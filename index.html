@@ -1,0 +1,2101 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Buddies</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+:root { --black:#000; --gray:#666; --light:#f5f5f5; --border:#ddd; --eee:#eee; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif; background:#f7f7f7; color:#111; line-height:1.5; }
+.app-container { max-width:1200px; margin:0 auto; min-height:100vh; background:#fff; position:relative; padding:0 16px 110px; }
+header { padding:24px 0 8px; background:#fff; z-index:10; }
+.logo { font-size:24px; font-weight:800; letter-spacing:-0.5px; }
+
+h2.section-title { font-size:17px; font-weight:700; margin:28px 0 12px; }
+.card { background:#fff; border:1px solid var(--eee); border-radius:24px; padding:20px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
+
+.pill-input, select.pill-input, textarea.pill-input { width:100%; padding:14px 20px; border:1px solid var(--border); border-radius:9999px; font-size:14px; background:#fff; outline:none; transition:border .2s; font-family:inherit; color:#000; -webkit-appearance:none; -moz-appearance:none; appearance:none; }
+.pill-input:focus { border-color:#000; }
+textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
+
+.pill-button { padding:10px 16px; border-radius:9999px; font-size:13px; font-weight:500; border:1px solid var(--border); background:#fff; cursor:pointer; display:inline-flex; align-items:center; justify-content:center; gap:6px; transition:all .15s; white-space:nowrap; min-height:40px; color:#000; -webkit-appearance:none; -moz-appearance:none; appearance:none; }
+.pill-button:active { transform:scale(0.98); }
+.pill-button:focus { outline:2px solid #000; outline-offset:2px; }
+.pill-button.black { background:#000; color:#fff; border-color:#000; }
+.pill-button.pink { background:#ffb7c5; border-color:#ffb7c5; color:#000; }
+.pill-button.gray { background:#f2f2f2; border-color:#f2f2f2; }
+.pill-button:disabled { opacity:.5; cursor:not-allowed; }
+
+@media (max-width: 500px) {
+  .app-container { padding:0 12px 110px; }
+  header { padding:16px 0 6px; }
+  .logo { font-size:20px; }
+  h2.section-title { font-size:15px; margin:20px 0 10px; }
+  .card { padding:16px; margin-bottom:12px; }
+  .pill-input, select.pill-input, textarea.pill-input { padding:12px 16px; font-size:16px; }
+  .pill-button { padding:10px 16px; font-size:13px; }
+  .modal-card { padding:20px 16px 28px; border-radius:24px 24px 0 0; background:linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%); }
+  .modal-overlay { padding:0; background:rgba(0,0,0,0.3); }
+  .edit-header { padding:10px 16px; gap:12px; }
+  .edit-header-back { width:40px; height:40px; font-size:18px; }
+  .edit-header-title { font-size:18px; }
+  .edit-content { padding:12px; }
+  .profile-header { gap:10px; margin-bottom:16px; }
+  .profile-avatar { width:56px; height:56px; font-size:24px; }
+  .profile-name { font-size:18px; }
+  .profile-meta { font-size:12px; }
+  .profile-section { margin-bottom:16px; }
+  .profile-song { padding:16px 20px; font-size:16px; gap:10px; }
+  .profile-song > span:first-child { font-size:20px; }
+  .profile-bio { padding:12px 16px; font-size:13px; }
+  .profile-section-title { font-size:12px; margin-bottom:10px; }
+  .profile-actions { gap:6px; margin:12px 0 0; }
+}
+
+@media (min-width: 501px) and (max-width: 768px) {
+  .app-container { max-width:600px; padding:0 20px 110px; }
+  header { padding:28px 0 12px; }
+  .logo { font-size:24px; }
+  h2.section-title { font-size:16px; margin:24px 0 12px; }
+  .card { padding:18px; margin-bottom:14px; }
+  .modal-overlay { align-items:center; padding:20px; }
+  .modal-card { border-radius:24px; max-width:500px; padding:24px; background:#fff; }
+  #similar-list { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #search-results { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #exchanged-list { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  #favorites-list { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .profile-mini { flex-direction:column; align-items:center; text-align:center; }
+  .profile-mini-avatar-wrap { margin-bottom:4px; }
+  .profile-mini-info { width:100%; }
+  .profile-mini > i { display:none; }
+}
+
+@media (min-width: 769px) {
+  .app-container { max-width:1000px; padding:0 40px 110px; }
+  header { padding:32px 0 16px; }
+  .logo { font-size:28px; }
+  h2.section-title { font-size:18px; margin:32px 0 16px; font-weight:700; }
+  .card { padding:24px; margin-bottom:16px; border-radius:28px; }
+  .pill-input, select.pill-input, textarea.pill-input { padding:14px 22px; font-size:15px; border-radius:12px; }
+  textarea.pill-input { border-radius:16px; }
+  .pill-button { padding:12px 22px; font-size:15px; border-radius:12px; }
+  .modal-overlay { align-items:center; padding:20px; }
+  .modal-card { border-radius:28px; max-width:600px; padding:32px; background:#fff; }
+  #similar-list { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  #search-results { display:grid; grid-template-columns:repeat(3, 1fr); gap:16px; }
+  #exchanged-list { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+  #favorites-list { display:grid; grid-template-columns:repeat(4, 1fr); gap:16px; }
+  .profile-mini { flex-direction:column; align-items:center; text-align:center; border-radius:20px; padding:16px; }
+  .profile-mini-avatar-wrap { margin-bottom:8px; }
+  .profile-mini-avatar { width:56px; height:56px; font-size:20px; }
+  .profile-mini-info { width:100%; }
+  .profile-mini-name { font-size:16px; margin-bottom:4px; }
+  .profile-mini-meta { font-size:13px; white-space:normal; height:40px; display:flex; align-items:center; justify-content:center; }
+  .profile-mini > i { display:none; }
+  .edit-header { padding:14px 40px; }
+  .edit-header-title { font-size:22px; }
+  .edit-content { max-width:800px; padding:32px; }
+  .profile-header { gap:14px; }
+  .profile-avatar { width:72px; height:72px; font-size:32px; }
+  .profile-name { font-size:24px; }
+  .profile-meta { font-size:13px; }
+  .profile-section { margin-bottom:28px; }
+  .profile-song { padding:24px 28px; font-size:18px; gap:14px; }
+  .profile-bio { padding:20px 24px; font-size:15px; }
+}
+
+.pill-tag { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; background:#f2f2f2; border-radius:9999px; font-size:13px; line-height:1; }
+.pill-tag.black { background:#000; color:#fff; }
+.pill-tag .remove { cursor:pointer; opacity:.7; display:flex; }
+.pill-tag .remove:hover { opacity:1; }
+
+.oshi-pill { background:#000; color:#fff; padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:500; }
+
+.stance-btn.active { background:#000; color:#fff; border-color:#000; }
+.stance-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9999px; font-size:12px; font-weight:500; background:#eef7ff; color:#0c63a8; border:1px solid #cce4f7; }
+.stance-pill.hello { background:#fff3e0; color:#a75a0c; border-color:#ffd9a8; }
+
+.edit-section { display:flex; flex-direction:column; gap:14px; padding-bottom:32px; margin-bottom:20px; border-bottom:1px solid var(--eee); }
+.edit-section:last-of-type { border-bottom:none; }
+.edit-section-title { font-size:13px; font-weight:700; color:#000; letter-spacing:0.3px; margin:0 4px; }
+.edit-field-label { font-size:12px; color:#666; margin:0 0 6px 4px; }
+.edit-oshi-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(88px, 1fr)); gap:8px; }
+.oshi-card { position:relative; display:flex; flex-direction:column; align-items:center; gap:6px; padding:10px 6px; border:1px solid var(--eee); border-radius:16px; background:#fff; cursor:pointer; transition:all .15s; }
+.oshi-card:hover { border-color:#999; }
+.oshi-card-avatar { width:56px; height:56px; border-radius:50%; overflow:hidden; background:#eee; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; }
+.oshi-card-avatar img { width:100%; height:100%; object-fit:cover; object-position:top center; }
+.oshi-card-label { font-size:11px; color:#999; font-weight:600; }
+.oshi-card-name { font-size:12px; font-weight:600; text-align:center; line-height:1.2; }
+.oshi-card-remove { position:absolute; top:4px; right:4px; width:22px; height:22px; border-radius:50%; background:#000; color:#fff; border:none; display:flex; align-items:center; justify-content:center; cursor:pointer; padding:0; }
+.oshi-card-add { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; padding:10px 6px; border:1px dashed #bbb; border-radius:16px; background:#fafafa; cursor:pointer; min-height:108px; color:#666; font-size:12px; }
+.oshi-card-add:hover { border-color:#000; color:#000; }
+
+.sns-circle { width:32px; height:32px; border:1px solid var(--eee); border-radius:50%; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all .2s; background:#fff; flex-shrink:0; }
+.sns-circle:hover { border-color:#000; }
+.sns-circle svg { width:16px; height:16px; stroke:#333; }
+
+.sns-chip { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--eee); border-radius:9999px; background:#fff; text-decoration:none; color:inherit; font-size:12px; transition:all .2s; cursor:pointer; line-height:1; }
+.sns-chip:hover { border-color:#000; background:#fafafa; }
+.sns-chip svg { width:14px; height:14px; display:block; flex-shrink:0; }
+
+.avatar-circle { width:56px; height:56px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:24px; flex-shrink:0; overflow:hidden; }
+.avatar-circle img { width:100%; height:100%; object-fit:cover; object-position:top center; }
+
+.profile-list { display:flex; flex-direction:column; gap:10px; }
+.profile-mini { display:flex; align-items:center; gap:12px; padding:14px; border:1px solid var(--eee); border-radius:20px; cursor:pointer; transition:all .15s; background:#fff; }
+.profile-mini:active { background:#fafafa; }
+.profile-mini-avatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:18px; flex-shrink:0; overflow:hidden; position:relative; }
+.profile-mini-avatar img { width:100%; height:100%; object-fit:cover; object-position:top center; }
+.profile-mini-avatar-wrap { position:relative; flex-shrink:0; }
+.profile-mini-exchanged-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#22c55e; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+.profile-mini-exchanged-badge svg { width:8px; height:8px; }
+.profile-mini-admin-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#3b82f6; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+.profile-mini-admin-badge svg { width:8px; height:8px; }
+.profile-mini-info { flex:1; min-width:0; }
+.profile-mini-name { font-weight:600; font-size:15px; margin-bottom:2px; }
+.profile-mini-meta { font-size:12px; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+.header-icon-btn { width:36px; height:36px; border-radius:50%; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#666; transition:background .15s, color .15s; text-decoration:none; appearance:none; }
+.header-icon-btn:hover { background:#f2f2f2; color:#000; }
+.header-icon-btn:active { background:#e8e8e8; }
+
+.floating-tabbar { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:90%; max-width:360px; background:#fff; border:1px solid var(--eee); border-radius:9999px; box-shadow:0 4px 12px rgba(0,0,0,0.08); padding:8px; display:flex; justify-content:space-around; z-index:100; }
+.tab-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 4px; border-radius:9999px; cursor:pointer; transition:all .2s; color:#bbb; background:transparent; border:none; }
+.tab-btn svg { width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
+.tab-btn.active { color:#000; }
+.tab-btn.active svg { stroke-width:2.3; }
+
+.modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.3); display:flex; align-items:flex-end; justify-content:center; z-index:1000; padding:0; opacity:0; pointer-events:none; transition:opacity .3s; backdrop-filter:blur(2px); }
+.modal-overlay.active { opacity:1; pointer-events:auto; }
+.modal-card { background:#fff; border-radius:28px 28px 0 0; padding:28px 24px 32px; width:100%; max-width:100%; max-height:90vh; overflow-y:auto; transform:translateY(100%); transition:transform .4s cubic-bezier(0.4,0,0.2,1); position:relative; }
+.modal-overlay.active .modal-card { transform:translateY(0); }
+.modal-close-btn { position:absolute; top:14px; right:16px; width:32px; height:32px; border-radius:50%; background:#f2f2f2; border:none; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#666; transition:all .15s; flex-shrink:0; z-index:1; }
+.modal-close-btn:hover { background:#e0e0e0; color:#000; }
+.modal-close-btn:active { transform:scale(0.93); }
+
+.edit-page { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:999; overflow-y:auto; animation:slideInUp .3s ease-out; }
+.edit-page.active { display:block; }
+@keyframes slideInUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
+
+.edit-header { position:relative; top:auto; background:#fff; padding:12px 24px; border:none; display:flex; align-items:center; gap:16px; z-index:10; box-shadow:none; }
+.edit-header-back { background:transparent; border:none; cursor:pointer; font-size:20px; color:#000; padding:0; width:44px; height:44px; display:flex; align-items:center; justify-content:center; border-radius:10px; transition:all .2s; }
+.edit-header-back:hover { background:#f5f5f5; }
+.edit-header-back:active { transform:scale(0.95); }
+.edit-header-title { font-size:20px; font-weight:800; color:#000; letter-spacing:-0.5px; }
+.edit-content { max-width:440px; margin:0 auto; padding:16px; }
+
+.profile-detail { background:transparent; border-radius:0; padding:0; margin-bottom:0; border:none; }
+.profile-header { display:flex; flex-direction:column; align-items:center; gap:12px; margin-bottom:20px; text-align:center; }
+.profile-avatar { width:64px; height:64px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:700; font-size:28px; flex-shrink:0; box-shadow:0 4px 12px rgba(0,0,0,0.1); overflow:hidden; }
+.profile-avatar img { width:100%; height:100%; object-fit:cover; object-position:top center; }
+.profile-info { width:100%; }
+.profile-name { font-size:20px; font-weight:800; line-height:1.2; margin-bottom:8px; }
+.profile-meta { font-size:12px; color:#666; line-height:1.6; display:flex; flex-direction:row; flex-wrap:wrap; gap:12px; justify-content:center; }
+.profile-actions { display:flex; gap:8px; margin-top:16px; flex-wrap:wrap; }
+
+.profile-section { margin-bottom:18px; }
+.profile-section-title { font-size:12px; font-weight:700; color:#333; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:10px; }
+.profile-oshi-list { display:flex; flex-wrap:wrap; gap:8px; }
+.profile-tag-list { display:flex; flex-wrap:wrap; gap:8px; }
+.profile-sns-list { display:flex; gap:10px; flex-wrap:wrap; }
+.profile-bio { font-size:14px; line-height:1.8; color:#333; white-space:pre-wrap; background:#f5f5f5; padding:14px 18px; border-radius:30px; margin:0; }
+.profile-song { font-size:14px; font-weight:500; color:#333; background:#f5f5f5; padding:14px 16px; border-radius:9999px; border-left:none; margin:0; display:flex; align-items:center; gap:10px; }
+
+.qr-tabs { display:flex; gap:8px; border-bottom:1px solid var(--eee); margin:-8px -4px 16px; }
+.qr-tab { flex:1; padding:12px; text-align:center; font-size:14px; font-weight:500; cursor:pointer; color:#999; border-bottom:2px solid transparent; background:none; border:none; border-top:none; border-left:none; border-right:none; }
+.qr-tab.active { color:#000; border-bottom-color:#000; }
+
+/* ── QRスキャナー ── */
+#qr-reader { width:100%; border-radius:16px; overflow:hidden; background:#111; min-height:260px; position:relative; }
+#qr-reader video { width:100% !important; height:auto !important; display:block; object-fit:cover; }
+#qr-reader img { display:none !important; }
+/* html5-qrcode が挿入するUI要素を非表示 */
+#qr-reader > br { display:none !important; }
+#qr-reader select { display:none !important; }
+#qr-reader > div > span + button,
+#qr-reader > div > span + span + button { display:none !important; }
+.qr-scan-hint { display:flex; align-items:center; justify-content:center; gap:6px; font-size:12px; color:#999; margin-top:10px; text-align:center; line-height:1.6; }
+.qr-scan-hint svg { flex-shrink:0; }
+
+/* ── 交換完了アニメーション ── */
+.exchange-success-anim { animation: successPop 0.5s cubic-bezier(0.175,0.885,0.32,1.275) both; display:inline-block; }
+@keyframes successPop { 0%{transform:scale(0);opacity:0} 70%{transform:scale(1.15)} 100%{transform:scale(1);opacity:1} }
+.checkmark-path { stroke-dasharray:50; stroke-dashoffset:50; animation:drawCheck 0.4s 0.3s ease forwards; }
+@keyframes drawCheck { to { stroke-dashoffset:0; } }
+
+.exchange-burst { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+@keyframes confettiFall {
+  0%   { transform:translate(0,0) rotate(0deg); opacity:1; }
+  100% { transform:translate(var(--tx),120vh) rotate(var(--rot)); opacity:0; }
+}
+.confetti-piece { position:absolute; width:10px; height:10px; top:-20px; animation: confettiFall 1.8s ease-in both; }
+
+#exchange-overlay { display:none; }
+#exchange-overlay.active { display:flex; }
+
+.toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); background:#000; color:#fff; padding:12px 20px; border-radius:9999px; font-size:14px; opacity:0; transition:all .3s; z-index:2000; pointer-events:none; white-space:nowrap; max-width:90%; }
+.toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+.view-banner { position:fixed; top:0; left:0; right:0; background:#fff8e1; color:#5d4037; padding:10px 16px; text-align:center; font-size:12px; border-bottom:1px solid #ffecb3; z-index:500; display:none; }
+
+.search-input-wrap { position:relative; margin-top:16px; }
+.search-input-wrap svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:#999; pointer-events:none; }
+
+.empty-state { text-align:center; padding:40px 20px; color:#999; font-size:14px; }
+
+.divider { height:1px; background:var(--eee); margin:20px 0; }
+
+::-webkit-scrollbar { display:none; }
+
+.pagination { display:flex; justify-content:center; gap:8px; margin-top:24px; flex-wrap:wrap; }
+.pagination button { padding:6px 10px; border:1px solid var(--eee); border-radius:6px; background:#fff; cursor:pointer; font-size:12px; transition:all .2s; color:#000; -webkit-appearance:none; -moz-appearance:none; appearance:none; }
+.pagination button.active { background:#000; color:#fff; border-color:#000; }
+.pagination button:disabled { opacity:.5; cursor:not-allowed; }
+
+.input-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.3); display:flex; align-items:flex-end; justify-content:center; z-index:2000; opacity:0; pointer-events:none; transition:opacity .3s; backdrop-filter:blur(2px); }
+.input-modal-overlay.active { opacity:1; pointer-events:auto; }
+.input-modal { background:#fff; border-radius:28px 28px 0 0; padding:28px 24px 32px; width:100%; max-width:100%; transform:translateY(100%); transition:transform .4s cubic-bezier(0.4,0,0.2,1); }
+.input-modal-overlay.active .input-modal { transform:translateY(0); }
+@media (min-width: 501px) {
+  .input-modal { border-radius:28px; max-width:400px; }
+  .input-modal-overlay { align-items:center; }
+}
+.input-modal-title { font-size:18px; font-weight:700; margin-bottom:16px; }
+.input-modal-input { width:100%; padding:12px 16px; border:1px solid var(--eee); border-radius:12px; font-size:16px; margin-bottom:12px; color:#000; }
+.input-modal-buttons { display:flex; gap:8px; }
+
+/* ── 認証モーダル ── */
+.auth-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:3000; padding:16px; }
+.auth-modal { background:#fff; border-radius:24px; padding:28px 24px; width:100%; max-width:400px; }
+.auth-modal-title { font-size:22px; font-weight:800; margin-bottom:20px; }
+.auth-tabs { display:flex; gap:8px; margin-bottom:20px; }
+.auth-tab { flex:1; padding:10px; border-radius:9999px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid var(--eee); background:#f2f2f2; color:#999; transition:all .2s; }
+.auth-tab.active { background:#000; color:#fff; border-color:#000; }
+.auth-field { margin-bottom:12px; }
+.auth-field label { display:block; font-size:12px; color:#666; margin-bottom:4px; font-weight:600; }
+.auth-field input { width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px; font-size:15px; color:#000; outline:none; transition:border .2s; }
+.auth-field input:focus { border-color:#000; }
+.auth-err { font-size:13px; color:#e00; margin-bottom:8px; display:none; }
+
+/* ── アイコン選択ページ ── */
+.icon-picker-page { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:1100; overflow-y:auto; }
+.icon-picker-page.active { display:block; }
+.icon-picker-toolbar { display:flex; gap:8px; flex-wrap:wrap; align-items:center; padding:12px 16px; border-bottom:1px solid var(--eee); position:sticky; top:0; background:#fff; z-index:10; }
+.icon-picker-grid { display:grid; grid-template-columns:repeat(3, 1fr); gap:3px; padding:8px; }
+@media (min-width:501px) { .icon-picker-grid { grid-template-columns:repeat(4,1fr); } }
+@media (min-width:769px) { .icon-picker-grid { grid-template-columns:repeat(5,1fr); } }
+.icon-picker-cell { aspect-ratio:1; overflow:hidden; border-radius:8px; cursor:pointer; background:#f5f5f5; position:relative; }
+.icon-picker-cell img { width:100%; height:100%; object-fit:cover; object-position:top center; transition:opacity .15s; }
+.icon-picker-cell:hover img { opacity:.85; }
+.icon-picker-cell.selected::after { content:'✓'; position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.45); color:#fff; font-size:28px; font-weight:700; }
+</style>
+</head>
+<body>
+<div class="view-banner" id="viewBanner">閲覧モード：交換するにはアプリ内のカメラで読み取ってください</div>
+
+<div class="app-container">
+<header>
+  <div style="display:flex; align-items:center; justify-content:space-between;">
+    <div class="logo">Buddies</div>
+    <div id="header-auth-area"></div>
+  </div>
+</header>
+<main>
+  <!-- ローディング -->
+  <div id="page-loading" style="text-align:center; padding:60px 20px; color:#999; font-size:14px;">読み込み中…</div>
+
+  <div id="home-page" hidden>
+    <div id="my-home-card"></div>
+    <h2 class="section-title">おすすめのBuddies</h2>
+    <div id="similar-list" class="profile-list"></div>
+  </div>
+
+  <div id="search-page" hidden>
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグで検索" style="padding-left:44px;">
+    </div>
+    <div id="search-results" class="profile-list" style="margin-top:16px;"></div>
+    <div id="search-pagination" class="pagination"></div>
+  </div>
+
+  <div id="mypage-page" hidden>
+    <div id="my-page-card" class="card"></div>
+    <h2 class="section-title">お気に入り</h2>
+    <div id="favorites-list" class="profile-list"></div>
+    <div id="favorites-more-wrap" style="text-align:center; margin-top:12px; display:none;">
+      <button class="pill-button" onclick="showMoreFavorites()">もっと見る</button>
+    </div>
+    <h2 class="section-title">交換したプロフィール</h2>
+    <div id="exchanged-list" class="profile-list"></div>
+    <div id="exchanged-more-wrap" style="text-align:center; margin-top:12px; display:none;">
+      <button class="pill-button" onclick="showMoreExchanged()">もっと見る</button>
+    </div>
+  </div>
+</main>
+</div>
+
+<nav class="floating-tabbar">
+  <button class="tab-btn active" data-tab="home" onclick="switchTab('home')" aria-label="ホーム">
+    <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+  </button>
+  <button class="tab-btn" data-tab="search" onclick="switchTab('search')" aria-label="検索">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+  </button>
+  <button class="tab-btn" data-tab="mypage" onclick="switchTab('mypage')" aria-label="マイページ">
+    <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+  </button>
+</nav>
+
+<!-- Profile Modal -->
+<div id="profile-modal" class="modal-overlay" onclick="if(event.target===this)closeProfileModal()">
+  <div class="modal-card" id="profile-modal-card"></div>
+</div>
+
+<!-- Edit Page -->
+<div id="edit-page" class="edit-page">
+  <div class="edit-header">
+    <button class="edit-header-back" onclick="closeEdit()">&larr;</button>
+    <div class="edit-header-title">プロフィール編集</div>
+  </div>
+  <div class="edit-content">
+    <!-- 基本情報 -->
+    <div class="edit-section">
+      <div class="edit-section-title">基本情報</div>
+
+      <div style="display:flex; flex-direction:column; align-items:center; gap:10px;">
+        <div id="edit-icon-preview" style="width:96px; height:96px; border-radius:50%; background:#eee; overflow:hidden; flex-shrink:0; display:flex; align-items:center; justify-content:center; font-size:36px; color:#999; box-shadow:0 4px 12px rgba(0,0,0,0.08);"></div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="pill-button" onclick="openIconPicker()">画像を選ぶ</button>
+          <button type="button" class="pill-button" id="clear-icon-btn" onclick="clearIcon()">削除</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="edit-field-label">表示名 <span style="color:#e00;">*</span></div>
+        <input id="edit-name" class="pill-input" maxlength="64" placeholder="表示名" required>
+      </div>
+
+      <div>
+        <div class="edit-field-label">誕生日（年齢は自動計算されます）</div>
+        <div style="display:flex; gap:8px;">
+          <select id="edit-bd-year" class="pill-input" style="flex:1.3;" onchange="updateBirthdayAgePreview()"></select>
+          <select id="edit-bd-month" class="pill-input" style="flex:1;" onchange="updateBirthdayAgePreview()"></select>
+          <select id="edit-bd-day" class="pill-input" style="flex:1;" onchange="updateBirthdayAgePreview()"></select>
+        </div>
+        <div id="edit-age-preview" style="font-size:11px; color:#999; margin:6px 8px 0;"></div>
+      </div>
+
+      <div>
+        <div class="edit-field-label">性別</div>
+        <select id="edit-gender" class="pill-input">
+          <option value="">選択しない</option><option>男性</option><option>女性</option><option>その他</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="edit-field-label">出身都道府県</div>
+        <select id="edit-location" class="pill-input">
+          <option value="">選択しない</option>
+          <option>北海道</option><option>青森県</option><option>岩手県</option><option>宮城県</option><option>秋田県</option><option>山形県</option><option>福島県</option>
+          <option>茨城県</option><option>栃木県</option><option>群馬県</option><option>埼玉県</option><option>千葉県</option><option>東京都</option><option>神奈川県</option>
+          <option>新潟県</option><option>富山県</option><option>石川県</option><option>福井県</option><option>山梨県</option><option>長野県</option><option>岐阜県</option><option>静岡県</option><option>愛知県</option>
+          <option>三重県</option><option>滋賀県</option><option>京都府</option><option>大阪府</option><option>兵庫県</option><option>奈良県</option><option>和歌山県</option>
+          <option>鳥取県</option><option>島根県</option><option>岡山県</option><option>広島県</option><option>山口県</option>
+          <option>徳島県</option><option>香川県</option><option>愛媛県</option><option>高知県</option>
+          <option>福岡県</option><option>佐賀県</option><option>長崎県</option><option>熊本県</option><option>大分県</option><option>宮崎県</option><option>鹿児島県</option><option>沖縄県</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="edit-field-label">興味タグ（最大5個）</div>
+        <div id="edit-tags-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; min-height:32px;"></div>
+        <button type="button" id="add-tag-btn" class="pill-button" style="width:100%;" onclick="addTag()">+ 興味タグを追加</button>
+      </div>
+
+      <div>
+        <div class="edit-field-label">自己紹介</div>
+        <textarea id="edit-bio" class="pill-input" style="min-height:80px;" maxlength="500" placeholder="好きなこと、活動エリアなど"></textarea>
+      </div>
+    </div>
+
+    <!-- My推し -->
+    <div class="edit-section">
+      <div class="edit-section-title">My推し</div>
+
+      <div>
+        <div class="edit-field-label">推し始めた時期</div>
+        <select id="edit-buddies-year" class="pill-input"></select>
+      </div>
+
+      <div>
+        <div class="edit-field-label">推しメン（最大3人：1番目が第一推し）</div>
+        <div id="edit-oshi-grid" class="edit-oshi-grid"></div>
+      </div>
+
+      <div>
+        <div class="edit-field-label">好きな曲（最大3曲）</div>
+        <div id="edit-songs-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; min-height:32px;"></div>
+        <button type="button" id="add-song-btn" class="pill-button" style="width:100%;" onclick="addSong()">+ 好きな曲を追加</button>
+      </div>
+    </div>
+
+    <!-- SNS -->
+    <div class="edit-section">
+      <div class="edit-section-title">SNS</div>
+
+      <div>
+        <div class="edit-field-label">SNSリンク（最大4個）</div>
+        <div id="edit-sns-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
+        <button type="button" id="add-sns-btn" class="pill-button" style="width:100%;">+ SNSリンクを追加</button>
+      </div>
+
+      <div id="edit-follow-stance-wrap" style="display:none;">
+        <div class="edit-field-label">フォローのスタンス</div>
+        <div style="display:flex; gap:6px;">
+          <button type="button" class="pill-button stance-btn" data-stance="silent_ok" style="flex:1;" onclick="setFollowStance('silent_ok')">無言フォローOK</button>
+          <button type="button" class="pill-button stance-btn" data-stance="hello_please" style="flex:1;" onclick="setFollowStance('hello_please')">一言欲しい</button>
+        </div>
+      </div>
+
+      <div>
+        <div class="edit-field-label">紹介タグ（任意・Xワンタップ投稿用）</div>
+        <div id="edit-post-template-wrap" style="display:none;">
+          <div style="display:flex; gap:6px; margin:0 0 6px; justify-content:flex-end;">
+            <button type="button" class="pill-button" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="generatePostTemplate()">自動生成</button>
+            <button type="button" class="pill-button" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="removePostTemplate()">削除</button>
+          </div>
+          <textarea id="edit-post-template" class="pill-input" style="min-height:180px; font-family:inherit; line-height:1.7;" maxlength="1000" placeholder="🏷️&#10;07 | 東京 | ♂&#10;&#10;藤吉夏鈴＆山崎天 推し&#10;&#10;#櫻坂46好きな人と繋がりたい&#10;#buddiesと繋がりたい"></textarea>
+          <div style="font-size:11px; color:#999; margin:4px 8px 0;">プロフィール画面の「X」ボタンから一括でポストできます</div>
+        </div>
+        <button type="button" id="add-post-template-btn" class="pill-button" style="width:100%;" onclick="addPostTemplate()">+ 紹介タグを追加</button>
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; margin-top:8px; margin-bottom:80px;">
+      <button type="button" class="pill-button" style="flex:1;" onclick="closeEdit()">キャンセル</button>
+      <button type="button" class="pill-button black" style="flex:1;" onclick="saveEdit()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- QR Modal -->
+<div id="qr-modal" class="modal-overlay" onclick="if(event.target===this)closeQR()">
+  <div class="modal-card" style="padding-bottom:28px;">
+    <!-- 通常タブUI -->
+    <div id="qr-main-ui">
+      <div class="qr-tabs">
+        <button id="qr-tab-show" class="qr-tab active" onclick="switchQRTab('show')">見せる</button>
+        <button id="qr-tab-scan" class="qr-tab" onclick="switchQRTab('scan')">読み取る</button>
+      </div>
+      <div id="qr-show-pane">
+        <div id="qrcode" style="display:flex; justify-content:center; padding:8px 16px;"></div>
+        <div id="qr-timer-bar-wrap" style="margin:0 16px 12px; height:4px; background:#eee; border-radius:9999px; overflow:hidden;">
+          <div id="qr-timer-bar" style="height:100%; background:#000; border-radius:9999px; width:100%; transition:width linear;"></div>
+        </div>
+        <p style="font-size:13px; text-align:center; color:#333; line-height:1.6;">このQRを相手のBuddiesアプリで読み取ると<br>相互に交換されます</p>
+        <p style="font-size:12px; text-align:center; color:#999; margin-top:6px;">※OSカメラで読み取った場合は閲覧のみになります<br>QRは20秒ごとに更新されます</p>
+      </div>
+      <div id="qr-scan-pane" style="display:none;">
+        <div id="qr-reader"></div>
+        <div class="qr-scan-hint">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
+          相手のQRコードをカメラで読み取ると交換が完了します
+        </div>
+      </div>
+      <button class="pill-button" style="width:100%; margin-top:16px;" onclick="closeQR()">閉じる</button>
+    </div>
+    <!-- 交換完了画面 -->
+    <div id="qr-success-ui" style="display:none; text-align:center; padding:12px 0 4px; position:relative;">
+      <button class="modal-close-btn" onclick="closeQR()" aria-label="閉じる" style="position:absolute; top:0; right:0;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      <div style="display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:20px;">
+        <div id="exchange-success-check" style="display:flex; align-items:center; justify-content:center; width:28px; height:28px; border-radius:50%; background:#22c55e; flex-shrink:0;">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </div>
+        <div id="exchange-success-title" style="font-size:22px; font-weight:800;">交換完了！</div>
+      </div>
+      <div id="exchange-success-avatar" class="exchange-success-anim" style="display:flex; justify-content:center; margin-bottom:14px;"></div>
+      <div id="exchange-success-name" style="font-size:16px; font-weight:600; margin-bottom:28px;"></div>
+      <button class="pill-button black" style="width:100%; max-width:240px; margin:0 auto; display:block;" id="exchange-success-view-btn">プロフィールを見る</button>
+    </div>
+  </div>
+</div>
+
+<!-- Exchange Success Full Overlay -->
+<div id="exchange-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); z-index:4000; align-items:center; justify-content:center; flex-direction:column;">
+  <div class="exchange-burst" id="exchange-burst"></div>
+  <div style="text-align:center; color:#fff; padding:24px;">
+    <div style="font-size:64px; margin-bottom:16px;" id="exchange-overlay-emoji">🎉</div>
+    <div style="font-size:28px; font-weight:800; margin-bottom:8px;">Buddies交換完了！</div>
+    <div id="exchange-overlay-name" style="font-size:16px; opacity:0.85; margin-bottom:28px;"></div>
+    <div id="exchange-overlay-avatar" style="display:flex; justify-content:center; margin-bottom:24px;"></div>
+    <button class="pill-button black" style="padding:14px 32px; font-size:15px;" onclick="closeExchangeOverlay()">やったー！</button>
+  </div>
+</div>
+
+<!-- X Share Sheet -->
+<div id="x-share-sheet" class="input-modal-overlay" onclick="if(event.target===this)closeXShareSheet()">
+  <div class="input-modal" style="padding-bottom:24px;">
+    <div class="input-modal-title" style="margin-bottom:12px;">Xでシェア</div>
+    <div id="x-share-options" style="display:flex; flex-direction:column; gap:8px;"></div>
+    <button class="pill-button" style="width:100%; margin-top:12px;" onclick="closeXShareSheet()">キャンセル</button>
+  </div>
+</div>
+
+<!-- Confirm Modal -->
+<div id="confirm-modal" class="input-modal-overlay" onclick="if(event.target===this)closeConfirmModal()">
+  <div class="input-modal" style="padding-bottom:24px;">
+    <div id="confirm-modal-title" class="input-modal-title"></div>
+    <div id="confirm-modal-body" style="font-size:14px; color:#666; margin:-4px 0 20px; line-height:1.6;"></div>
+    <div style="display:flex; gap:8px;">
+      <button class="pill-button" style="flex:1;" onclick="closeConfirmModal()">キャンセル</button>
+      <button id="confirm-modal-ok" class="pill-button" style="flex:1;">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- Input Modal -->
+<div id="input-modal" class="input-modal-overlay" onclick="if(event.target===this)closeInputModal()">
+  <div class="input-modal">
+    <div class="input-modal-title" id="input-modal-title"></div>
+    <input type="text" id="input-modal-input" class="input-modal-input" placeholder="">
+    <div class="input-modal-buttons">
+      <button class="pill-button" style="flex:1;" onclick="closeInputModal()">キャンセル</button>
+      <button class="pill-button black" style="flex:1;" onclick="submitInputModal()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div id="auth-modal" class="auth-modal-overlay" style="display:none;">
+  <div class="auth-modal">
+    <div class="auth-modal-title">Buddies</div>
+    <div class="auth-tabs">
+      <button class="auth-tab active" onclick="switchAuthTab('login')">ログイン</button>
+      <button class="auth-tab" onclick="switchAuthTab('register')">新規登録</button>
+    </div>
+    <div id="auth-login-form">
+      <div class="auth-field"><label>ユーザー名</label><input id="auth-username" type="text" autocapitalize="none"></div>
+      <div class="auth-field"><label>パスワード</label><input id="auth-password" type="password"></div>
+      <div class="auth-err" id="auth-login-err"></div>
+      <button class="pill-button black" style="width:100%; margin-top:4px;" onclick="doLogin()">ログイン</button>
+      <p style="font-size:12px; color:#999; text-align:center; margin-top:12px;">SakuLabo のアカウントでもログインできます</p>
+    </div>
+    <div id="auth-register-form" style="display:none;">
+      <div class="auth-field"><label>ユーザー名（半角英数字・_ 3〜32文字）</label><input id="reg-username" type="text" autocapitalize="none"></div>
+      <div class="auth-field"><label>表示名</label><input id="reg-display" type="text"></div>
+      <div class="auth-field"><label>パスワード（8文字以上）</label><input id="reg-password" type="password"></div>
+      <div class="auth-field"><label>パスワード（確認）</label><input id="reg-password2" type="password"></div>
+      <div class="auth-err" id="auth-reg-err"></div>
+      <button class="pill-button black" style="width:100%; margin-top:4px;" onclick="doRegister()">アカウント作成</button>
+      <p style="font-size:12px; color:#999; text-align:center; margin-top:12px;">SakuLabo でも同じアカウントでログインできます</p>
+    </div>
+  </div>
+</div>
+
+<!-- Icon Picker Page -->
+<div id="icon-picker-page" class="icon-picker-page">
+  <div class="edit-header">
+    <button class="edit-header-back" onclick="closeIconPicker()">&larr;</button>
+    <div class="edit-header-title">プロフィール画像を選ぶ</div>
+  </div>
+  <div class="icon-picker-toolbar">
+    <select id="icon-member-filter" class="pill-input" style="max-width:180px; padding:10px 14px; font-size:13px;" onchange="loadBlogImages()">
+      <option value="">すべてのメンバー</option>
+    </select>
+    <select id="icon-sort" class="pill-input" style="max-width:140px; padding:10px 14px; font-size:13px;" onchange="loadBlogImages()">
+      <option value="newest">新しい順</option>
+      <option value="oldest">古い順</option>
+    </select>
+    <button class="pill-button" onclick="clearIcon()" style="margin-left:auto;">画像を削除</button>
+  </div>
+  <div id="icon-picker-loading" style="text-align:center; padding:40px; color:#999; font-size:14px;">読み込み中…</div>
+  <div id="icon-picker-grid" class="icon-picker-grid" style="display:none;"></div>
+  <div id="icon-picker-empty" class="empty-state" style="display:none;">画像が見つかりません</div>
+  <div style="text-align:center; padding:16px;" id="icon-load-more-wrap" style="display:none;">
+    <button class="pill-button" onclick="loadMoreBlogImages()">さらに読み込む</button>
+  </div>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<script>
+// ── 定数 ────────────────────────────────────────────────
+const API = './api.php';
+const BLOG_DATA   = '../data/blogs.json';
+const MEMBER_DATA = '../data/member.json';
+
+// ── 状態 ────────────────────────────────────────────────
+let me = null;              // ログインユーザー（DB）
+let memberMap = {};         // メンバーJSONマップ
+let allBlogs = [];          // ブログJSON
+let exchangedProfiles = []; // 交換済み（DBから）
+let favoriteProfiles = [];  // お気に入り（DBから）
+let currentPopupProfile = null;
+let currentScanner = null;
+let inputModalContext = { type: null, callback: null };
+let paginationState = { search: 1 };
+const ITEMS_PER_PAGE = 12;
+const MYPAGE_PREVIEW = 6; // お気に入り・交換済みの初期表示数
+let favoritesShowAll = false;
+let exchangedShowAll = false;
+let qrPollTimer = null;
+let qrPollKnownIds = new Set();
+let lastSearchQuery = '';
+let lastSearchFiltered = [];
+let iconPickerImages = [];
+let iconPickerOffset = 0;
+const ICON_PAGE_SIZE = 60;
+let selectedIconUrl = null;
+
+const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
+const ADMIN_IDS = new Set([1]); // 管理者ユーザーID（追加はここに）
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+// ── 初期化 ───────────────────────────────────────────────
+async function init() {
+  try {
+    const [meRes, bRes, mRes] = await Promise.all([
+      fetch(API + '?action=auth_me', { credentials:'include' }),
+      fetch(BLOG_DATA + '?_=' + Date.now()).catch(() => null),
+      fetch(MEMBER_DATA + '?_=' + Date.now()).catch(() => null),
+    ]);
+    const meJson = await meRes.json();
+    me = meJson.ok ? meJson.data : null;
+
+    if (bRes) { try { allBlogs = await bRes.json(); } catch(e){} }
+    if (mRes) {
+      try {
+        const rawM = await mRes.json();
+        const arr = Array.isArray(rawM) ? rawM : Object.values(rawM);
+        arr.forEach(m => { memberMap[m.name] = m; });
+      } catch(e){}
+    }
+  } catch(e){}
+
+  document.getElementById('page-loading').style.display = 'none';
+
+  if (me) {
+    await loadUserData();
+    showMainUI();
+  } else {
+    showMainUI();
+    showAuthModal();
+  }
+
+  checkUrl();
+  document.getElementById('search-input').addEventListener('input', e => triggerSearch(e.target.value));
+  document.getElementById('add-sns-btn').onclick = addSns;
+}
+window.onload = init;
+
+async function loadUserData() {
+  try {
+    const [exRes, favRes] = await Promise.all([
+      fetch(API + '?action=buddies_exchange_list', { credentials:'include' }),
+      fetch(API + '?action=buddies_favorite_list', { credentials:'include' }),
+    ]);
+    const exJson = await exRes.json();
+    if (exJson.ok) exchangedProfiles = exJson.data || [];
+    const favJson = await favRes.json();
+    if (favJson.ok) favoriteProfiles = favJson.data || [];
+  } catch(e){}
+}
+
+function showMainUI() {
+  renderHeaderAuth();
+  renderAll();
+  switchTab('home');
+}
+
+// ── 認証 ─────────────────────────────────────────────────
+function showAuthModal() {
+  document.getElementById('auth-modal').style.display = 'flex';
+}
+function closeAuthModal() {
+  document.getElementById('auth-modal').style.display = 'none';
+}
+function switchAuthTab(tab) {
+  document.getElementById('auth-login-form').style.display = tab === 'login' ? 'block' : 'none';
+  document.getElementById('auth-register-form').style.display = tab === 'register' ? 'block' : 'none';
+  document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0) === (tab==='login')));
+}
+async function doLogin() {
+  const username = document.getElementById('auth-username').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const errEl = document.getElementById('auth-login-err');
+  errEl.style.display = 'none';
+  try {
+    const res = await fetch(API + '?action=auth_login', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, password }),
+    });
+    const json = await res.json();
+    if (!json.ok) { errEl.textContent = json.error; errEl.style.display = 'block'; return; }
+    me = json.data.user;
+    await loadUserData();
+    closeAuthModal();
+    renderHeaderAuth();
+    renderAll();
+    toast('ログインしました');
+  } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
+}
+async function doRegister() {
+  const username = document.getElementById('reg-username').value.trim();
+  const display  = document.getElementById('reg-display').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const password2= document.getElementById('reg-password2').value;
+  const errEl = document.getElementById('auth-reg-err');
+  errEl.style.display = 'none';
+  if (password !== password2) { errEl.textContent = 'パスワードが一致しません。'; errEl.style.display = 'block'; return; }
+  try {
+    const res = await fetch(API + '?action=auth_register', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ username, display_name: display, password }),
+    });
+    const json = await res.json();
+    if (!json.ok) { errEl.textContent = json.error; errEl.style.display = 'block'; return; }
+    me = json.data.user;
+    await loadUserData();
+    closeAuthModal();
+    renderHeaderAuth();
+    renderAll();
+    toast('アカウントを作成しました');
+  } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
+}
+async function doLogout() {
+  openConfirmModal('ログアウト', 'ログアウトしますか？', async () => {
+    await fetch(API + '?action=auth_logout', { method:'POST', credentials:'include' });
+    me = null; exchangedProfiles = []; favoriteProfiles = [];
+    renderHeaderAuth(); renderAll();
+    showAuthModal();
+    toast('ログアウトしました');
+  });
+}
+
+function renderHeaderAuth() {
+  const el = document.getElementById('header-auth-area');
+  if (me) {
+    el.innerHTML = `<div style="display:flex; align-items:center; gap:6px;">
+      <a href="./help/" class="header-icon-btn" aria-label="ヘルプ" title="ヘルプ">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
+      </a>
+      <button class="header-icon-btn" onclick="doLogout()" aria-label="ログアウト" title="ログアウト">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      </button>
+    </div>`;
+  } else {
+    el.innerHTML = `<button class="pill-button black" style="padding:6px 14px; font-size:13px;" onclick="showAuthModal()">ログイン</button>`;
+  }
+}
+
+// ── タブ切り替え ─────────────────────────────────────────
+function switchTab(tab) {
+  document.getElementById('home-page').hidden = tab !== 'home';
+  document.getElementById('search-page').hidden = tab !== 'search';
+  document.getElementById('mypage-page').hidden = tab !== 'mypage';
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  window.scrollTo(0,0);
+}
+
+function renderAll() { renderHome(); triggerSearch(''); renderMyPage(); }
+
+// ── アバター表示 ─────────────────────────────────────────
+function getAvatarUrl(profile) {
+  if (profile?.user_icon) return profile.user_icon;
+  const firstOshi = profile?.oshi_member || profile?.oshi?.[0]?.name;
+  if (firstOshi && memberMap[firstOshi]?.image) return memberMap[firstOshi].image;
+  return null;
+}
+function avatarHtml(profile, size=56, fontSize=24) {
+  const color = getOshi1Color(profile);
+  const url = getAvatarUrl(profile);
+  if (url) {
+    return `<div class="avatar-circle" style="width:${size}px;height:${size}px;background:${color};"><img src="${esc(url)}" alt="" onerror="this.style.display='none'"></div>`;
+  }
+  return `<div class="avatar-circle" style="width:${size}px;height:${size}px;background:${color};font-size:${fontSize}px;">${esc((profile.display_name||profile.name||'？')[0])}</div>`;
+}
+function getOshi1Color(profile) {
+  const name = profile.oshi_member || profile.oshi?.[0]?.name;
+  if (name && memberMap[name]?.color) return memberMap[name].color;
+  return profile.oshi?.[0]?.color || '#ffb7c5';
+}
+function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
+function getOshiList(p) {
+  // DB形式とlocalStorage形式の両方に対応
+  const list = [];
+  if (p.oshi_member)   list.push(p.oshi_member);
+  if (p.oshi_member_2) list.push(p.oshi_member_2);
+  if (p.oshi_member_3) list.push(p.oshi_member_3);
+  if (!list.length && p.oshi) p.oshi.forEach(o => { if(o.name) list.push(o.name); });
+  return list;
+}
+
+// ── ホーム ───────────────────────────────────────────────
+async function renderHome() {
+  const card = document.getElementById('my-home-card');
+  if (!me) {
+    card.innerHTML = `<div class="card" style="margin-top:16px; text-align:center;">
+      <p style="color:#666; font-size:14px; margin-bottom:12px;">ログインしてプロフィールを作成しましょう</p>
+      <button class="pill-button black" onclick="showAuthModal()">ログイン / 新規登録</button>
+    </div>`;
+    document.getElementById('similar-list').innerHTML = '';
+    return;
+  }
+  card.innerHTML = `<div class="card" style="margin-top:16px; cursor:pointer;" onclick="openProfile(me, true)">
+    <div style="display:flex; align-items:center; gap:14px;">
+      ${avatarHtml(me)}
+      <div style="flex:1;">
+        <div style="font-size:20px; font-weight:700;">${esc(getDisplayName(me))}</div>
+        <div style="font-size:12px; color:#666; margin-top:2px;">Buddies歴 ${esc(me.buddies_since || '-')}</div>
+      </div>
+    </div>
+    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;">
+      ${getOshiList(me).map(o=>`<span class="oshi-pill">${esc(o)}</span>`).join('')}
+    </div>
+  </div>`;
+
+  // おすすめ読み込み
+  const list = document.getElementById('similar-list');
+  list.innerHTML = '<div class="empty-state">読み込み中…</div>';
+  try {
+    const res = await fetch(API + '?action=buddies_similar&limit=6', { credentials:'include' });
+    const json = await res.json();
+    if (json.ok && json.data.length) {
+      const similars = json.data;
+      list.innerHTML = similars.map(p => profileMini(p)).join('');
+      list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(similars[i], false));
+    } else {
+      list.innerHTML = '<div class="empty-state">まだおすすめがいません</div>';
+    }
+  } catch(e) { list.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; }
+  if(window.lucide) window.lucide.createIcons();
+}
+
+// ── 検索 ─────────────────────────────────────────────────
+let searchDebounce = null;
+function triggerSearch(q) {
+  lastSearchQuery = q;
+  paginationState.search = 1;
+  clearTimeout(searchDebounce);
+  searchDebounce = setTimeout(() => doSearch(q), 300);
+}
+async function doSearch(q) {
+  const results = document.getElementById('search-results');
+  results.innerHTML = '<div class="empty-state">検索中…</div>';
+  try {
+    const url = API + '?action=buddies_search&limit=100&q=' + encodeURIComponent(q);
+    const res = await fetch(url, { credentials:'include' });
+    const json = await res.json();
+    if (json.ok) {
+      lastSearchFiltered = json.data || [];
+    } else {
+      lastSearchFiltered = [];
+    }
+  } catch(e) { lastSearchFiltered = []; }
+  renderSearchPage();
+}
+function renderSearchPage() {
+  const results = document.getElementById('search-results');
+  if (!lastSearchFiltered.length) {
+    results.innerHTML = '<div class="empty-state">見つかりませんでした</div>';
+    document.getElementById('search-pagination').innerHTML = '';
+    return;
+  }
+  const page = paginationState.search;
+  const start = (page-1)*ITEMS_PER_PAGE;
+  const end   = start + ITEMS_PER_PAGE;
+  const paged = lastSearchFiltered.slice(start, end);
+  const total = Math.ceil(lastSearchFiltered.length / ITEMS_PER_PAGE);
+
+  results.innerHTML = paged.map(p => profileMini(p)).join('');
+  results.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(lastSearchFiltered[start+i], false));
+
+  if (total > 1) renderPaginationButtons('search-pagination', page, total, 'gotoSearchPage');
+  else document.getElementById('search-pagination').innerHTML = '';
+  if(window.lucide) window.lucide.createIcons();
+}
+function gotoSearchPage(page) { paginationState.search = page; renderSearchPage(); window.scrollTo(0,0); }
+
+// ── マイページ ───────────────────────────────────────────
+function renderMyPage() {
+  const card = document.getElementById('my-page-card');
+  if (!me) {
+    card.innerHTML = `<div style="text-align:center; padding:20px;">
+      <button class="pill-button black" onclick="showAuthModal()">ログインしてください</button>
+    </div>`;
+    document.getElementById('exchanged-list').innerHTML = '';
+    document.getElementById('favorites-list').innerHTML = '';
+    return;
+  }
+  card.innerHTML = `
+    <div style="display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="openProfile(me, true)">
+      ${avatarHtml(me)}
+      <div style="flex:1;">
+        <div style="font-size:20px; font-weight:700;">${esc(getDisplayName(me))}</div>
+        <div style="font-size:13px; color:#666;">${esc(me.location||'')} ${me.age ? '・'+me.age+'歳' : ''}</div>
+      </div>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:16px;">
+      <button class="pill-button" style="flex:1;" onclick="openEdit()"><i data-lucide="edit-2" style="width:16px;height:16px;"></i>編集</button>
+      <button class="pill-button black" style="flex:1;" onclick="openQR('show')"><i data-lucide="qr-code" style="width:16px;height:16px;"></i>QRで交換</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="pill-button" style="flex:1;" onclick="copyProfileURL()"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
+      <button class="pill-button" style="flex:1;" onclick="shareToX()"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="flex-shrink:0;display:block;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.262 5.638 5.9-5.638Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X</button>
+      <button class="pill-button" style="flex:1;" onclick="shareProfile()"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
+    </div>`;
+
+  favoritesShowAll = false;
+  exchangedShowAll = false;
+  renderFavoritesSection();
+  renderExchangedSection();
+  if(window.lucide) window.lucide.createIcons();
+}
+
+function renderExchangedSection() {
+  const exList = document.getElementById('exchanged-list');
+  const moreWrap = document.getElementById('exchanged-more-wrap');
+  if (!exchangedProfiles.length) {
+    exList.innerHTML = '<div class="empty-state">まだ交換したプロフィールはありません<br>QRで交換してみましょう</div>';
+    moreWrap.style.display = 'none';
+    return;
+  }
+  const shown = exchangedShowAll ? exchangedProfiles : exchangedProfiles.slice(0, MYPAGE_PREVIEW);
+  exList.innerHTML = shown.map(p => profileMini(p)).join('');
+  exList.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(shown[i], false));
+  moreWrap.style.display = (!exchangedShowAll && exchangedProfiles.length > MYPAGE_PREVIEW) ? 'block' : 'none';
+  if(window.lucide) window.lucide.createIcons();
+}
+function showMoreExchanged() { exchangedShowAll = true; renderExchangedSection(); }
+
+function renderFavoritesSection() {
+  const favList = document.getElementById('favorites-list');
+  const moreWrap = document.getElementById('favorites-more-wrap');
+  if (!favoriteProfiles.length) {
+    favList.innerHTML = '<div class="empty-state">お気に入りはまだありません</div>';
+    moreWrap.style.display = 'none';
+    return;
+  }
+  const shown = favoritesShowAll ? favoriteProfiles : favoriteProfiles.slice(0, MYPAGE_PREVIEW);
+  favList.innerHTML = shown.map(p => profileMini(p)).join('');
+  favList.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(shown[i], false));
+  moreWrap.style.display = (!favoritesShowAll && favoriteProfiles.length > MYPAGE_PREVIEW) ? 'block' : 'none';
+  if(window.lucide) window.lucide.createIcons();
+}
+function showMoreFavorites() { favoritesShowAll = true; renderFavoritesSection(); }
+
+// ── プロフィールミニ ─────────────────────────────────────
+function profileMini(p) {
+  const oshiList = getOshiList(p);
+  const name = getDisplayName(p);
+  const color = getOshi1Color(p);
+  const url = getAvatarUrl(p);
+  const isExchanged = exchangedProfiles.some(e => e.id === p.id);
+  const isAdmin = ADMIN_IDS.has(p.id);
+  const avatarInner = url
+    ? `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`
+    : esc(name[0]||'？');
+  const badge = isAdmin
+    ? `<div class="profile-mini-admin-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
+    : isExchanged
+    ? `<div class="profile-mini-exchanged-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
+    : '';
+  return `<div class="profile-mini">
+    <div class="profile-mini-avatar-wrap">
+      <div class="profile-mini-avatar" style="background:${color}">${avatarInner}</div>
+      ${badge}
+    </div>
+    <div class="profile-mini-info">
+      <div class="profile-mini-name">${esc(name)}</div>
+      <div class="profile-mini-meta">${oshiList.map(o=>esc(o)).join(' ・ ')||esc(p.location||'')}</div>
+    </div>
+    <i data-lucide="chevron-right" style="width:18px;height:18px;color:#ccc;flex-shrink:0;"></i>
+  </div>`;
+}
+
+// ── プロフィール詳細モーダル ──────────────────────────────
+function getSnsIcon(type) {
+  const icons = {
+    'x': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:block;flex-shrink:0;" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.262 5.638 5.9-5.638Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    'instagram': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    'tiktok': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19.321 7.532a5.88 5.88 0 0 1-3.442-1.103 5.91 5.91 0 0 1-2.146-3.043 5.86 5.86 0 0 1-.165-1.386h-3.14v12.63a3.02 3.02 0 1 1-2.137-2.895v-3.2a6.23 6.23 0 0 0-1.24-.124 6.22 6.22 0 1 0 6.22 6.22V9.59a8.91 8.91 0 0 0 4.93 1.49v-3.14a5.9 5.9 0 0 1-.88-.408Z"/></svg>',
+    'youtube': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.388.52A2.997 2.997 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a2.997 2.997 0 0 0 2.11 2.12c1.883.52 9.388.52 9.388.52s7.505 0 9.388-.52a2.997 2.997 0 0 0 2.11-2.12C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.546 15.568V8.432L15.818 12l-6.272 3.568Z"/></svg>',
+    'link': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+  };
+  return icons[type] || icons['link'];
+}
+
+function openProfile(profile, isOwn) {
+  currentPopupProfile = profile;
+  const modal = document.getElementById('profile-modal');
+  const card  = document.getElementById('profile-modal-card');
+  const oshiList = getOshiList(profile);
+  const name = getDisplayName(profile);
+  const color = getOshi1Color(profile);
+
+  const oshiHtml  = oshiList.map(o=>`<span class="pill-tag black">${esc(o)}</span>`).join('');
+  const tagsHtml  = (profile.tags||[]).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('');
+  const songsHtml = (profile.favorite_songs||profile.favoriteSongs||[]).map(s=>`<span class="pill-tag">${esc(s)}</span>`).join('');
+  const snsNames  = {x:'X',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'Link'};
+  const snsLinks  = (profile.sns_links||profile.sns||[]).filter(s => s.url && s.url.trim()).slice(0,10);
+  const snsItems  = snsLinks.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener" class="sns-chip" title="${esc(s.type)}">${getSnsIcon(s.type)}<span>${snsNames[s.type]||'Link'}</span></a>`).join('');
+
+  let stanceChip = '';
+  if (snsLinks.length && profile.follow_stance) {
+    if (profile.follow_stance === 'silent_ok') stanceChip = `<span class="stance-pill">無言フォローOK</span>`;
+    else if (profile.follow_stance === 'hello_please') stanceChip = `<span class="stance-pill hello">一言欲しい</span>`;
+  }
+  const snsDiv = snsItems || stanceChip ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:8px;">${snsItems}${stanceChip}</div>` : '';
+
+  let actionBtns = '';
+  if (isOwn) {
+    actionBtns = `
+      <button class="pill-button" onclick="openQR('show')" style="flex:1;"><i data-lucide="qr-code" style="width:16px;height:16px;"></i>QR</button>
+      <button class="pill-button" onclick="copyProfileURL()" style="flex:1;"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
+      <button class="pill-button" onclick="shareToX()" style="flex:1;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="flex-shrink:0;display:block;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.262 5.638 5.9-5.638Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X</button>
+      <button class="pill-button" onclick="shareProfile()" style="flex:1;"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
+    `;
+  } else {
+    const isFav = favoriteProfiles.some(f => f.id === profile.id);
+    actionBtns = `
+      <button class="pill-button${isFav?' pink':''}" onclick="toggleFavorite()" style="flex:1;"><i data-lucide="heart" style="width:16px;height:16px; ${isFav?'fill:#000':''}"></i>お気に入り</button>
+      <button class="pill-button black" onclick="closeProfileModal()" style="flex:1;">閉じる</button>
+    `;
+  }
+
+  const metaItems = [];
+  if (profile.age)          metaItems.push(`<div style="display:flex; align-items:center; gap:6px;"><i data-lucide="calendar" style="width:14px; height:14px;"></i>${profile.age}歳</div>`);
+  if (profile.location)     metaItems.push(`<div style="display:flex; align-items:center; gap:6px;"><i data-lucide="map-pin" style="width:14px; height:14px;"></i>${esc(profile.location)}</div>`);
+  if (profile.buddies_since||profile.buddiesSince) metaItems.push(`<div style="display:flex; align-items:center; gap:6px;"><i data-lucide="star" style="width:14px; height:14px;"></i>Buddies歴 ${esc(profile.buddies_since||profile.buddiesSince)}</div>`);
+
+  let avatarContent = '';
+  const avatarUrl = getAvatarUrl(profile);
+  if (avatarUrl) {
+    avatarContent = `<img src="${esc(avatarUrl)}" alt="" onerror="this.style.display='none'" style="width:100%;height:100%;object-fit:cover;object-position:top center;">`;
+  } else {
+    avatarContent = esc(name[0]||'？');
+  }
+
+  card.innerHTML = `
+    <button class="modal-close-btn" onclick="closeProfileModal()" aria-label="閉じる"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <div class="profile-detail">
+      <div class="profile-header">
+        <div class="profile-avatar" style="background:${color};">${avatarContent}</div>
+        <div class="profile-info">
+          <div class="profile-name">${esc(name)}</div>
+          <div class="profile-meta">${metaItems.join('')}</div>
+          ${snsDiv}
+        </div>
+      </div>
+      ${oshiHtml?`<div class="profile-section"><div class="profile-section-title">推しメン</div><div class="profile-oshi-list">${oshiHtml}</div></div>`:''}
+      ${tagsHtml?`<div class="profile-section"><div class="profile-section-title">興味</div><div class="profile-tag-list">${tagsHtml}</div></div>`:''}
+      ${songsHtml?`<div class="profile-section"><div class="profile-section-title">好きな曲</div><div class="profile-tag-list">${songsHtml}</div></div>`:''}
+      ${profile.bio?`<div class="profile-section"><div class="profile-section-title">自己紹介</div><div class="profile-bio">${esc(profile.bio)}</div></div>`:''}
+    </div>
+    <div style="display:flex; gap:8px; flex-wrap:wrap; padding:0; margin-top:20px;">${actionBtns}</div>
+  `;
+
+  modal.classList.add('active');
+  card.scrollTop = 0;
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => { if(window.lucide) window.lucide.createIcons(); }, 50);
+}
+function closeProfileModal() {
+  document.getElementById('profile-modal').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+async function toggleFavorite() {
+  if (!currentPopupProfile || !me) return;
+  const isFav = favoriteProfiles.some(f => f.id === currentPopupProfile.id);
+  const doToggle = async () => {
+    try {
+      const res = await fetch(API + '?action=buddies_favorite_toggle', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ target_id: currentPopupProfile.id }),
+      });
+      const json = await res.json();
+      if (!json.ok) { toast(json.error); return; }
+      if (json.data.favorited) {
+        favoriteProfiles.unshift({...currentPopupProfile});
+        toast('お気に入りに追加しました');
+      } else {
+        favoriteProfiles = favoriteProfiles.filter(f => f.id !== currentPopupProfile.id);
+        toast('お気に入りから削除しました');
+      }
+      renderMyPage();
+      openProfile(currentPopupProfile, false);
+      if(window.lucide) window.lucide.createIcons();
+    } catch(e) { toast('エラーが発生しました'); }
+  };
+  if (isFav) {
+    const name = getDisplayName(currentPopupProfile);
+    openConfirmModal('お気に入りの解除', `${name} さんをお気に入りから解除しますか？`, doToggle, 'danger');
+  } else {
+    await doToggle();
+  }
+}
+
+// ── 編集ページ ───────────────────────────────────────────
+let editOshiList = []; // [name, name, name] 0番目が第一推し
+let editTags = [];
+let editSongs = [];
+let editSns = [];
+let editFollowStance = null; // 'silent_ok' | 'hello_please' | null
+
+function openEdit() {
+  if (!me) { showAuthModal(); return; }
+  document.getElementById('edit-name').value = me.display_name || '';
+  document.getElementById('edit-gender').value = me.gender || '';
+  document.getElementById('edit-location').value = me.location || '';
+  document.getElementById('edit-bio').value = me.bio || '';
+
+  setupBirthdaySelectors(me.birthday || '');
+  setupBuddiesSinceSelectors(me.buddies_since || '');
+
+  // 推しメン（1番目＝第一推し）
+  editOshiList = [];
+  if (me.oshi_member)   editOshiList.push(me.oshi_member);
+  if (me.oshi_member_2) editOshiList.push(me.oshi_member_2);
+  if (me.oshi_member_3) editOshiList.push(me.oshi_member_3);
+
+  editTags  = [...(me.tags || [])];
+  editSongs = [...(me.favorite_songs || [])];
+  editSns   = JSON.parse(JSON.stringify(me.sns_links || []));
+  editFollowStance = me.follow_stance || null;
+
+  document.getElementById('edit-post-template').value = me.post_template || '';
+  togglePostTemplate(!!me.post_template);
+
+  renderEditOshi();
+  renderEditTags();
+  renderEditSongs();
+  renderEditSns();
+  renderFollowStance();
+  renderEditIconPreview();
+  updateBirthdayAgePreview();
+
+  document.getElementById('edit-page').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function setupBirthdaySelectors(value) {
+  const y = document.getElementById('edit-bd-year');
+  const m = document.getElementById('edit-bd-month');
+  const d = document.getElementById('edit-bd-day');
+  const currentYear = new Date().getFullYear();
+  let yHtml = '<option value="">年</option>';
+  for (let i = currentYear + 1; i >= 1950; i--) yHtml += `<option value="${i}">${i}年</option>`;
+  y.innerHTML = yHtml;
+  let mHtml = '<option value="">月</option>';
+  for (let i = 1; i <= 12; i++) mHtml += `<option value="${i}">${i}月</option>`;
+  m.innerHTML = mHtml;
+  let dHtml = '<option value="">日</option>';
+  for (let i = 1; i <= 31; i++) dHtml += `<option value="${i}">${i}日</option>`;
+  d.innerHTML = dHtml;
+
+  const parts = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  y.value = parts ? parts[1] : '';
+  m.value = parts ? String(parseInt(parts[2],10)) : '';
+  d.value = parts ? String(parseInt(parts[3],10)) : '';
+}
+
+function getBirthdayValue() {
+  const y = document.getElementById('edit-bd-year').value;
+  const m = document.getElementById('edit-bd-month').value;
+  const d = document.getElementById('edit-bd-day').value;
+  if (!y || !m || !d) return null;
+  return `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+}
+
+function calcAge(birthday) {
+  if (!birthday) return null;
+  const b = new Date(birthday);
+  if (isNaN(b)) return null;
+  const now = new Date();
+  let age = now.getFullYear() - b.getFullYear();
+  const md = (now.getMonth() - b.getMonth()) * 100 + (now.getDate() - b.getDate());
+  if (md < 0) age--;
+  return age >= 0 ? age : null;
+}
+
+function updateBirthdayAgePreview() {
+  const bd = getBirthdayValue();
+  const age = calcAge(bd);
+  const el = document.getElementById('edit-age-preview');
+  el.textContent = age != null ? `現在 ${age} 歳（${String(bd.slice(0,4)).slice(-2)}世代）` : '';
+}
+
+function setupBuddiesSinceSelectors(value) {
+  const yearEl = document.getElementById('edit-buddies-year');
+  const currentYear = new Date().getFullYear();
+  let yHtml = '<option value="">選択しない</option>';
+  for (let y = currentYear; y >= 2010; y--) yHtml += `<option value="${y}">${y}年</option>`;
+  yearEl.innerHTML = yHtml;
+  const m = String(value || '').match(/^(\d{4})/);
+  yearEl.value = m ? m[1] : '';
+}
+function closeEdit() {
+  document.getElementById('edit-page').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+function renderEditIconPreview() {
+  const el = document.getElementById('edit-icon-preview');
+  const url = getAvatarUrlFromState();
+  if (url) {
+    el.innerHTML = `<img src="${esc(url)}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;" onerror="this.style.display='none'">`;
+  } else {
+    el.textContent = '？';
+  }
+}
+
+function getAvatarUrlFromState() {
+  if (me?.user_icon) return me.user_icon;
+  const firstOshi = editOshiList[0] || me?.oshi_member;
+  if (firstOshi && memberMap[firstOshi]?.image) return memberMap[firstOshi].image;
+  return null;
+}
+
+function renderEditOshi() {
+  const grid = document.getElementById('edit-oshi-grid');
+  const labels = ['第一推し', '第二推し', '第三推し'];
+  const cards = editOshiList.map((name, i) => {
+    const color = memberMap[name]?.color || '#ffb7c5';
+    const img = memberMap[name]?.image;
+    const avatar = img
+      ? `<div class="oshi-card-avatar" style="background:${color}"><img src="${esc(img)}" alt="" onerror="this.style.display='none'"></div>`
+      : `<div class="oshi-card-avatar" style="background:${color}; font-size:20px;">${esc(name[0]||'?')}</div>`;
+    return `<div class="oshi-card">
+      <button type="button" class="oshi-card-remove" onclick="removeOshi(${i})" aria-label="削除"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+      ${avatar}
+      <div class="oshi-card-label">${labels[i]}</div>
+      <div class="oshi-card-name">${esc(name)}</div>
+    </div>`;
+  });
+  if (editOshiList.length < 3) {
+    cards.push(`<button type="button" class="oshi-card-add" onclick="addOshi()">
+      <div style="font-size:24px; line-height:1;">＋</div>
+      <div>推しメンを追加</div>
+    </button>`);
+  }
+  grid.innerHTML = cards.join('');
+}
+function addOshi() {
+  if (editOshiList.length >= 3) { alert('推しメンは3人まで追加できます'); return; }
+  const excluded = new Set(editOshiList);
+  const members = Object.keys(memberMap).filter(n => n && !excluded.has(n));
+  if (members.length) {
+    openSelectModal('推しメンを選択', members, name => {
+      editOshiList.push(name);
+      renderEditOshi();
+      renderEditIconPreview();
+    });
+  } else {
+    openInputModal('推しメンの名前を入力', () => {
+      const v = document.getElementById('input-modal-input').value.trim();
+      if (!v) { alert('名前を入力してください'); return; }
+      if (editOshiList.includes(v)) { alert('すでに追加済みです'); return; }
+      editOshiList.push(v);
+      renderEditOshi();
+      renderEditIconPreview();
+      closeInputModal();
+    });
+  }
+}
+function removeOshi(i) { editOshiList.splice(i, 1); renderEditOshi(); renderEditIconPreview(); }
+
+function renderEditTags() {
+  const c = document.getElementById('edit-tags-container');
+  c.innerHTML = editTags.map((t,i)=>`<div class="pill-tag">${esc(t)}<span class="remove" onclick="removeTag(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>`).join('');
+  document.getElementById('add-tag-btn').style.display = editTags.length >= 5 ? 'none' : 'block';
+}
+function addTag() {
+  if (editTags.length >= 5) { alert('興味タグは5個までです'); return; }
+  openInputModal('興味タグを入力（例: ライブ参戦）', () => {
+    const v = document.getElementById('input-modal-input').value.trim();
+    if (!v || v.length > 20) { alert('タグは1〜20文字で入力してください'); return; }
+    editTags.push(v);
+    renderEditTags();
+    closeInputModal();
+  });
+}
+function removeTag(i) { editTags.splice(i,1); renderEditTags(); }
+
+function renderEditSongs() {
+  const c = document.getElementById('edit-songs-container');
+  c.innerHTML = editSongs.map((s,i)=>`<div class="pill-tag">${esc(s)}<span class="remove" onclick="removeSong(${i})"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></span></div>`).join('');
+  document.getElementById('add-song-btn').style.display = editSongs.length >= 3 ? 'none' : 'block';
+}
+function addSong() {
+  if (editSongs.length >= 3) { alert('好きな曲は3曲までです'); return; }
+  openInputModal('好きな曲を入力（例: Start over!）', () => {
+    const v = document.getElementById('input-modal-input').value.trim();
+    if (!v || v.length > 30) { alert('曲は1〜30文字で入力してください'); return; }
+    editSongs.push(v);
+    renderEditSongs();
+    closeInputModal();
+  });
+}
+function removeSong(i) { editSongs.splice(i,1); renderEditSongs(); }
+
+function renderEditSns() {
+  const c = document.getElementById('edit-sns-container');
+  c.innerHTML = editSns.map((s,i)=>`
+    <div style="display:flex; gap:6px; align-items:center;">
+      <select class="pill-input" style="width:110px; padding:10px 12px; font-size:13px;" onchange="updateSns(${i},'type',this.value)">
+        <option value="x" ${s.type==='x'?'selected':''}>X</option>
+        <option value="instagram" ${s.type==='instagram'?'selected':''}>Instagram</option>
+        <option value="tiktok" ${s.type==='tiktok'?'selected':''}>TikTok</option>
+        <option value="youtube" ${s.type==='youtube'?'selected':''}>YouTube</option>
+        <option value="link" ${s.type==='link'?'selected':''}>Link</option>
+      </select>
+      <input class="pill-input" style="flex:1; padding:10px 14px; font-size:13px;" placeholder="https://" value="${esc(s.url)}" oninput="updateSns(${i},'url',this.value)">
+      <button type="button" class="pill-button" style="padding:10px;" onclick="removeSns(${i})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>`).join('');
+  document.getElementById('add-sns-btn').style.display = editSns.length >= 4 ? 'none' : 'block';
+  renderFollowStance();
+}
+function addSns() { if(editSns.length >= 4) return; editSns.push({type:'x',url:''}); renderEditSns(); }
+function updateSns(i,k,v) { editSns[i][k] = v; }
+function removeSns(i) {
+  editSns.splice(i,1);
+  if (!editSns.length) editFollowStance = null;
+  renderEditSns();
+}
+
+function renderFollowStance() {
+  const wrap = document.getElementById('edit-follow-stance-wrap');
+  if (!wrap) return;
+  const hasSns = editSns.some(s => s.url && s.url.trim());
+  wrap.style.display = hasSns ? 'block' : 'none';
+  wrap.querySelectorAll('.stance-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.stance === editFollowStance);
+  });
+}
+function setFollowStance(v) {
+  editFollowStance = (editFollowStance === v) ? null : v;
+  renderFollowStance();
+}
+
+function generatePostTemplate() {
+  const bd = getBirthdayValue();
+  const gen = document.getElementById('edit-gender').value;
+  const since = document.getElementById('edit-buddies-year').value;
+
+  // 誕生日から世代（例: 2007年生まれ → 07世代）
+  let genWord = '';
+  if (bd) genWord = bd.slice(2,4);
+  const genderMark = gen === '男性' ? '♂' : gen === '女性' ? '♀' : '';
+
+  const headerParts = [];
+  if (genWord) headerParts.push(`${genWord}世代`);
+  if (genderMark) headerParts.push(genderMark);
+  const oshiLine = editOshiList.length
+    ? (editOshiList.length >= 2 ? `${editOshiList.slice(0,2).join('＆')} 推し` : `${editOshiList[0]} 推し`)
+    : '';
+
+  const lines = ['🏷️'];
+  if (headerParts.length) lines.push(headerParts.join(' | '));
+  lines.push('');
+  if (oshiLine) { lines.push(oshiLine); lines.push(''); }
+  if (since)    { lines.push(`${since}年から応援してるBuddiesです！`); lines.push('沢山繋がりたいです‼️'); lines.push(''); }
+  lines.push('#櫻坂46好きな人と繋がりたい');
+  lines.push('#buddiesと繋がりたい');
+
+  document.getElementById('edit-post-template').value = lines.join('\n');
+}
+
+function togglePostTemplate(show) {
+  document.getElementById('edit-post-template-wrap').style.display = show ? 'block' : 'none';
+  document.getElementById('add-post-template-btn').style.display = show ? 'none' : 'block';
+}
+function addPostTemplate() {
+  togglePostTemplate(true);
+  const ta = document.getElementById('edit-post-template');
+  if (!ta.value) generatePostTemplate();
+  ta.focus();
+}
+function removePostTemplate() {
+  document.getElementById('edit-post-template').value = '';
+  togglePostTemplate(false);
+}
+
+async function saveEdit() {
+  if (!me) return;
+  const name = document.getElementById('edit-name').value.trim();
+  if (!name || name.length > 64) { alert('表示名は1〜64文字で入力してください'); return; }
+  const bio = document.getElementById('edit-bio').value.trim();
+  if (bio.length > 500) { alert('自己紹介は500文字以内で入力してください'); return; }
+
+  const buddiesSince = document.getElementById('edit-buddies-year').value || null;
+  const birthday = getBirthdayValue();
+
+  const payload = {
+    display_name:  name,
+    birthday:      birthday,
+    gender:        document.getElementById('edit-gender').value || null,
+    location:      document.getElementById('edit-location').value || null,
+    buddies_since: buddiesSince,
+    bio:           bio || null,
+    oshi_member:   editOshiList[0] || null,
+    oshi_member_2: editOshiList[1] || null,
+    oshi_member_3: editOshiList[2] || null,
+    tags:          editTags,
+    favorite_songs:editSongs,
+    sns_links:     editSns.slice(0, 4),
+    follow_stance: editSns.some(s => s.url && s.url.trim()) ? (editFollowStance || null) : null,
+    post_template: document.getElementById('edit-post-template').value.trim() || null,
+  };
+
+  try {
+    const res = await fetch(API + '?action=buddies_profile_update', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!json.ok) { alert(json.error); return; }
+    me = json.data;
+    closeEdit();
+    renderAll();
+    toast('保存しました');
+    if(window.lucide) window.lucide.createIcons();
+  } catch(e) { alert('通信エラーが発生しました'); }
+}
+
+// ── アイコン選択 ─────────────────────────────────────────
+async function openIconPicker() {
+  // メンバーフィルターを初期化
+  const filterEl = document.getElementById('icon-member-filter');
+  if (filterEl.options.length <= 1) {
+    const members = Object.keys(memberMap).filter(n => n);
+    members.forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name; opt.textContent = name;
+      filterEl.appendChild(opt);
+    });
+  }
+  iconPickerOffset = 0;
+  iconPickerImages = [];
+  document.getElementById('icon-picker-page').classList.add('active');
+  document.body.style.overflow = 'hidden';
+  await loadBlogImages();
+}
+function closeIconPicker() {
+  document.getElementById('icon-picker-page').classList.remove('active');
+  document.body.style.overflow = 'hidden'; // edit-page が開いているのでhidden維持
+}
+
+async function loadBlogImages() {
+  iconPickerOffset = 0;
+  iconPickerImages = [];
+  document.getElementById('icon-picker-loading').style.display = 'block';
+  document.getElementById('icon-picker-grid').style.display = 'none';
+  document.getElementById('icon-picker-empty').style.display = 'none';
+
+  const member = document.getElementById('icon-member-filter').value;
+  const sort   = document.getElementById('icon-sort').value;
+  const url = API + `?action=buddies_blog_images&limit=${ICON_PAGE_SIZE}&offset=0&sort=${sort}&member=${encodeURIComponent(member)}`;
+
+  try {
+    const res = await fetch(url, { credentials:'include' });
+    const json = await res.json();
+    if (json.ok) {
+      iconPickerImages = json.data.items || [];
+      const total = json.data.total || 0;
+      renderIconGrid(true);
+      document.getElementById('icon-load-more-wrap').style.display = total > ICON_PAGE_SIZE ? 'block' : 'none';
+      iconPickerOffset = iconPickerImages.length;
+    } else {
+      document.getElementById('icon-picker-empty').style.display = 'flex';
+    }
+  } catch(e) {
+    document.getElementById('icon-picker-empty').style.display = 'flex';
+  }
+  document.getElementById('icon-picker-loading').style.display = 'none';
+}
+
+async function loadMoreBlogImages() {
+  const member = document.getElementById('icon-member-filter').value;
+  const sort   = document.getElementById('icon-sort').value;
+  const url = API + `?action=buddies_blog_images&limit=${ICON_PAGE_SIZE}&offset=${iconPickerOffset}&sort=${sort}&member=${encodeURIComponent(member)}`;
+  try {
+    const res = await fetch(url, { credentials:'include' });
+    const json = await res.json();
+    if (json.ok) {
+      const newItems = json.data.items || [];
+      iconPickerImages = [...iconPickerImages, ...newItems];
+      iconPickerOffset = iconPickerImages.length;
+      renderIconGrid(false);
+      const total = json.data.total || 0;
+      document.getElementById('icon-load-more-wrap').style.display = iconPickerImages.length < total ? 'block' : 'none';
+    }
+  } catch(e){}
+}
+
+function renderIconGrid(reset) {
+  const grid = document.getElementById('icon-picker-grid');
+  if (reset) grid.innerHTML = '';
+  if (!iconPickerImages.length) {
+    document.getElementById('icon-picker-empty').style.display = 'flex';
+    grid.style.display = 'none';
+    return;
+  }
+  document.getElementById('icon-picker-empty').style.display = 'none';
+  grid.style.display = 'grid';
+  const currentIcon = me?.user_icon;
+  const startIdx = reset ? 0 : grid.children.length;
+  const toAdd = reset ? iconPickerImages : iconPickerImages.slice(startIdx);
+  toAdd.forEach(img => {
+    const cell = document.createElement('div');
+    cell.className = 'icon-picker-cell' + (img.url === currentIcon ? ' selected' : '');
+    cell.innerHTML = `<img src="${esc(img.url)}" alt="" loading="lazy">`;
+    cell.onclick = () => setUserIcon(img.url);
+    grid.appendChild(cell);
+  });
+}
+
+async function setUserIcon(url) {
+  if (!me) return;
+  try {
+    const res = await fetch(API + '?action=buddies_icon_update', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ user_icon: url }),
+    });
+    const json = await res.json();
+    if (json.ok) {
+      me.user_icon = json.data.user_icon;
+      closeIconPicker();
+      renderEditIconPreview();
+      toast('アイコンを変更しました');
+    }
+  } catch(e) { toast('エラーが発生しました'); }
+}
+async function clearIcon() {
+  if (!me) return;
+  try {
+    const res = await fetch(API + '?action=buddies_icon_clear', {
+      method:'POST', credentials:'include',
+    });
+    const json = await res.json();
+    if (json.ok) {
+      me.user_icon = null;
+      if (document.getElementById('icon-picker-page').classList.contains('active')) closeIconPicker();
+      renderEditIconPreview();
+      toast('アイコンを削除しました');
+    }
+  } catch(e) {}
+}
+
+// ── セレクトモーダル（メンバー選択） ─────────────────────
+function openSelectModal(title, options, callback) {
+  // 既存のinput-modalを流用
+  const modal = document.getElementById('input-modal');
+  document.getElementById('input-modal-title').textContent = title;
+  // inputをselectに差し替え
+  const inputEl = document.getElementById('input-modal-input');
+  inputEl.style.display = 'none';
+  let selectEl = document.getElementById('input-modal-select');
+  if (!selectEl) {
+    selectEl = document.createElement('select');
+    selectEl.id = 'input-modal-select';
+    selectEl.className = 'input-modal-input';
+    inputEl.parentNode.insertBefore(selectEl, inputEl);
+  }
+  selectEl.style.display = 'block';
+  selectEl.innerHTML = options.map(o=>`<option value="${esc(o)}">${esc(o)}</option>`).join('');
+
+  inputModalContext = { type: 'select', callback: () => {
+    callback(selectEl.value);
+    closeInputModal();
+  }};
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+// ── QR ───────────────────────────────────────────────────
+const QR_TOKEN_TTL = 20; // 秒
+let qrRefreshTimer = null;
+let qrTimerInterval = null;
+
+function openQR(tab) {
+  const modal = document.getElementById('qr-modal');
+  modal.classList.add('active');
+  document.getElementById('qr-main-ui').style.display = 'block';
+  document.getElementById('qr-success-ui').style.display = 'none';
+  document.body.style.overflow = 'hidden';
+  switchQRTab(tab);
+}
+
+function closeQR() {
+  document.getElementById('qr-modal').classList.remove('active');
+  document.body.style.overflow = 'auto';
+  stopScanner();
+  clearQRTimers();
+}
+
+function clearQRTimers() {
+  if (qrRefreshTimer)  { clearTimeout(qrRefreshTimer);  qrRefreshTimer = null; }
+  if (qrTimerInterval) { clearInterval(qrTimerInterval); qrTimerInterval = null; }
+  if (qrPollTimer)     { clearInterval(qrPollTimer);     qrPollTimer = null; }
+}
+
+function switchQRTab(tab) {
+  document.getElementById('qr-show-pane').style.display = tab==='show' ? 'block' : 'none';
+  document.getElementById('qr-scan-pane').style.display = tab==='scan' ? 'block' : 'none';
+  document.getElementById('qr-tab-show').classList.toggle('active', tab==='show');
+  document.getElementById('qr-tab-scan').classList.toggle('active', tab==='scan');
+  if (tab==='show') { stopScanner(); startQRCycle(); startExchangePoll(); }
+  else { clearQRTimers(); startScanner(); }
+}
+
+function makeQRToken() {
+  // uid + タイムスタンプ（30秒刻み）+ 簡易ハッシュでリアルタイム認証
+  const slot = Math.floor(Date.now() / (QR_TOKEN_TTL * 1000));
+  const raw  = `${me.id}:${slot}:buddies`;
+  // 軽量なFNVハッシュ（クライアント側署名）
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i++) { h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const sig = h.toString(36);
+  return `${me.id}:${slot}:${sig}`;
+}
+
+function verifyQRToken(token) {
+  // スキャン側でトークンを検証
+  const parts = token.split(':');
+  if (parts.length !== 3) return null;
+  const [uid, slot, sig] = parts;
+  const now = Math.floor(Date.now() / (QR_TOKEN_TTL * 1000));
+  if (Math.abs(now - parseInt(slot, 10)) > 1) return null; // ±1スロット（最大2分）許容
+  const raw = `${uid}:${slot}:buddies`;
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i++) { h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  if (h.toString(36) !== sig) return null;
+  return parseInt(uid, 10);
+}
+
+function startQRCycle() {
+  clearQRTimers();
+  generateQR();
+  // 次のスロット境界まで待ってから再生成
+  const remaining = QR_TOKEN_TTL - (Math.floor(Date.now() / 1000) % QR_TOKEN_TTL);
+  startTimerBar(remaining);
+  qrRefreshTimer = setTimeout(() => {
+    generateQR();
+    startTimerBar(QR_TOKEN_TTL);
+    qrRefreshTimer = setInterval(() => {
+      generateQR();
+      startTimerBar(QR_TOKEN_TTL);
+    }, QR_TOKEN_TTL * 1000);
+  }, remaining * 1000);
+}
+
+function startTimerBar(seconds) {
+  if (qrTimerInterval) { clearInterval(qrTimerInterval); qrTimerInterval = null; }
+  const bar = document.getElementById('qr-timer-bar');
+  if (!bar) return;
+  bar.style.transition = 'none';
+  bar.style.width = '100%';
+  let elapsed = 0;
+  qrTimerInterval = setInterval(() => {
+    elapsed++;
+    const pct = Math.max(0, 100 - (elapsed / seconds * 100));
+    bar.style.transition = 'width 1s linear';
+    bar.style.width = pct + '%';
+    if (elapsed >= seconds) { clearInterval(qrTimerInterval); qrTimerInterval = null; }
+  }, 1000);
+}
+
+function generateQR() {
+  const el = document.getElementById('qrcode');
+  el.innerHTML = '';
+  if (!me) return;
+  const token = makeQRToken();
+  // OSカメラで開いた場合は閲覧用URL、アプリ内スキャンはトークンで判別
+  const url = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  // QRにはトークンURLを埋め込む（アプリ内スキャン時はtokenパラメータも含む）
+  const qrUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=exchange&token=' + encodeURIComponent(token);
+  new QRCode(el, { text:qrUrl, width:220, height:220, correctLevel:QRCode.CorrectLevel.M, colorDark:'#000', colorLight:'#fff' });
+}
+function startScanner() {
+  if (currentScanner) return;
+  const reader = document.getElementById('qr-reader');
+  if (!reader) { toast('カメラエリアが見つかりません'); return; }
+  reader.innerHTML = '';
+
+  if (!window.Html5Qrcode) { toast('QRスキャナーが読み込まれていません'); return; }
+
+  let scanning = true;
+  const html5Qr = new Html5Qrcode('qr-reader');
+  currentScanner = html5Qr;
+
+  const qrboxSize = Math.min(reader.clientWidth || 280, 280) - 40;
+
+  html5Qr.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: { width: qrboxSize, height: qrboxSize }, aspectRatio: 1.0, disableFlip: false },
+    async (decodedText) => {
+      if (!scanning) return;
+      try {
+        const url = new URL(decodedText, location.origin);
+        const hash = new URLSearchParams(url.hash.slice(1));
+        const uid   = parseInt(hash.get('uid'), 10);
+        const token = hash.get('token');
+        if (!uid || isNaN(uid)) return;
+
+        // トークン検証（Buddiesアプリ内スキャン）
+        if (!token) {
+          // tokenなし = OSカメラ向けURL → 閲覧のみでプロフィール表示
+          stopScanner();
+          const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${uid}`, { credentials:'include' });
+          const pJson = await pRes.json();
+          if (pJson.ok) { closeQR(); setTimeout(() => openProfile(pJson.data, false), 300); }
+          else { toast('プロフィールが見つかりません'); scanning = false; }
+          return;
+        }
+        const verifiedUid = verifyQRToken(token);
+        if (!verifiedUid || verifiedUid !== uid) {
+          toast('QRコードが期限切れです。相手に再表示してもらってください');
+          return;
+        }
+        if (!me) { toast('ログインが必要です'); return; }
+        if (uid === me.id) { toast('自分自身とは交換できません'); return; }
+
+        scanning = false;
+        stopScanner();
+        addExchangedById(uid, true); // showSuccess=true
+      } catch(e) { /* QRテキストが対象外の場合はスキャン継続 */ }
+    },
+    () => {}
+  ).then(() => {
+    // ライブラリが挿入する不要UI要素を除去
+    setTimeout(() => {
+      const r = document.getElementById('qr-reader');
+      if (!r) return;
+      r.querySelectorAll('select, br, button:not([class])').forEach(el => el.remove());
+      r.querySelectorAll('div').forEach(el => {
+        if (el.querySelector('input[type=file]')) el.style.display = 'none';
+      });
+    }, 300);
+  }).catch(err => {
+    currentScanner = null;
+    const msg = String(err).toLowerCase().includes('permission')
+      ? 'カメラのアクセスを許可してください'
+      : 'カメラを起動できません';
+    document.getElementById('qr-reader').innerHTML =
+      `<div style="padding:40px 20px; text-align:center; color:#666; font-size:13px; line-height:1.8;">${msg}<br><button class="pill-button" style="margin-top:12px;" onclick="startScanner()">再試行</button></div>`;
+  });
+}
+function stopScanner() {
+  if (!currentScanner) return;
+  const s = currentScanner;
+  currentScanner = null;
+  s.stop().catch(() => {}).finally(() => { try { s.clear(); } catch(e) {} });
+}
+async function addExchangedById(targetId, showSuccess = false) {
+  if (!me) { toast('ログインが必要です'); return; }
+  if (targetId === me.id) { toast('自分自身は追加できません'); return; }
+  const alreadyExchanged = exchangedProfiles.some(p => p.id === targetId);
+  try {
+    if (!alreadyExchanged) {
+      const res = await fetch(API + '?action=buddies_exchange_add', {
+        method:'POST', credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ target_id: targetId }),
+      });
+      const json = await res.json();
+      if (!json.ok) { toast(json.error); return; }
+    }
+    // プロフィール詳細を取得
+    const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${targetId}`, { credentials:'include' });
+    const pJson = await pRes.json();
+    const profile = pJson.ok ? pJson.data : null;
+    if (profile && !alreadyExchanged) exchangedProfiles.unshift(profile);
+    renderMyPage();
+    triggerSearch(lastSearchQuery);
+
+    if (showSuccess && profile) {
+      showExchangeSuccess(profile, alreadyExchanged);
+    } else if (alreadyExchanged) {
+      toast('すでに交換済みです');
+      if (profile) { closeQR(); setTimeout(() => openProfile(profile, false), 300); }
+    }
+  } catch(e) { toast('エラーが発生しました'); }
+}
+
+function showExchangeSuccess(profile, alreadyDone = false) {
+  clearQRTimers();
+  document.getElementById('qr-main-ui').style.display = 'none';
+  const successUi = document.getElementById('qr-success-ui');
+  successUi.style.display = 'block';
+
+  const name = getDisplayName(profile);
+  const titleEl = document.getElementById('exchange-success-title');
+  const nameEl  = document.getElementById('exchange-success-name');
+  const viewBtn = document.getElementById('exchange-success-view-btn');
+
+  const checkEl = document.getElementById('exchange-success-check');
+  if (alreadyDone) {
+    titleEl.textContent = '交換済み';
+    nameEl.textContent  = name + ' さん';
+    checkEl.style.background = '#999';
+  } else {
+    titleEl.textContent = '交換完了！';
+    nameEl.textContent  = name + ' さん';
+    checkEl.style.background = '#22c55e';
+  }
+
+  const avatarWrap = document.getElementById('exchange-success-avatar');
+  avatarWrap.innerHTML = avatarHtml(profile, 80, 30);
+
+  viewBtn.onclick = () => {
+    closeQR();
+    setTimeout(() => openProfile(profile, false), 300);
+  };
+
+  if (!alreadyDone) showExchangeOverlay(profile);
+}
+
+// QR表示中（見せる側）に相手がスキャンしたことをポーリングで検知する
+function startExchangePoll() {
+  if (!me) return;
+  if (qrPollTimer) { clearInterval(qrPollTimer); qrPollTimer = null; }
+
+  // 現時点の交換済みIDセットを記録
+  qrPollKnownIds = new Set(exchangedProfiles.map(p => p.id));
+
+  const poll = async () => {
+    if (!document.getElementById('qr-modal').classList.contains('active')) {
+      clearInterval(qrPollTimer); qrPollTimer = null; return;
+    }
+    if (document.getElementById('qr-success-ui').style.display !== 'none') return;
+    try {
+      const res  = await fetch(API + '?action=buddies_exchange_list', { credentials:'include' });
+      const json = await res.json();
+      if (!json.ok) return;
+      const newList = json.data || [];
+      const newEntry = newList.find(p => !qrPollKnownIds.has(p.id));
+      if (newEntry) {
+        clearInterval(qrPollTimer); qrPollTimer = null;
+        exchangedProfiles = newList;
+        renderMyPage();
+        showExchangeSuccess(newEntry, false);
+      }
+    } catch(e) {}
+  };
+
+  // 3秒おきにポーリング
+  qrPollTimer = setInterval(poll, 3000);
+}
+
+function showExchangeOverlay(profile) {
+  const overlay = document.getElementById('exchange-overlay');
+  const name = getDisplayName(profile);
+  document.getElementById('exchange-overlay-name').textContent = name + ' さんと交換しました！';
+  document.getElementById('exchange-overlay-avatar').innerHTML = avatarHtml(profile, 80, 32);
+
+  // 紙吹雪
+  const burst = document.getElementById('exchange-burst');
+  burst.innerHTML = '';
+  const colors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308','#fff','#000'];
+  for (let i = 0; i < 60; i++) {
+    const p = document.createElement('div');
+    p.className = 'confetti-piece';
+    p.style.cssText = `
+      left:${Math.random()*100}%;
+      background:${colors[Math.floor(Math.random()*colors.length)]};
+      border-radius:${Math.random()>0.5?'50%':'2px'};
+      width:${6+Math.random()*8}px; height:${6+Math.random()*8}px;
+      --tx:${(Math.random()-0.5)*300}px;
+      --rot:${Math.random()*720-360}deg;
+      animation-delay:${Math.random()*0.6}s;
+      animation-duration:${1.4+Math.random()*0.8}s;
+    `;
+    burst.appendChild(p);
+  }
+
+  overlay.classList.add('active');
+  // 2.5秒後に自動で閉じる
+  setTimeout(() => overlay.classList.remove('active'), 2500);
+}
+
+function closeExchangeOverlay() {
+  document.getElementById('exchange-overlay').classList.remove('active');
+}
+
+function copyProfileURL() {
+  if (!me) return;
+  const url = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  navigator.clipboard.writeText(url).then(()=>toast('URLをコピーしました')).catch(()=>toast('コピーできませんでした'));
+}
+function shareToX() {
+  if (!me) return;
+  const tpl = (me.post_template || '').trim();
+  const profileUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  const profileText = `${getDisplayName(me)}のBuddiesプロフィール`;
+
+  if (tpl) {
+    // タグあり → 選択シートを表示
+    openXShareSheet([
+      {
+        label: 'プロフィールを共有',
+        sub: profileUrl,
+        action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}&url=${encodeURIComponent(profileUrl)}`, '_blank'),
+      },
+      {
+        label: '紹介タグを共有',
+        sub: tpl.slice(0, 40) + (tpl.length > 40 ? '…' : ''),
+        action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(tpl)}`, '_blank'),
+      },
+    ]);
+  } else {
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}&url=${encodeURIComponent(profileUrl)}`, '_blank');
+  }
+}
+
+function shareProfile() {
+  if (!me) return;
+  const url = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  const name = getDisplayName(me);
+  if (navigator.share) {
+    navigator.share({ title: `${name}のBuddiesプロフィール`, url }).catch(() => {});
+  } else {
+    navigator.clipboard.writeText(url).then(() => toast('URLをコピーしました')).catch(() => toast('コピーできませんでした'));
+  }
+}
+
+function openXShareSheet(options) {
+  const wrap = document.getElementById('x-share-options');
+  wrap.innerHTML = options.map((o, i) => `
+    <button class="pill-button" style="width:100%; flex-direction:column; align-items:flex-start; gap:2px; padding:12px 16px; height:auto;" onclick="xShareOptionClick(${i})">
+      <span style="font-weight:600; font-size:14px;">${esc(o.label)}</span>
+      <span style="font-size:11px; color:#999; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;">${esc(o.sub)}</span>
+    </button>`).join('');
+  wrap._options = options;
+  document.getElementById('x-share-sheet').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function xShareOptionClick(i) {
+  const opts = document.getElementById('x-share-options')._options;
+  closeXShareSheet();
+  if (opts && opts[i]) opts[i].action();
+}
+function closeXShareSheet() {
+  document.getElementById('x-share-sheet').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+async function checkUrl() {
+  if (!location.hash) return;
+  try {
+    const params = new URLSearchParams(location.hash.slice(1));
+    const uid   = params.get('uid');
+    const mode  = params.get('mode');
+    const token = params.get('token');
+    if (!uid) return;
+
+    history.replaceState(null, '', location.pathname);
+
+    const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${uid}`, { credentials:'include' });
+    const pJson = await pRes.json();
+    if (!pJson.ok) return;
+
+    if (mode === 'exchange' && token && me) {
+      // Buddiesアプリ内経由のQRスキャン（URL遷移ケース）
+      const verifiedUid = verifyQRToken(token);
+      if (verifiedUid && verifiedUid === parseInt(uid, 10)) {
+        await addExchangedById(parseInt(uid, 10), true);
+        return; // showExchangeSuccess内でプロフィール表示
+      }
+      // tokenが期限切れでも閲覧は可能にする
+      toast('QRコードが期限切れです。交換にはBuddiesアプリ内カメラで読み取ってください');
+    }
+    // 閲覧モード（OSカメラ・URL共有・token期限切れ）
+    document.getElementById('viewBanner').style.display = 'block';
+    setTimeout(() => openProfile(pJson.data, false), 300);
+  } catch(e) {}
+}
+
+// ── ページネーション ─────────────────────────────────────
+function renderPaginationButtons(elementId, currentPage, totalPages, functionName) {
+  const paginationEl = document.getElementById(elementId);
+  if (!paginationEl || totalPages <= 1) { if(paginationEl) paginationEl.innerHTML = ''; return; }
+  let html = '';
+  if (currentPage > 1) html += `<button onclick="${functionName}(${currentPage-1})">&laquo;</button>`;
+  const startPage = Math.max(1, currentPage-2), endPage = Math.min(totalPages, currentPage+2);
+  if (startPage > 1) { html += `<button onclick="${functionName}(1)">1</button>`; if (startPage > 2) html += `<button disabled>...</button>`; }
+  for (let i = startPage; i <= endPage; i++) {
+    html += i===currentPage ? `<button class="active" disabled>${i}</button>` : `<button onclick="${functionName}(${i})">${i}</button>`;
+  }
+  if (endPage < totalPages) { if (endPage < totalPages-1) html += `<button disabled>...</button>`; html += `<button onclick="${functionName}(${totalPages})">${totalPages}</button>`; }
+  if (currentPage < totalPages) html += `<button onclick="${functionName}(${currentPage+1})">&raquo;</button>`;
+  paginationEl.innerHTML = html;
+}
+
+// ── 確認モーダル ──────────────────────────────────────────
+function openConfirmModal(title, body, onOk, variant = 'default') {
+  document.getElementById('confirm-modal-title').textContent = title;
+  document.getElementById('confirm-modal-body').textContent  = body;
+  const okBtn = document.getElementById('confirm-modal-ok');
+  okBtn.className = variant === 'danger' ? 'pill-button' : 'pill-button black';
+  okBtn.style.background    = variant === 'danger' ? '#e00'   : '';
+  okBtn.style.borderColor   = variant === 'danger' ? '#e00'   : '';
+  okBtn.style.color         = variant === 'danger' ? '#fff'   : '';
+  okBtn.onclick = () => { closeConfirmModal(); onOk(); };
+  document.getElementById('confirm-modal').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.remove('active');
+  document.body.style.overflow = 'auto';
+}
+
+// ── インプットモーダル ────────────────────────────────────
+function openInputModal(title, callback) {
+  const modal = document.getElementById('input-modal');
+  document.getElementById('input-modal-title').textContent = title;
+  document.getElementById('input-modal-input').value = '';
+  document.getElementById('input-modal-input').style.display = 'block';
+  const sel = document.getElementById('input-modal-select');
+  if (sel) sel.style.display = 'none';
+  inputModalContext = { type:'text', callback };
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => document.getElementById('input-modal-input').focus(), 100);
+}
+function closeInputModal() {
+  document.getElementById('input-modal').classList.remove('active');
+  document.body.style.overflow = 'hidden';
+  inputModalContext = { type:null, callback:null };
+}
+function submitInputModal() {
+  if (inputModalContext.callback) inputModalContext.callback();
+}
+document.addEventListener('keydown', e => {
+  const modal = document.getElementById('input-modal');
+  if (modal.classList.contains('active') && e.key === 'Enter') { e.preventDefault(); submitInputModal(); }
+  if (modal.classList.contains('active') && e.key === 'Escape') { e.preventDefault(); closeInputModal(); }
+});
+
+// ── トースト ─────────────────────────────────────────────
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(window._toastTimer);
+  window._toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+</script>
+</body>
+</html>
