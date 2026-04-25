@@ -158,6 +158,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .profile-mini-info { flex:1; min-width:0; }
 .profile-mini-name { font-weight:600; font-size:15px; margin-bottom:2px; }
 .profile-mini-meta { font-size:12px; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.profile-mini-exchanged-at { font-size:11px; color:#aaa; margin-top:3px; white-space:nowrap; }
+.profile-mini-reasons { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
+.match-reason { font-size:10px; font-weight:600; padding:2px 7px; border-radius:9999px; background:#f0f0f0; color:#555; white-space:nowrap; }
 
 .header-icon-btn { width:36px; height:36px; border-radius:50%; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#666; transition:background .15s, color .15s; text-decoration:none; appearance:none; }
 .header-icon-btn:hover { background:#f2f2f2; color:#000; }
@@ -240,12 +243,33 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .toast { position:fixed; bottom:100px; left:50%; transform:translateX(-50%) translateY(20px); background:#000; color:#fff; padding:12px 20px; border-radius:9999px; font-size:14px; opacity:0; transition:all .3s; z-index:2000; pointer-events:none; white-space:nowrap; max-width:90%; }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
+/* グローバルローディングオーバーレイ */
+.g-loading { position:fixed; inset:0; z-index:3000; display:none; align-items:center; justify-content:center; background:rgba(255,255,255,.55); backdrop-filter:blur(2px); }
+.g-loading.show { display:flex; }
+.g-loading-inner { display:flex; flex-direction:column; align-items:center; gap:12px; }
+.g-loading-spinner { width:32px; height:32px; border:3px solid #e0e0e0; border-top-color:#000; border-radius:50%; animation:glSpin .7s linear infinite; }
+@keyframes glSpin { to { transform:rotate(360deg); } }
+.g-loading-label { font-size:13px; font-weight:600; color:#444; }
+
 .view-banner { position:fixed; top:0; left:0; right:0; background:#fff8e1; color:#5d4037; padding:10px 16px; text-align:center; font-size:12px; border-bottom:1px solid #ffecb3; z-index:500; display:none; }
 
 .search-input-wrap { position:relative; margin-top:16px; }
 .search-input-wrap svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:#999; pointer-events:none; }
 
 .empty-state { text-align:center; padding:40px 20px; color:#999; font-size:14px; }
+
+/* プロフィール未入力ヒントバナー */
+.profile-hint-banner { display:flex; align-items:flex-start; gap:12px; background:#f9f9f9; border:1.5px dashed #ddd; border-radius:20px; padding:16px 16px 16px 18px; margin-top:14px; animation:hintFadeIn .4s ease; }
+@keyframes hintFadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+.profile-hint-banner .hint-icon { font-size:28px; flex-shrink:0; line-height:1; }
+.profile-hint-banner .hint-body { flex:1; min-width:0; }
+.profile-hint-banner .hint-title { font-size:14px; font-weight:700; color:#111; margin-bottom:4px; }
+.profile-hint-banner .hint-desc { font-size:12px; color:#666; line-height:1.6; margin-bottom:10px; }
+.profile-hint-banner .hint-steps { display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px; }
+.profile-hint-banner .hint-step { font-size:11px; font-weight:600; background:#fff; border:1px solid #e0e0e0; border-radius:9999px; padding:4px 10px; color:#555; }
+.profile-hint-banner .hint-actions { display:flex; gap:8px; }
+.profile-hint-banner .hint-edit-btn { padding:9px 18px; border-radius:9999px; font-size:13px; font-weight:700; background:#000; color:#fff; border:none; cursor:pointer; font-family:inherit; }
+.profile-hint-banner .hint-close-btn { width:32px; height:32px; border-radius:50%; border:1px solid var(--border); background:#fff; display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; margin-top:-4px; color:#999; }
 
 .divider { height:1px; background:var(--eee); margin:20px 0; }
 
@@ -465,11 +489,15 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       <div>
         <div class="edit-field-label">紹介タグ（任意・Xワンタップ投稿用）</div>
         <div id="edit-post-template-wrap" style="display:none;">
-          <div style="display:flex; gap:6px; margin:0 0 6px; justify-content:flex-end;">
-            <button type="button" class="pill-button" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="generatePostTemplate()">自動生成</button>
-            <button type="button" class="pill-button" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="removePostTemplate()">削除</button>
+          <div style="display:flex; gap:6px; margin:0 0 8px; flex-wrap:wrap;">
+            <div style="font-size:11px; color:#999; width:100%; margin-bottom:2px;">テンプレート:</div>
+            <button type="button" class="pill-button tpl-select-btn" data-tpl="standard" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="selectPostTemplate('standard')">スタンダード</button>
+            <button type="button" class="pill-button tpl-select-btn" data-tpl="simple" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="selectPostTemplate('simple')">シンプル</button>
+            <button type="button" class="pill-button tpl-select-btn" data-tpl="lively" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="selectPostTemplate('lively')">にぎやか</button>
+            <button type="button" class="pill-button tpl-select-btn" data-tpl="custom" style="padding:4px 10px; font-size:11px; min-height:auto;" onclick="selectPostTemplate('custom')">カスタム</button>
+            <button type="button" class="pill-button" style="padding:4px 10px; font-size:11px; min-height:auto; margin-left:auto;" onclick="removePostTemplate()">削除</button>
           </div>
-          <textarea id="edit-post-template" class="pill-input" style="min-height:180px; font-family:inherit; line-height:1.7;" maxlength="1000" placeholder="🏷️&#10;07 | 東京 | ♂&#10;&#10;藤吉夏鈴＆山崎天 推し&#10;&#10;#櫻坂46好きな人と繋がりたい&#10;#buddiesと繋がりたい"></textarea>
+          <textarea id="edit-post-template" class="pill-input" style="min-height:180px; font-family:inherit; line-height:1.7;" maxlength="1000" placeholder="🏷️&#10;07 | 東京 | ♂&#10;&#10;藤吉夏鈴＆山崎天 推し&#10;&#10;#櫻坂46好きな人と繋がりたい&#10;#buddiesと繋がりたい" oninput="onPostTemplateInput()"></textarea>
           <div style="font-size:11px; color:#999; margin:4px 8px 0;">プロフィール画面の「X」ボタンから一括でポストできます</div>
         </div>
         <button type="button" id="add-post-template-btn" class="pill-button" style="width:100%;" onclick="addPostTemplate()">+ 紹介タグを追加</button>
@@ -622,6 +650,12 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 </div>
 
 <div id="toast" class="toast"></div>
+<div id="g-loading" class="g-loading" aria-live="polite" aria-label="読み込み中">
+  <div class="g-loading-inner">
+    <div class="g-loading-spinner"></div>
+    <div class="g-loading-label" id="g-loading-label">処理中…</div>
+  </div>
+</div>
 
 <script>
 // ── 定数 ────────────────────────────────────────────────
@@ -630,6 +664,28 @@ const BLOG_DATA   = '../data/blogs.json';
 const MEMBER_DATA = '../data/member.json';
 
 // ── 状態 ────────────────────────────────────────────────
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+const PREF_ROMAJI = {
+  '北海道':'Hokkaido','青森県':'Aomori','岩手県':'Iwate','宮城県':'Miyagi','秋田県':'Akita',
+  '山形県':'Yamagata','福島県':'Fukushima','茨城県':'Ibaraki','栃木県':'Tochigi','群馬県':'Gunma',
+  '埼玉県':'Saitama','千葉県':'Chiba','東京都':'Tokyo','神奈川県':'Kanagawa','新潟県':'Niigata',
+  '富山県':'Toyama','石川県':'Ishikawa','福井県':'Fukui','山梨県':'Yamanashi','長野県':'Nagano',
+  '岐阜県':'Gifu','静岡県':'Shizuoka','愛知県':'Aichi','三重県':'Mie','滋賀県':'Shiga',
+  '京都府':'Kyoto','大阪府':'Osaka','兵庫県':'Hyogo','奈良県':'Nara','和歌山県':'Wakayama',
+  '鳥取県':'Tottori','島根県':'Shimane','岡山県':'Okayama','広島県':'Hiroshima','山口県':'Yamaguchi',
+  '徳島県':'Tokushima','香川県':'Kagawa','愛媛県':'Ehime','高知県':'Kochi','福岡県':'Fukuoka',
+  '佐賀県':'Saga','長崎県':'Nagasaki','熊本県':'Kumamoto','大分県':'Oita','宮崎県':'Miyazaki',
+  '鹿児島県':'Kagoshima','沖縄県':'Okinawa',
+};
+
 let me = null;              // ログインユーザー（DB）
 let memberMap = {};         // メンバーJSONマップ
 let allBlogs = [];          // ブログJSON
@@ -710,7 +766,12 @@ async function loadUserData() {
 function showMainUI() {
   renderHeaderAuth();
   renderAll();
-  switchTab('home');
+  // 未入力プロフィールがある場合はマイページタブを初期表示してヒントを見せる
+  if (me && isProfileEmpty(me) && !sessionStorage.getItem('buddies_hint_dismissed')) {
+    switchTab('mypage');
+  } else {
+    switchTab('home');
+  }
 }
 
 // ── 認証 ─────────────────────────────────────────────────
@@ -730,6 +791,7 @@ async function doLogin() {
   const password = document.getElementById('auth-password').value;
   const errEl = document.getElementById('auth-login-err');
   errEl.style.display = 'none';
+  setLoading(true, 'ログイン中…');
   try {
     const res = await fetch(API + '?action=auth_login', {
       method:'POST', credentials:'include',
@@ -745,6 +807,7 @@ async function doLogin() {
     renderAll();
     toast('ログインしました');
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
+  finally { setLoading(false); }
 }
 async function doRegister() {
   const username = document.getElementById('reg-username').value.trim();
@@ -754,6 +817,7 @@ async function doRegister() {
   const errEl = document.getElementById('auth-reg-err');
   errEl.style.display = 'none';
   if (password !== password2) { errEl.textContent = 'パスワードが一致しません。'; errEl.style.display = 'block'; return; }
+  setLoading(true, 'アカウントを作成中…');
   try {
     const res = await fetch(API + '?action=auth_register', {
       method:'POST', credentials:'include',
@@ -769,6 +833,7 @@ async function doRegister() {
     renderAll();
     toast('アカウントを作成しました');
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
+  finally { setLoading(false); }
 }
 async function doLogout() {
   openConfirmModal('ログアウト', 'ログアウトしますか？', async () => {
@@ -787,9 +852,9 @@ function renderHeaderAuth() {
       <a href="./help/" class="header-icon-btn" aria-label="ヘルプ" title="ヘルプ">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></svg>
       </a>
-      <button class="header-icon-btn" onclick="doLogout()" aria-label="ログアウト" title="ログアウト">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
-      </button>
+      <a href="./account/" class="header-icon-btn" aria-label="アカウント設定" title="アカウント設定">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      </a>
     </div>`;
   } else {
     el.innerHTML = `<button class="pill-button black" style="padding:6px 14px; font-size:13px;" onclick="showAuthModal()">ログイン</button>`;
@@ -828,6 +893,49 @@ function getOshi1Color(profile) {
   return profile.oshi?.[0]?.color || '#ffb7c5';
 }
 function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
+
+function isProfileEmpty(p) {
+  if (!p) return false;
+  // 推しメンを一人も設定していない場合にヒントを表示
+  return !p.oshi_member;
+}
+
+function getMissingFields(p) {
+  const list = [];
+  if (!p.oshi_member)                                                      list.push('推しメン');
+  if (!p.bio || !p.bio.trim())                                             list.push('自己紹介');
+  if (!Array.isArray(p.tags) || !p.tags.length)                           list.push('興味タグ');
+  if (!Array.isArray(p.sns_links) || !p.sns_links.some(s=>s.url?.trim())) list.push('SNSリンク');
+  if (!p.location)                                                         list.push('地域');
+  return list;
+}
+
+function dismissHint() {
+  sessionStorage.setItem('buddies_hint_dismissed', '1');
+  const el = document.getElementById('profile-hint-banner');
+  if (el) el.remove();
+}
+
+function formatExchangedAt(raw) {
+  if (!raw) return '';
+  const d = new Date(raw.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  const now   = new Date();
+  const diffMs = now - d;
+  const diffM  = Math.floor(diffMs / 60000);
+  const diffH  = Math.floor(diffMs / 3600000);
+  const diffD  = Math.floor(diffMs / 86400000);
+  if (diffM  <  1) return '交換: たった今';
+  if (diffM  < 60) return `交換: ${diffM}分前`;
+  if (diffH  < 24) return `交換: ${diffH}時間前`;
+  if (diffD  <  7) return `交換: ${diffD}日前`;
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mi = String(d.getMinutes()).padStart(2, '0');
+  const year = d.getFullYear() !== now.getFullYear() ? `${d.getFullYear()}/` : '';
+  return `交換: ${year}${mm}/${dd} ${hh}:${mi}`;
+}
 function getOshiList(p) {
   // DB形式とlocalStorage形式の両方に対応
   const list = [];
@@ -870,7 +978,7 @@ async function renderHome() {
     const json = await res.json();
     if (json.ok && json.data.length) {
       const similars = json.data;
-      list.innerHTML = similars.map(p => profileMini(p)).join('');
+      list.innerHTML = similars.map(p => profileMini(p, {showReasons: true})).join('');
       list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(similars[i], false));
     } else {
       list.innerHTML = '<div class="empty-state">まだおすすめがいません</div>';
@@ -895,13 +1003,31 @@ async function doSearch(q) {
     const res = await fetch(url, { credentials:'include' });
     const json = await res.json();
     if (json.ok) {
-      lastSearchFiltered = json.data || [];
+      lastSearchFiltered = shuffleArray(json.data || []);
     } else {
       lastSearchFiltered = [];
     }
   } catch(e) { lastSearchFiltered = []; }
   renderSearchPage();
 }
+function calcMatchReasons(p) {
+  if (!me) return [];
+  const reasons = [];
+  const myOshis = [me.oshi_member, me.oshi_member_2, me.oshi_member_3].filter(Boolean);
+  const cOshis  = [p.oshi_member,  p.oshi_member_2,  p.oshi_member_3 ].filter(Boolean);
+  if (me.oshi_member && p.oshi_member && me.oshi_member === p.oshi_member) {
+    reasons.push('第一推しが一緒');
+  } else if (myOshis.some(o => cOshis.includes(o))) {
+    reasons.push('推しメンが一緒');
+  }
+  const myTags = Array.isArray(me.tags) ? me.tags : [];
+  const cTags  = Array.isArray(p.tags)  ? p.tags  : [];
+  if (myTags.some(t => cTags.includes(t))) reasons.push('興味が一緒');
+  if (me.location && p.location && me.location === p.location) reasons.push('都道府県が一緒');
+  if (me.follow_stance && p.follow_stance && me.follow_stance === p.follow_stance) reasons.push('SNSスタンスが一緒');
+  return reasons;
+}
+
 function renderSearchPage() {
   const results = document.getElementById('search-results');
   if (!lastSearchFiltered.length) {
@@ -915,7 +1041,11 @@ function renderSearchPage() {
   const paged = lastSearchFiltered.slice(start, end);
   const total = Math.ceil(lastSearchFiltered.length / ITEMS_PER_PAGE);
 
-  results.innerHTML = paged.map(p => profileMini(p)).join('');
+  results.innerHTML = paged.map(p => {
+    const reasons = calcMatchReasons(p);
+    const pWithReasons = reasons.length ? {...p, match_reasons: reasons} : p;
+    return profileMini(pWithReasons, {showReasons: reasons.length > 0});
+  }).join('');
   results.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(lastSearchFiltered[start+i], false));
 
   if (total > 1) renderPaginationButtons('search-pagination', page, total, 'gotoSearchPage');
@@ -953,6 +1083,28 @@ function renderMyPage() {
       <button class="pill-button" style="flex:1;" onclick="shareProfile()"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
     </div>`;
 
+  // プロフィール未入力ヒントバナー
+  if (!sessionStorage.getItem('buddies_hint_dismissed') && isProfileEmpty(me)) {
+    const hint = document.createElement('div');
+    hint.className = 'profile-hint-banner';
+    hint.id = 'profile-hint-banner';
+    const missing = getMissingFields(me);
+    hint.innerHTML = `
+      <div class="hint-icon">✏️</div>
+      <div class="hint-body">
+        <div class="hint-title">プロフィールを編集してみましょう</div>
+        <div class="hint-desc">入力すると同じ推しのファン仲間が見つかりやすくなります。</div>
+        <div class="hint-steps">${missing.map(m=>`<span class="hint-step">${esc(m)}</span>`).join('')}</div>
+        <div class="hint-actions">
+          <button class="hint-edit-btn" onclick="dismissHint();openEdit()">プロフィールを編集</button>
+        </div>
+      </div>
+      <button class="hint-close-btn" onclick="dismissHint()" aria-label="閉じる">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>`;
+    card.appendChild(hint);
+  }
+
   favoritesShowAll = false;
   exchangedShowAll = false;
   renderFavoritesSection();
@@ -969,7 +1121,7 @@ function renderExchangedSection() {
     return;
   }
   const shown = exchangedShowAll ? exchangedProfiles : exchangedProfiles.slice(0, MYPAGE_PREVIEW);
-  exList.innerHTML = shown.map(p => profileMini(p)).join('');
+  exList.innerHTML = shown.map(p => profileMini(p, { exchangedAt: p.exchanged_at })).join('');
   exList.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(shown[i], false));
   moreWrap.style.display = (!exchangedShowAll && exchangedProfiles.length > MYPAGE_PREVIEW) ? 'block' : 'none';
   if(window.lucide) window.lucide.createIcons();
@@ -993,7 +1145,7 @@ function renderFavoritesSection() {
 function showMoreFavorites() { favoritesShowAll = true; renderFavoritesSection(); }
 
 // ── プロフィールミニ ─────────────────────────────────────
-function profileMini(p) {
+function profileMini(p, opts = {}) {
   const oshiList = getOshiList(p);
   const name = getDisplayName(p);
   const color = getOshi1Color(p);
@@ -1008,6 +1160,12 @@ function profileMini(p) {
     : isExchanged
     ? `<div class="profile-mini-exchanged-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
+  const reasons = opts.showReasons && Array.isArray(p.match_reasons) && p.match_reasons.length
+    ? `<div class="profile-mini-reasons">${p.match_reasons.map(r=>`<span class="match-reason">${esc(r)}</span>`).join('')}</div>`
+    : '';
+  const exchangedAtHtml = opts.exchangedAt
+    ? `<div class="profile-mini-exchanged-at">${formatExchangedAt(opts.exchangedAt)}</div>`
+    : '';
   return `<div class="profile-mini">
     <div class="profile-mini-avatar-wrap">
       <div class="profile-mini-avatar" style="background:${color}">${avatarInner}</div>
@@ -1016,6 +1174,8 @@ function profileMini(p) {
     <div class="profile-mini-info">
       <div class="profile-mini-name">${esc(name)}</div>
       <div class="profile-mini-meta">${oshiList.map(o=>esc(o)).join(' ・ ')||esc(p.location||'')}</div>
+      ${exchangedAtHtml}
+      ${reasons}
     </div>
     <i data-lucide="chevron-right" style="width:18px;height:18px;color:#ccc;flex-shrink:0;"></i>
   </div>`;
@@ -1173,8 +1333,21 @@ function openEdit() {
   editSns   = JSON.parse(JSON.stringify(me.sns_links || []));
   editFollowStance = me.follow_stance || null;
 
-  document.getElementById('edit-post-template').value = me.post_template || '';
-  togglePostTemplate(!!me.post_template);
+  // 紹介タグ読み込み（JSON軽量形式 or フルテキスト）
+  const rawTpl = me.post_template || '';
+  currentTplId = null;
+  tplDirty     = false;
+  if (rawTpl) {
+    try {
+      const obj = JSON.parse(rawTpl);
+      if (obj.tpl && POST_TEMPLATES[obj.tpl]) {
+        currentTplId = obj.tpl;
+      }
+    } catch (_) { currentTplId = 'custom'; }
+  }
+  document.getElementById('edit-post-template').value = expandPostTemplate(rawTpl);
+  highlightTplBtn(currentTplId);
+  togglePostTemplate(!!rawTpl);
 
   renderEditOshi();
   renderEditTags();
@@ -1387,32 +1560,146 @@ function setFollowStance(v) {
   renderFollowStance();
 }
 
-function generatePostTemplate() {
-  const bd = getBirthdayValue();
+// ── 紹介タグ テンプレート定義 ──────────────────────────────
+const POST_TEMPLATES = {
+  standard: {
+    label: 'スタンダード',
+    render: (v) => {
+      const header = [v.gen, v.loc, v.gender].filter(Boolean).join(' | ');
+      const oshi   = v.oshi.length >= 2 ? `${v.oshi.slice(0,2).join('＆')} 推し` : v.oshi[0] ? `${v.oshi[0]} 推し` : '';
+      const stance = v.stance === 'silent_ok' ? '無言フォローOK' : v.stance === 'hello_please' ? 'フォロー前に一言ください' : '';
+      const lines  = ['🏷️'];
+      if (header) lines.push(header);
+      lines.push('');
+      if (oshi) { lines.push(oshi); lines.push(''); }
+      lines.push('next→');
+      lines.push('たくさん繋がりたいです‼️');
+      lines.push('');
+      if (stance) { lines.push(stance); lines.push(''); }
+      lines.push('#櫻坂46好きな人と繋がりたい');
+      lines.push('#buddiesと繋がりたい');
+      return lines.join('\n');
+    },
+  },
+  simple: {
+    label: 'シンプル',
+    render: (v) => {
+      const header = [v.gen, v.loc, v.gender].filter(Boolean).join(' | ');
+      const oshi   = v.oshi[0] ? `${v.oshi.slice(0,2).join('・')} 推し` : '';
+      const stance = v.stance === 'silent_ok' ? '無言フォローOK 🙆' : v.stance === 'hello_please' ? '一言いただけると嬉しいです🙏' : '';
+      const lines  = [];
+      if (header) lines.push(header);
+      if (oshi)   lines.push(oshi);
+      if (stance) lines.push(stance);
+      lines.push('#櫻坂46好きな人と繋がりたい');
+      lines.push('#buddiesと繋がりたい');
+      return lines.join('\n');
+    },
+  },
+  lively: {
+    label: 'にぎやか',
+    render: (v) => {
+      const header = [v.gen ? `🎂${v.gen}` : '', v.loc ? `📍${v.loc}` : '', v.gender].filter(Boolean).join(' ');
+      const oshi   = v.oshi.length >= 2 ? `💕 ${v.oshi.slice(0,2).join('&')} 推し 💕` : v.oshi[0] ? `💕 ${v.oshi[0]} 推し 💕` : '';
+      const stance = v.stance === 'silent_ok' ? '✅ 無言フォローOK' : v.stance === 'hello_please' ? '💬 一言ください' : '';
+      const lines  = ['🌸 仲間募集中 🌸'];
+      if (header) lines.push(header);
+      lines.push('');
+      if (oshi) { lines.push(oshi); lines.push(''); }
+      lines.push('ライブ参戦・配信勢どちらも歓迎！');
+      if (stance) lines.push(stance);
+      lines.push('');
+      lines.push('#櫻坂46好きな人と繋がりたい');
+      lines.push('#buddiesと繋がりたい');
+      return lines.join('\n');
+    },
+  },
+  custom: {
+    label: 'カスタム',
+    render: () => '',
+  },
+};
+
+let currentTplId  = null; // 現在選択中のテンプレートID（null = 手動編集）
+let tplDirty      = false; // テンプレ適用後にユーザーが手動編集したか
+
+function getPostTemplateVars() {
+  const bd  = getBirthdayValue();
   const gen = document.getElementById('edit-gender').value;
-  const since = document.getElementById('edit-buddies-year').value;
+  const loc = document.getElementById('edit-location').value;
+  return {
+    gen:    bd ? bd.slice(2, 4) : '',
+    loc:    PREF_ROMAJI[loc] || '',
+    gender: gen === '男性' ? '♂' : gen === '女性' ? '♀' : '',
+    oshi:   [...editOshiList],
+    stance: editFollowStance || '',
+  };
+}
 
-  // 誕生日から世代（例: 2007年生まれ → 07世代）
-  let genWord = '';
-  if (bd) genWord = bd.slice(2,4);
-  const genderMark = gen === '男性' ? '♂' : gen === '女性' ? '♀' : '';
+function renderPostTemplateText(tplId) {
+  const t = POST_TEMPLATES[tplId];
+  if (!t) return '';
+  return t.render(getPostTemplateVars());
+}
 
-  const headerParts = [];
-  if (genWord) headerParts.push(`${genWord}世代`);
-  if (genderMark) headerParts.push(genderMark);
-  const oshiLine = editOshiList.length
-    ? (editOshiList.length >= 2 ? `${editOshiList.slice(0,2).join('＆')} 推し` : `${editOshiList[0]} 推し`)
-    : '';
+function highlightTplBtn(tplId) {
+  document.querySelectorAll('.tpl-select-btn').forEach(btn => {
+    btn.classList.toggle('black', btn.dataset.tpl === tplId);
+  });
+}
 
-  const lines = ['🏷️'];
-  if (headerParts.length) lines.push(headerParts.join(' | '));
-  lines.push('');
-  if (oshiLine) { lines.push(oshiLine); lines.push(''); }
-  if (since)    { lines.push(`${since}年から応援してるBuddiesです！`); lines.push('沢山繋がりたいです‼️'); lines.push(''); }
-  lines.push('#櫻坂46好きな人と繋がりたい');
-  lines.push('#buddiesと繋がりたい');
+function selectPostTemplate(tplId) {
+  currentTplId = tplId;
+  tplDirty     = false;
+  if (tplId === 'custom') {
+    document.getElementById('edit-post-template').value = '';
+    document.getElementById('edit-post-template').focus();
+  } else {
+    document.getElementById('edit-post-template').value = renderPostTemplateText(tplId);
+  }
+  highlightTplBtn(tplId);
+}
 
-  document.getElementById('edit-post-template').value = lines.join('\n');
+function onPostTemplateInput() {
+  // ユーザーが手動で内容を変えたらカスタム扱い
+  if (currentTplId && currentTplId !== 'custom') {
+    const expected = renderPostTemplateText(currentTplId);
+    if (document.getElementById('edit-post-template').value !== expected) {
+      currentTplId = 'custom';
+      tplDirty     = true;
+      highlightTplBtn('custom');
+    }
+  }
+}
+
+// 保存用: テンプレートIDがある場合は軽量化して保存
+function buildPostTemplatePayload() {
+  const ta  = document.getElementById('edit-post-template');
+  const txt = ta.value.trim();
+  if (!txt) return null;
+
+  if (currentTplId && currentTplId !== 'custom' && !tplDirty) {
+    // 自動生成テンプレ → vars を JSON 保存（フルテキストより軽量）
+    return JSON.stringify({ tpl: currentTplId, vars: getPostTemplateVars() });
+  }
+  // 手動編集 or カスタム → テキストをそのまま保存
+  return txt;
+}
+
+// 読み込み用: JSON 形式なら展開、文字列ならそのまま返す
+function expandPostTemplate(raw) {
+  if (!raw) return '';
+  try {
+    const obj = JSON.parse(raw);
+    if (obj.tpl && POST_TEMPLATES[obj.tpl]) {
+      return POST_TEMPLATES[obj.tpl].render(obj.vars || {});
+    }
+  } catch (_) { /* not JSON */ }
+  return raw;
+}
+
+function generatePostTemplate() {
+  selectPostTemplate('standard');
 }
 
 function togglePostTemplate(show) {
@@ -1422,11 +1709,16 @@ function togglePostTemplate(show) {
 function addPostTemplate() {
   togglePostTemplate(true);
   const ta = document.getElementById('edit-post-template');
-  if (!ta.value) generatePostTemplate();
+  if (!ta.value) {
+    selectPostTemplate('standard');
+  }
   ta.focus();
 }
 function removePostTemplate() {
   document.getElementById('edit-post-template').value = '';
+  currentTplId = null;
+  tplDirty     = false;
+  highlightTplBtn(null);
   togglePostTemplate(false);
 }
 
@@ -1454,9 +1746,10 @@ async function saveEdit() {
     favorite_songs:editSongs,
     sns_links:     editSns.slice(0, 4),
     follow_stance: editSns.some(s => s.url && s.url.trim()) ? (editFollowStance || null) : null,
-    post_template: document.getElementById('edit-post-template').value.trim() || null,
+    post_template: buildPostTemplatePayload(),
   };
 
+  setLoading(true, '保存中…');
   try {
     const res = await fetch(API + '?action=buddies_profile_update', {
       method:'POST', credentials:'include',
@@ -1471,6 +1764,7 @@ async function saveEdit() {
     toast('保存しました');
     if(window.lucide) window.lucide.createIcons();
   } catch(e) { alert('通信エラーが発生しました'); }
+  finally { setLoading(false); }
 }
 
 // ── アイコン選択 ─────────────────────────────────────────
@@ -1807,6 +2101,7 @@ async function addExchangedById(targetId, showSuccess = false) {
   if (!me) { toast('ログインが必要です'); return; }
   if (targetId === me.id) { toast('自分自身は追加できません'); return; }
   const alreadyExchanged = exchangedProfiles.some(p => p.id === targetId);
+  setLoading(true, '交換中…');
   try {
     if (!alreadyExchanged) {
       const res = await fetch(API + '?action=buddies_exchange_add', {
@@ -1832,6 +2127,7 @@ async function addExchangedById(targetId, showSuccess = false) {
       if (profile) { closeQR(); setTimeout(() => openProfile(profile, false), 300); }
     }
   } catch(e) { toast('エラーが発生しました'); }
+  finally { setLoading(false); }
 }
 
 function showExchangeSuccess(profile, alreadyDone = false) {
@@ -1941,7 +2237,7 @@ function copyProfileURL() {
 }
 function shareToX() {
   if (!me) return;
-  const tpl = (me.post_template || '').trim();
+  const tpl = expandPostTemplate(me.post_template || '').trim();
   const profileUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
   const profileText = `${getDisplayName(me)}のBuddiesプロフィール`;
 
@@ -2095,6 +2391,13 @@ function toast(msg) {
   t.classList.add('show');
   clearTimeout(window._toastTimer);
   window._toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── グローバルローディング ──────────────────────────────────
+function setLoading(show, label = '処理中…') {
+  const el = document.getElementById('g-loading');
+  document.getElementById('g-loading-label').textContent = label;
+  el.classList.toggle('show', show);
 }
 </script>
 </body>

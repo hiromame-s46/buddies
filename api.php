@@ -297,6 +297,8 @@ match ($action) {
     'auth_login'              => actionLogin(),
     'auth_logout'             => actionLogout(),
     'auth_me'                 => actionMe(),
+    'auth_username_change'    => actionUsernameChange(),
+    'auth_password_change'    => actionPasswordChange(),
 
     'buddies_profile_get'     => actionProfileGet(),
     'buddies_profile_update'  => actionProfileUpdate(),
@@ -390,6 +392,63 @@ function actionLogout(): void {
     $token = getToken();
     if ($token) db()->prepare('DELETE FROM sakulabo_sessions WHERE token = ?')->execute([$token]);
     setcookie('sakulabo_token', '', ['expires' => time() - 3600, 'path' => '/']);
+    ok();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  ユーザー名変更
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function actionUsernameChange(): void {
+    $me  = requireAuth();
+    $uid = (int)$me['id'];
+    $b   = body();
+    $newUsername     = trim($b['new_username'] ?? '');
+    $currentPassword = $b['current_password'] ?? '';
+
+    if (!preg_match('/^[a-zA-Z0-9_]{3,32}$/', $newUsername))
+        err('ユーザー名は3〜32文字の半角英数字・アンダースコアで入力してください。');
+
+    $st = db()->prepare('SELECT * FROM sakulabo_users WHERE id = ? LIMIT 1');
+    $st->execute([$uid]);
+    $user = $st->fetch();
+    if (!$user) err('ユーザーが見つかりません。', 404);
+    if (!password_verify($currentPassword, $user['password_hash']))
+        err('現在のパスワードが正しくありません。');
+
+    $ck = db()->prepare('SELECT id FROM sakulabo_users WHERE username = ? AND id != ? LIMIT 1');
+    $ck->execute([$newUsername, $uid]);
+    if ($ck->fetch()) err('そのユーザー名はすでに使用されています。');
+
+    db()->prepare('UPDATE sakulabo_users SET username = ? WHERE id = ?')
+       ->execute([$newUsername, $uid]);
+
+    ok(['username' => $newUsername]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  パスワード変更
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function actionPasswordChange(): void {
+    $me  = requireAuth();
+    $uid = (int)$me['id'];
+    $b   = body();
+    $currentPassword = $b['current_password'] ?? '';
+    $newPassword     = $b['new_password']      ?? '';
+
+    if (strlen($newPassword) < 8)
+        err('新しいパスワードは8文字以上で入力してください。');
+
+    $st = db()->prepare('SELECT * FROM sakulabo_users WHERE id = ? LIMIT 1');
+    $st->execute([$uid]);
+    $user = $st->fetch();
+    if (!$user) err('ユーザーが見つかりません。', 404);
+    if (!password_verify($currentPassword, $user['password_hash']))
+        err('現在のパスワードが正しくありません。');
+
+    $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+    db()->prepare('UPDATE sakulabo_users SET password_hash = ? WHERE id = ?')
+       ->execute([$hash, $uid]);
+
     ok();
 }
 
@@ -671,15 +730,39 @@ function actionSearch(): void {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  おすすめ（同じ推しメンのユーザー）
+//  おすすめ（スコアリング：第一推し＞推しメン＞興味＞年齢＞都道府県＞SNSスタンス）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function actionSimilar(): void {
     $me = currentUser();
     if (!$me) { ok([]); return; }
 
-    $oshi  = $me['oshi_member'] ?? null;
-    $limit = min((int)($_GET['limit'] ?? 10), 50);
     $myId  = (int)$me['id'];
+    $limit = min((int)($_GET['limit'] ?? 10), 50);
+
+    // 自分のプロフィールデータを取得
+    $myBp      = getBuddiesProfile($myId);
+    $myOshi1   = $me['oshi_member']   ?? null;
+    $myOshi2   = $me['oshi_member_2'] ?? null;
+    $myOshi3   = $me['oshi_member_3'] ?? null;
+    $myOshis   = array_values(array_filter([$myOshi1, $myOshi2, $myOshi3]));
+    $myTags    = ($myBp && $myBp['tags'])   ? (json_decode($myBp['tags'],   true) ?? []) : [];
+    $myLocation = $myBp['location']         ?? null;
+    $myStance  = $myBp['follow_stance']     ?? null;
+    $myAge     = null;
+    if ($myBp) {
+        $bd    = $myBp['birthday'] ?? null;
+        $myAge = $bd ? calcAgeFromBirthday($bd) : ($myBp['age'] !== null ? (int)$myBp['age'] : null);
+    }
+
+    // お気に入り・交換済みのIDセットを取得（優先度を下げるため）
+    $favSt = db()->prepare('SELECT target_id FROM buddies_favorites WHERE user_id = ?');
+    $favSt->execute([$myId]);
+    $exSt  = db()->prepare('SELECT target_id FROM buddies_exchanges WHERE user_id = ?');
+    $exSt->execute([$myId]);
+    $deprioritized = array_flip(array_merge(
+        array_column($favSt->fetchAll(), 'target_id'),
+        array_column($exSt->fetchAll(),  'target_id')
+    ));
 
     $selectCols = '
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
@@ -687,25 +770,101 @@ function actionSimilar(): void {
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
         bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template';
 
-    if (!$oshi) {
-        $st = db()->prepare("
-            SELECT $selectCols
-            FROM sakulabo_users u
-            LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
-            WHERE u.id != ?
-            ORDER BY RAND() LIMIT ?");
-        $st->execute([$myId, $limit]);
-    } else {
-        $st = db()->prepare("
-            SELECT $selectCols
-            FROM sakulabo_users u
-            LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
-            WHERE u.id != ?
-              AND (u.oshi_member = ? OR u.oshi_member_2 = ? OR u.oshi_member_3 = ?)
-            ORDER BY RAND() LIMIT ?");
-        $st->execute([$myId, $oshi, $oshi, $oshi, $limit]);
+    // 候補を最大150件をランダム取得し PHP 側でスコアリング
+    $st = db()->prepare("
+        SELECT $selectCols
+        FROM sakulabo_users u
+        LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
+        WHERE u.id != ?
+        ORDER BY RAND() LIMIT 150");
+    $st->execute([$myId]);
+    $candidates = $st->fetchAll();
+
+    $scored = [];
+    foreach ($candidates as $c) {
+        $score   = 0.0;
+        $reasons = [];
+        $cId     = (int)$c['id'];
+
+        // ① 第一推しが一致（最高優先度: 15点）
+        $cOshi1 = $c['oshi_member'] ?? null;
+        if ($myOshi1 && $cOshi1 && $myOshi1 === $cOshi1) {
+            $score  += 15;
+            $reasons[] = '第一推しが一緒';
+        }
+
+        // ② 順番関係なく推しメンが被っている（1人につき5点）
+        $cOshis      = array_values(array_filter([$c['oshi_member'] ?? null, $c['oshi_member_2'] ?? null, $c['oshi_member_3'] ?? null]));
+        $oshiOverlap = array_intersect($myOshis, $cOshis);
+        // 第一推し一致分はここでは加点しない（①で済み）
+        $extraOverlap = $oshiOverlap;
+        if ($myOshi1 && $cOshi1 && $myOshi1 === $cOshi1) {
+            $extraOverlap = array_diff($oshiOverlap, [$myOshi1]);
+        }
+        if ($extraOverlap) {
+            $score  += count($extraOverlap) * 5;
+            $reasons[] = '推しメンが一緒';
+        } elseif ($oshiOverlap && !in_array('第一推しが一緒', $reasons)) {
+            // 第一推し同士の一致はないが被りあり
+            $score  += count($oshiOverlap) * 5;
+            $reasons[] = '推しメンが一緒';
+        }
+
+        // ③ 興味・タグ一致（1タグ3点）
+        $cTags      = ($c['tags']) ? (json_decode($c['tags'], true) ?? []) : [];
+        $tagOverlap = array_intersect($myTags, $cTags);
+        if ($tagOverlap) {
+            $score  += count($tagOverlap) * 3;
+            $reasons[] = '興味が一緒';
+        }
+
+        // ④ 年齢一致（同い年4点、±1歳2点）
+        $cAge = null;
+        if (!empty($c['birthday'])) {
+            $cAge = calcAgeFromBirthday($c['birthday']);
+        } elseif ($c['age'] !== null) {
+            $cAge = (int)$c['age'];
+        }
+        if ($myAge !== null && $cAge !== null) {
+            $diff = abs($myAge - $cAge);
+            if ($diff === 0)      { $score += 4; $reasons[] = '年齢が一緒'; }
+            elseif ($diff === 1)  { $score += 2; }
+        }
+
+        // ⑤ 都道府県一致（4点）
+        if ($myLocation && !empty($c['location']) && $myLocation === $c['location']) {
+            $score  += 4;
+            $reasons[] = '都道府県が一緒';
+        }
+
+        // ⑥ SNSフォロースタンス一致（2点）
+        if ($myStance && !empty($c['follow_stance']) && $myStance === $c['follow_stance']) {
+            $score  += 2;
+            $reasons[] = 'SNSスタンスが一緒';
+        }
+
+        // お気に入り・交換済みは後方へ。ただし共通点があればスコア最低1を保証
+        if (isset($deprioritized[$cId])) {
+            if ($score > 0) {
+                $score = max(1.0, $score - 50);
+            } else {
+                $score -= 50;
+            }
+        }
+
+        // 同スコア内でシャッフルされるよう小さなランダムジッター（0〜2）を加える
+        $score += mt_rand(0, 200) / 100.0;
+
+        $row = buildRowData($c);
+        $row['match_score']   = $score;
+        $row['match_reasons'] = array_values(array_unique($reasons));
+        $scored[] = $row;
     }
-    ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
+
+    // スコア降順ソート
+    usort($scored, fn($a, $b) => $b['match_score'] <=> $a['match_score']);
+
+    ok(array_slice($scored, 0, $limit));
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

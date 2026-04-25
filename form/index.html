@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>お問い合わせフォーム</title>
+<style>
+    * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+  a { color: inherit; text-decoration: none; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fff;
+    color: #111;
+    padding: 24px 16px 80px;
+    line-height: 1.6;
+  }
+  .wrap {
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  h1 {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 32px;
+    letter-spacing: -0.02em;
+  }
+  label {
+    display: block;
+    font-size: 16px;
+    font-weight: 500;
+    margin: 24px 0 10px;
+  }
+  .label-sub {
+    font-weight: 400;
+    font-size: 14px;
+    color: #666;
+  }
+  input[type="text"],
+  input[type="file"],
+  select,
+  textarea {
+    width: 100%;
+    font-size: 16px;
+    padding: 14px 20px;
+    border: 1px solid #ddd;
+    border-radius: 9999px;
+    background: #fff;
+    color: #111;
+    -webkit-text-fill-color: #111;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border 0.2s;
+  }
+  input[type="file"] {
+    padding: 11px 20px;
+    cursor: pointer;
+  }
+  input[type="file"]::file-selector-button {
+    border: none;
+    background: #111;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 9999px;
+    font-size: 14px;
+    margin-right: 12px;
+    cursor: pointer;
+  }
+  input[type="text"]:focus,
+  select:focus,
+  textarea:focus,
+  input[type="file"]:focus {
+    outline: none;
+    border-color: #111;
+  }
+  select {
+    color: #111;
+    -webkit-text-fill-color: #111;
+    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23111' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 20px center;
+    padding-right: 48px;
+  }
+  textarea {
+    border-radius: 24px;
+    resize: vertical;
+    min-height: 140px;
+    padding: 16px 20px;
+  }
+  .radio-group {
+    display: flex;
+    gap: 8px;
+    margin-top: 10px;
+  }
+  .radio-item {
+    flex: 1;
+  }
+  .radio-item input {
+    display: none;
+  }
+  .radio-item label {
+    display: block;
+    text-align: center;
+    margin: 0;
+    padding: 12px 16px;
+    font-size: 16px;
+    font-weight: 400;
+    border: 1px solid #ddd;
+    border-radius: 9999px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .radio-item input:checked + label {
+    background: #111;
+    color: #fff;
+    border-color: #111;
+  }
+  .hidden {
+    display: none;
+  }
+  .file-info {
+    font-size: 13px;
+    color: #666;
+    margin-top: 8px;
+  }
+  .preview-box {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+  }
+  .preview-box img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #eee;
+  }
+  .checkbox-wrap {
+    margin: 32px 0 24px;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .checkbox-wrap input {
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    accent-color: #111;
+  }
+  .checkbox-wrap label {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+  button {
+    width: 100%;
+    font-size: 16px;
+    font-weight: 600;
+    padding: 16px;
+    border: none;
+    border-radius: 9999px;
+    background: #111;
+    color: #fff;
+    -webkit-text-fill-color: #fff;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  button:active {
+    opacity: 0.8;
+  }
+  button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  button.secondary {
+    background: #fff;
+    color: #111;
+    -webkit-text-fill-color: #111;
+    border: 1px solid #ddd;
+    margin-bottom: 12px;
+  }
+  .confirm-list {
+    margin-bottom: 32px;
+  }
+  .confirm-item {
+    padding: 18px 0;
+    border-bottom: 1px solid #eee;
+  }
+  .confirm-item:last-child {
+    border-bottom: none;
+  }
+  .confirm-label {
+    font-size: 14px;
+    color: #666;
+    margin-bottom: 6px;
+  }
+  .confirm-value {
+    font-size: 16px;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .confirm-images {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .confirm-images img {
+    width: 80px;
+    height: 80px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 1px solid #eee;
+  }
+  .complete {
+    text-align: center;
+    padding: 40px 0;
+  }
+  .complete h1 {
+    margin-bottom: 16px;
+  }
+  .complete p {
+    font-size: 16px;
+    color: #666;
+    margin-bottom: 32px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <form id="inputForm" enctype="multipart/form-data">
+    <h1>お問い合わせ</h1>
+    
+    <label for="category">カテゴリ</label>
+    <select id="category" name="category" required>
+      <option value="">選択してください</option>
+      <option value="お問い合わせ">お問い合わせ</option>
+      <option value="サイトの感想や意見">サイトの感想や意見</option>
+      <option value="情報の提供">情報の提供</option>
+      <option value="不具合の報告">不具合の報告</option>
+      <option value="誤情報の報告">誤情報の報告</option>
+      <option value="機能のリクエスト">機能のリクエスト</option>
+      <option value="サイトのリクエストや提案">サイトのリクエストや提案</option>
+      <option value="情報請求">情報請求</option>
+      <option value="その他">その他</option>
+    </select>
+
+    <label>返信の希望</label>
+    <div class="radio-group">
+      <div class="radio-item">
+        <input type="radio" id="replyNo" name="need_reply" value="希望しない" checked>
+        <label for="replyNo">希望しない</label>
+      </div>
+      <div class="radio-item">
+        <input type="radio" id="replyYes" name="need_reply" value="希望する">
+        <label for="replyYes">希望する</label>
+      </div>
+    </div>
+
+    <div id="snsBox" class="hidden">
+      <label for="sns_service">SNSサービス名</label>
+      <input type="text" id="sns_service" name="sns_service" placeholder="X, Instagram など">
+      
+      <label for="sns_account">アカウント名</label>
+      <input type="text" id="sns_account" name="sns_account" placeholder="@yourname">
+    </div>
+
+    <label for="title">タイトル <span class="label-sub">(任意)</span></label>
+    <input type="text" id="title" name="title">
+
+    <!-- 不具合・誤情報時のサイト名 -->
+    <div id="siteBox" class="hidden">
+      <label for="site_name">対象サイト名</label>
+      <input type="text" id="site_name" name="site_name" placeholder="不具合/誤情報があるサイト名">
+    </div>
+
+    <label for="message">本文</label>
+    <textarea id="message" name="message" required></textarea>
+
+    <!-- 不具合報告時の画像添付 -->
+    <div id="imageBox" class="hidden">
+      <label for="images">画像添付 <span class="label-sub">(最大3枚)</span></label>
+      <input type="file" id="images" name="images[]" accept="image/*" multiple>
+      <div class="file-info">JPG, PNG, GIF, WEBP対応 / 1枚5MBまで</div>
+      <div class="preview-box" id="previewBox"></div>
+    </div>
+
+    <div class="checkbox-wrap">
+      <input type="checkbox" id="agree" name="agree" required>
+      <label for="agree">利用規約とプライバシーポリシーに同意する</label>
+    </div>
+
+    <button type="button" id="confirmBtn">確認する</button>
+  </form>
+
+  <div id="confirmForm" class="hidden">
+    <h1>内容の確認</h1>
+    <div class="confirm-list" id="confirmList"></div>
+    <button type="button" id="backBtn" class="secondary">修正する</button>
+    <button type="button" id="submitBtn">送信する</button>
+  </div>
+
+  <div id="completeForm" class="hidden complete">
+    <h1>送信完了</h1>
+    <p>お問い合わせありがとうございました。</p>
+    <button type="button" onclick="location.reload()">トップへ戻る</button>
+  </div>
+</div>
+
+<script>
+const inputForm = document.getElementById('inputForm');
+const confirmForm = document.getElementById('confirmForm');
+const completeForm = document.getElementById('completeForm');
+const snsBox = document.getElementById('snsBox');
+const siteBox = document.getElementById('siteBox');
+const imageBox = document.getElementById('imageBox');
+const confirmBtn = document.getElementById('confirmBtn');
+const backBtn = document.getElementById('backBtn');
+const submitBtn = document.getElementById('submitBtn');
+const categorySelect = document.getElementById('category');
+const imagesInput = document.getElementById('images');
+const previewBox = document.getElementById('previewBox');
+
+let selectedFiles = [];
+
+// 返信希望でSNS欄表示
+document.querySelectorAll('input[name="need_reply"]').forEach(radio => {
+  radio.addEventListener('change', e => {
+    if (e.target.value === '希望する') {
+      snsBox.classList.remove('hidden');
+      document.getElementById('sns_service').required = true;
+      document.getElementById('sns_account').required = true;
+    } else {
+      snsBox.classList.add('hidden');
+      document.getElementById('sns_service').required = false;
+      document.getElementById('sns_account').required = false;
+    }
+  });
+});
+
+// カテゴリ変更で条件分岐
+categorySelect.addEventListener('change', e => {
+  const val = e.target.value;
+  // 不具合の報告
+  if (val === '不具合の報告') {
+    siteBox.classList.remove('hidden');
+    imageBox.classList.remove('hidden');
+    document.getElementById('site_name').required = true;
+  } 
+  // 誤情報の報告
+  else if (val === '誤情報の報告') {
+    siteBox.classList.remove('hidden');
+    imageBox.classList.add('hidden');
+    document.getElementById('site_name').required = true;
+    imagesInput.value = '';
+    selectedFiles = [];
+    previewBox.innerHTML = '';
+  } 
+  // その他
+  else {
+    siteBox.classList.add('hidden');
+    imageBox.classList.add('hidden');
+    document.getElementById('site_name').required = false;
+    imagesInput.value = '';
+    selectedFiles = [];
+    previewBox.innerHTML = '';
+  }
+});
+
+// 画像プレビュー
+imagesInput.addEventListener('change', e => {
+  const files = Array.from(e.target.files).slice(0, 3);
+  selectedFiles = files;
+  previewBox.innerHTML = '';
+  
+  files.forEach(file => {
+    if (file.size > 5 * 1024 * 1024) {
+      alert(`${file.name} は5MBを超えています`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      previewBox.appendChild(img);
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+// 確認画面へ
+confirmBtn.addEventListener('click', () => {
+  if (!inputForm.checkValidity()) {
+    inputForm.reportValidity();
+    return;
+  }
+  
+  const formData = new FormData(inputForm);
+  let html = '';
+  const items = [
+    ['category', 'カテゴリ'],
+    ['need_reply', '返信の希望'],
+    ['sns_service', 'SNSサービス名'],
+    ['sns_account', 'アカウント名'],
+    ['title', 'タイトル'],
+    ['site_name', '対象サイト名'],
+    ['message', '本文']
+  ];
+  
+  items.forEach(([key, label]) => {
+    let val = formData.get(key) || '';
+    if ((key === 'sns_service' || key === 'sns_account') && formData.get('need_reply') !== '希望する') return;
+    if (key === 'site_name' && !['不具合の報告', '誤情報の報告'].includes(formData.get('category'))) return;
+    if (key === 'title' && !val) val = '未入力';
+    html += `<div class="confirm-item">
+      <div class="confirm-label">${label}</div>
+      <div class="confirm-value">${val}</div>
+    </div>`;
+  });
+  
+  // 画像プレビュー
+  if (selectedFiles.length > 0 && formData.get('category') === '不具合の報告') {
+    html += `<div class="confirm-item">
+      <div class="confirm-label">添付画像</div>
+      <div class="confirm-images">`;
+    selectedFiles.forEach(file => {
+      const url = URL.createObjectURL(file);
+      html += `<img src="${url}">`;
+    });
+    html += `</div></div>`;
+  }
+  
+  document.getElementById('confirmList').innerHTML = html;
+  inputForm.classList.add('hidden');
+  confirmForm.classList.remove('hidden');
+  window.scrollTo(0, 0);
+});
+
+backBtn.addEventListener('click', () => {
+  confirmForm.classList.add('hidden');
+  inputForm.classList.remove('hidden');
+});
+
+// 送信
+submitBtn.addEventListener('click', async () => {
+  submitBtn.disabled = true;
+  submitBtn.textContent = '送信中...';
+  
+  const formData = new FormData(inputForm);
+  // 3枚までに制限
+  const dt = new DataTransfer();
+  selectedFiles.slice(0, 3).forEach(f => dt.items.add(f));
+  formData.delete('images[]');
+  Array.from(dt.files).forEach(f => formData.append('images[]', f));
+  
+  try {
+    const res = await fetch('send.php', {
+      method: 'POST',
+      body: formData
+    });
+    const result = await res.json();
+    
+    if (result.success) {
+      confirmForm.classList.add('hidden');
+      completeForm.classList.remove('hidden');
+      window.scrollTo(0, 0);
+    } else {
+      alert('送信に失敗しました: ' + result.message);
+      submitBtn.disabled = false;
+      submitBtn.textContent = '送信する';
+    }
+  } catch (e) {
+    alert('通信エラーが発生しました');
+    submitBtn.disabled = false;
+    submitBtn.textContent = '送信する';
+  }
+});
+</script>
+</body>
+</html>
