@@ -717,8 +717,8 @@ function actionSearch(): void {
         $like = '%' . $q . '%';
         $where[] = '(u.display_name LIKE ? OR u.username LIKE ?
                     OR u.oshi_member LIKE ? OR u.oshi_member_2 LIKE ? OR u.oshi_member_3 LIKE ?
-                    OR bp.tags LIKE ? OR bp.location LIKE ?)';
-        for ($i = 0; $i < 7; $i++) $params[] = $like;
+                    OR bp.tags LIKE ? OR bp.location LIKE ? OR bp.favorite_songs LIKE ?)';
+        for ($i = 0; $i < 8; $i++) $params[] = $like;
     }
 
     // 第一推し指定（最優先で oshi_member 列に固定）

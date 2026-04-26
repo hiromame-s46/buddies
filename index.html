@@ -112,6 +112,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .pill-tag.black { background:#000; color:#fff; }
 .pill-tag .remove { cursor:pointer; opacity:.7; display:flex; }
 .pill-tag .remove:hover { opacity:1; }
+.search-pill-btn { cursor:pointer; border:none; font-family:inherit; color:#000; transition:background .15s; }
+.search-pill-btn:hover { background:#e0e0e0; }
+.search-pill-btn:active { transform:scale(0.96); }
 
 .oshi-pill { background:#000; color:#fff; padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:500; }
 
@@ -165,12 +168,12 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .profile-mini-avatar { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:600; font-size:18px; flex-shrink:0; overflow:hidden; position:relative; }
 .profile-mini-avatar img { width:100%; height:100%; object-fit:cover; object-position:top center; }
 .profile-mini-avatar-wrap { position:relative; flex-shrink:0; }
-.profile-mini-exchanged-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#22c55e; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+.profile-mini-exchanged-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#22c55e; border:2px solid #fff; display:flex; align-items:center; justify-content:center; z-index:2; }
 .profile-mini-exchanged-badge svg { width:8px; height:8px; }
-.profile-mini-admin-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#3b82f6; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+.profile-mini-admin-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#f59e0b; border:2px solid #fff; display:flex; align-items:center; justify-content:center; z-index:3; }
 .profile-mini-admin-badge svg { width:8px; height:8px; }
-.profile-mini-sns-badge { position:absolute; top:0; right:0; width:16px; height:16px; border-radius:50%; background:#000; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
-.profile-mini-sns-badge svg { width:9px; height:9px; }
+.profile-mini-sns-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#3b82f6; border:2px solid #fff; display:flex; align-items:center; justify-content:center; z-index:1; }
+.profile-mini-sns-badge svg { width:8px; height:8px; }
 .profile-mini-info { flex:1; min-width:0; }
 .profile-mini-name { font-weight:600; font-size:15px; margin-bottom:2px; }
 .profile-mini-meta { font-size:12px; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -362,7 +365,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="search-page" hidden>
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグで検索" style="padding-left:44px;">
+      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲で検索" style="padding-left:44px;">
     </div>
 
     <!-- 推しメンフィルター -->
@@ -436,7 +439,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 </nav>
 
 <!-- Profile Modal -->
-<div id="profile-modal" class="modal-overlay" onclick="if(event.target===this)closeProfileModal()">
+<div id="profile-modal" class="modal-overlay" onclick="if(event.target===this)closeProfileModal(true)">
   <div class="modal-card" id="profile-modal-card"></div>
 </div>
 
@@ -805,7 +808,11 @@ async function init() {
     showMainUI();
   } else {
     showMainUI();
-    showAuthModal();
+    // 共有URLで開いた場合はログインモーダルを出さずそのまま閲覧させる
+    const qs = new URLSearchParams(location.search);
+    const hashParams = new URLSearchParams(location.hash.slice(1));
+    const hasSharedUid = qs.get('uid') || hashParams.get('uid') || sessionStorage.getItem('buddies_shared_uid');
+    if (!hasSharedUid) showAuthModal();
   }
 
   checkUrl();
@@ -1095,6 +1102,14 @@ function triggerSearch(q) {
   searchDebounce = setTimeout(() => resetAndLoadSearch(), 300);
 }
 
+function searchByKeyword(q) {
+  closeProfileModal(true);
+  switchTab('search');
+  const input = document.getElementById('search-input');
+  input.value = q;
+  triggerSearch(q);
+}
+
 function resetAndLoadSearch() {
   searchOffset = 0;
   searchLoading = false;
@@ -1348,13 +1363,13 @@ function profileMini(p, opts = {}) {
     ? `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`
     : esc(name[0]||'？');
   const badge = isAdmin
-    ? `<div class="profile-mini-admin-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
+    ? `<div class="profile-mini-admin-badge" title="管理者"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : isExchanged
     ? `<div class="profile-mini-exchanged-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
   const hasSns = Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim());
   const snsBadge = hasSns
-    ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div>`
+    ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
   const filteredReasons = opts.showReasons && Array.isArray(p.match_reasons)
     ? p.match_reasons.filter(r => r !== 'SNSを登録している')
@@ -1368,6 +1383,7 @@ function profileMini(p, opts = {}) {
   return `<div class="profile-mini">
     <div class="profile-mini-avatar-wrap">
       <div class="profile-mini-avatar" style="background:${color}">${avatarInner}</div>
+      ${snsBadge}
       ${badge}
     </div>
     <div class="profile-mini-info">
@@ -1404,8 +1420,8 @@ function openProfile(profile, isOwn, opts = {}) {
   const color = getOshi1Color(profile);
 
   const oshiHtml  = oshiList.map(o=>`<span class="pill-tag black">${esc(o)}</span>`).join('');
-  const tagsHtml  = (profile.tags||[]).map(t=>`<span class="pill-tag">${esc(t)}</span>`).join('');
-  const songsHtml = (profile.favorite_songs||profile.favoriteSongs||[]).map(s=>`<span class="pill-tag">${esc(s)}</span>`).join('');
+  const tagsHtml  = (profile.tags||[]).map(t=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(t)}" title="${esc(t)}を検索">${esc(t)}</button>`).join('');
+  const songsHtml = (profile.favorite_songs||profile.favoriteSongs||[]).map(s=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(s)}" title="${esc(s)}を検索">${esc(s)}</button>`).join('');
   const snsNames  = {x:'X',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'Link'};
   const snsLinks  = (profile.sns_links||profile.sns||[]).filter(s => s.url && s.url.trim()).slice(0,10);
   const snsItems  = snsLinks.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener" class="sns-chip" title="${esc(s.type)}">${getSnsIcon(s.type)}<span>${snsNames[s.type]||'Link'}</span></a>`).join('');
@@ -1426,10 +1442,10 @@ function openProfile(profile, isOwn, opts = {}) {
       <button class="pill-button" onclick="shareProfile()" style="flex:1;"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
     `;
   } else if (isShared && !me) {
-    // 未ログインで共有URL経由
+    // 未ログインで共有URL経由 — 閲覧のみ、お気に入り不可
     actionBtns = `
-      <button class="pill-button black" onclick="closeProfileModal(); showAuthModal();" style="flex:1;display:inline-flex;align-items:center;gap:6px;justify-content:center;"><i data-lucide="log-in" style="width:16px;height:16px;"></i>ログインしてお気に入り</button>
-      <button class="pill-button" onclick="closeProfileModal()" style="flex:1;">閉じる</button>
+      <button class="pill-button black" onclick="closeProfileModal(true); showAuthModal();" style="flex:1;display:inline-flex;align-items:center;gap:6px;justify-content:center;"><i data-lucide="log-in" style="width:16px;height:16px;"></i>ログインしてお気に入り</button>
+      <button class="pill-button" onclick="closeProfileModal(true)" style="flex:1;">閉じる</button>
     `;
   } else if (isShared) {
     // ログイン済み + 共有URL経由（交換不可）
@@ -1440,14 +1456,14 @@ function openProfile(profile, isOwn, opts = {}) {
       : `<div style="flex-basis:100%;font-size:11px;color:#9ca3af;text-align:center;margin-top:4px;line-height:1.5;">交換するにはBuddiesアプリ内カメラでQRを読み取ってください</div>`;
     actionBtns = `
       <button class="pill-button${isFav?' pink':''}" onclick="toggleFavorite()" style="flex:1;"><i data-lucide="heart" style="width:16px;height:16px; ${isFav?'fill:#000':''}"></i>お気に入り</button>
-      <button class="pill-button black" onclick="closeProfileModal()" style="flex:1;">閉じる</button>
+      <button class="pill-button black" onclick="closeProfileModal(true)" style="flex:1;">閉じる</button>
       ${exchangeNote}
     `;
   } else {
     const isFav = favoriteProfiles.some(f => f.id === profile.id);
     actionBtns = `
       <button class="pill-button${isFav?' pink':''}" onclick="toggleFavorite()" style="flex:1;"><i data-lucide="heart" style="width:16px;height:16px; ${isFav?'fill:#000':''}"></i>お気に入り</button>
-      <button class="pill-button black" onclick="closeProfileModal()" style="flex:1;">閉じる</button>
+      <button class="pill-button black" onclick="closeProfileModal(true)" style="flex:1;">閉じる</button>
     `;
   }
 
@@ -1465,7 +1481,7 @@ function openProfile(profile, isOwn, opts = {}) {
   }
 
   card.innerHTML = `
-    <button class="modal-close-btn" onclick="closeProfileModal()" aria-label="閉じる"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    <button class="modal-close-btn" onclick="closeProfileModal(true)" aria-label="閉じる"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     <div class="profile-detail">
       <div class="profile-header">
         <div class="profile-avatar" style="background:${color};">${avatarContent}</div>
@@ -1487,11 +1503,19 @@ function openProfile(profile, isOwn, opts = {}) {
   card.scrollTop = 0;
   document.body.style.overflow = 'hidden';
   setTimeout(() => { if(window.lucide) window.lucide.createIcons(); }, 50);
+
+  // タグ・曲のクリックをイベント委譲で処理
+  card.onclick = (e) => {
+    const btn = e.target.closest('.search-pill-btn');
+    if (btn && btn.dataset.keyword) searchByKeyword(btn.dataset.keyword);
+  };
 }
-function closeProfileModal() {
+function closeProfileModal(userDismissed = false) {
   document.getElementById('profile-modal').classList.remove('active');
   document.body.style.overflow = 'auto';
   if (currentPopupProfile) delete currentPopupProfile._sharedView;
+  // 未ログインユーザーが共有URLを閉じたらログインモーダルを表示
+  if (userDismissed && !me) showAuthModal();
 }
 
 async function toggleFavorite() {
@@ -2499,15 +2523,18 @@ function closeExchangeOverlay() {
   document.getElementById('exchange-overlay').classList.remove('active');
 }
 
+function buildProfileURL(uid) {
+  return location.origin + location.pathname + '#uid=' + uid + '&mode=view';
+}
 function copyProfileURL() {
   if (!me) return;
-  const url = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  const url = buildProfileURL(me.id);
   navigator.clipboard.writeText(url).then(()=>toast('URLをコピーしました')).catch(()=>toast('コピーできませんでした'));
 }
 function shareToX() {
   if (!me) return;
   const tpl = expandPostTemplate(me.post_template || '').trim();
-  const profileUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  const profileUrl = buildProfileURL(me.id);
   const profileText = `${getDisplayName(me)}のBuddiesプロフィール`;
 
   if (tpl) {
@@ -2531,7 +2558,7 @@ function shareToX() {
 
 function shareProfile() {
   if (!me) return;
-  const url = location.origin + location.pathname + '#uid=' + me.id + '&mode=view';
+  const url = buildProfileURL(me.id);
   const name = getDisplayName(me);
   if (navigator.share) {
     navigator.share({ title: `${name}のBuddiesプロフィール`, url }).catch(() => {});
@@ -2562,47 +2589,81 @@ function closeXShareSheet() {
 }
 
 async function checkUrl() {
-  if (!location.hash) return;
+  // hash優先、なければクエリパラメータ、なければsessionStorageで補完
+  // hashはリダイレクト（t.co等）でも脱落しないため共有URLの主形式として使用
+  let uid, mode, token;
+
+  if (location.hash) {
+    const hp = new URLSearchParams(location.hash.slice(1));
+    uid   = hp.get('uid');
+    mode  = hp.get('mode');
+    token = hp.get('token');
+  }
+  if (!uid) {
+    const qp = new URLSearchParams(location.search);
+    uid   = qp.get('uid');
+    mode  = qp.get('mode');
+    token = qp.get('token');
+    // クエリパラメータにあればhashに正規化
+    if (uid) {
+      const newHash = '#uid=' + uid + '&mode=' + (mode || 'view') + (token ? '&token=' + encodeURIComponent(token) : '');
+      history.replaceState(null, '', location.pathname + newHash);
+    }
+  }
+  if (!uid) {
+    uid  = sessionStorage.getItem('buddies_shared_uid');
+    mode = sessionStorage.getItem('buddies_shared_mode') || 'view';
+    if (uid) history.replaceState(null, '', location.pathname + '#uid=' + uid + '&mode=' + mode);
+  }
+
+  if (!uid) return;
+
+  // sessionStorageに保存（リダイレクト経由の脱落対策）
+  sessionStorage.setItem('buddies_shared_uid', uid);
+  sessionStorage.setItem('buddies_shared_mode', mode || 'view');
+
   try {
-    const params = new URLSearchParams(location.hash.slice(1));
-    const uid   = params.get('uid');
-    const mode  = params.get('mode');
-    const token = params.get('token');
-    if (!uid) return;
-
-    history.replaceState(null, '', location.pathname);
-
     const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${uid}`, { credentials:'include' });
     const pJson = await pRes.json();
     if (!pJson.ok) {
       toast('プロフィールが見つかりませんでした');
+      sessionStorage.removeItem('buddies_shared_uid');
+      sessionStorage.removeItem('buddies_shared_mode');
       return;
     }
 
     // 自分自身のリンクなら自分のプロフィール表示へ
     if (me && parseInt(uid, 10) === parseInt(me.id, 10)) {
+      history.replaceState(null, '', location.pathname);
+      sessionStorage.removeItem('buddies_shared_uid');
+      sessionStorage.removeItem('buddies_shared_mode');
       switchTab('mypage');
       setTimeout(() => openProfile(me, true), 300);
       return;
     }
 
     if (mode === 'exchange' && token && me) {
-      // Buddiesアプリ内経由のQRスキャン（URL遷移ケース）
       const verifiedUid = verifyQRToken(token);
       if (verifiedUid && verifiedUid === parseInt(uid, 10)) {
+        history.replaceState(null, '', location.pathname);
+        sessionStorage.removeItem('buddies_shared_uid');
+        sessionStorage.removeItem('buddies_shared_mode');
         await addExchangedById(parseInt(uid, 10), true);
-        return; // showExchangeSuccess内でプロフィール表示
+        return;
       }
+      history.replaceState(null, '', location.pathname);
+      sessionStorage.removeItem('buddies_shared_uid');
+      sessionStorage.removeItem('buddies_shared_mode');
       toast('QRコードが期限切れです。交換にはBuddiesアプリ内カメラで読み取ってください');
     }
 
-    // 閲覧モード（OSカメラ・URL共有・token期限切れ）
+    // 閲覧モード
     const targetName = getDisplayName(pJson.data);
     const banner    = document.getElementById('viewBanner');
     const bannerTxt = document.getElementById('viewBannerText');
     bannerTxt.textContent = me
       ? `${targetName} さんのプロフィールを閲覧中（交換はBuddiesアプリ内カメラから）`
-      : `${targetName} さんのプロフィールを閲覧中（ログインするとお気に入りできます）`;
+      : `${targetName} さんのプロフィールを閲覧中`;
     banner.style.display = 'block';
     setTimeout(() => openProfile(pJson.data, false, { source: 'shared' }), 300);
   } catch(e) {}
