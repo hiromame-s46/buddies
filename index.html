@@ -115,6 +115,20 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
 .oshi-pill { background:#000; color:#fff; padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:500; }
 
+.oshi-chip { 
+  padding:7px 13px; border-radius:9999px; font-size:12px; font-weight:600;
+  background:#fff; color:#333; border:1.5px solid #d1d5db; cursor:pointer;
+  user-select:none; -webkit-user-select:none; transition:all 0.15s;
+  -webkit-appearance:none; -moz-appearance:none; appearance:none;
+  font-family:inherit;
+}
+.oshi-chip:hover {
+  border-color:#999;
+}
+.oshi-chip:active {
+  transform:scale(0.96);
+}
+
 .stance-btn.active { background:#000; color:#fff; border-color:#000; }
 .stance-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9999px; font-size:12px; font-weight:500; background:#eef7ff; color:#0c63a8; border:1px solid #cce4f7; }
 .stance-pill.hello { background:#fff3e0; color:#a75a0c; border-color:#ffd9a8; }
@@ -155,6 +169,8 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .profile-mini-exchanged-badge svg { width:8px; height:8px; }
 .profile-mini-admin-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#3b82f6; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
 .profile-mini-admin-badge svg { width:8px; height:8px; }
+.profile-mini-sns-badge { position:absolute; top:0; right:0; width:16px; height:16px; border-radius:50%; background:#000; border:2px solid #fff; display:flex; align-items:center; justify-content:center; }
+.profile-mini-sns-badge svg { width:9px; height:9px; }
 .profile-mini-info { flex:1; min-width:0; }
 .profile-mini-name { font-weight:600; font-size:15px; margin-bottom:2px; }
 .profile-mini-meta { font-size:12px; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -251,7 +267,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 @keyframes glSpin { to { transform:rotate(360deg); } }
 .g-loading-label { font-size:13px; font-weight:600; color:#444; }
 
-.view-banner { position:fixed; top:0; left:0; right:0; background:#fff8e1; color:#5d4037; padding:10px 16px; text-align:center; font-size:12px; border-bottom:1px solid #ffecb3; z-index:500; display:none; }
+.view-banner { position:fixed; top:0; left:0; right:0; background:#fff8e1; color:#5d4037; padding:10px 40px 10px 16px; text-align:center; font-size:12px; border-bottom:1px solid #ffecb3; z-index:500; display:none; line-height:1.5; }
+.view-banner-close { position:absolute; right:8px; top:50%; transform:translateY(-50%); width:28px; height:28px; border-radius:50%; border:none; background:rgba(255,255,255,0.7); color:#5d4037; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.view-banner-close:hover { background:#fff; }
 
 .search-input-wrap { position:relative; margin-top:16px; }
 .search-input-wrap svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:#999; pointer-events:none; }
@@ -319,7 +337,10 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 </style>
 </head>
 <body>
-<div class="view-banner" id="viewBanner">閲覧モード：交換するにはアプリ内のカメラで読み取ってください</div>
+<div class="view-banner" id="viewBanner">
+  <span id="viewBannerText">閲覧モード：交換するにはアプリ内のカメラで読み取ってください</span>
+  <button class="view-banner-close" onclick="closeViewBanner()" aria-label="閉じる">✕</button>
+</div>
 
 <div class="app-container">
 <header>
@@ -343,8 +364,47 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグで検索" style="padding-left:44px;">
     </div>
+
+    <!-- 推しメンフィルター -->
+    <div id="oshi-filter-wrap" style="margin-top:12px; padding:14px; background:#fff; border-radius:14px; border:1px solid #e5e7eb; box-shadow:0 1px 3px rgba(0, 0, 0, 0.05);">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:0;">
+        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#000;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 12h8M6 18h12"/>
+          </svg>
+          フィルター
+        </div>
+        <button id="oshi-filter-toggle" class="pill-button" style="padding:5px 12px; font-size:12px; font-weight:600; background:#f5f5f5; border-color:#e5e7eb; color:#000;" onclick="toggleOshiFilterPanel()">
+          <span id="oshi-filter-toggle-text">開く</span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition: transform 0.2s;" id="oshi-filter-toggle-icon">
+            <path d="m6 9 6 6 6-6"/>
+          </svg>
+        </button>
+      </div>
+      <div id="oshi-filter-panel" style="display:none; margin-top:12px;">
+        <!-- モード選択 -->
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 12px; border:1.5px solid #e5e7eb; border-radius:9999px; background:#fff; transition:all 0.15s;">
+            <input type="radio" name="oshi-mode" value="or" checked onchange="applyOshiFilter()" style="width:14px; height:14px; cursor:pointer; accent-color:#000;">
+            <div style="font-size:12px; font-weight:600; color:#000;">いずれか</div>
+          </label>
+          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 12px; border:1.5px solid #e5e7eb; border-radius:9999px; background:#fff; transition:all 0.15s;">
+            <input type="radio" name="oshi-mode" value="and" onchange="applyOshiFilter()" style="width:14px; height:14px; cursor:pointer; accent-color:#000;">
+            <div style="font-size:12px; font-weight:600; color:#000;">全員一致</div>
+          </label>
+        </div>
+        <!-- 選択チップ -->
+        <div>
+          <div style="font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:8px;">メンバー選択</div>
+          <div id="oshi-filter-chips" style="display:flex; flex-wrap:wrap; gap:6px; background:#f9f9f9; padding:10px 12px; border-radius:10px; border:1px solid #e5e7eb; min-height:32px;"></div>
+        </div>
+      </div>
+    </div>
+
     <div id="search-results" class="profile-list" style="margin-top:16px;"></div>
-    <div id="search-pagination" class="pagination"></div>
+    <div id="search-loading" style="text-align:center; padding:14px 0; display:none; font-size:12px; color:#888;">読み込み中…</div>
+    <div id="search-end" style="text-align:center; padding:14px 0; display:none; font-size:12px; color:#bbb;">— 結果は以上です —</div>
+    <div id="search-sentinel" style="height:1px;"></div>
   </div>
 
   <div id="mypage-page" hidden>
@@ -639,6 +699,10 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       <option value="newest">新しい順</option>
       <option value="oldest">古い順</option>
     </select>
+    <button id="icon-fav-only-toggle" class="pill-button" style="padding:8px 12px; font-size:12px; font-weight:600; background:#f5f5f5; border-color:#e5e7eb; color:#000; display:inline-flex; align-items:center; gap:6px;" onclick="toggleIconFavOnly()">
+      <i data-lucide="heart" style="width:14px;height:14px;"></i>
+      <span>お気に入りのみ</span>
+    </button>
     <button class="pill-button" onclick="clearIcon()" style="margin-left:auto;">画像を削除</button>
   </div>
   <div id="icon-picker-loading" style="text-align:center; padding:40px; color:#999; font-size:14px;">読み込み中…</div>
@@ -694,7 +758,6 @@ let favoriteProfiles = [];  // お気に入り（DBから）
 let currentPopupProfile = null;
 let currentScanner = null;
 let inputModalContext = { type: null, callback: null };
-let paginationState = { search: 1 };
 const ITEMS_PER_PAGE = 12;
 const MYPAGE_PREVIEW = 6; // お気に入り・交換済みの初期表示数
 let favoritesShowAll = false;
@@ -705,6 +768,7 @@ let lastSearchQuery = '';
 let lastSearchFiltered = [];
 let iconPickerImages = [];
 let iconPickerOffset = 0;
+let iconFavOnlyActive = false;  // お気に入りのみモード
 const ICON_PAGE_SIZE = 60;
 let selectedIconUrl = null;
 
@@ -745,6 +809,19 @@ async function init() {
   }
 
   checkUrl();
+
+  // ?edit=1 でプロフィール編集を直接開く（sakulabo からの誘導等）
+  try {
+    const qs = new URLSearchParams(location.search);
+    if (qs.get('edit') === '1' && me) {
+      // クエリは消す（リロード時に二重起動しない）
+      const cleanUrl = location.pathname + (qs.get('from') ? '?from=' + encodeURIComponent(qs.get('from')) : '');
+      history.replaceState(null, '', cleanUrl);
+      switchTab('mypage');
+      setTimeout(() => openEdit(), 100);
+    }
+  } catch(e){}
+
   document.getElementById('search-input').addEventListener('input', e => triggerSearch(e.target.value));
   document.getElementById('add-sns-btn').onclick = addSns;
 }
@@ -868,9 +945,13 @@ function switchTab(tab) {
   document.getElementById('mypage-page').hidden = tab !== 'mypage';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   window.scrollTo(0,0);
+  if (tab === 'search') {
+    setupSearchObserver();
+    if (!searchOffset && !searchLoading) resetAndLoadSearch();
+  }
 }
 
-function renderAll() { renderHome(); triggerSearch(''); renderMyPage(); }
+function renderAll() { renderHome(); renderMyPage(); }
 
 // ── アバター表示 ─────────────────────────────────────────
 function getAvatarUrl(profile) {
@@ -974,7 +1055,7 @@ async function renderHome() {
   const list = document.getElementById('similar-list');
   list.innerHTML = '<div class="empty-state">読み込み中…</div>';
   try {
-    const res = await fetch(API + '?action=buddies_similar&limit=6', { credentials:'include' });
+    const res = await fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' });
     const json = await res.json();
     if (json.ok && json.data.length) {
       const similars = json.data;
@@ -989,26 +1070,162 @@ async function renderHome() {
 
 // ── 検索 ─────────────────────────────────────────────────
 let searchDebounce = null;
+let searchOffset = 0;
+let searchLoading = false;
+let searchEnded = false;
+let searchPageSize = 24;
+let searchOshis = [];          // 選択された推しメン名
+let searchOshiMode = 'or';     // 'or' or 'and'
+let searchObserver = null;
+
+function buildSearchParams(offset) {
+  const params = new URLSearchParams();
+  params.set('action', 'buddies_search');
+  params.set('limit', searchPageSize);
+  params.set('offset', offset);
+  if (lastSearchQuery) params.set('q', lastSearchQuery);
+  if (searchOshis.length) params.set('oshis', searchOshis.join(','));
+  if (searchOshiMode === 'and') params.set('oshi_mode', 'and');
+  return params.toString();
+}
+
 function triggerSearch(q) {
   lastSearchQuery = q;
-  paginationState.search = 1;
   clearTimeout(searchDebounce);
-  searchDebounce = setTimeout(() => doSearch(q), 300);
+  searchDebounce = setTimeout(() => resetAndLoadSearch(), 300);
 }
-async function doSearch(q) {
-  const results = document.getElementById('search-results');
-  results.innerHTML = '<div class="empty-state">検索中…</div>';
+
+function resetAndLoadSearch() {
+  searchOffset = 0;
+  searchLoading = false;
+  searchEnded = false;
+  lastSearchFiltered = [];
+  document.getElementById('search-results').innerHTML = '';
+  document.getElementById('search-end').style.display = 'none';
+  loadMoreSearch();
+}
+
+async function loadMoreSearch() {
+  if (searchLoading || searchEnded) return;
+  searchLoading = true;
+  const loadingEl = document.getElementById('search-loading');
+  loadingEl.style.display = 'block';
   try {
-    const url = API + '?action=buddies_search&limit=100&q=' + encodeURIComponent(q);
+    const url = API + '?' + buildSearchParams(searchOffset);
     const res = await fetch(url, { credentials:'include' });
     const json = await res.json();
-    if (json.ok) {
-      lastSearchFiltered = shuffleArray(json.data || []);
-    } else {
-      lastSearchFiltered = [];
+    const items = json.ok ? (json.data || []) : [];
+    if (items.length < searchPageSize) searchEnded = true;
+    lastSearchFiltered = lastSearchFiltered.concat(items);
+    appendSearchResults(items, searchOffset === 0);
+    searchOffset += items.length;
+  } catch(e) {
+    searchEnded = true;
+  }
+  loadingEl.style.display = 'none';
+  if (searchEnded) {
+    document.getElementById('search-end').style.display = lastSearchFiltered.length ? 'block' : 'none';
+    if (!lastSearchFiltered.length) {
+      document.getElementById('search-results').innerHTML = '<div class="empty-state">見つかりませんでした</div>';
     }
-  } catch(e) { lastSearchFiltered = []; }
-  renderSearchPage();
+  }
+  searchLoading = false;
+}
+
+function appendSearchResults(items, isFirst) {
+  const results = document.getElementById('search-results');
+  if (isFirst && !items.length) return;
+  const startIndex = lastSearchFiltered.length - items.length;
+  const html = items.map(p => {
+    const reasons = calcMatchReasons(p);
+    const pWithReasons = reasons.length ? {...p, match_reasons: reasons} : p;
+    return profileMini(pWithReasons, {showReasons: reasons.length > 0});
+  }).join('');
+  results.insertAdjacentHTML('beforeend', html);
+  // 新しく追加されたカードにクリックハンドラを付与
+  const all = results.querySelectorAll('.profile-mini');
+  for (let i = startIndex; i < lastSearchFiltered.length; i++) {
+    const el = all[i];
+    if (el && !el.dataset.bound) {
+      el.dataset.bound = '1';
+      el.onclick = () => openProfile(lastSearchFiltered[i], false);
+    }
+  }
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function setupSearchObserver() {
+  if (searchObserver) return;
+  const sentinel = document.getElementById('search-sentinel');
+  if (!sentinel) return;
+  searchObserver = new IntersectionObserver(entries => {
+    for (const e of entries) {
+      if (e.isIntersecting) {
+        const searchPage = document.getElementById('search-page');
+        if (!searchPage.hidden) loadMoreSearch();
+      }
+    }
+  }, { rootMargin: '300px 0px' });
+  searchObserver.observe(sentinel);
+}
+
+// ── 推しメンフィルターUI ─────────────────────────────────
+function toggleOshiFilterPanel() {
+  const panel = document.getElementById('oshi-filter-panel');
+  const btn   = document.getElementById('oshi-filter-toggle');
+  const toggleText = document.getElementById('oshi-filter-toggle-text');
+  const toggleIcon = document.getElementById('oshi-filter-toggle-icon');
+  const isOpen = panel.style.display !== 'none';
+  
+  if (isOpen) {
+    panel.style.display = 'none';
+    toggleText.textContent = '開く';
+    if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
+  } else {
+    panel.style.display = 'block';
+    toggleText.textContent = '閉じる';
+    if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
+    renderOshiFilterChips();
+  }
+}
+
+function renderOshiFilterChips() {
+  const wrap = document.getElementById('oshi-filter-chips');
+  if (!wrap) return;
+  const names = Object.keys(memberMap);
+  wrap.innerHTML = names.map(name => {
+    const isSelected = searchOshis.includes(name);
+    const bg = isSelected ? '#000' : '#fff';
+    const color = isSelected ? '#fff' : '#333';
+    const border = isSelected ? '#000' : '#d1d5db';
+    
+    return `<button type="button" class="oshi-chip" data-name="${esc(name)}"
+      style="padding:7px 13px; border-radius:9999px; font-size:12px; font-weight:600;
+             background:${bg}; color:${color}; border:1.5px solid ${border}; cursor:pointer;
+             user-select:none; -webkit-user-select:none; transition:all 0.15s;">${esc(name)}</button>`;
+  }).join('');
+  
+  // クリックイベントのみ
+  wrap.querySelectorAll('.oshi-chip').forEach(btn => {
+    const name = btn.dataset.name;
+
+    btn.addEventListener('click', () => {
+      const idx = searchOshis.indexOf(name);
+      if (idx >= 0) {
+        searchOshis.splice(idx, 1);
+      } else {
+        if (searchOshis.length < 10) searchOshis.push(name);
+      }
+      renderOshiFilterChips();
+      applyOshiFilter();
+    });
+  });
+}
+
+function applyOshiFilter() {
+  const mode = document.querySelector('input[name="oshi-mode"]:checked');
+  searchOshiMode = mode ? mode.value : 'or';
+  resetAndLoadSearch();
 }
 function calcMatchReasons(p) {
   if (!me) return [];
@@ -1028,31 +1245,6 @@ function calcMatchReasons(p) {
   return reasons;
 }
 
-function renderSearchPage() {
-  const results = document.getElementById('search-results');
-  if (!lastSearchFiltered.length) {
-    results.innerHTML = '<div class="empty-state">見つかりませんでした</div>';
-    document.getElementById('search-pagination').innerHTML = '';
-    return;
-  }
-  const page = paginationState.search;
-  const start = (page-1)*ITEMS_PER_PAGE;
-  const end   = start + ITEMS_PER_PAGE;
-  const paged = lastSearchFiltered.slice(start, end);
-  const total = Math.ceil(lastSearchFiltered.length / ITEMS_PER_PAGE);
-
-  results.innerHTML = paged.map(p => {
-    const reasons = calcMatchReasons(p);
-    const pWithReasons = reasons.length ? {...p, match_reasons: reasons} : p;
-    return profileMini(pWithReasons, {showReasons: reasons.length > 0});
-  }).join('');
-  results.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(lastSearchFiltered[start+i], false));
-
-  if (total > 1) renderPaginationButtons('search-pagination', page, total, 'gotoSearchPage');
-  else document.getElementById('search-pagination').innerHTML = '';
-  if(window.lucide) window.lucide.createIcons();
-}
-function gotoSearchPage(page) { paginationState.search = page; renderSearchPage(); window.scrollTo(0,0); }
 
 // ── マイページ ───────────────────────────────────────────
 function renderMyPage() {
@@ -1160,8 +1352,15 @@ function profileMini(p, opts = {}) {
     : isExchanged
     ? `<div class="profile-mini-exchanged-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
-  const reasons = opts.showReasons && Array.isArray(p.match_reasons) && p.match_reasons.length
-    ? `<div class="profile-mini-reasons">${p.match_reasons.map(r=>`<span class="match-reason">${esc(r)}</span>`).join('')}</div>`
+  const hasSns = Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim());
+  const snsBadge = hasSns
+    ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></div>`
+    : '';
+  const filteredReasons = opts.showReasons && Array.isArray(p.match_reasons)
+    ? p.match_reasons.filter(r => r !== 'SNSを登録している')
+    : [];
+  const reasons = filteredReasons.length
+    ? `<div class="profile-mini-reasons">${filteredReasons.map(r=>`<span class="match-reason">${esc(r)}</span>`).join('')}</div>`
     : '';
   const exchangedAtHtml = opts.exchangedAt
     ? `<div class="profile-mini-exchanged-at">${formatExchangedAt(opts.exchangedAt)}</div>`
@@ -1193,8 +1392,11 @@ function getSnsIcon(type) {
   return icons[type] || icons['link'];
 }
 
-function openProfile(profile, isOwn) {
+function openProfile(profile, isOwn, opts = {}) {
+  // 共有経由フラグはプロフィールオブジェクトに保持（再描画時に維持するため）
+  if (opts.source === 'shared') profile._sharedView = true;
   currentPopupProfile = profile;
+  const isShared = profile._sharedView === true;
   const modal = document.getElementById('profile-modal');
   const card  = document.getElementById('profile-modal-card');
   const oshiList = getOshiList(profile);
@@ -1222,6 +1424,24 @@ function openProfile(profile, isOwn) {
       <button class="pill-button" onclick="copyProfileURL()" style="flex:1;"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
       <button class="pill-button" onclick="shareToX()" style="flex:1;display:inline-flex;align-items:center;gap:6px;"><svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="flex-shrink:0;display:block;"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.262 5.638 5.9-5.638Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>X</button>
       <button class="pill-button" onclick="shareProfile()" style="flex:1;"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
+    `;
+  } else if (isShared && !me) {
+    // 未ログインで共有URL経由
+    actionBtns = `
+      <button class="pill-button black" onclick="closeProfileModal(); showAuthModal();" style="flex:1;display:inline-flex;align-items:center;gap:6px;justify-content:center;"><i data-lucide="log-in" style="width:16px;height:16px;"></i>ログインしてお気に入り</button>
+      <button class="pill-button" onclick="closeProfileModal()" style="flex:1;">閉じる</button>
+    `;
+  } else if (isShared) {
+    // ログイン済み + 共有URL経由（交換不可）
+    const isFav = favoriteProfiles.some(f => f.id === profile.id);
+    const alreadyExchanged = exchangedProfiles.some(e => e.id === profile.id);
+    const exchangeNote = alreadyExchanged
+      ? `<div style="flex-basis:100%;font-size:11px;color:#16a34a;text-align:center;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:4px;"><i data-lucide="check-circle" style="width:13px;height:13px;"></i>このユーザーとは交換済み</div>`
+      : `<div style="flex-basis:100%;font-size:11px;color:#9ca3af;text-align:center;margin-top:4px;line-height:1.5;">交換するにはBuddiesアプリ内カメラでQRを読み取ってください</div>`;
+    actionBtns = `
+      <button class="pill-button${isFav?' pink':''}" onclick="toggleFavorite()" style="flex:1;"><i data-lucide="heart" style="width:16px;height:16px; ${isFav?'fill:#000':''}"></i>お気に入り</button>
+      <button class="pill-button black" onclick="closeProfileModal()" style="flex:1;">閉じる</button>
+      ${exchangeNote}
     `;
   } else {
     const isFav = favoriteProfiles.some(f => f.id === profile.id);
@@ -1271,6 +1491,7 @@ function openProfile(profile, isOwn) {
 function closeProfileModal() {
   document.getElementById('profile-modal').classList.remove('active');
   document.body.style.overflow = 'auto';
+  if (currentPopupProfile) delete currentPopupProfile._sharedView;
 }
 
 async function toggleFavorite() {
@@ -1779,6 +2000,18 @@ async function openIconPicker() {
       filterEl.appendChild(opt);
     });
   }
+  
+  // お気に入りフィルターをリセット
+  iconFavOnlyActive = false;
+  const btn = document.getElementById('icon-fav-only-toggle');
+  if (btn) {
+    const span = btn.querySelector('span');
+    if (span) span.textContent = 'お気に入りのみ';
+    btn.style.background = '#f5f5f5';
+    btn.style.color = '#000';
+    btn.style.borderColor = '#e5e7eb';
+  }
+  
   iconPickerOffset = 0;
   iconPickerImages = [];
   document.getElementById('icon-picker-page').classList.add('active');
@@ -1790,6 +2023,31 @@ function closeIconPicker() {
   document.body.style.overflow = 'hidden'; // edit-page が開いているのでhidden維持
 }
 
+function toggleIconFavOnly() {
+  const btn = document.getElementById('icon-fav-only-toggle');
+  const span = btn.querySelector('span');
+  iconFavOnlyActive = !iconFavOnlyActive;
+  
+  // ボタンのテキストと外観を更新
+  if (iconFavOnlyActive) {
+    span.textContent = 'お気に入りのみ ✓';
+    btn.style.background = '#000';
+    btn.style.color = '#fff';
+    btn.style.borderColor = '#000';
+  } else {
+    span.textContent = 'お気に入りのみ';
+    btn.style.background = '#f5f5f5';
+    btn.style.color = '#000';
+    btn.style.borderColor = '#e5e7eb';
+  }
+  
+  // Lucideアイコンを再初期化
+  if (window.lucide) window.lucide.createIcons();
+  
+  // 画像を再読み込み
+  loadBlogImages();
+}
+
 async function loadBlogImages() {
   iconPickerOffset = 0;
   iconPickerImages = [];
@@ -1797,9 +2055,10 @@ async function loadBlogImages() {
   document.getElementById('icon-picker-grid').style.display = 'none';
   document.getElementById('icon-picker-empty').style.display = 'none';
 
-  const member = document.getElementById('icon-member-filter').value;
-  const sort   = document.getElementById('icon-sort').value;
-  const url = API + `?action=buddies_blog_images&limit=${ICON_PAGE_SIZE}&offset=0&sort=${sort}&member=${encodeURIComponent(member)}`;
+  const member  = document.getElementById('icon-member-filter').value;
+  const sort    = document.getElementById('icon-sort').value;
+  const favOnly = iconFavOnlyActive ? '&favorite_only=1' : '';
+  const url = API + `?action=buddies_blog_images&limit=${ICON_PAGE_SIZE}&offset=0&sort=${sort}&member=${encodeURIComponent(member)}${favOnly}`;
 
   try {
     const res = await fetch(url, { credentials:'include' });
@@ -1820,9 +2079,10 @@ async function loadBlogImages() {
 }
 
 async function loadMoreBlogImages() {
-  const member = document.getElementById('icon-member-filter').value;
-  const sort   = document.getElementById('icon-sort').value;
-  const url = API + `?action=buddies_blog_images&limit=${ICON_PAGE_SIZE}&offset=${iconPickerOffset}&sort=${sort}&member=${encodeURIComponent(member)}`;
+  const member  = document.getElementById('icon-member-filter').value;
+  const sort    = document.getElementById('icon-sort').value;
+  const favOnly = iconFavOnlyActive ? '&favorite_only=1' : '';
+  const url = API + `?action=buddies_blog_images&limit=${ICON_PAGE_SIZE}&offset=${iconPickerOffset}&sort=${sort}&member=${encodeURIComponent(member)}${favOnly}`;
   try {
     const res = await fetch(url, { credentials:'include' });
     const json = await res.json();
@@ -1839,13 +2099,22 @@ async function loadMoreBlogImages() {
 
 function renderIconGrid(reset) {
   const grid = document.getElementById('icon-picker-grid');
+  const empty = document.getElementById('icon-picker-empty');
   if (reset) grid.innerHTML = '';
   if (!iconPickerImages.length) {
-    document.getElementById('icon-picker-empty').style.display = 'flex';
+    if (iconFavOnlyActive) {
+      empty.innerHTML = '<div style="text-align:center; line-height:1.6;"><div style="font-size:14px; font-weight:600; margin-bottom:6px;">お気に入りに画像がありません</div><div style="font-size:12px; color:#888;">SakuLaboでブログ画像を<br/>お気に入りに追加できます。</div><br><br><a href="https://buddies46.stars.ne.jp/satellite/sakulabo/blog" target="_blank" style="color:#007bff; text-decoration:underline;">sakulaboはこちら</a></div>';
+    } else {
+      empty.textContent = '画像が見つかりません';
+    }
+    empty.style.display = 'flex';
+    empty.style.alignItems = 'center';
+    empty.style.justifyContent = 'center';
+    empty.style.minHeight = '400px';
     grid.style.display = 'none';
     return;
   }
-  document.getElementById('icon-picker-empty').style.display = 'none';
+  empty.style.display = 'none';
   grid.style.display = 'grid';
   const currentIcon = me?.user_icon;
   const startIdx = reset ? 0 : grid.children.length;
@@ -2305,7 +2574,17 @@ async function checkUrl() {
 
     const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${uid}`, { credentials:'include' });
     const pJson = await pRes.json();
-    if (!pJson.ok) return;
+    if (!pJson.ok) {
+      toast('プロフィールが見つかりませんでした');
+      return;
+    }
+
+    // 自分自身のリンクなら自分のプロフィール表示へ
+    if (me && parseInt(uid, 10) === parseInt(me.id, 10)) {
+      switchTab('mypage');
+      setTimeout(() => openProfile(me, true), 300);
+      return;
+    }
 
     if (mode === 'exchange' && token && me) {
       // Buddiesアプリ内経由のQRスキャン（URL遷移ケース）
@@ -2314,13 +2593,23 @@ async function checkUrl() {
         await addExchangedById(parseInt(uid, 10), true);
         return; // showExchangeSuccess内でプロフィール表示
       }
-      // tokenが期限切れでも閲覧は可能にする
       toast('QRコードが期限切れです。交換にはBuddiesアプリ内カメラで読み取ってください');
     }
+
     // 閲覧モード（OSカメラ・URL共有・token期限切れ）
-    document.getElementById('viewBanner').style.display = 'block';
-    setTimeout(() => openProfile(pJson.data, false), 300);
+    const targetName = getDisplayName(pJson.data);
+    const banner    = document.getElementById('viewBanner');
+    const bannerTxt = document.getElementById('viewBannerText');
+    bannerTxt.textContent = me
+      ? `${targetName} さんのプロフィールを閲覧中（交換はBuddiesアプリ内カメラから）`
+      : `${targetName} さんのプロフィールを閲覧中（ログインするとお気に入りできます）`;
+    banner.style.display = 'block';
+    setTimeout(() => openProfile(pJson.data, false, { source: 'shared' }), 300);
   } catch(e) {}
+}
+
+function closeViewBanner() {
+  document.getElementById('viewBanner').style.display = 'none';
 }
 
 // ── ページネーション ─────────────────────────────────────

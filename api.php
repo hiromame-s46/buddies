@@ -697,35 +697,70 @@ function actionSearch(): void {
     $me     = currentUser();
     $myId   = $me ? (int)$me['id'] : 0;
 
+    // 推しメン絞り込み（複数指定 + AND/OR + 第一推し指定）
+    $oshisRaw = $_GET['oshis'] ?? '';
+    $oshis    = array_values(array_filter(array_map('trim', explode(',', $oshisRaw))));
+    $oshis    = array_slice(array_unique($oshis), 0, 10);
+    $oshiMode = strtolower(trim($_GET['oshi_mode'] ?? 'or')) === 'and' ? 'and' : 'or';
+    $primary  = trim($_GET['primary_oshi'] ?? '');
+
     $selectCols = '
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
         bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template';
 
-    if ($q === '') {
-        $st = db()->prepare("
-            SELECT $selectCols
-            FROM sakulabo_users u
-            LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
-            WHERE u.id != ?
-            ORDER BY u.created_at DESC
-            LIMIT ? OFFSET ?");
-        $st->execute([$myId ?: 0, $limit, $offset]);
-    } else {
+    $where  = ['u.id != ?'];
+    $params = [$myId ?: 0];
+
+    if ($q !== '') {
         $like = '%' . $q . '%';
-        $st = db()->prepare("
-            SELECT $selectCols
+        $where[] = '(u.display_name LIKE ? OR u.username LIKE ?
+                    OR u.oshi_member LIKE ? OR u.oshi_member_2 LIKE ? OR u.oshi_member_3 LIKE ?
+                    OR bp.tags LIKE ? OR bp.location LIKE ?)';
+        for ($i = 0; $i < 7; $i++) $params[] = $like;
+    }
+
+    // 第一推し指定（最優先で oshi_member 列に固定）
+    if ($primary !== '') {
+        $where[]  = 'u.oshi_member = ?';
+        $params[] = $primary;
+    }
+
+    // 複数推しメン（AND: 全員いずれかのスロットに含む / OR: いずれか1人でも一致）
+    if (!empty($oshis)) {
+        $oshiCols = ['u.oshi_member', 'u.oshi_member_2', 'u.oshi_member_3'];
+        if ($oshiMode === 'and') {
+            // 全員が3スロットのいずれかに含まれる必要がある
+            foreach ($oshis as $name) {
+                if ($primary !== '' && $primary === $name) continue; // 第一推しと同一なら重複条件不要
+                $where[]  = '(' . implode(' OR ', array_map(fn($c) => "$c = ?", $oshiCols)) . ')';
+                $params[] = $name; $params[] = $name; $params[] = $name;
+            }
+        } else {
+            // OR: いずれか1人がいずれかのスロットに含まれる
+            $clauses = [];
+            foreach ($oshis as $name) {
+                foreach ($oshiCols as $c) {
+                    $clauses[] = "$c = ?";
+                    $params[]  = $name;
+                }
+            }
+            if ($clauses) $where[] = '(' . implode(' OR ', $clauses) . ')';
+        }
+    }
+
+    $sql = "SELECT $selectCols
             FROM sakulabo_users u
             LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
-            WHERE u.id != ?
-              AND (u.display_name LIKE ? OR u.username LIKE ?
-                   OR u.oshi_member LIKE ? OR u.oshi_member_2 LIKE ? OR u.oshi_member_3 LIKE ?
-                   OR bp.tags LIKE ? OR bp.location LIKE ?)
+            WHERE " . implode(' AND ', $where) . "
             ORDER BY u.created_at DESC
-            LIMIT ? OFFSET ?");
-        $st->execute([$myId ?: 0, $like, $like, $like, $like, $like, $like, $like, $limit, $offset]);
-    }
+            LIMIT ? OFFSET ?";
+    $params[] = $limit;
+    $params[] = $offset;
+
+    $st = db()->prepare($sql);
+    $st->execute($params);
     ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
 }
 
@@ -737,7 +772,7 @@ function actionSimilar(): void {
     if (!$me) { ok([]); return; }
 
     $myId  = (int)$me['id'];
-    $limit = min((int)($_GET['limit'] ?? 10), 50);
+    $limit = min((int)($_GET['limit'] ?? 25), 50);
 
     // 自分のプロフィールデータを取得
     $myBp      = getBuddiesProfile($myId);
@@ -757,12 +792,40 @@ function actionSimilar(): void {
     // お気に入り・交換済みのIDセットを取得（優先度を下げるため）
     $favSt = db()->prepare('SELECT target_id FROM buddies_favorites WHERE user_id = ?');
     $favSt->execute([$myId]);
+    $favIds = array_map('intval', array_column($favSt->fetchAll(), 'target_id'));
+
     $exSt  = db()->prepare('SELECT target_id FROM buddies_exchanges WHERE user_id = ?');
     $exSt->execute([$myId]);
-    $deprioritized = array_flip(array_merge(
-        array_column($favSt->fetchAll(), 'target_id'),
-        array_column($exSt->fetchAll(),  'target_id')
-    ));
+    $exIds = array_map('intval', array_column($exSt->fetchAll(), 'target_id'));
+
+    $deprioritized = array_flip(array_merge($favIds, $exIds));
+
+    // お気に入りした人たちの推しメン・タグ・都道府県を集約（類似ユーザー検出用）
+    $favOshiCount     = []; // name => count
+    $favTagCount      = []; // tag  => count
+    $favLocationCount = []; // pref => count
+    if (!empty($favIds)) {
+        $ph = implode(',', array_fill(0, count($favIds), '?'));
+        $favSt2 = db()->prepare("
+            SELECT u.oshi_member, u.oshi_member_2, u.oshi_member_3,
+                   bp.tags, bp.location
+            FROM sakulabo_users u
+            LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
+            WHERE u.id IN ($ph)");
+        $favSt2->execute($favIds);
+        foreach ($favSt2->fetchAll() as $fr) {
+            foreach ([$fr['oshi_member'], $fr['oshi_member_2'], $fr['oshi_member_3']] as $o) {
+                if ($o) $favOshiCount[$o] = ($favOshiCount[$o] ?? 0) + 1;
+            }
+            $tg = $fr['tags'] ? (json_decode($fr['tags'], true) ?? []) : [];
+            foreach ($tg as $t) {
+                if (is_string($t) && $t !== '') $favTagCount[$t] = ($favTagCount[$t] ?? 0) + 1;
+            }
+            if (!empty($fr['location'])) {
+                $favLocationCount[$fr['location']] = ($favLocationCount[$fr['location']] ?? 0) + 1;
+            }
+        }
+    }
 
     $selectCols = '
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
@@ -843,6 +906,34 @@ function actionSimilar(): void {
             $reasons[] = 'SNSスタンスが一緒';
         }
 
+        // ⑦ お気に入りした人に似ている（推しメン傾向 / タグ傾向 / 都道府県）
+        if (!empty($favOshiCount)) {
+            $simBoost = 0;
+            foreach ($cOshis as $o) {
+                if (isset($favOshiCount[$o])) $simBoost += min(3, $favOshiCount[$o]) * 2;
+            }
+            if (!empty($cTags)) {
+                foreach ($cTags as $t) {
+                    if (isset($favTagCount[$t])) $simBoost += min(2, $favTagCount[$t]);
+                }
+            }
+            if (!empty($c['location']) && isset($favLocationCount[$c['location']])) {
+                $simBoost += min(2, $favLocationCount[$c['location']]);
+            }
+            if ($simBoost > 0) {
+                $score += min(10, $simBoost);
+                $reasons[] = 'お気に入りした人に似ている';
+            }
+        }
+
+        // ⑧ SNSリンクを登録している人を優先（最大3点）
+        $cSns = ($c['sns_links']) ? (json_decode($c['sns_links'], true) ?? []) : [];
+        $cSns = is_array($cSns) ? array_values(array_filter($cSns, fn($s) => is_array($s) && !empty($s['url']))) : [];
+        if (count($cSns) > 0) {
+            $score += min(3, count($cSns));
+            $reasons[] = 'SNSを登録している';
+        }
+
         // お気に入り・交換済みは後方へ。ただし共通点があればスコア最低1を保証
         if (isset($deprioritized[$cId])) {
             if ($score > 0) {
@@ -871,17 +962,58 @@ function actionSimilar(): void {
 //  ブログ画像一覧（アイコン選択用）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function actionBlogImages(): void {
-    requireAuth();
-
-    $blogsPath = BLOG_DATA_PATH;
-    if (!file_exists($blogsPath)) { ok(['total' => 0, 'items' => []]); return; }
-    $blogs = json_decode(file_get_contents($blogsPath), true);
-    if (!is_array($blogs)) { ok(['total' => 0, 'items' => []]); return; }
+    $me = requireAuth();
 
     $memberFilter = trim($_GET['member'] ?? '');
     $sort         = $_GET['sort'] ?? 'newest';
     $limit        = min((int)($_GET['limit'] ?? 200), 500);
     $offset       = max((int)($_GET['offset'] ?? 0), 0);
+    $favoriteOnly = !empty($_GET['favorite_only']) && $_GET['favorite_only'] !== '0';
+
+    // ─ お気に入り画像のみ ─（sakulabo_blog_image_likes から取得）
+    if ($favoriteOnly) {
+        try {
+            $st = db()->prepare(
+                'SELECT image_url, blog_id, created_at
+                 FROM sakulabo_blog_image_likes
+                 WHERE user_id = ?
+                 ORDER BY created_at ' . ($sort === 'oldest' ? 'ASC' : 'DESC')
+            );
+            $st->execute([(int)$me['id']]);
+            $rows = $st->fetchAll();
+        } catch (\Throwable $e) { $rows = []; }
+
+        // blog_id → blog（member, date）の対応を作る
+        $blogsPath = BLOG_DATA_PATH;
+        $blogByLink = [];
+        if (file_exists($blogsPath)) {
+            $blogs = json_decode(file_get_contents($blogsPath), true);
+            if (is_array($blogs)) {
+                foreach ($blogs as $b) {
+                    if (!empty($b['link'])) $blogByLink[$b['link']] = $b;
+                }
+            }
+        }
+
+        $items = [];
+        foreach ($rows as $r) {
+            $b = $blogByLink[$r['blog_id']] ?? null;
+            $member = $b['member'] ?? '';
+            if ($memberFilter !== '' && $member !== $memberFilter) continue;
+            $items[] = [
+                'url'    => $r['image_url'],
+                'member' => $member,
+                'date'   => $b['date'] ?? '',
+            ];
+        }
+        ok(['total' => count($items), 'items' => array_slice($items, $offset, $limit)]);
+        return;
+    }
+
+    $blogsPath = BLOG_DATA_PATH;
+    if (!file_exists($blogsPath)) { ok(['total' => 0, 'items' => []]); return; }
+    $blogs = json_decode(file_get_contents($blogsPath), true);
+    if (!is_array($blogs)) { ok(['total' => 0, 'items' => []]); return; }
 
     if ($memberFilter !== '') {
         $blogs = array_values(array_filter($blogs, fn($b) => ($b['member'] ?? '') === $memberFilter));
