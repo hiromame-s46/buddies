@@ -118,7 +118,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
 .oshi-pill { background:#000; color:#fff; padding:6px 14px; border-radius:9999px; font-size:13px; font-weight:500; }
 
-.oshi-chip { 
+.oshi-chip {
   padding:7px 13px; border-radius:9999px; font-size:12px; font-weight:600;
   background:#fff; color:#333; border:1.5px solid #d1d5db; cursor:pointer;
   user-select:none; -webkit-user-select:none; transition:all 0.15s;
@@ -130,6 +130,231 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 }
 .oshi-chip:active {
   transform:scale(0.96);
+}
+
+/* フィルタートリガーボタン */
+.filter-trigger {
+  display:inline-flex; align-items:center; gap:8px;
+  padding:9px 16px; border-radius:9999px; border:1.5px solid #e5e7eb;
+  background:#fff; color:#000; font-size:13px; font-weight:700; cursor:pointer;
+  font-family:inherit; transition:all 0.15s;
+  -webkit-appearance:none; appearance:none;
+}
+.filter-trigger:hover { border-color:#999; background:#fafafa; }
+.filter-trigger:active { transform:scale(0.97); }
+.filter-trigger.has-active {
+  background:#000; color:#fff; border-color:#000;
+}
+.filter-trigger-badge {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 6px;
+  background:#fff; color:#000; border-radius:9999px;
+  font-size:11px; font-weight:800;
+}
+.filter-trigger:not(.has-active) .filter-trigger-badge { background:#000; color:#fff; }
+
+/* 適用中サマリー */
+#filters-summary .summary-pill {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:5px 8px 5px 12px; border-radius:9999px;
+  background:#f2f2f2; color:#000; font-size:12px; font-weight:600;
+  border:1px solid #e5e7eb;
+}
+#filters-summary .summary-pill .remove {
+  display:flex; cursor:pointer; opacity:.6; padding:2px; border-radius:50%;
+}
+#filters-summary .summary-pill .remove:hover { opacity:1; background:rgba(0,0,0,.06); }
+
+/* フィルターモーダル */
+.filters-modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:2500;
+  display:flex; align-items:flex-end; justify-content:center;
+  opacity:0; pointer-events:none; transition:opacity .25s;
+  backdrop-filter:blur(3px);
+}
+.filters-modal-overlay.active { opacity:1; pointer-events:auto; }
+.filters-modal {
+  background:#fff; border-radius:24px 24px 0 0;
+  width:100%; max-width:100%; max-height:88vh;
+  display:flex; flex-direction:column;
+  transform:translateY(100%); transition:transform .35s cubic-bezier(0.32,0.72,0,1);
+}
+.filters-modal-overlay.active .filters-modal { transform:translateY(0); }
+.filters-modal-handle {
+  width:40px; height:4px; background:#e5e7eb; border-radius:9999px;
+  margin:10px auto 4px;
+}
+.filters-modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 20px 12px; flex-shrink:0;
+}
+.filters-modal-body {
+  flex:1 1 auto; overflow-y:auto; padding:0 20px 20px; min-height:0;
+  -webkit-overflow-scrolling:touch;
+}
+.filters-modal-footer {
+  display:flex; gap:10px; padding:14px 20px calc(18px + env(safe-area-inset-bottom));
+  border-top:1px solid #f0f0f0; background:#fff; flex-shrink:0;
+}
+@media (min-width:560px) {
+  .filters-modal-overlay { align-items:center; padding:20px; }
+  .filters-modal { border-radius:24px; max-width:480px; max-height:80vh; }
+}
+
+/* タブ */
+.filters-tabs {
+  display:flex; gap:6px; padding:4px 20px 14px;
+  overflow-x:auto; -webkit-overflow-scrolling:touch; scrollbar-width:none;
+  border-bottom:1px solid #f0f0f0; flex-shrink:0;
+}
+.filters-tabs::-webkit-scrollbar { display:none; }
+.filter-tab {
+  flex:0 0 auto; padding:9px 16px; border-radius:9999px; font-size:13px; font-weight:700;
+  background:#f5f5f5; color:#666; border:1.5px solid transparent; cursor:pointer;
+  font-family:inherit; transition:all 0.15s; white-space:nowrap;
+  -webkit-appearance:none; appearance:none;
+  display:inline-flex; align-items:center;
+}
+.filter-tab > * { pointer-events:none; }
+.filter-tab:hover { background:#ececec; }
+.filter-tab.active { background:#000; color:#fff; }
+.filter-tab .filter-tab-count {
+  display:inline-flex; align-items:center; justify-content:center;
+  margin-left:6px; min-width:18px; height:18px; padding:0 6px;
+  background:rgba(255,255,255,.25); color:inherit; border-radius:9999px; font-size:11px; font-weight:800;
+}
+.filter-tab:not(.active) .filter-tab-count { background:#000; color:#fff; }
+
+/* セクションラベル */
+.filter-section-label {
+  font-size:11px; font-weight:700; color:#999;
+  text-transform:uppercase; letter-spacing:0.5px;
+  margin:14px 2px 8px;
+}
+.filter-section-label:first-child { margin-top:8px; }
+
+/* マッチングモード（カード風ラジオ） */
+.filter-mode-card {
+  display:flex; align-items:center; gap:10px; cursor:pointer;
+  padding:12px 14px; border:1.5px solid #e5e7eb; border-radius:14px;
+  background:#fff; transition:all 0.15s;
+}
+.filter-mode-card:has(input:checked) { border-color:#000; background:#fafafa; }
+.filter-mode-card input[type="radio"] {
+  width:16px; height:16px; cursor:pointer; accent-color:#000; flex-shrink:0;
+}
+.filter-mode-title { font-size:13px; font-weight:700; color:#000; line-height:1.2; }
+.filter-mode-sub { font-size:11px; color:#666; margin-top:2px; line-height:1.2; }
+
+/* メンバーチップ（アバター付き、上側クロップ） */
+.member-chip-grid {
+  display:grid; grid-template-columns:repeat(auto-fill, minmax(78px, 1fr)); gap:8px;
+}
+.member-chip {
+  display:flex; flex-direction:column; align-items:center; gap:6px;
+  padding:8px 6px 10px; border-radius:14px; background:#fff;
+  border:1.5px solid #e5e7eb; cursor:pointer; transition:all 0.15s;
+  font-family:inherit; position:relative;
+  -webkit-appearance:none; appearance:none;
+}
+.member-chip:hover { border-color:#999; }
+.member-chip:active { transform:scale(0.96); }
+.member-chip.selected { background:#000; border-color:#000; }
+.member-chip.selected .member-chip-name { color:#fff; }
+.member-chip-avatar {
+  width:48px; height:48px; border-radius:50%; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  font-weight:700; color:#fff; font-size:18px; flex-shrink:0;
+  border:2px solid #fff; box-shadow:0 1px 3px rgba(0,0,0,.08);
+}
+.member-chip.selected .member-chip-avatar { border-color:#222; }
+.member-chip-avatar img {
+  width:100%; height:100%; object-fit:cover; object-position:top center; display:block;
+}
+.member-chip-name {
+  font-size:11px; font-weight:700; color:#333; line-height:1.2; text-align:center;
+  word-break:keep-all; overflow:hidden; text-overflow:ellipsis;
+  max-width:100%; padding:0 2px;
+}
+.member-chip-check {
+  position:absolute; top:6px; right:6px;
+  width:18px; height:18px; border-radius:50%;
+  background:#fff; color:#000;
+  display:none; align-items:center; justify-content:center;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+}
+.member-chip.selected .member-chip-check { display:flex; }
+
+/* 興味/楽曲のピル一覧 */
+.filter-pill-list {
+  display:flex; flex-wrap:wrap; gap:6px; min-height:36px;
+  padding:10px; background:#f9f9f9; border:1px solid #e5e7eb; border-radius:12px;
+}
+.filter-pill-list:empty::before {
+  content:"未選択"; font-size:12px; color:#999; padding:4px;
+}
+.filter-pill {
+  display:inline-flex; align-items:center; gap:6px; padding:7px 10px 7px 14px;
+  background:#000; color:#fff; border-radius:9999px; font-size:12px; font-weight:600;
+}
+.filter-pill .remove { cursor:pointer; display:flex; padding:2px; opacity:.85; }
+.filter-pill .remove:hover { opacity:1; }
+
+/* オプションチップ（人気タグ・楽曲） */
+.option-chip-list {
+  display:flex; flex-wrap:wrap; gap:6px;
+}
+.option-chip-list .option-loading,
+.option-chip-list .option-empty {
+  font-size:12px; color:#999; padding:6px 2px;
+}
+.option-chip {
+  display:inline-flex; align-items:center; gap:6px;
+  padding:7px 12px; border-radius:9999px;
+  background:#fff; border:1.5px solid #e5e7eb; color:#333;
+  font-size:12px; font-weight:600; font-family:inherit; cursor:pointer;
+  transition:all 0.15s; -webkit-appearance:none; appearance:none;
+  max-width:100%;
+}
+.option-chip > * { pointer-events:none; }
+.option-chip:hover { border-color:#999; background:#fafafa; }
+.option-chip:active { transform:scale(0.97); }
+.option-chip.selected { background:#000; border-color:#000; color:#fff; }
+.option-chip-name {
+  overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:180px;
+}
+.option-chip-count {
+  display:inline-flex; align-items:center; justify-content:center;
+  min-width:18px; height:18px; padding:0 6px; border-radius:9999px;
+  background:#f2f2f2; color:#666; font-size:10px; font-weight:700;
+}
+.option-chip.selected .option-chip-count { background:rgba(255,255,255,.22); color:#fff; }
+
+/* SNSトグル */
+.filter-toggle-card {
+  display:flex; align-items:center; gap:14px; cursor:pointer;
+  padding:14px 16px; border:1.5px solid #e5e7eb; border-radius:14px; background:#fff;
+  transition:all 0.15s; position:relative;
+}
+.filter-toggle-card:hover { border-color:#999; }
+.filter-toggle-card:has(input:checked) { border-color:#000; background:#fafafa; }
+.filter-switch {
+  position:absolute; opacity:0; pointer-events:none;
+}
+.filter-switch-track {
+  position:relative; flex-shrink:0;
+  width:44px; height:26px; border-radius:9999px;
+  background:#d1d5db; transition:background 0.2s;
+}
+.filter-switch-track::after {
+  content:""; position:absolute; top:3px; left:3px;
+  width:20px; height:20px; border-radius:50%; background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.2);
+  transition:transform 0.2s;
+}
+.filter-toggle-card:has(input:checked) .filter-switch-track { background:#000; }
+.filter-toggle-card:has(input:checked) .filter-switch-track::after {
+  transform:translateX(18px);
 }
 
 .stance-btn.active { background:#000; color:#fff; border-color:#000; }
@@ -275,7 +500,10 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .view-banner-close:hover { background:#fff; }
 
 .search-input-wrap { position:relative; margin-top:16px; }
-.search-input-wrap svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:#999; pointer-events:none; }
+.search-input-wrap > svg { position:absolute; left:18px; top:50%; transform:translateY(-50%); width:18px; height:18px; stroke:#999; pointer-events:none; }
+.search-clear-btn { position:absolute; right:12px; top:50%; transform:translateY(-50%); display:none; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; border:none; background:#ccc; cursor:pointer; padding:0; color:#fff; }
+.search-clear-btn svg { width:12px; height:12px; display:block; }
+.search-clear-btn:hover { background:#999; }
 
 .empty-state { text-align:center; padding:40px 20px; color:#999; font-size:14px; }
 
@@ -312,6 +540,10 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .input-modal-title { font-size:18px; font-weight:700; margin-bottom:16px; }
 .input-modal-input { width:100%; padding:12px 16px; border:1px solid var(--eee); border-radius:12px; font-size:16px; margin-bottom:12px; color:#000; }
 .input-modal-buttons { display:flex; gap:8px; }
+.suggest-item { display:flex; align-items:center; justify-content:space-between; padding:11px 16px; font-size:14px; cursor:pointer; border-bottom:1px solid var(--eee); color:#111; background:#fff; }
+.suggest-item:last-child { border-bottom:none; }
+.suggest-item:hover { background:#f7f7f7; }
+.suggest-item .suggest-count { font-size:11px; color:#999; margin-left:8px; flex-shrink:0; }
 
 /* ── 認証モーダル ── */
 .auth-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:3000; padding:16px; }
@@ -365,44 +597,27 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="search-page" hidden>
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲で検索" style="padding-left:44px;">
+      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲で検索" style="padding-left:44px; padding-right:44px;">
+      <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" aria-label="クリア">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
     </div>
 
-    <!-- 推しメンフィルター -->
-    <div id="oshi-filter-wrap" style="margin-top:12px; padding:14px; background:#fff; border-radius:14px; border:1px solid #e5e7eb; box-shadow:0 1px 3px rgba(0, 0, 0, 0.05);">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:0;">
-        <div style="display:flex; align-items:center; gap:6px; font-size:13px; font-weight:700; color:#000;">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M8 12h8M6 18h12"/>
-          </svg>
-          フィルター
-        </div>
-        <button id="oshi-filter-toggle" class="pill-button" style="padding:5px 12px; font-size:12px; font-weight:600; background:#f5f5f5; border-color:#e5e7eb; color:#000;" onclick="toggleOshiFilterPanel()">
-          <span id="oshi-filter-toggle-text">開く</span>
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="transition: transform 0.2s;" id="oshi-filter-toggle-icon">
-            <path d="m6 9 6 6 6-6"/>
-          </svg>
-        </button>
-      </div>
-      <div id="oshi-filter-panel" style="display:none; margin-top:12px;">
-        <!-- モード選択 -->
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:12px;">
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 12px; border:1.5px solid #e5e7eb; border-radius:9999px; background:#fff; transition:all 0.15s;">
-            <input type="radio" name="oshi-mode" value="or" checked onchange="applyOshiFilter()" style="width:14px; height:14px; cursor:pointer; accent-color:#000;">
-            <div style="font-size:12px; font-weight:600; color:#000;">いずれか</div>
-          </label>
-          <label style="display:flex; align-items:center; gap:8px; cursor:pointer; padding:10px 12px; border:1.5px solid #e5e7eb; border-radius:9999px; background:#fff; transition:all 0.15s;">
-            <input type="radio" name="oshi-mode" value="and" onchange="applyOshiFilter()" style="width:14px; height:14px; cursor:pointer; accent-color:#000;">
-            <div style="font-size:12px; font-weight:600; color:#000;">全員一致</div>
-          </label>
-        </div>
-        <!-- 選択チップ -->
-        <div>
-          <div style="font-size:11px; font-weight:600; color:#666; text-transform:uppercase; letter-spacing:0.3px; margin-bottom:8px;">メンバー選択</div>
-          <div id="oshi-filter-chips" style="display:flex; flex-wrap:wrap; gap:6px; background:#f9f9f9; padding:10px 12px; border-radius:10px; border:1px solid #e5e7eb; min-height:32px;"></div>
-        </div>
-      </div>
+    <!-- フィルタートリガー -->
+    <div id="filters-bar" style="margin-top:12px; display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+      <button id="filters-open-btn" type="button" class="filter-trigger" onclick="openFiltersModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+          <path d="M3 6h18M7 12h10M11 18h2"/>
+        </svg>
+        <span>フィルター</span>
+        <span id="filters-active-count" class="filter-trigger-badge" hidden>0</span>
+      </button>
+      <button id="filters-clear-btn" type="button" class="pill-button" style="padding:7px 14px; font-size:12px; font-weight:600; background:#fff; border-color:#e5e7eb; color:#666;" onclick="clearAllFilters()" hidden>
+        すべてクリア
+      </button>
     </div>
+    <!-- 適用中サマリー -->
+    <div id="filters-summary" style="margin-top:8px; display:none; flex-wrap:wrap; gap:6px;"></div>
 
     <div id="search-results" class="profile-list" style="margin-top:16px;"></div>
     <div id="search-loading" style="text-align:center; padding:14px 0; display:none; font-size:12px; color:#888;">読み込み中…</div>
@@ -653,10 +868,96 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 <div id="input-modal" class="input-modal-overlay" onclick="if(event.target===this)closeInputModal()">
   <div class="input-modal">
     <div class="input-modal-title" id="input-modal-title"></div>
-    <input type="text" id="input-modal-input" class="input-modal-input" placeholder="">
+    <div id="input-modal-suggest" style="display:none; margin:0 0 10px; border:1px solid var(--eee); border-radius:12px; overflow:hidden; max-height:200px; overflow-y:auto;"></div>
+    <input type="text" id="input-modal-input" class="input-modal-input" placeholder="" autocomplete="off">
     <div class="input-modal-buttons">
       <button class="pill-button" style="flex:1;" onclick="closeInputModal()">キャンセル</button>
       <button class="pill-button black" style="flex:1;" onclick="submitInputModal()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- フィルターモーダル -->
+<div id="filters-modal" class="filters-modal-overlay" onclick="if(event.target===this)closeFiltersModal()">
+  <div class="filters-modal">
+    <div class="filters-modal-handle"></div>
+    <div class="filters-modal-header">
+      <div style="font-size:18px; font-weight:800; letter-spacing:-0.3px;">フィルター</div>
+      <button type="button" class="modal-close-btn" onclick="closeFiltersModal()" aria-label="閉じる" style="position:static;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+
+    <div id="filters-tabs" class="filters-tabs">
+      <button type="button" class="filter-tab" data-tab="member" onclick="switchFilterTab('member')">メンバー</button>
+      <button type="button" class="filter-tab" data-tab="tags"   onclick="switchFilterTab('tags')">興味</button>
+      <button type="button" class="filter-tab" data-tab="songs"  onclick="switchFilterTab('songs')">楽曲</button>
+      <button type="button" class="filter-tab" data-tab="sns"    onclick="switchFilterTab('sns')">SNS</button>
+    </div>
+
+    <div class="filters-modal-body">
+      <!-- メンバータブ -->
+      <div class="filter-tab-panel" data-tab="member">
+        <div class="filter-section-label">マッチング条件</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
+          <label class="filter-mode-card">
+            <input type="radio" name="oshi-mode" value="or" checked onchange="applyOshiFilter()">
+            <div>
+              <div class="filter-mode-title">いずれか</div>
+              <div class="filter-mode-sub">1人でも一致</div>
+            </div>
+          </label>
+          <label class="filter-mode-card">
+            <input type="radio" name="oshi-mode" value="and" onchange="applyOshiFilter()">
+            <div>
+              <div class="filter-mode-title">全員一致</div>
+              <div class="filter-mode-sub">全員推している</div>
+            </div>
+          </label>
+        </div>
+        <div class="filter-section-label">メンバー（複数選択可）</div>
+        <div id="oshi-filter-chips" class="member-chip-grid"></div>
+      </div>
+
+      <!-- 興味タブ -->
+      <div class="filter-tab-panel" data-tab="tags" hidden>
+        <div class="filter-section-label">選択中</div>
+        <div id="tags-filter-chips" class="filter-pill-list"></div>
+        <div class="filter-section-label">人気の興味タグ</div>
+        <div id="tags-options-list" class="option-chip-list">
+          <div class="option-loading">読み込み中…</div>
+        </div>
+      </div>
+
+      <!-- 楽曲タブ -->
+      <div class="filter-tab-panel" data-tab="songs" hidden>
+        <div class="filter-section-label">選択中</div>
+        <div id="songs-filter-chips" class="filter-pill-list"></div>
+        <div class="filter-section-label">人気の楽曲</div>
+        <div id="songs-options-list" class="option-chip-list">
+          <div class="option-loading">読み込み中…</div>
+        </div>
+      </div>
+
+      <!-- SNSタブ -->
+      <div class="filter-tab-panel" data-tab="sns" hidden>
+        <div class="filter-section-label">SNS設定</div>
+        <label class="filter-toggle-card">
+          <div style="flex:1;">
+            <div style="font-size:14px; font-weight:700; color:#000;">SNS設定済みのみ表示</div>
+            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">SNSリンクを登録しているユーザーに絞り込みます</div>
+          </div>
+          <input type="checkbox" id="sns-set-filter" class="filter-switch" onchange="applySnsFilter()">
+          <span class="filter-switch-track" aria-hidden="true"></span>
+        </label>
+      </div>
+    </div>
+
+    <div class="filters-modal-footer">
+      <button type="button" class="pill-button" style="flex:1;" onclick="clearAllFilters()">クリア</button>
+      <button type="button" class="pill-button black" style="flex:2;" onclick="closeFiltersModal()">
+        <span id="filters-apply-label">結果を見る</span>
+      </button>
     </div>
   </div>
 </div>
@@ -829,7 +1130,12 @@ async function init() {
     }
   } catch(e){}
 
-  document.getElementById('search-input').addEventListener('input', e => triggerSearch(e.target.value));
+  const searchInputEl = document.getElementById('search-input');
+  const searchClearBtn = document.getElementById('search-clear-btn');
+  searchInputEl.addEventListener('input', e => {
+    searchClearBtn.style.display = e.target.value ? 'flex' : 'none';
+    triggerSearch(e.target.value);
+  });
   document.getElementById('add-sns-btn').onclick = addSns;
 }
 window.onload = init;
@@ -1083,7 +1389,13 @@ let searchEnded = false;
 let searchPageSize = 24;
 let searchOshis = [];          // 選択された推しメン名
 let searchOshiMode = 'or';     // 'or' or 'and'
+let searchTags = [];           // 興味タグ
+let searchSongs = [];          // 楽曲
+let searchHasSns = false;      // SNS設定済みのみ
+let searchActiveTab = 'member';
 let searchObserver = null;
+let filterOptionsCache = null; // { tags:[{name,count}], songs:[...] }
+let filterOptionsLoading = false;
 
 function buildSearchParams(offset) {
   const params = new URLSearchParams();
@@ -1093,6 +1405,9 @@ function buildSearchParams(offset) {
   if (lastSearchQuery) params.set('q', lastSearchQuery);
   if (searchOshis.length) params.set('oshis', searchOshis.join(','));
   if (searchOshiMode === 'and') params.set('oshi_mode', 'and');
+  if (searchTags.length) params.set('tags', searchTags.join(','));
+  if (searchSongs.length) params.set('songs', searchSongs.join(','));
+  if (searchHasSns) params.set('has_sns', '1');
   return params.toString();
 }
 
@@ -1102,11 +1417,20 @@ function triggerSearch(q) {
   searchDebounce = setTimeout(() => resetAndLoadSearch(), 300);
 }
 
+function clearSearchInput() {
+  const el = document.getElementById('search-input');
+  el.value = '';
+  document.getElementById('search-clear-btn').style.display = 'none';
+  el.focus();
+  triggerSearch('');
+}
+
 function searchByKeyword(q) {
   closeProfileModal(true);
   switchTab('search');
   const input = document.getElementById('search-input');
   input.value = q;
+  document.getElementById('search-clear-btn').style.display = q ? 'flex' : 'none';
   triggerSearch(q);
 }
 
@@ -1184,47 +1508,268 @@ function setupSearchObserver() {
   searchObserver.observe(sentinel);
 }
 
-// ── 推しメンフィルターUI ─────────────────────────────────
-function toggleOshiFilterPanel() {
-  const panel = document.getElementById('oshi-filter-panel');
-  const btn   = document.getElementById('oshi-filter-toggle');
-  const toggleText = document.getElementById('oshi-filter-toggle-text');
-  const toggleIcon = document.getElementById('oshi-filter-toggle-icon');
-  const isOpen = panel.style.display !== 'none';
-  
-  if (isOpen) {
-    panel.style.display = 'none';
-    toggleText.textContent = '開く';
-    if (toggleIcon) toggleIcon.style.transform = 'rotate(0deg)';
-  } else {
-    panel.style.display = 'block';
-    toggleText.textContent = '閉じる';
-    if (toggleIcon) toggleIcon.style.transform = 'rotate(180deg)';
-    renderOshiFilterChips();
-  }
+// ── フィルターUI ─────────────────────────────────────────
+function openFiltersModal() {
+  const modal = document.getElementById('filters-modal');
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+  switchFilterTab(searchActiveTab);
+  renderAllFilterChips();
+  loadFilterOptions();
 }
 
+async function loadFilterOptions(force = false) {
+  if (filterOptionsCache && !force) {
+    renderTagsOptions();
+    renderSongsOptions();
+    return;
+  }
+  if (filterOptionsLoading) return;
+  filterOptionsLoading = true;
+  try {
+    const res = await fetch(API + '?action=buddies_filter_options', { credentials:'include' });
+    const json = await res.json();
+    if (json.ok) {
+      filterOptionsCache = json.data || { tags:[], songs:[] };
+    } else {
+      filterOptionsCache = { tags:[], songs:[] };
+    }
+  } catch (e) {
+    filterOptionsCache = { tags:[], songs:[] };
+  }
+  filterOptionsLoading = false;
+  renderTagsOptions();
+  renderSongsOptions();
+}
+
+function renderTagsOptions() {
+  const wrap = document.getElementById('tags-options-list');
+  if (!wrap) return;
+  if (!filterOptionsCache) {
+    wrap.innerHTML = '<div class="option-loading">読み込み中…</div>';
+    return;
+  }
+  const items = filterOptionsCache.tags || [];
+  if (!items.length) {
+    wrap.innerHTML = '<div class="option-empty">登録されている興味タグはまだありません</div>';
+    return;
+  }
+  wrap.innerHTML = items.map(it => {
+    const sel = searchTags.includes(it.name);
+    return `<button type="button" class="option-chip ${sel ? 'selected' : ''}" data-name="${esc(it.name)}">
+      <span class="option-chip-name">${esc(it.name)}</span>
+      <span class="option-chip-count">${it.count}</span>
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.option-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.name;
+      const idx = searchTags.indexOf(name);
+      if (idx >= 0) searchTags.splice(idx, 1);
+      else if (searchTags.length < 10) searchTags.push(name);
+      else { alert('興味タグは10個までです'); return; }
+      renderTagsFilterChips();
+      renderTagsOptions();
+      renderFilterTabsCounts();
+      resetAndLoadSearch();
+    });
+  });
+}
+
+function renderSongsOptions() {
+  const wrap = document.getElementById('songs-options-list');
+  if (!wrap) return;
+  if (!filterOptionsCache) {
+    wrap.innerHTML = '<div class="option-loading">読み込み中…</div>';
+    return;
+  }
+  const items = filterOptionsCache.songs || [];
+  if (!items.length) {
+    wrap.innerHTML = '<div class="option-empty">登録されている楽曲はまだありません</div>';
+    return;
+  }
+  wrap.innerHTML = items.map(it => {
+    const sel = searchSongs.includes(it.name);
+    return `<button type="button" class="option-chip ${sel ? 'selected' : ''}" data-name="${esc(it.name)}">
+      <span class="option-chip-name">${esc(it.name)}</span>
+      <span class="option-chip-count">${it.count}</span>
+    </button>`;
+  }).join('');
+  wrap.querySelectorAll('.option-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const name = btn.dataset.name;
+      const idx = searchSongs.indexOf(name);
+      if (idx >= 0) searchSongs.splice(idx, 1);
+      else if (searchSongs.length < 10) searchSongs.push(name);
+      else { alert('楽曲は10個までです'); return; }
+      renderSongsFilterChips();
+      renderSongsOptions();
+      renderFilterTabsCounts();
+      resetAndLoadSearch();
+    });
+  });
+}
+function closeFiltersModal() {
+  document.getElementById('filters-modal').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+function switchFilterTab(tab) {
+  searchActiveTab = tab;
+  document.querySelectorAll('.filter-tab').forEach(b => {
+    b.classList.toggle('active', b.dataset.tab === tab);
+  });
+  document.querySelectorAll('.filter-tab-panel').forEach(p => {
+    p.hidden = p.dataset.tab !== tab;
+  });
+  if (tab === 'member') renderOshiFilterChips();
+  if (tab === 'tags')   { renderTagsFilterChips(); renderTagsOptions(); }
+  if (tab === 'songs')  { renderSongsFilterChips(); renderSongsOptions(); }
+}
+
+function renderFilterTabsCounts() {
+  const counts = {
+    member: searchOshis.length,
+    tags:   searchTags.length,
+    songs:  searchSongs.length,
+    sns:    searchHasSns ? 1 : 0,
+  };
+  document.querySelectorAll('.filter-tab').forEach(btn => {
+    const c = counts[btn.dataset.tab] || 0;
+    const label = ({member:'メンバー', tags:'興味', songs:'楽曲', sns:'SNS'})[btn.dataset.tab] || '';
+    btn.innerHTML = c > 0
+      ? `${esc(label)}<span class="filter-tab-count">${c}</span>`
+      : esc(label);
+  });
+
+  const total = counts.member + counts.tags + counts.songs + counts.sns;
+  const badge = document.getElementById('filters-active-count');
+  const trigger = document.getElementById('filters-open-btn');
+  const clearBtn = document.getElementById('filters-clear-btn');
+  const applyLabel = document.getElementById('filters-apply-label');
+
+  if (total > 0) {
+    badge.textContent = total;
+    badge.hidden = false;
+    trigger.classList.add('has-active');
+    clearBtn.hidden = false;
+    if (applyLabel) applyLabel.textContent = `${total}件のフィルターで絞り込む`;
+  } else {
+    badge.hidden = true;
+    trigger.classList.remove('has-active');
+    clearBtn.hidden = true;
+    if (applyLabel) applyLabel.textContent = '結果を見る';
+  }
+
+  renderFiltersSummary();
+}
+
+function renderFiltersSummary() {
+  const wrap = document.getElementById('filters-summary');
+  if (!wrap) return;
+  const items = [];
+  if (searchOshis.length) {
+    const modeLabel = searchOshiMode === 'and' ? '全員' : 'いずれか';
+    items.push({ key:'member-mode', label:`メンバー: ${modeLabel}`, removable:false });
+    searchOshis.forEach((name, i) => items.push({
+      key:`member-${i}`, label:name, type:'member', index:i,
+    }));
+  }
+  searchTags.forEach((t, i) => items.push({ key:`tag-${i}`, label:`#${t}`, type:'tag', index:i }));
+  searchSongs.forEach((s, i) => items.push({ key:`song-${i}`, label:`♪ ${s}`, type:'song', index:i }));
+  if (searchHasSns) items.push({ key:'sns', label:'SNS設定済み', type:'sns' });
+
+  if (!items.length) {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.style.display = 'flex';
+  wrap.innerHTML = items.map(it => {
+    if (it.removable === false) {
+      return `<span class="summary-pill" style="background:#fff;">${esc(it.label)}</span>`;
+    }
+    const handler = it.type === 'member' ? `removeOshiAt(${it.index})`
+                  : it.type === 'tag'    ? `removeTagsFilter(${it.index})`
+                  : it.type === 'song'   ? `removeSongsFilter(${it.index})`
+                  : `toggleSnsFilter(false)`;
+    return `<span class="summary-pill">${esc(it.label)}<span class="remove" onclick="${handler}" aria-label="削除">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </span></span>`;
+  }).join('');
+}
+
+function removeOshiAt(i) {
+  searchOshis.splice(i, 1);
+  renderOshiFilterChips();
+  renderFilterTabsCounts();
+  resetAndLoadSearch();
+}
+function toggleSnsFilter(v) {
+  searchHasSns = !!v;
+  const cb = document.getElementById('sns-set-filter');
+  if (cb) cb.checked = searchHasSns;
+  renderFilterTabsCounts();
+  resetAndLoadSearch();
+}
+
+function renderAllFilterChips() {
+  renderOshiFilterChips();
+  renderTagsFilterChips();
+  renderSongsFilterChips();
+  renderTagsOptions();
+  renderSongsOptions();
+  const cb = document.getElementById('sns-set-filter');
+  if (cb) cb.checked = searchHasSns;
+  renderFilterTabsCounts();
+}
+
+function clearAllFilters() {
+  searchOshis = [];
+  searchTags = [];
+  searchSongs = [];
+  searchHasSns = false;
+  const orRadio = document.querySelector('input[name="oshi-mode"][value="or"]');
+  if (orRadio) orRadio.checked = true;
+  searchOshiMode = 'or';
+  renderAllFilterChips();
+  resetAndLoadSearch();
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key !== 'Escape') return;
+  const modal = document.getElementById('filters-modal');
+  if (modal && modal.classList.contains('active')) {
+    e.preventDefault();
+    closeFiltersModal();
+  }
+});
+
+// ── メンバーフィルター ───────────────────────────────────
 function renderOshiFilterChips() {
   const wrap = document.getElementById('oshi-filter-chips');
   if (!wrap) return;
   const names = Object.keys(memberMap);
   wrap.innerHTML = names.map(name => {
+    const m = memberMap[name] || {};
+    const color = m.color || '#ffb7c5';
+    const img = m.image;
     const isSelected = searchOshis.includes(name);
-    const bg = isSelected ? '#000' : '#fff';
-    const color = isSelected ? '#fff' : '#333';
-    const border = isSelected ? '#000' : '#d1d5db';
-    
-    return `<button type="button" class="oshi-chip" data-name="${esc(name)}"
-      style="padding:7px 13px; border-radius:9999px; font-size:12px; font-weight:600;
-             background:${bg}; color:${color}; border:1.5px solid ${border}; cursor:pointer;
-             user-select:none; -webkit-user-select:none; transition:all 0.15s;">${esc(name)}</button>`;
+    const avatar = img
+      ? `<div class="member-chip-avatar" style="background:${esc(color)};"><img src="${esc(img)}" alt="" onerror="this.style.display='none'"></div>`
+      : `<div class="member-chip-avatar" style="background:${esc(color)};">${esc((name[0]||'?'))}</div>`;
+    return `<button type="button" class="member-chip ${isSelected ? 'selected' : ''}" data-name="${esc(name)}">
+      <span class="member-chip-check" aria-hidden="true">
+        <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.5"><path d="M5 12l5 5L20 7"/></svg>
+      </span>
+      ${avatar}
+      <div class="member-chip-name">${esc(name)}</div>
+    </button>`;
   }).join('');
-  
-  // クリックイベントのみ
-  wrap.querySelectorAll('.oshi-chip').forEach(btn => {
-    const name = btn.dataset.name;
 
+  wrap.querySelectorAll('.member-chip').forEach(btn => {
     btn.addEventListener('click', () => {
+      const name = btn.dataset.name;
       const idx = searchOshis.indexOf(name);
       if (idx >= 0) {
         searchOshis.splice(idx, 1);
@@ -1232,6 +1777,7 @@ function renderOshiFilterChips() {
         if (searchOshis.length < 10) searchOshis.push(name);
       }
       renderOshiFilterChips();
+      renderFilterTabsCounts();
       applyOshiFilter();
     });
   });
@@ -1240,6 +1786,87 @@ function renderOshiFilterChips() {
 function applyOshiFilter() {
   const mode = document.querySelector('input[name="oshi-mode"]:checked');
   searchOshiMode = mode ? mode.value : 'or';
+  renderFilterTabsCounts();
+  resetAndLoadSearch();
+}
+
+// ── 興味タグフィルター ───────────────────────────────────
+function renderTagsFilterChips() {
+  const wrap = document.getElementById('tags-filter-chips');
+  if (!wrap) return;
+  if (!searchTags.length) {
+    wrap.innerHTML = '<div style="font-size:12px; color:#888; padding:6px 2px;">興味タグで絞り込めます</div>';
+    return;
+  }
+  wrap.innerHTML = searchTags.map((t, i) =>
+    `<span class="filter-pill">${esc(t)}<span class="remove" onclick="removeTagsFilter(${i})" aria-label="削除">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </span></span>`
+  ).join('');
+}
+function addTagsFilter() {
+  if (searchTags.length >= 10) { alert('興味タグは10個までです'); return; }
+  openInputModal('興味タグを入力（例: ライブ参戦）', () => {
+    const v = document.getElementById('input-modal-input').value.trim();
+    if (!v) { alert('入力してください'); return; }
+    if (searchTags.includes(v)) { alert('すでに追加済みです'); return; }
+    searchTags.push(v);
+    closeInputModal();
+    renderTagsFilterChips();
+    renderTagsOptions();
+    renderFilterTabsCounts();
+    resetAndLoadSearch();
+  });
+}
+function removeTagsFilter(i) {
+  searchTags.splice(i, 1);
+  renderTagsFilterChips();
+  renderTagsOptions();
+  renderFilterTabsCounts();
+  resetAndLoadSearch();
+}
+
+// ── 楽曲フィルター ───────────────────────────────────────
+function renderSongsFilterChips() {
+  const wrap = document.getElementById('songs-filter-chips');
+  if (!wrap) return;
+  if (!searchSongs.length) {
+    wrap.innerHTML = '<div style="font-size:12px; color:#888; padding:6px 2px;">好きな曲で絞り込めます</div>';
+    return;
+  }
+  wrap.innerHTML = searchSongs.map((s, i) =>
+    `<span class="filter-pill">${esc(s)}<span class="remove" onclick="removeSongsFilter(${i})" aria-label="削除">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </span></span>`
+  ).join('');
+}
+function addSongsFilter() {
+  if (searchSongs.length >= 10) { alert('楽曲は10個までです'); return; }
+  openInputModal('好きな曲を入力（例: Start over!）', () => {
+    const v = document.getElementById('input-modal-input').value.trim();
+    if (!v) { alert('入力してください'); return; }
+    if (searchSongs.includes(v)) { alert('すでに追加済みです'); return; }
+    searchSongs.push(v);
+    closeInputModal();
+    renderSongsFilterChips();
+    renderSongsOptions();
+    renderFilterTabsCounts();
+    resetAndLoadSearch();
+  });
+}
+function removeSongsFilter(i) {
+  searchSongs.splice(i, 1);
+  renderSongsFilterChips();
+  renderSongsOptions();
+  renderFilterTabsCounts();
+  resetAndLoadSearch();
+}
+
+// ── SNSフィルター ────────────────────────────────────────
+function applySnsFilter() {
+  const cb = document.getElementById('sns-set-filter');
+  searchHasSns = !!(cb && cb.checked);
+  renderFilterTabsCounts();
   resetAndLoadSearch();
 }
 function calcMatchReasons(p) {
@@ -1400,6 +2027,7 @@ function profileMini(p, opts = {}) {
 function getSnsIcon(type) {
   const icons = {
     'x': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:block;flex-shrink:0;" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.747l7.73-8.835L1.254 2.25H8.08l4.262 5.638 5.9-5.638Zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>',
+    'threads': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="display:block;flex-shrink:0;" aria-hidden="true"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221z"/></svg>',
     'instagram': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
     'tiktok': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19.321 7.532a5.88 5.88 0 0 1-3.442-1.103 5.91 5.91 0 0 1-2.146-3.043 5.86 5.86 0 0 1-.165-1.386h-3.14v12.63a3.02 3.02 0 1 1-2.137-2.895v-3.2a6.23 6.23 0 0 0-1.24-.124 6.22 6.22 0 1 0 6.22 6.22V9.59a8.91 8.91 0 0 0 4.93 1.49v-3.14a5.9 5.9 0 0 1-.88-.408Z"/></svg>',
     'youtube': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.388.52A2.997 2.997 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a2.997 2.997 0 0 0 2.11 2.12c1.883.52 9.388.52 9.388.52s7.505 0 9.388-.52a2.997 2.997 0 0 0 2.11-2.12C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.546 15.568V8.432L15.818 12l-6.272 3.568Z"/></svg>',
@@ -1422,7 +2050,7 @@ function openProfile(profile, isOwn, opts = {}) {
   const oshiHtml  = oshiList.map(o=>`<span class="pill-tag black">${esc(o)}</span>`).join('');
   const tagsHtml  = (profile.tags||[]).map(t=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(t)}" title="${esc(t)}を検索">${esc(t)}</button>`).join('');
   const songsHtml = (profile.favorite_songs||profile.favoriteSongs||[]).map(s=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(s)}" title="${esc(s)}を検索">${esc(s)}</button>`).join('');
-  const snsNames  = {x:'X',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'Link'};
+  const snsNames  = {x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'Link'};
   const snsLinks  = (profile.sns_links||profile.sns||[]).filter(s => s.url && s.url.trim()).slice(0,10);
   const snsItems  = snsLinks.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener" class="sns-chip" title="${esc(s.type)}">${getSnsIcon(s.type)}<span>${snsNames[s.type]||'Link'}</span></a>`).join('');
 
@@ -1604,6 +2232,7 @@ function openEdit() {
 
   document.getElementById('edit-page').classList.add('active');
   document.body.style.overflow = 'hidden';
+  if (!filterOptionsCache) loadFilterOptions();
 }
 
 function setupBirthdaySelectors(value) {
@@ -1646,11 +2275,21 @@ function calcAge(birthday) {
   return age >= 0 ? age : null;
 }
 
+function calcGenerationYY(birthday) {
+  const m = String(birthday || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return null;
+  const year = parseInt(m[1], 10);
+  const month = parseInt(m[2], 10);
+  const genYear = month <= 3 ? year - 1 : year;
+  return String(genYear).slice(-2);
+}
+
 function updateBirthdayAgePreview() {
   const bd = getBirthdayValue();
   const age = calcAge(bd);
   const el = document.getElementById('edit-age-preview');
-  el.textContent = age != null ? `現在 ${age} 歳（${String(bd.slice(0,4)).slice(-2)}世代）` : '';
+  const gen = calcGenerationYY(bd);
+  el.textContent = age != null && gen != null ? `現在 ${age} 歳（${gen}世代）` : '';
 }
 
 function setupBuddiesSinceSelectors(value) {
@@ -1739,13 +2378,14 @@ function renderEditTags() {
 }
 function addTag() {
   if (editTags.length >= 5) { alert('興味タグは5個までです'); return; }
+  const tagOptions = (filterOptionsCache && filterOptionsCache.tags) ? filterOptionsCache.tags : [];
   openInputModal('興味タグを入力（例: ライブ参戦）', () => {
     const v = document.getElementById('input-modal-input').value.trim();
     if (!v || v.length > 20) { alert('タグは1〜20文字で入力してください'); return; }
     editTags.push(v);
     renderEditTags();
     closeInputModal();
-  });
+  }, { suggest: tagOptions });
 }
 function removeTag(i) { editTags.splice(i,1); renderEditTags(); }
 
@@ -1756,13 +2396,14 @@ function renderEditSongs() {
 }
 function addSong() {
   if (editSongs.length >= 3) { alert('好きな曲は3曲までです'); return; }
+  const songOptions = (filterOptionsCache && filterOptionsCache.songs) ? filterOptionsCache.songs : [];
   openInputModal('好きな曲を入力（例: Start over!）', () => {
     const v = document.getElementById('input-modal-input').value.trim();
     if (!v || v.length > 30) { alert('曲は1〜30文字で入力してください'); return; }
     editSongs.push(v);
     renderEditSongs();
     closeInputModal();
-  });
+  }, { suggest: songOptions });
 }
 function removeSong(i) { editSongs.splice(i,1); renderEditSongs(); }
 
@@ -1772,6 +2413,7 @@ function renderEditSns() {
     <div style="display:flex; gap:6px; align-items:center;">
       <select class="pill-input" style="width:110px; padding:10px 12px; font-size:13px;" onchange="updateSns(${i},'type',this.value)">
         <option value="x" ${s.type==='x'?'selected':''}>X</option>
+        <option value="threads" ${s.type==='threads'?'selected':''}>Threads</option>
         <option value="instagram" ${s.type==='instagram'?'selected':''}>Instagram</option>
         <option value="tiktok" ${s.type==='tiktok'?'selected':''}>TikTok</option>
         <option value="youtube" ${s.type==='youtube'?'selected':''}>YouTube</option>
@@ -2708,21 +3350,69 @@ function closeConfirmModal() {
 }
 
 // ── インプットモーダル ────────────────────────────────────
-function openInputModal(title, callback) {
+function openInputModal(title, callback, opts = {}) {
   const modal = document.getElementById('input-modal');
   document.getElementById('input-modal-title').textContent = title;
-  document.getElementById('input-modal-input').value = '';
-  document.getElementById('input-modal-input').style.display = 'block';
+  const inputEl = document.getElementById('input-modal-input');
+  inputEl.value = '';
+  inputEl.style.display = 'block';
   const sel = document.getElementById('input-modal-select');
   if (sel) sel.style.display = 'none';
-  inputModalContext = { type:'text', callback };
+  const suggestEl = document.getElementById('input-modal-suggest');
+  suggestEl.style.display = 'none';
+  suggestEl.innerHTML = '';
+  inputModalContext = { type: opts.suggest ? 'song' : 'text', callback };
+  if (opts.suggest) {
+    inputEl.oninput = () => updateSongSuggest(opts.suggest);
+  } else {
+    inputEl.oninput = null;
+  }
   modal.classList.add('active');
   document.body.style.overflow = 'hidden';
-  setTimeout(() => document.getElementById('input-modal-input').focus(), 100);
+  setTimeout(() => inputEl.focus(), 100);
 }
+
+function normalizeKana(s) {
+  return s.toLowerCase()
+    .replace(/[ァ-ヶ]/g, c => String.fromCharCode(c.charCodeAt(0) - 0x60))
+    .replace(/[ぁ-ゖ]/g, c => String.fromCharCode(c.charCodeAt(0) + 0x60));
+}
+function updateSongSuggest(allSongs) {
+  const q = normalizeKana(document.getElementById('input-modal-input').value.trim());
+  const suggestEl = document.getElementById('input-modal-suggest');
+  if (!q) { suggestEl.style.display = 'none'; suggestEl.innerHTML = ''; return; }
+  const matches = allSongs.filter(s => normalizeKana(s.name).includes(q)).slice(0, 8);
+  if (!matches.length) { suggestEl.style.display = 'none'; suggestEl.innerHTML = ''; return; }
+  suggestEl.innerHTML = matches.map(s =>
+    `<div class="suggest-item" data-name="${esc(s.name)}">
+      <span>${esc(s.name)}</span>
+      <span class="suggest-count">${s.count}人</span>
+    </div>`
+  ).join('');
+  suggestEl.querySelectorAll('.suggest-item').forEach(el => {
+    el.addEventListener('mousedown', e => {
+      e.preventDefault();
+      selectSongSuggest(el.dataset.name);
+    });
+  });
+  suggestEl.style.display = 'block';
+}
+
+function selectSongSuggest(name) {
+  document.getElementById('input-modal-input').value = name;
+  const suggestEl = document.getElementById('input-modal-suggest');
+  suggestEl.style.display = 'none';
+  suggestEl.innerHTML = '';
+}
+
 function closeInputModal() {
   document.getElementById('input-modal').classList.remove('active');
   document.body.style.overflow = 'hidden';
+  const inputEl = document.getElementById('input-modal-input');
+  inputEl.oninput = null;
+  const suggestEl = document.getElementById('input-modal-suggest');
+  suggestEl.style.display = 'none';
+  suggestEl.innerHTML = '';
   inputModalContext = { type:null, callback:null };
 }
 function submitInputModal() {
@@ -2730,7 +3420,7 @@ function submitInputModal() {
 }
 document.addEventListener('keydown', e => {
   const modal = document.getElementById('input-modal');
-  if (modal.classList.contains('active') && e.key === 'Enter') { e.preventDefault(); submitInputModal(); }
+  if (modal.classList.contains('active') && e.key === 'Enter' && !e.isComposing) { e.preventDefault(); submitInputModal(); }
   if (modal.classList.contains('active') && e.key === 'Escape') { e.preventDefault(); closeInputModal(); }
 });
 

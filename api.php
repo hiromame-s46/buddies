@@ -314,6 +314,7 @@ match ($action) {
 
     'buddies_search'          => actionSearch(),
     'buddies_similar'         => actionSimilar(),
+    'buddies_filter_options'  => actionFilterOptions(),
 
     'buddies_blog_images'     => actionBlogImages(),
 
@@ -704,6 +705,19 @@ function actionSearch(): void {
     $oshiMode = strtolower(trim($_GET['oshi_mode'] ?? 'or')) === 'and' ? 'and' : 'or';
     $primary  = trim($_GET['primary_oshi'] ?? '');
 
+    // 興味タグ絞り込み（OR: いずれかを含む）
+    $tagsRaw = $_GET['tags'] ?? '';
+    $tags    = array_values(array_filter(array_map('trim', explode(',', $tagsRaw))));
+    $tags    = array_slice(array_unique($tags), 0, 10);
+
+    // 楽曲絞り込み（OR: いずれかを含む）
+    $songsRaw = $_GET['songs'] ?? '';
+    $songs    = array_values(array_filter(array_map('trim', explode(',', $songsRaw))));
+    $songs    = array_slice(array_unique($songs), 0, 10);
+
+    // SNS設定済みのみ
+    $hasSns = !empty($_GET['has_sns']) && $_GET['has_sns'] !== '0' && $_GET['has_sns'] !== 'false';
+
     $selectCols = '
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
         u.user_icon,
@@ -750,11 +764,56 @@ function actionSearch(): void {
         }
     }
 
-    $sql = "SELECT $selectCols
+    // 興味タグ（OR: bp.tags JSON文字列に LIKE で部分一致）
+    if (!empty($tags)) {
+        $clauses = [];
+        foreach ($tags as $t) {
+            $clauses[] = 'bp.tags LIKE ?';
+            $params[]  = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $t) . '"%';
+        }
+        $where[] = '(' . implode(' OR ', $clauses) . ')';
+    }
+
+    // 楽曲（OR: bp.favorite_songs JSON文字列に LIKE で部分一致）
+    if (!empty($songs)) {
+        $clauses = [];
+        foreach ($songs as $s) {
+            $clauses[] = 'bp.favorite_songs LIKE ?';
+            $params[]  = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $s) . '"%';
+        }
+        $where[] = '(' . implode(' OR ', $clauses) . ')';
+    }
+
+    // SNS設定済み（sns_links に少なくとも1件 url を含む）
+    if ($hasSns) {
+        $where[] = "(bp.sns_links IS NOT NULL AND bp.sns_links <> '' AND bp.sns_links <> '[]' AND bp.sns_links LIKE ?)";
+        $params[] = '%"url"%';
+    }
+
+    // 並び順:
+    //  1) SNS設定済みを優先
+    //  2) プロフィール完成度（推しメン/自己紹介/興味/楽曲/地域/SNS/誕生日/スタンス）
+    //  3) 新しいユーザー順
+    $hasSnsExpr = "(CASE WHEN bp.sns_links IS NOT NULL AND bp.sns_links <> '' AND bp.sns_links <> '[]' AND bp.sns_links LIKE '%\"url\"%' THEN 1 ELSE 0 END)";
+    $completionExpr =
+        "(CASE WHEN u.oshi_member   IS NOT NULL AND u.oshi_member   <> '' THEN 1 ELSE 0 END) +
+         (CASE WHEN u.oshi_member_2 IS NOT NULL AND u.oshi_member_2 <> '' THEN 1 ELSE 0 END) +
+         (CASE WHEN u.oshi_member_3 IS NOT NULL AND u.oshi_member_3 <> '' THEN 1 ELSE 0 END) +
+         (CASE WHEN bp.bio            IS NOT NULL AND bp.bio            <> '' THEN 1 ELSE 0 END) +
+         (CASE WHEN bp.tags           IS NOT NULL AND bp.tags           <> '' AND bp.tags           <> '[]' THEN 1 ELSE 0 END) +
+         (CASE WHEN bp.favorite_songs IS NOT NULL AND bp.favorite_songs <> '' AND bp.favorite_songs <> '[]' THEN 1 ELSE 0 END) +
+         (CASE WHEN bp.location       IS NOT NULL AND bp.location       <> '' THEN 1 ELSE 0 END) +
+         (CASE WHEN bp.birthday       IS NOT NULL THEN 1 ELSE 0 END) +
+         (CASE WHEN bp.follow_stance  IS NOT NULL AND bp.follow_stance  <> '' THEN 1 ELSE 0 END) +
+         (CASE WHEN u.user_icon       IS NOT NULL AND u.user_icon       <> '' THEN 1 ELSE 0 END)";
+
+    $sql = "SELECT $selectCols,
+                   $hasSnsExpr     AS _has_sns,
+                   $completionExpr AS _completion
             FROM sakulabo_users u
             LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
             WHERE " . implode(' AND ', $where) . "
-            ORDER BY u.created_at DESC
+            ORDER BY _has_sns DESC, _completion DESC, u.created_at DESC
             LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
@@ -762,6 +821,60 @@ function actionSearch(): void {
     $st = db()->prepare($sql);
     $st->execute($params);
     ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  フィルター選択肢（登録ユーザー数の多い順に集計）
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function actionFilterOptions(): void {
+    $limit = min((int)($_GET['limit'] ?? 50), 200);
+    $st = db()->query('SELECT tags, favorite_songs FROM buddies_profiles
+                       WHERE tags IS NOT NULL OR favorite_songs IS NOT NULL');
+    $tagCount  = [];
+    $songCount = [];
+    foreach ($st->fetchAll() as $r) {
+        if (!empty($r['tags'])) {
+            $arr = json_decode($r['tags'], true);
+            if (is_array($arr)) {
+                $seen = [];
+                foreach ($arr as $t) {
+                    if (!is_string($t)) continue;
+                    $t = trim($t);
+                    if ($t === '' || isset($seen[$t])) continue;
+                    $seen[$t] = true;
+                    $tagCount[$t] = ($tagCount[$t] ?? 0) + 1;
+                }
+            }
+        }
+        if (!empty($r['favorite_songs'])) {
+            $arr = json_decode($r['favorite_songs'], true);
+            if (is_array($arr)) {
+                $seen = [];
+                foreach ($arr as $s) {
+                    if (!is_string($s)) continue;
+                    $s = trim($s);
+                    if ($s === '' || isset($seen[$s])) continue;
+                    $seen[$s] = true;
+                    $songCount[$s] = ($songCount[$s] ?? 0) + 1;
+                }
+            }
+        }
+    }
+
+    $toList = function(array $counts) use ($limit) {
+        arsort($counts);
+        $out = [];
+        foreach ($counts as $name => $c) {
+            $out[] = ['name' => (string)$name, 'count' => (int)$c];
+            if (count($out) >= $limit) break;
+        }
+        return $out;
+    };
+
+    ok([
+        'tags'  => $toList($tagCount),
+        'songs' => $toList($songCount),
+    ]);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
