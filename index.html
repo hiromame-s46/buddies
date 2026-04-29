@@ -1396,12 +1396,14 @@ let searchActiveTab = 'member';
 let searchObserver = null;
 let filterOptionsCache = null; // { tags:[{name,count}], songs:[...] }
 let filterOptionsLoading = false;
+let searchSeed = 0;            // シャッフル用シード（検索リセット時に再生成）
 
 function buildSearchParams(offset) {
   const params = new URLSearchParams();
   params.set('action', 'buddies_search');
   params.set('limit', searchPageSize);
   params.set('offset', offset);
+  params.set('seed', searchSeed);
   if (lastSearchQuery) params.set('q', lastSearchQuery);
   if (searchOshis.length) params.set('oshis', searchOshis.join(','));
   if (searchOshiMode === 'and') params.set('oshi_mode', 'and');
@@ -1435,6 +1437,7 @@ function searchByKeyword(q) {
 }
 
 function resetAndLoadSearch() {
+  searchSeed = Math.floor(Math.random() * 2147483647) + 1;
   searchOffset = 0;
   searchLoading = false;
   searchEnded = false;

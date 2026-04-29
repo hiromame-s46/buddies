@@ -33,6 +33,7 @@
 $config = require __DIR__ . '/../../../api/config.php';
 
 define('SESSION_EXPIRE_HOURS', 720);
+define('ADMIN_KEY', '447686');
 define('ALLOWED_ORIGINS', ['*']);
 define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v4.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
@@ -317,6 +318,12 @@ match ($action) {
     'buddies_filter_options'  => actionFilterOptions(),
 
     'buddies_blog_images'     => actionBlogImages(),
+
+    'admin_tag_list'          => actionAdminTagList(),
+    'admin_tag_merge'         => actionAdminTagMerge(),
+
+    'admin_sns_search'        => actionAdminSnsSearch(),
+    'admin_sns_rename'        => actionAdminSnsRename(),
 
     default => err('不明なアクションです。'),
 };
@@ -793,7 +800,10 @@ function actionSearch(): void {
     // 並び順:
     //  1) SNS設定済みを優先
     //  2) プロフィール完成度（推しメン/自己紹介/興味/楽曲/地域/SNS/誕生日/スタンス）
-    //  3) 新しいユーザー順
+    //  3) 同一グループ内はシードベースのシャッフル（毎回ランダムだがページング中は順序維持）
+    $seed = (int)($_GET['seed'] ?? 0);
+    if ($seed === 0) $seed = rand(1, 2147483647);
+
     $hasSnsExpr = "(CASE WHEN bp.sns_links IS NOT NULL AND bp.sns_links <> '' AND bp.sns_links <> '[]' AND bp.sns_links LIKE '%\"url\"%' THEN 1 ELSE 0 END)";
     $completionExpr =
         "(CASE WHEN u.oshi_member   IS NOT NULL AND u.oshi_member   <> '' THEN 1 ELSE 0 END) +
@@ -807,13 +817,14 @@ function actionSearch(): void {
          (CASE WHEN bp.follow_stance  IS NOT NULL AND bp.follow_stance  <> '' THEN 1 ELSE 0 END) +
          (CASE WHEN u.user_icon       IS NOT NULL AND u.user_icon       <> '' THEN 1 ELSE 0 END)";
 
+    $params[] = $seed;
     $sql = "SELECT $selectCols,
                    $hasSnsExpr     AS _has_sns,
                    $completionExpr AS _completion
             FROM sakulabo_users u
             LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
             WHERE " . implode(' AND ', $where) . "
-            ORDER BY _has_sns DESC, _completion DESC, u.created_at DESC
+            ORDER BY _has_sns DESC, _completion DESC, RAND(?)
             LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
@@ -827,7 +838,6 @@ function actionSearch(): void {
 //  フィルター選択肢（登録ユーザー数の多い順に集計）
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function actionFilterOptions(): void {
-    $limit = min((int)($_GET['limit'] ?? 50), 200);
     $st = db()->query('SELECT tags, favorite_songs FROM buddies_profiles
                        WHERE tags IS NOT NULL OR favorite_songs IS NOT NULL');
     $tagCount  = [];
@@ -861,12 +871,11 @@ function actionFilterOptions(): void {
         }
     }
 
-    $toList = function(array $counts) use ($limit) {
+    $toList = function(array $counts) {
         arsort($counts);
         $out = [];
         foreach ($counts as $name => $c) {
             $out[] = ['name' => (string)$name, 'count' => (int)$c];
-            if (count($out) >= $limit) break;
         }
         return $out;
     };
@@ -1162,4 +1171,186 @@ function actionBlogImages(): void {
     }
 
     ok(['total' => count($unique), 'items' => array_slice($unique, $offset, $limit)]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  管理者: タグ一覧取得 / タグ統合
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function requireAdmin(): void {
+    $key = $_SERVER['HTTP_X_ADMIN_KEY'] ?? '';
+    if ($key !== ADMIN_KEY) {
+        http_response_code(403);
+        err('管理者認証が必要です。');
+    }
+}
+
+// タグ一覧（tags / favorite_songs 両方）を件数付きで返す
+function actionAdminTagList(): void {
+    requireAdmin();
+    $type = $_GET['type'] ?? 'tags'; // 'tags' or 'songs'
+    $col  = $type === 'songs' ? 'favorite_songs' : 'tags';
+
+    $st = db()->query("SELECT user_id, $col AS val FROM buddies_profiles WHERE $col IS NOT NULL AND $col != '' AND $col != '[]'");
+    $counts = [];
+    foreach ($st->fetchAll() as $r) {
+        $arr = json_decode($r['val'], true);
+        if (!is_array($arr)) continue;
+        $seen = [];
+        foreach ($arr as $item) {
+            if (!is_string($item)) continue;
+            $item = trim($item);
+            if ($item === '' || isset($seen[$item])) continue;
+            $seen[$item] = true;
+            $counts[$item] = ($counts[$item] ?? 0) + 1;
+        }
+    }
+    arsort($counts);
+    $out = [];
+    foreach ($counts as $name => $c) {
+        $out[] = ['name' => $name, 'count' => $c];
+    }
+    ok($out);
+}
+
+// タグ統合: $from を $to に置き換える（全ユーザーのプロフィールを更新）
+function actionAdminTagMerge(): void {
+    requireAdmin();
+    $b    = body();
+    $type = $b['type'] ?? 'tags'; // 'tags' or 'songs'
+    $from = trim($b['from'] ?? '');
+    $to   = trim($b['to']   ?? '');
+    if ($from === '' || $to === '') err('from と to は必須です。');
+    if ($from === $to) err('from と to が同じです。');
+    $col  = $type === 'songs' ? 'favorite_songs' : 'tags';
+
+    $st = db()->query("SELECT user_id, $col AS val FROM buddies_profiles WHERE $col IS NOT NULL AND $col != '' AND $col != '[]'");
+    $rows = $st->fetchAll();
+
+    $updated = 0;
+    $upd = db()->prepare("UPDATE buddies_profiles SET $col = ? WHERE user_id = ?");
+    foreach ($rows as $r) {
+        $arr = json_decode($r['val'], true);
+        if (!is_array($arr)) continue;
+
+        $hasFrom = false;
+        $hasTo   = false;
+        $new     = [];
+        foreach ($arr as $item) {
+            if (!is_string($item)) { $new[] = $item; continue; }
+            $t = trim($item);
+            if ($t === $from) { $hasFrom = true; continue; } // 置換対象は一旦スキップ
+            if ($t === $to)   { $hasTo   = true; }
+            $new[] = $t;
+        }
+        if (!$hasFrom) continue; // このユーザーは $from を持っていない
+
+        // $to がまだ入っていなければ先頭に追加
+        if (!$hasTo) array_unshift($new, $to);
+
+        $upd->execute([json_encode($new, JSON_UNESCAPED_UNICODE), $r['user_id']]);
+        $updated++;
+    }
+
+    ok(['updated' => $updated, 'from' => $from, 'to' => $to, 'type' => $type]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  管理者: SNSリンク検索
+//  GET ?action=admin_sns_search&q=URLキーワード
+//  → [{user_id, username, display_name, links:[{type,url}]}, ...]
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function actionAdminSnsSearch(): void {
+    requireAdmin();
+    $q = trim($_GET['q'] ?? '');
+
+    // sns_links が空でないユーザーを全取得（ユーザー情報とJOIN）
+    $st = db()->query(
+        'SELECT u.id, u.username, u.display_name, bp.sns_links
+         FROM buddies_profiles bp
+         JOIN sakulabo_users u ON u.id = bp.user_id
+         WHERE bp.sns_links IS NOT NULL
+           AND bp.sns_links != \'\'
+           AND bp.sns_links != \'[]\''
+    );
+    $rows = $st->fetchAll();
+
+    $results = [];
+    foreach ($rows as $r) {
+        $links = json_decode($r['sns_links'], true);
+        if (!is_array($links)) continue;
+        // URLキーワードでフィルタ（空なら全件）
+        if ($q !== '') {
+            $links = array_values(array_filter($links, function($l) use ($q) {
+                return is_array($l) && !empty($l['url'])
+                    && stripos($l['url'], $q) !== false;
+            }));
+            if (empty($links)) continue;
+        } else {
+            $links = array_values(array_filter($links, fn($l) => is_array($l) && !empty($l['url'])));
+            if (empty($links)) continue;
+        }
+        $results[] = [
+            'user_id'      => (int)$r['id'],
+            'username'     => $r['username'],
+            'display_name' => $r['display_name'],
+            'links'        => $links,
+        ];
+    }
+
+    ok($results);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  管理者: SNS名称一括変更
+//  POST {changes:[{user_id, url, new_type}], ...}
+//  → {updated: N}
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function actionAdminSnsRename(): void {
+    requireAdmin();
+    $b       = body();
+    $changes = $b['changes'] ?? [];
+
+    if (!is_array($changes) || empty($changes)) err('changes は必須です。');
+
+    // user_id ごとにグルーピング
+    $byUser = [];
+    foreach ($changes as $c) {
+        $uid     = (int)($c['user_id'] ?? 0);
+        $url     = trim($c['url']      ?? '');
+        $newType = trim($c['new_type'] ?? '');
+        if ($uid <= 0 || $url === '' || $newType === '') continue;
+        $byUser[$uid][] = ['url' => $url, 'new_type' => $newType];
+    }
+    if (empty($byUser)) err('有効な変更が1件もありません。');
+
+    $st  = db()->prepare('SELECT sns_links FROM buddies_profiles WHERE user_id = ? LIMIT 1');
+    $upd = db()->prepare('UPDATE buddies_profiles SET sns_links = ? WHERE user_id = ?');
+
+    $updated = 0;
+    foreach ($byUser as $uid => $changeList) {
+        $st->execute([$uid]);
+        $row = $st->fetch();
+        if (!$row) continue;
+        $links = json_decode($row['sns_links'] ?? '[]', true);
+        if (!is_array($links)) continue;
+
+        $modified = false;
+        foreach ($links as &$link) {
+            if (!is_array($link) || empty($link['url'])) continue;
+            foreach ($changeList as $ch) {
+                if ($link['url'] === $ch['url']) {
+                    $link['type'] = $ch['new_type'];
+                    $modified = true;
+                }
+            }
+        }
+        unset($link);
+
+        if ($modified) {
+            $upd->execute([json_encode(array_values($links), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $uid]);
+            $updated++;
+        }
+    }
+
+    ok(['updated' => $updated]);
 }
