@@ -322,9 +322,6 @@ match ($action) {
     'admin_tag_list'          => actionAdminTagList(),
     'admin_tag_merge'         => actionAdminTagMerge(),
 
-    'admin_sns_search'        => actionAdminSnsSearch(),
-    'admin_sns_rename'        => actionAdminSnsRename(),
-
     default => err('不明なアクションです。'),
 };
 
@@ -1252,105 +1249,4 @@ function actionAdminTagMerge(): void {
     }
 
     ok(['updated' => $updated, 'from' => $from, 'to' => $to, 'type' => $type]);
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  管理者: SNSリンク検索
-//  GET ?action=admin_sns_search&q=URLキーワード
-//  → [{user_id, username, display_name, links:[{type,url}]}, ...]
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function actionAdminSnsSearch(): void {
-    requireAdmin();
-    $q = trim($_GET['q'] ?? '');
-
-    // sns_links が空でないユーザーを全取得（ユーザー情報とJOIN）
-    $st = db()->query(
-        'SELECT u.id, u.username, u.display_name, bp.sns_links
-         FROM buddies_profiles bp
-         JOIN sakulabo_users u ON u.id = bp.user_id
-         WHERE bp.sns_links IS NOT NULL
-           AND bp.sns_links != \'\'
-           AND bp.sns_links != \'[]\''
-    );
-    $rows = $st->fetchAll();
-
-    $results = [];
-    foreach ($rows as $r) {
-        $links = json_decode($r['sns_links'], true);
-        if (!is_array($links)) continue;
-        // URLキーワードでフィルタ（空なら全件）
-        if ($q !== '') {
-            $links = array_values(array_filter($links, function($l) use ($q) {
-                return is_array($l) && !empty($l['url'])
-                    && stripos($l['url'], $q) !== false;
-            }));
-            if (empty($links)) continue;
-        } else {
-            $links = array_values(array_filter($links, fn($l) => is_array($l) && !empty($l['url'])));
-            if (empty($links)) continue;
-        }
-        $results[] = [
-            'user_id'      => (int)$r['id'],
-            'username'     => $r['username'],
-            'display_name' => $r['display_name'],
-            'links'        => $links,
-        ];
-    }
-
-    ok($results);
-}
-
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  管理者: SNS名称一括変更
-//  POST {changes:[{user_id, url, new_type}], ...}
-//  → {updated: N}
-// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-function actionAdminSnsRename(): void {
-    requireAdmin();
-    $b       = body();
-    $changes = $b['changes'] ?? [];
-
-    if (!is_array($changes) || empty($changes)) err('changes は必須です。');
-
-    // user_id ごとにグルーピング
-    $byUser = [];
-    foreach ($changes as $c) {
-        $uid     = (int)($c['user_id'] ?? 0);
-        $url     = trim($c['url']      ?? '');
-        $newType = trim($c['new_type'] ?? '');
-        if ($uid <= 0 || $url === '' || $newType === '') continue;
-        $byUser[$uid][] = ['url' => $url, 'new_type' => $newType];
-    }
-    if (empty($byUser)) err('有効な変更が1件もありません。');
-
-    $st  = db()->prepare('SELECT sns_links FROM buddies_profiles WHERE user_id = ? LIMIT 1');
-    $upd = db()->prepare('UPDATE buddies_profiles SET sns_links = ? WHERE user_id = ?');
-
-    $updated = 0;
-    foreach ($byUser as $uid => $changeList) {
-        $st->execute([$uid]);
-        $row = $st->fetch();
-        if (!$row) continue;
-        $links = json_decode($row['sns_links'] ?? '[]', true);
-        if (!is_array($links)) continue;
-
-        $modified = false;
-        foreach ($links as &$link) {
-            if (!is_array($link) || empty($link['url'])) continue;
-            foreach ($changeList as $ch) {
-                if ($link['url'] === $ch['url']) {
-                    $link['type'] = $ch['new_type'];
-                    $modified = true;
-                }
-            }
-        }
-        unset($link);
-
-        if ($modified) {
-            $upd->execute([json_encode(array_values($links), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), $uid]);
-            $updated++;
-        }
-    }
-
-    ok(['updated' => $updated]);
 }
