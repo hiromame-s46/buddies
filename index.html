@@ -1087,6 +1087,7 @@ let allBlogs = [];          // ブログJSON
 let exchangedProfiles = []; // 交換済み（DBから）
 let favoriteProfiles = [];  // お気に入り（DBから）
 let currentPopupProfile = null;
+let pendingProfileAfterLogin = null; // 未ログインで「ログインしてお気に入り」押下時の保留プロフィール
 let currentScanner = null;
 let inputModalContext = { type: null, callback: null };
 const ITEMS_PER_PAGE = 12;
@@ -1223,6 +1224,7 @@ async function doLogin() {
     renderHeaderAuth();
     renderAll();
     toast('ログインしました');
+    reopenPendingProfile();
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
 }
@@ -1249,6 +1251,7 @@ async function doRegister() {
     renderHeaderAuth();
     renderAll();
     toast('アカウントを作成しました');
+    reopenPendingProfile();
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
 }
@@ -2106,7 +2109,7 @@ function openProfile(profile, isOwn, opts = {}) {
   } else if (isShared && !me) {
     // 未ログインで共有URL経由 — 閲覧のみ、お気に入り不可
     actionBtns = `
-      <button class="pill-button black" onclick="closeProfileModal(true); showAuthModal();" style="flex:1;display:inline-flex;align-items:center;gap:6px;justify-content:center;"><i data-lucide="log-in" style="width:16px;height:16px;"></i>ログインしてお気に入り</button>
+      <button class="pill-button black" onclick="requestLoginForFavorite()" style="flex:1;display:inline-flex;align-items:center;gap:6px;justify-content:center;"><i data-lucide="log-in" style="width:16px;height:16px;"></i>ログインしてお気に入り</button>
       <button class="pill-button" onclick="closeProfileModal(true)" style="flex:1;">閉じる</button>
     `;
   } else if (isShared) {
@@ -2221,6 +2224,22 @@ function closeProfileModal(userDismissed = false) {
   if (currentPopupProfile) delete currentPopupProfile._sharedView;
   // 未ログインユーザーが共有URLを閉じたらログインモーダルを表示
   if (userDismissed && !me) showAuthModal();
+}
+
+function requestLoginForFavorite() {
+  // ログイン後に再表示できるようプロフィールを保留
+  if (currentPopupProfile) {
+    pendingProfileAfterLogin = { ...currentPopupProfile, _sharedView: true };
+  }
+  closeProfileModal(false);
+  showAuthModal();
+}
+
+function reopenPendingProfile() {
+  if (!pendingProfileAfterLogin) return;
+  const profile = pendingProfileAfterLogin;
+  pendingProfileAfterLogin = null;
+  openProfile(profile, false, { source: 'shared' });
 }
 
 async function toggleFavorite() {
