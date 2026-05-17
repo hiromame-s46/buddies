@@ -584,6 +584,42 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .auth-field input { width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px; font-size:15px; color:#000; outline:none; transition:border .2s; }
 .auth-field input:focus { border-color:#000; }
 .auth-err { font-size:13px; color:#e00; margin-bottom:8px; display:none; }
+@media (max-width: 500px) {
+  .auth-modal-overlay {
+    align-items:flex-end;
+    padding:0;
+    background:rgba(0,0,0,0.38);
+    backdrop-filter:blur(3px);
+  }
+  .auth-modal {
+    max-width:none;
+    max-height:min(78dvh, 620px);
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    border-radius:28px 28px 0 0;
+    padding:10px 20px calc(24px + env(safe-area-inset-bottom));
+    box-shadow:0 -10px 34px rgba(0,0,0,0.12);
+  }
+  .auth-modal::before {
+    content:'';
+    display:block;
+    width:42px;
+    height:4px;
+    border-radius:9999px;
+    background:#e5e5e5;
+    margin:0 auto 18px;
+  }
+  .auth-modal-title {
+    font-size:20px;
+    margin-bottom:16px;
+  }
+  .auth-tabs {
+    margin-bottom:16px;
+  }
+  .auth-field input {
+    font-size:16px;
+  }
+}
 
 /* ── アイコン選択ページ ── */
 .icon-picker-page { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:1100; overflow-y:auto; }
@@ -1952,6 +1988,9 @@ function renderMyPage() {
       <button class="pill-button" style="flex:1;" onclick="copyProfileURL()"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
       <button class="pill-button" style="flex:1;" onclick="shareToX()"><svg viewBox="0 0 1200 1227" width="15" height="15" fill="currentColor" style="flex-shrink:0;display:block;"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/></svg>X</button>
       <button class="pill-button" style="flex:1;" onclick="shareProfile()"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
+    </div>
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="pill-button" style="flex:1;" onclick="openProfileCardPage()"><i data-lucide="id-card" style="width:16px;height:16px;"></i>プロフィールカードを表示(beta)</button>
     </div>`;
 
   // プロフィール未入力ヒントバナー
@@ -2218,10 +2257,23 @@ function closeBadgePopup() {
   document.querySelectorAll('.badge-popup-overlay, .badge-popup').forEach(el => el.remove());
 }
 
+function clearSharedViewState() {
+  sessionStorage.removeItem('buddies_shared_uid');
+  sessionStorage.removeItem('buddies_shared_mode');
+  document.getElementById('viewBanner').style.display = 'none';
+  const qs = new URLSearchParams(location.search);
+  const hasSharedQuery = qs.has('uid') || qs.has('mode') || qs.has('token');
+  if (location.hash || hasSharedQuery) {
+    history.replaceState(null, '', location.pathname);
+  }
+}
+
 function closeProfileModal(userDismissed = false) {
+  const wasShared = currentPopupProfile && currentPopupProfile._sharedView === true;
   document.getElementById('profile-modal').classList.remove('active');
   document.body.style.overflow = 'auto';
   if (currentPopupProfile) delete currentPopupProfile._sharedView;
+  if (userDismissed && wasShared) clearSharedViewState();
   // 未ログインユーザーが共有URLを閉じたらログインモーダルを表示
   if (userDismissed && !me) showAuthModal();
 }
@@ -3262,7 +3314,7 @@ function closeExchangeOverlay() {
 }
 
 function buildProfileURL(uid) {
-  return location.origin + location.pathname + '#uid=' + uid + '&mode=view';
+  return location.origin + location.pathname.replace(/[^/]*$/, '') + 'profile.php?uid=' + encodeURIComponent(uid);
 }
 function copyProfileURL() {
   if (!me) return;
@@ -3304,6 +3356,19 @@ function shareProfile() {
     navigator.clipboard.writeText(url).then(() => toast('URLをコピーしました')).catch(() => toast('コピーできませんでした'));
   }
 }
+function openProfileCardPage() {
+  if (!me) return;
+  try {
+    const profileJson = JSON.stringify(me);
+    const membersJson = JSON.stringify(memberMap || {});
+    sessionStorage.setItem('buddies_card_profile', profileJson);
+    sessionStorage.setItem('buddies_card_members', membersJson);
+    localStorage.setItem('buddies_card_profile_' + me.id, profileJson);
+    localStorage.setItem('buddies_card_members', membersJson);
+  } catch(e) {}
+  const url = 'card.html?uid=' + encodeURIComponent(me.id);
+  window.open(url, '_blank', 'noopener');
+}
 
 function openXShareSheet(options) {
   const wrap = document.getElementById('x-share-options');
@@ -3328,7 +3393,7 @@ function closeXShareSheet() {
 
 async function checkUrl() {
   // hash優先、なければクエリパラメータ、なければsessionStorageで補完
-  // hashはリダイレクト（t.co等）でも脱落しないため共有URLの主形式として使用
+  // 旧共有URL（#uid=...）と新OGP共有URL（?uid=...）の両方を受け付ける
   let uid, mode, token;
 
   if (location.hash) {
@@ -3342,7 +3407,7 @@ async function checkUrl() {
     uid   = qp.get('uid');
     mode  = qp.get('mode');
     token = qp.get('token');
-    // クエリパラメータにあればhashに正規化
+    // クエリパラメータにあれば、以後の画面内処理用にhashへ正規化
     if (uid) {
       const newHash = '#uid=' + uid + '&mode=' + (mode || 'view') + (token ? '&token=' + encodeURIComponent(token) : '');
       history.replaceState(null, '', location.pathname + newHash);
@@ -3356,7 +3421,7 @@ async function checkUrl() {
 
   if (!uid) return;
 
-  // sessionStorageに保存（リダイレクト経由の脱落対策）
+  // sessionStorageに保存（ログイン導線などの画面内遷移対策）
   sessionStorage.setItem('buddies_shared_uid', uid);
   sessionStorage.setItem('buddies_shared_mode', mode || 'view');
 
