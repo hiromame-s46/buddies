@@ -224,6 +224,9 @@ let verifiedSns = [];
 let myEvents = [];
 let subeventsByEvent = {};
 let editingEventId = null;
+let pendingEventCover = null;
+let pendingEventAttachments = [];
+let pendingExistingAttachment = null;
 let editingSubeventId = null;
 let editingSubeventEventId = null;
 
@@ -551,6 +554,37 @@ function fmtFileSize(bytes){
   if (bytes >= 1024) return Math.ceil(bytes / 1024) + 'KB';
   return bytes + 'B';
 }
+function defaultAttachmentName(file){
+  const name = String(file?.name || '添付ファイル').replace(/\.[^.]+$/, '').trim();
+  return name || '添付ファイル';
+}
+function readFileAsDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('file read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+function validateEventCoverFile(file){
+  if (!file) return false;
+  if (!['image/png','image/jpeg','image/webp'].includes(file.type)) {
+    msg('event-msg', 'カバー画像はPNG/JPEG/WebPのみアップロードできます', false);
+    return false;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    msg('event-msg', 'カバー画像は5MB以内にしてください', false);
+    return false;
+  }
+  return true;
+}
+function validateEventAttachmentFile(file){
+  if (!file) return false;
+  const okTypes = ['image/png','image/jpeg','image/webp','application/pdf'];
+  if (!okTypes.includes(file.type)) { msg('event-msg', '画像（PNG/JPEG/WebP）またはPDFのみ添付できます', false); return false; }
+  if (file.size > 5 * 1024 * 1024) { msg('event-msg', '添付ファイルは5MB以内にしてください', false); return false; }
+  return true;
+}
 function eventAttachmentHtml(e){
   const files = Array.isArray(e?.attachments) ? e.attachments : [];
   const rows = files.map(f => {
@@ -568,8 +602,84 @@ function eventAttachmentHtml(e){
   return `<div class="field">
     <label>添付ファイル（画像/PDF・各5MBまで・最大3件）</label>
     <div class="attachment-list">${rows || '<div class="small">まだ添付ファイルはありません</div>'}</div>
-    ${files.length < 3 ? `<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onchange="uploadEventAttachment(${e.id}, this.files[0])">` : '<p class="small" style="margin:0;">添付ファイルは3件までです。</p>'}
+    ${files.length < 3 ? `<div id="existing-attachment-picker">${existingAttachmentPickerHtml(e.id)}</div>` : '<p class="small" style="margin:0;">添付ファイルは3件までです。</p>'}
   </div>`;
+}
+function existingAttachmentPickerHtml(eventId){
+  return `${pendingExistingAttachment ? `
+    <div class="attachment-row">
+      <div class="file-icon">${pendingExistingAttachment.file.type === 'application/pdf' ? 'PDF' : 'IMG'}</div>
+      <div class="file-body">
+        <div class="file-name">${esc(pendingExistingAttachment.file.name)}</div>
+        <div class="file-meta">${esc(fmtFileSize(pendingExistingAttachment.file.size))}</div>
+        <input style="margin-top:6px;" maxlength="120" value="${esc(pendingExistingAttachment.name)}" placeholder="表示名" oninput="updateExistingAttachmentName(this.value)">
+      </div>
+      <button class="btn sm danger" type="button" onclick="clearExistingAttachment()">削除</button>
+    </div>
+    <button class="btn sm" type="button" onclick="uploadPendingExistingAttachment(${eventId})">この名前で追加</button>
+  ` : ''}
+  <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onchange="setExistingAttachment(this.files[0]);this.value=''">`;
+}
+function renderExistingAttachmentPicker(eventId){
+  const wrap = document.getElementById('existing-attachment-picker');
+  if (wrap) wrap.innerHTML = existingAttachmentPickerHtml(eventId);
+}
+function setExistingAttachment(file){
+  if (!validateEventAttachmentFile(file)) return;
+  pendingExistingAttachment = { file, name: defaultAttachmentName(file) };
+  renderExistingAttachmentPicker(editingEventId);
+}
+function updateExistingAttachmentName(name){
+  if (pendingExistingAttachment) pendingExistingAttachment.name = name;
+}
+function clearExistingAttachment(){
+  pendingExistingAttachment = null;
+  renderExistingAttachmentPicker(editingEventId);
+}
+function pendingEventFilesHtml(){
+  const cover = pendingEventCover
+    ? `<div class="attachment-row"><div class="file-icon">IMG</div><div class="file-body"><div class="file-name">${esc(pendingEventCover.name)}</div><div class="file-meta">${esc(fmtFileSize(pendingEventCover.size))}</div></div><button class="btn sm danger" type="button" onclick="clearPendingEventCover()">削除</button></div>`
+    : '<div class="small">未選択</div>';
+  const files = pendingEventAttachments.map((item, i) => {
+    const isPdf = item.file.type === 'application/pdf';
+    return `<div class="attachment-row"><div class="file-icon">${isPdf ? 'PDF' : 'IMG'}</div><div class="file-body"><div class="file-name">${esc(item.file.name)}</div><div class="file-meta">${esc(fmtFileSize(item.file.size))}</div><input style="margin-top:6px;" maxlength="120" value="${esc(item.name)}" placeholder="表示名" oninput="updatePendingEventAttachmentName(${i}, this.value)"></div><button class="btn sm danger" type="button" onclick="removePendingEventAttachment(${i})">削除</button></div>`;
+  }).join('');
+  return `<div class="field">
+    <label>カバー画像（保存時にアップロード）</label>
+    <div class="attachment-list">${cover}</div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" onchange="setPendingEventCover(this.files[0]);this.value=''">
+  </div>
+  <div class="field">
+    <label>添付ファイル（画像/PDF・各5MBまで・最大3件）</label>
+    <div class="attachment-list">${files || '<div class="small">まだ添付ファイルはありません</div>'}</div>
+    ${pendingEventAttachments.length < 3 ? `<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onchange="addPendingEventAttachment(this.files[0]);this.value=''">` : '<p class="small" style="margin:0;">添付ファイルは3件までです。</p>'}
+  </div>`;
+}
+function renderPendingEventFiles(){
+  const wrap = document.getElementById('pending-event-files');
+  if (wrap) wrap.innerHTML = pendingEventFilesHtml();
+}
+function setPendingEventCover(file){
+  if (!validateEventCoverFile(file)) return;
+  pendingEventCover = file;
+  renderPendingEventFiles();
+}
+function clearPendingEventCover(){
+  pendingEventCover = null;
+  renderPendingEventFiles();
+}
+function addPendingEventAttachment(file){
+  if (!validateEventAttachmentFile(file)) return;
+  if (pendingEventAttachments.length >= 3) { msg('event-msg', '添付ファイルは3件までです', false); return; }
+  pendingEventAttachments.push({ file, name: defaultAttachmentName(file) });
+  renderPendingEventFiles();
+}
+function updatePendingEventAttachmentName(i, name){
+  if (pendingEventAttachments[i]) pendingEventAttachments[i].name = name;
+}
+function removePendingEventAttachment(i){
+  pendingEventAttachments.splice(i, 1);
+  renderPendingEventFiles();
 }
 async function loadEvents(){
   const json = await api('event_mine_list');
@@ -633,6 +743,9 @@ function renderEventList(){
 }
 function openEventForm(id = null){
   editingEventId = id;
+  pendingEventCover = null;
+  pendingEventAttachments = [];
+  pendingExistingAttachment = null;
   const e = id ? myEvents.find(x => x.id === id) : null;
   document.getElementById('event-modal-title').textContent = id ? 'イベントを編集' : '新しいイベント';
   document.getElementById('event-save-btn').textContent = id ? '更新' : '作成';
@@ -660,15 +773,20 @@ function openEventForm(id = null){
       <label>カバー画像</label>
       ${e?.cover_url ? `<img src="../${esc(e.cover_url)}" alt="" style="max-width:240px;border-radius:12px;display:block;margin-bottom:8px;">` : ''}
       <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadEventCover(${id}, this.files[0])">
-    </div>${eventAttachmentHtml(e)}` : '<p class="small">※カバー画像と添付ファイルは保存後にアップロードできます</p>'}
+    </div>${eventAttachmentHtml(e)}` : `<div id="pending-event-files">${pendingEventFilesHtml()}</div>`}
   `;
   document.getElementById('event-modal').classList.add('open');
 }
 function closeEventForm(){
   editingEventId = null;
+  pendingEventCover = null;
+  pendingEventAttachments = [];
+  pendingExistingAttachment = null;
   document.getElementById('event-modal').classList.remove('open');
 }
 async function saveEvent(){
+  const saveBtn = document.getElementById('event-save-btn');
+  const isNew = !editingEventId;
   const payload = {
     title: val('ev-title'),
     description: val('ev-desc'),
@@ -682,9 +800,38 @@ async function saveEvent(){
   };
   const action = editingEventId ? 'event_update' : 'event_create';
   if (editingEventId) payload.id = editingEventId;
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = isNew ? '作成中…' : '更新中…'; }
   const json = await api(action, payload);
-  if (!json.ok) { msg('event-msg', json.error || '保存できませんでした', false); return; }
-  msg('event-msg', editingEventId ? 'イベントを更新しました' : 'イベントを作成しました', true);
+  if (!json.ok) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingEventId ? '更新' : '作成'; }
+    msg('event-msg', json.error || '保存できませんでした', false);
+    return;
+  }
+  const savedId = editingEventId || json.data?.id;
+  const uploadErrors = [];
+  if (isNew && savedId) {
+    if (saveBtn) saveBtn.textContent = 'ファイルをアップロード中…';
+    if (pendingEventCover) {
+      try {
+        const data = await readFileAsDataUrl(pendingEventCover);
+        const coverJson = await api('event_upload_cover', { id:savedId, image:data });
+        if (!coverJson.ok) uploadErrors.push(coverJson.error || 'カバー画像を保存できませんでした');
+      } catch(e) {
+        uploadErrors.push('カバー画像を読み込めませんでした');
+      }
+    }
+    for (const item of pendingEventAttachments) {
+      try {
+        const data = await readFileAsDataUrl(item.file);
+        const fileJson = await api('event_upload_attachment', { id:savedId, name:item.name || defaultAttachmentName(item.file), file:data });
+        if (!fileJson.ok) uploadErrors.push(`${item.name || item.file.name}: ${fileJson.error || '保存できませんでした'}`);
+      } catch(e) {
+        uploadErrors.push(`${item.name || item.file.name}: 読み込めませんでした`);
+      }
+    }
+  }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingEventId ? '更新' : '作成'; }
+  msg('event-msg', uploadErrors.length ? `イベントは保存しました。一部ファイルのアップロードに失敗しました: ${uploadErrors.join(' / ')}` : (isNew ? 'イベントを作成しました' : 'イベントを更新しました'), uploadErrors.length === 0);
   closeEventForm();
   loadEvents();
 }
@@ -698,31 +845,31 @@ async function deleteEvent(id){
 }
 async function uploadEventCover(id, file){
   if (!file) return;
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const json = await api('event_upload_cover', { id, image: reader.result });
-    if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
-    msg('event-msg', 'カバー画像を更新しました', true);
-    loadEvents();
-  };
-  reader.readAsDataURL(file);
+  if (!validateEventCoverFile(file)) return;
+  const data = await readFileAsDataUrl(file);
+  const json = await api('event_upload_cover', { id, image:data });
+  if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
+  msg('event-msg', 'カバー画像を更新しました', true);
+  loadEvents();
 }
 async function uploadEventAttachment(id, file){
   if (!file) return;
-  const okTypes = ['image/png','image/jpeg','image/webp','application/pdf'];
-  if (!okTypes.includes(file.type)) { msg('event-msg', '画像（PNG/JPEG/WebP）またはPDFのみ添付できます', false); return; }
-  if (file.size > 5 * 1024 * 1024) { msg('event-msg', '添付ファイルは5MB以内にしてください', false); return; }
-  const reader = new FileReader();
-  reader.onload = async () => {
-    const json = await api('event_upload_attachment', { id, name:file.name, file: reader.result });
-    if (!json.ok) { msg('event-msg', json.error || '添付ファイルを保存できませんでした', false); return; }
-    msg('event-msg', '添付ファイルを追加しました', true);
-    const fresh = await api('event_mine_list');
-    if (fresh.ok) myEvents = fresh.data || [];
-    openEventForm(id);
-    renderEventList();
-  };
-  reader.readAsDataURL(file);
+  if (!validateEventAttachmentFile(file)) return;
+  pendingExistingAttachment = { file, name: defaultAttachmentName(file) };
+  renderExistingAttachmentPicker(id);
+}
+async function uploadPendingExistingAttachment(id){
+  if (!pendingExistingAttachment) return;
+  const item = pendingExistingAttachment;
+  const data = await readFileAsDataUrl(item.file);
+  const json = await api('event_upload_attachment', { id, name:item.name || defaultAttachmentName(item.file), file:data });
+  if (!json.ok) { msg('event-msg', json.error || '添付ファイルを保存できませんでした', false); return; }
+  pendingExistingAttachment = null;
+  msg('event-msg', '添付ファイルを追加しました', true);
+  const fresh = await api('event_mine_list');
+  if (fresh.ok) myEvents = fresh.data || [];
+  openEventForm(id);
+  renderEventList();
 }
 async function deleteEventAttachment(id, fileId){
   const ok = await confirmDialog('添付ファイルを削除', 'この添付ファイルを削除しますか？');

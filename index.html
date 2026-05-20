@@ -1599,7 +1599,7 @@ async function renderHome() {
   const meSnsBadge = meHasSns
     ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
-  card.innerHTML = `<div class="card" style="margin-top:16px; cursor:pointer;" onclick="openProfile(me, true)">
+  card.innerHTML = `<div class="card" style="margin-top:16px; cursor:pointer;" onclick="openMyProfileView()">
     <div style="display:flex; align-items:center; gap:14px;">
       <div class="profile-mini-avatar-wrap">${avatarHtml(me)}${meSnsBadge}</div>
       <div style="flex:1;">
@@ -2260,7 +2260,7 @@ function renderMyPage() {
   }
   setMyPageListSectionsVisible(true);
   card.innerHTML = `
-    <div style="display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="openProfile(me, true)">
+    <div style="display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="openMyProfileView()">
       ${avatarHtml(me)}
       <div style="flex:1;">
         <div style="font-size:20px; font-weight:700;">${esc(getDisplayName(me))}</div>
@@ -3743,6 +3743,15 @@ function closeExchangeOverlay() {
 
 function buildProfileURL(uid) {
   return location.origin + location.pathname.replace(/[^/]*$/, '') + 'view.html?id=' + encodeURIComponent(uid);
+}
+function openMyProfileView() {
+  if (!me) return;
+  const a = currentVerifiedAccount();
+  if (a && a.id) {
+    window.open('./verified/view.html?id=' + encodeURIComponent(a.id), '_blank');
+    return;
+  }
+  window.open(buildProfileURL(me.id), '_blank');
 }
 function copyProfileURL() {
   if (!me) return;

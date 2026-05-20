@@ -35,7 +35,7 @@ $config = require __DIR__ . '/../../../api/config.php';
 
 define('SESSION_EXPIRE_HOURS', 720);
 define('ALLOWED_ORIGINS', ['*']);
-define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v9.lock');
+define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v10.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
 define('MEMBER_DATA_PATH', __DIR__ . '/../data/member.json');
 
@@ -187,6 +187,14 @@ function runMigrations(PDO $pdo): void {
         $pdo->exec("ALTER TABLE buddies_verified_accounts ADD COLUMN cta_url VARCHAR(2048) NULL DEFAULT NULL AFTER cta_label");
     }
     try {
+        $idx = $pdo->query("SHOW INDEX FROM buddies_verified_accounts WHERE Key_name='uq_verified_user_id'")->fetchAll();
+        if (!$idx) $pdo->exec("ALTER TABLE buddies_verified_accounts ADD UNIQUE KEY uq_verified_user_id (user_id)");
+    } catch (\Throwable $e) {}
+    try {
+        $idx = $pdo->query("SHOW INDEX FROM buddies_verified_accounts WHERE Key_name='uq_verified_login_id'")->fetchAll();
+        if (!$idx) $pdo->exec("ALTER TABLE buddies_verified_accounts ADD UNIQUE KEY uq_verified_login_id (login_id)");
+    } catch (\Throwable $e) {}
+    try {
         $pdo->exec("UPDATE buddies_verified_accounts a
                    JOIN sakulabo_users u ON u.username = a.login_id
                    SET a.user_id = u.id
@@ -222,6 +230,24 @@ function runMigrations(PDO $pdo): void {
     if (!in_array('attachments', $eventCols, true)) {
         $pdo->exec("ALTER TABLE buddies_events ADD COLUMN attachments TEXT NULL DEFAULT NULL COMMENT 'JSON array of event files' AFTER cover_url");
     }
+
+    // ─ 認証アカウント掲示板 ─
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_posts (
+        id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id  BIGINT UNSIGNED NOT NULL,
+        body        TEXT NULL DEFAULT NULL,
+        link_url    VARCHAR(2048) NULL DEFAULT NULL,
+        link_label  VARCHAR(120) NULL DEFAULT NULL,
+        files       TEXT NULL DEFAULT NULL COMMENT 'JSON array of post files',
+        file_url    VARCHAR(2048) NULL DEFAULT NULL,
+        file_name   VARCHAR(160) NULL DEFAULT NULL,
+        file_mime   VARCHAR(80) NULL DEFAULT NULL,
+        file_size   INT UNSIGNED NULL DEFAULT NULL,
+        status      VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_account_status_created (account_id, status, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // ─ イベント参加（join=公開, like=非公開いいね） ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_event_participants (
@@ -348,6 +374,12 @@ function verifiedAccountByUserId(int $userId): ?array {
     if ($userId <= 0) return null;
     $st = db()->prepare("SELECT * FROM buddies_verified_accounts WHERE user_id = ? AND status != 'disabled' LIMIT 1");
     $st->execute([$userId]);
+    return $st->fetch() ?: null;
+}
+function verifiedAccountById(int $id): ?array {
+    if ($id <= 0) return null;
+    $st = db()->prepare("SELECT * FROM buddies_verified_accounts WHERE id = ? AND status != 'disabled' LIMIT 1");
+    $st->execute([$id]);
     return $st->fetch() ?: null;
 }
 function developerVerifiedAccount(?array $u = null): ?array {
@@ -530,6 +562,29 @@ function cleanUrl(?string $url): ?string {
     if (strlen($url) > 2048 || !filter_var($url, FILTER_VALIDATE_URL)) err('URLの形式が正しくありません。');
     return $url;
 }
+function ensureLoginNameAvailable(string $name, ?int $excludeUserId = null, ?int $excludeVerifiedId = null, string $label = 'ユーザー名'): void {
+    $sql = 'SELECT id FROM sakulabo_users WHERE username = ?';
+    $params = [$name];
+    if ($excludeUserId !== null) {
+        $sql .= ' AND id != ?';
+        $params[] = $excludeUserId;
+    }
+    $sql .= ' LIMIT 1';
+    $ck = db()->prepare($sql);
+    $ck->execute($params);
+    if ($ck->fetch()) err("その{$label}はすでに使用されています。");
+
+    $sql = 'SELECT id FROM buddies_verified_accounts WHERE login_id = ?';
+    $params = [$name];
+    if ($excludeVerifiedId !== null) {
+        $sql .= ' AND id != ?';
+        $params[] = $excludeVerifiedId;
+    }
+    $sql .= ' LIMIT 1';
+    $ck = db()->prepare($sql);
+    $ck->execute($params);
+    if ($ck->fetch()) err("その{$label}はすでに使用されています。");
+}
 function normalizeSnsLinks($links, int $limit = 10): array {
     if (!is_array($links)) return [];
     $allowed = ['x', 'threads', 'instagram', 'tiktok', 'youtube', 'link'];
@@ -607,6 +662,76 @@ function verifiedUploadDir(string $kind, int $accountId): string {
 function publicUploadUrl(string $kind, int $accountId, string $file): string {
     return 'uploads/verified/' . $accountId . '/' . $kind . '/' . $file;
 }
+function canUseVerifiedBoard(array $a): bool {
+    $type = normalizeVerifiedType((string)($a['account_type'] ?? ''));
+    return in_array($type, ['developer', 'official'], true);
+}
+function ensureVerifiedPostTables(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    db()->exec("CREATE TABLE IF NOT EXISTS buddies_verified_posts (
+        id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id  BIGINT UNSIGNED NOT NULL,
+        body        TEXT NULL DEFAULT NULL,
+        link_url    VARCHAR(2048) NULL DEFAULT NULL,
+        link_label  VARCHAR(120) NULL DEFAULT NULL,
+        files       TEXT NULL DEFAULT NULL,
+        file_url    VARCHAR(2048) NULL DEFAULT NULL,
+        file_name   VARCHAR(160) NULL DEFAULT NULL,
+        file_mime   VARCHAR(80) NULL DEFAULT NULL,
+        file_size   INT UNSIGNED NULL DEFAULT NULL,
+        status      VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_account_status_created (account_id, status, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    try {
+        $cols = array_column(db()->query('DESCRIBE buddies_verified_posts')->fetchAll(), 'Field');
+        if (!in_array('files', $cols, true)) {
+            db()->exec("ALTER TABLE buddies_verified_posts ADD COLUMN files TEXT NULL DEFAULT NULL AFTER link_label");
+        }
+    } catch (\Throwable $e) {}
+}
+function verifiedPostFiles(array $p): array {
+    $files = [];
+    if (!empty($p['files'])) {
+        $decoded = json_decode($p['files'], true);
+        if (is_array($decoded)) $files = $decoded;
+    }
+    if (!$files && !empty($p['file_url'])) {
+        $files[] = [
+            'url' => $p['file_url'],
+            'name' => $p['file_name'] ?? null,
+            'mime' => $p['file_mime'] ?? null,
+            'size' => isset($p['file_size']) ? (int)$p['file_size'] : null,
+        ];
+    }
+    return array_values(array_filter(array_map(function($f) {
+        if (!is_array($f) || empty($f['url'])) return null;
+        return [
+            'url' => (string)$f['url'],
+            'name' => (string)($f['name'] ?? '添付ファイル'),
+            'mime' => (string)($f['mime'] ?? ''),
+            'size' => isset($f['size']) ? (int)$f['size'] : null,
+        ];
+    }, $files)));
+}
+function buildVerifiedPostData(array $p): array {
+    return [
+        'id' => (int)$p['id'],
+        'account_id' => (int)$p['account_id'],
+        'body' => $p['body'] ?? '',
+        'link_url' => $p['link_url'] ?? null,
+        'link_label' => $p['link_label'] ?? null,
+        'files' => verifiedPostFiles($p),
+        'file_url' => $p['file_url'] ?? null,
+        'file_name' => $p['file_name'] ?? null,
+        'file_mime' => $p['file_mime'] ?? null,
+        'file_size' => isset($p['file_size']) ? (int)$p['file_size'] : null,
+        'created_at' => $p['created_at'] ?? null,
+    ];
+}
 
 // ── アクション振り分け ────────────────────────────────────
 $action = $_GET['action'] ?? $_POST['action'] ?? body()['action'] ?? '';
@@ -655,6 +780,9 @@ match ($action) {
     'verified_admin_update'   => actionVerifiedAdminUpdate(),
     'verified_admin_disable'  => actionVerifiedAdminDisable(),
     'verified_admin_reset_password' => actionVerifiedAdminResetPassword(),
+    'verified_post_list'      => actionVerifiedPostList(),
+    'verified_post_create'    => actionVerifiedPostCreate(),
+    'verified_post_delete'    => actionVerifiedPostDelete(),
 
     'event_list_by_account'   => actionEventListByAccount(),
     'event_get'               => actionEventGet(),
@@ -698,21 +826,27 @@ function actionRegister(): void {
     if (mb_strlen($display) > 64)
         err('表示名は64文字以内で入力してください。');
 
-    $ck = db()->prepare('SELECT id FROM sakulabo_users WHERE username = ? LIMIT 1');
-    $ck->execute([$username]);
-    if ($ck->fetch()) err('そのユーザー名はすでに使用されています。');
+    ensureLoginNameAvailable($username, null, null, 'ユーザー名');
 
     $hash = password_hash($password, PASSWORD_BCRYPT, ['cost' => 12]);
-    db()->prepare('INSERT INTO sakulabo_users (username, password_hash, display_name) VALUES (?,?,?)')
-       ->execute([$username, $hash, $display]);
-    $uid   = (int)db()->lastInsertId();
-    $token = generateToken();
-    $exp   = date('Y-m-d H:i:s', strtotime('+' . SESSION_EXPIRE_HOURS . ' hours'));
-    db()->prepare('INSERT INTO sakulabo_sessions (token, user_id, expires_at) VALUES (?,?,?)')
-       ->execute([$token, $uid, $exp]);
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('INSERT INTO sakulabo_users (username, password_hash, display_name) VALUES (?,?,?)')
+            ->execute([$username, $hash, $display]);
+        $uid   = (int)$pdo->lastInsertId();
+        $token = generateToken();
+        $exp   = date('Y-m-d H:i:s', strtotime('+' . SESSION_EXPIRE_HOURS . ' hours'));
+        $pdo->prepare('INSERT INTO sakulabo_sessions (token, user_id, expires_at) VALUES (?,?,?)')
+            ->execute([$token, $uid, $exp]);
+        $pdo->prepare('INSERT IGNORE INTO buddies_profiles (user_id) VALUES (?)')->execute([$uid]);
+        $pdo->commit();
+    } catch (\Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
     setSessionCookie($token);
 
-    db()->prepare('INSERT IGNORE INTO buddies_profiles (user_id) VALUES (?)')->execute([$uid]);
     $bp = getBuddiesProfile($uid);
 
     $newUser = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
@@ -778,12 +912,13 @@ function actionUsernameChange(): void {
     if (!password_verify($currentPassword, $user['password_hash']))
         err('現在のパスワードが正しくありません。');
 
-    $ck = db()->prepare('SELECT id FROM sakulabo_users WHERE username = ? AND id != ? LIMIT 1');
-    $ck->execute([$newUsername, $uid]);
-    if ($ck->fetch()) err('そのユーザー名はすでに使用されています。');
+    $verified = verifiedAccountByUserId($uid);
+    ensureLoginNameAvailable($newUsername, $uid, $verified ? (int)$verified['id'] : null, 'ユーザー名');
 
-    db()->prepare('UPDATE sakulabo_users SET username = ? WHERE id = ?')
-       ->execute([$newUsername, $uid]);
+    db()->prepare('UPDATE sakulabo_users SET username = ? WHERE id = ?')->execute([$newUsername, $uid]);
+    if ($verified) {
+        db()->prepare('UPDATE buddies_verified_accounts SET login_id = ? WHERE id = ?')->execute([$newUsername, $verified['id']]);
+    }
 
     ok(['username' => $newUsername]);
 }
@@ -1839,29 +1974,35 @@ function actionVerifiedAdminCreate(): void {
     $pass  = (string)($b['password'] ?? '');
     if (!preg_match('/^[a-zA-Z0-9_]{3,64}$/', $login)) err('ログインIDは3〜64文字の半角英数字・アンダースコアで入力してください。');
     if (strlen($pass) < 8) err('初期パスワードは8文字以上で入力してください。');
-    $ck = db()->prepare('SELECT id FROM sakulabo_users WHERE username=? LIMIT 1');
-    $ck->execute([$login]);
-    if ($ck->fetch()) err('そのログインIDはすでに使用されています。');
+    ensureLoginNameAvailable($login, null, null, 'ログインID');
     $f = verifiedEditableFields($b, false);
     if ($f['account_type'] === 'developer') err('開発者アカウントは新規作成できません。');
     $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
-    db()->prepare('INSERT INTO sakulabo_users (username, password_hash, display_name) VALUES (?,?,?)')
-       ->execute([$login, $hash, $f['display_name']]);
-    $uid = (int)db()->lastInsertId();
-    db()->prepare('INSERT IGNORE INTO buddies_profiles (user_id) VALUES (?)')->execute([$uid]);
-    db()->prepare('INSERT INTO buddies_verified_accounts
-        (user_id, login_id, password_hash, display_name, account_type, label, description,
-         primary_link_url, primary_link_label, secondary_link_url, secondary_link_label,
-         x_url, sns_links, cta_label, cta_url, promotion_title, promotion_body, hashtags,
-         recommend_priority, status, created_by_admin_user_id)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
-    ->execute([
-        $uid, $login, $hash, $f['display_name'], $f['account_type'], $f['label'], $f['description'],
-        $f['primary_link_url'], $f['primary_link_label'], $f['secondary_link_url'], $f['secondary_link_label'],
-        $f['x_url'], $f['sns_links'], $f['cta_label'], $f['cta_url'], $f['promotion_title'], $f['promotion_body'], $f['hashtags'],
-        (int)($b['recommend_priority'] ?? 0), 'active', $admin['id'],
-    ]);
-    $id = (int)db()->lastInsertId();
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('INSERT INTO sakulabo_users (username, password_hash, display_name) VALUES (?,?,?)')
+            ->execute([$login, $hash, $f['display_name']]);
+        $uid = (int)$pdo->lastInsertId();
+        $pdo->prepare('INSERT IGNORE INTO buddies_profiles (user_id) VALUES (?)')->execute([$uid]);
+        $pdo->prepare('INSERT INTO buddies_verified_accounts
+            (user_id, login_id, password_hash, display_name, account_type, label, description,
+             primary_link_url, primary_link_label, secondary_link_url, secondary_link_label,
+             x_url, sns_links, cta_label, cta_url, promotion_title, promotion_body, hashtags,
+             recommend_priority, status, created_by_admin_user_id)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+        ->execute([
+            $uid, $login, $hash, $f['display_name'], $f['account_type'], $f['label'], $f['description'],
+            $f['primary_link_url'], $f['primary_link_label'], $f['secondary_link_url'], $f['secondary_link_label'],
+            $f['x_url'], $f['sns_links'], $f['cta_label'], $f['cta_url'], $f['promotion_title'], $f['promotion_body'], $f['hashtags'],
+            (int)($b['recommend_priority'] ?? 0), 'active', $admin['id'],
+        ]);
+        $id = (int)$pdo->lastInsertId();
+        $pdo->commit();
+    } catch (\Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
     $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
     $st->execute([$id]);
     ok(buildVerifiedData($st->fetch(), true));
@@ -1925,6 +2066,116 @@ function actionVerifiedAdminResetPassword(): void {
     db()->prepare('UPDATE buddies_verified_accounts SET password_hash=? WHERE id=?')->execute([$hash, $id]);
     db()->prepare('DELETE FROM buddies_verified_sessions WHERE account_id=?')->execute([$id]);
     db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id=?')->execute([$a['user_id']]);
+    ok();
+}
+
+function actionVerifiedPostList(): void {
+    ensureVerifiedPostTables();
+    $accountId = (int)($_GET['account_id'] ?? 0);
+    if ($accountId <= 0) err('account_id は必須です。');
+    $a = verifiedAccountById($accountId);
+    if (!$a || ($a['status'] ?? 'active') !== 'active' || !canUseVerifiedBoard($a)) ok([]);
+    $limit = min(max((int)($_GET['limit'] ?? 20), 1), 50);
+    $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND status='active' ORDER BY created_at DESC, id DESC LIMIT ?");
+    $st->bindValue(1, $accountId, PDO::PARAM_INT);
+    $st->bindValue(2, $limit, PDO::PARAM_INT);
+    $st->execute();
+    ok(array_map(fn($p) => buildVerifiedPostData($p), $st->fetchAll()));
+}
+
+function actionVerifiedPostCreate(): void {
+    ensureVerifiedPostTables();
+    $a = requireVerifiedAccount();
+    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・公式アカウントのみ利用できます。', 403);
+    $b = body();
+    $body = trim((string)($b['body'] ?? ''));
+    if (mb_strlen($body) > 8000) err('本文は8000文字以内で入力してください。');
+    $linkUrl = cleanUrl($b['link_url'] ?? null);
+    $linkLabel = trim((string)($b['link_label'] ?? ''));
+    if (mb_strlen($linkLabel) > 120) err('リンク文言は120文字以内で入力してください。');
+    if ($linkLabel === '') $linkLabel = null;
+
+    $files = [];
+    $imageCount = 0;
+    $pdfCount = 0;
+    $incomingFiles = [];
+    if (isset($b['files']) && is_array($b['files'])) {
+        $incomingFiles = array_slice($b['files'], 0, 3);
+    } elseif (!empty($b['file'])) {
+        $incomingFiles[] = ['data' => $b['file'], 'name' => $b['file_name'] ?? null];
+    }
+    foreach ($incomingFiles as $incoming) {
+        if (!is_array($incoming)) continue;
+        $dataUrl = (string)($incoming['data'] ?? '');
+        if ($dataUrl === '') continue;
+        if (!preg_match('/^data:(image\/png|image\/jpeg|image\/webp|application\/pdf);base64,/', $dataUrl, $m)) {
+            err('画像（PNG/JPEG/WebP）またはPDFファイルを指定してください。');
+        }
+        $fileMime = $m[1];
+        if (strpos($fileMime, 'image/') === 0) {
+            $imageCount++;
+            if ($imageCount > 2) err('画像は2枚まで投稿できます。');
+        } elseif ($fileMime === 'application/pdf') {
+            $pdfCount++;
+            if ($pdfCount > 1) err('PDFは1件まで投稿できます。');
+        }
+        $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+        if ($raw === false) err('ファイルを読み込めませんでした。');
+        if (strlen($raw) > 8 * 1024 * 1024) err('ファイルサイズは8MB以内にしてください。');
+        if (strpos($fileMime, 'image/') === 0 && !@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+        if ($fileMime === 'application/pdf' && substr($raw, 0, 4) !== '%PDF') err('有効なPDFファイルではありません。');
+        $ext = match ($fileMime) {
+            'image/png' => 'png',
+            'image/jpeg' => 'jpg',
+            'image/webp' => 'webp',
+            default => 'pdf',
+        };
+        $fileName = cleanUploadFileName((string)($incoming['name'] ?? ''), $ext === 'pdf' ? 'PDFファイル' : '画像');
+        $dir = __DIR__ . '/uploads/verified/' . (int)$a['id'] . '/posts';
+        if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+        $fileId = bin2hex(random_bytes(16));
+        while (is_file($dir . '/' . $fileId . '.' . $ext)) $fileId = bin2hex(random_bytes(16));
+        $path = $dir . '/' . $fileId . '.' . $ext;
+        if (file_put_contents($path, $raw) === false) err('ファイルを保存できませんでした。', 500);
+        $files[] = [
+            'url' => 'uploads/verified/' . (int)$a['id'] . '/posts/' . $fileId . '.' . $ext,
+            'name' => $fileName,
+            'mime' => $fileMime,
+            'size' => strlen($raw),
+        ];
+    }
+    if ($body === '' && !$linkUrl && !$files) err('本文、リンク、ファイルのいずれかを入力してください。');
+
+    $first = $files[0] ?? null;
+    db()->prepare("INSERT INTO buddies_verified_posts (account_id, body, link_url, link_label, files, file_url, file_name, file_mime, file_size)
+                   VALUES (?,?,?,?,?,?,?,?,?)")
+       ->execute([
+           (int)$a['id'], $body !== '' ? $body : null, $linkUrl, $linkLabel,
+           $files ? json_encode($files, JSON_UNESCAPED_UNICODE) : null,
+           $first['url'] ?? null, $first['name'] ?? null, $first['mime'] ?? null, $first['size'] ?? null,
+       ]);
+    $id = (int)db()->lastInsertId();
+    $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    ok(buildVerifiedPostData($st->fetch()));
+}
+
+function actionVerifiedPostDelete(): void {
+    ensureVerifiedPostTables();
+    $a = requireVerifiedAccount();
+    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・公式アカウントのみ利用できます。', 403);
+    $id = (int)(body()['id'] ?? $_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE id=? AND status='active' LIMIT 1");
+    $st->execute([$id]);
+    $p = $st->fetch();
+    if (!$p || (int)$p['account_id'] !== (int)$a['id']) err('削除権限がありません。', 403);
+    foreach (verifiedPostFiles($p) as $file) {
+        $base = __DIR__ . '/uploads/verified/' . (int)$a['id'];
+        $rel = strtok((string)$file['url'], '?');
+        if ($rel && !preg_match('/^https?:\/\//', $rel)) deletePathInside(__DIR__ . '/' . ltrim($rel, '/'), $base);
+    }
+    db()->prepare("UPDATE buddies_verified_posts SET status='disabled' WHERE id=?")->execute([$id]);
     ok();
 }
 
@@ -2061,6 +2312,39 @@ function cleanUploadFileName(string $name, string $fallback): string {
     $name = trim((string)$name, " .\t\n\r\0\x0B");
     if ($name === '') $name = $fallback;
     return mb_substr($name, 0, 120);
+}
+function deletePathInside(string $path, string $base): void {
+    $baseReal = realpath($base);
+    if (!$baseReal) return;
+    $targetReal = file_exists($path) ? realpath($path) : false;
+    if (!$targetReal || strpos($targetReal, $baseReal) !== 0) return;
+    if (is_file($targetReal)) @unlink($targetReal);
+}
+function deleteDirInside(string $dir, string $base): void {
+    $baseReal = realpath($base);
+    $dirReal = is_dir($dir) ? realpath($dir) : false;
+    if (!$baseReal || !$dirReal || strpos($dirReal, $baseReal) !== 0) return;
+    $items = scandir($dirReal);
+    if (!$items) return;
+    foreach ($items as $item) {
+        if ($item === '.' || $item === '..') continue;
+        $path = $dirReal . '/' . $item;
+        if (is_dir($path)) deleteDirInside($path, $baseReal);
+        elseif (is_file($path)) @unlink($path);
+    }
+    @rmdir($dirReal);
+}
+function deleteEventUploadFiles(array $event, int $accountId): void {
+    $base = __DIR__ . '/uploads/verified/' . $accountId;
+    if (!empty($event['cover_url'])) {
+        $rel = strtok((string)$event['cover_url'], '?');
+        if ($rel && !preg_match('/^https?:\/\//', $rel)) deletePathInside(__DIR__ . '/' . ltrim($rel, '/'), $base);
+    }
+    foreach (eventAttachments($event) as $file) {
+        $rel = strtok((string)($file['url'] ?? ''), '?');
+        if ($rel && !preg_match('/^https?:\/\//', $rel)) deletePathInside(__DIR__ . '/' . ltrim($rel, '/'), $base);
+    }
+    deleteDirInside($base . '/event_files/' . (int)$event['id'], $base);
 }
 
 function eventEditableFields(array $b): array {
@@ -2236,11 +2520,22 @@ function actionEventDelete(): void { ensureEventTables();
     $b = body();
     $id = (int)($b['id'] ?? $_GET['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
-    $st = db()->prepare("SELECT account_id FROM buddies_events WHERE id=? LIMIT 1");
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
     $st->execute([$id]);
     $e = $st->fetch();
     if (!$e || (int)$e['account_id'] !== (int)$a['id']) err('削除権限がありません。', 403);
-    db()->prepare("UPDATE buddies_events SET status='disabled' WHERE id=?")->execute([$id]);
+    deleteEventUploadFiles($e, (int)$a['id']);
+    $subSt = db()->prepare("SELECT id, cover_url FROM buddies_subevents WHERE event_id=?");
+    $subSt->execute([$id]);
+    $base = __DIR__ . '/uploads/verified/' . (int)$a['id'];
+    foreach ($subSt->fetchAll() as $sub) {
+        if (!empty($sub['cover_url'])) {
+            $rel = strtok((string)$sub['cover_url'], '?');
+            if ($rel && !preg_match('/^https?:\/\//', $rel)) deletePathInside(__DIR__ . '/' . ltrim($rel, '/'), $base);
+        }
+    }
+    db()->prepare("UPDATE buddies_events SET status='disabled', cover_url=NULL, attachments=NULL WHERE id=?")->execute([$id]);
+    db()->prepare("UPDATE buddies_subevents SET status='disabled', cover_url=NULL WHERE event_id=?")->execute([$id]);
     ok();
 }
 function actionEventUploadCover(): void { ensureEventTables();
@@ -2302,10 +2597,13 @@ function actionEventUploadAttachment(): void { ensureEventTables();
         'image/webp' => 'webp',
         default => 'pdf',
     };
-    $fileId = bin2hex(random_bytes(8));
+    $fileId = bin2hex(random_bytes(16));
     $accountId = (int)$a['id'];
     $dir = __DIR__ . '/uploads/verified/' . $accountId . '/event_files/' . $id;
     if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    while (is_file($dir . '/' . $fileId . '.' . $ext)) {
+        $fileId = bin2hex(random_bytes(16));
+    }
     $path = $dir . '/' . $fileId . '.' . $ext;
     if (file_put_contents($path, $raw) === false) err('ファイルを保存できませんでした。', 500);
     $url = 'uploads/verified/' . $accountId . '/event_files/' . $id . '/' . $fileId . '.' . $ext;

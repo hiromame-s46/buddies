@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Buddies profile</title>
 <meta name="description" content="Buddies profile の公開プロフィールページです。">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="Buddies profile">
+<meta property="og:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。推しメン・好きな曲・SNSをまとめてシェアできます。">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/view.html">
+<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Buddies">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Buddies profile">
+<meta name="twitter:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。">
+<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/view.html">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--blue:#3b82f6;--gold:#e6b422}
@@ -87,6 +101,54 @@ function closeOrBack(e){
 }
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : './' + url; }
+function absoluteUrl(url){ return new URL(url || location.href, location.href).href; }
+function setMeta(selector, attr, value){
+  if (!value) return;
+  let el = document.head.querySelector(selector);
+  if (!el) {
+    el = document.createElement('meta');
+    if (selector.startsWith('meta[name="')) el.setAttribute('name', selector.match(/meta\[name="([^"]+)"/)?.[1] || '');
+    if (selector.startsWith('meta[property="')) el.setAttribute('property', selector.match(/meta\[property="([^"]+)"/)?.[1] || '');
+    document.head.appendChild(el);
+  }
+  el.setAttribute(attr, value);
+}
+function setCanonical(url){
+  let el = document.head.querySelector('link[rel="canonical"]');
+  if (!el) {
+    el = document.createElement('link');
+    el.setAttribute('rel', 'canonical');
+    document.head.appendChild(el);
+  }
+  el.setAttribute('href', url);
+}
+function profileDescription(p){
+  const parts = [];
+  const oshis = getOshiList(p);
+  if (oshis.length) parts.push(`推しメン: ${oshis.join('、')}`);
+  const songs = Array.isArray(p.favorite_songs) ? p.favorite_songs : (Array.isArray(p.favoriteSongs) ? p.favoriteSongs : []);
+  if (songs.length) parts.push(`好きな曲: ${songs.slice(0, 3).join('、')}`);
+  if (p.location) parts.push(`地域: ${p.location}`);
+  const bio = String(p.bio || p.comment || '').trim().replace(/\s+/g, ' ');
+  if (bio) parts.push(bio.slice(0, 80));
+  return (parts.join(' | ') || '櫻坂46ファン同士でプロフィール交換できるBuddies profile。').slice(0, 160);
+}
+function updateSeo(p){
+  const title = `${getDisplayName(p)}のBuddiesプロフィール`;
+  const description = profileDescription(p);
+  const url = absoluteUrl(`view.html?id=${encodeURIComponent(p.id)}`);
+  const image = absoluteUrl(`og-image.php?uid=${encodeURIComponent(p.id)}&v=2`);
+  document.title = title;
+  setMeta('meta[name="description"]', 'content', description);
+  setMeta('meta[property="og:title"]', 'content', title);
+  setMeta('meta[property="og:description"]', 'content', description);
+  setMeta('meta[property="og:url"]', 'content', url);
+  setMeta('meta[property="og:image"]', 'content', image);
+  setMeta('meta[name="twitter:title"]', 'content', title);
+  setMeta('meta[name="twitter:description"]', 'content', description);
+  setMeta('meta[name="twitter:image"]', 'content', image);
+  setCanonical(url);
+}
 function toast(text){ const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),1800); }
 function getDisplayName(p){ return p.display_name || p.username || '名無し'; }
 function hasSns(p){ return Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim()); }
@@ -172,7 +234,7 @@ function renderError(text){
 
 function render(p){
   const name = getDisplayName(p);
-  document.title = `${name} - Buddies profile`;
+  updateSeo(p);
   const sns = hasSns(p);
   const stance = stanceLabel(p.follow_stance);
   const badge = sns ? `<div class="badge sns" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>` : '';
