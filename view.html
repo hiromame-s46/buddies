@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Buddies profile</title>
+<meta name="description" content="Buddies profile の公開プロフィールページです。">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--blue:#3b82f6;--gold:#e6b422}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
+header h1{font-size:15px;margin:0;font-weight:700;flex:1;color:#555}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
+.back:hover{background:#f3f3f3}
+main{padding:20px}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 16px 8px}
+.icon-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.icon{width:100%;height:100%;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;font-size:48px;font-weight:800;color:#888;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.icon img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.badge{position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:2}
+.badge.sns{background:var(--blue)}
+.badge.verified{background:var(--gold)}
+.badge svg{width:14px;height:14px}
+.kind{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:#fff;border:1px solid var(--line);color:#333;font-size:12px;font-weight:800;padding:4px 12px;margin-top:14px}
+.kind.sns{border-color:#bfdbfe;color:#1d4ed8;background:#eff6ff}
+.kind-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
+.name{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em;color:#111}
+.section{margin-top:24px}
+.section-title{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px}
+.card{background:#f7f7f7;border:1px solid #efefef;border-radius:24px;padding:16px 16px 18px}
+.meta-grid{display:grid;gap:10px}
+.meta-item{display:grid;grid-template-columns:108px 1fr;gap:10px;align-items:start}
+.meta-label{font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.3px}
+.meta-value{font-size:14px;color:#222;line-height:1.7}
+.box{font-size:14px;line-height:1.9;color:#333;white-space:pre-wrap;margin:0}
+.oshi-group+.oshi-group{margin-top:18px;padding-top:18px;border-top:1px solid #e9e9e9}
+.oshi-label{font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
+.oshi-members{display:flex;flex-wrap:wrap;gap:10px}
+.member-chip{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 12px 8px 8px;background:#fff;border:1px solid #ececec;border-radius:9999px}
+.member-chip-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#ececec;display:grid;place-items:center;color:#666;font-weight:700}
+.member-chip-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.member-chip-name{font-size:13px;font-weight:700;color:#222;line-height:1.35}
+.tag-list{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-flex;align-items:center;min-height:34px;padding:7px 12px;border-radius:9999px;background:#fff;border:1px solid #ececec;font-size:13px;font-weight:700;color:#333;line-height:1.35}
+.links{display:grid;gap:8px}
+.link,.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;border-radius:9999px;text-decoration:none;font-weight:700;font-size:14px;padding:0 20px;border:1.5px solid #111;background:#fff;color:#111;cursor:pointer;font-family:inherit}
+.link:hover,.btn:hover{background:#fafafa}
+.btn.favorite-add{background:#111;color:#fff;border-color:#111}
+.btn.favorite-add:hover{background:#222}
+.btn.favorite-done{background:#fff;color:#111;border-color:#111}
+.btn.favorite-done:hover{background:#fafafa}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.notice{font-size:12px;color:#777;text-align:center;margin-top:10px;line-height:1.7}
+.spacer{height:18px}
+.footer{margin-top:32px;padding:16px;text-align:center;font-size:12px;color:#aaa}
+.error{padding:40px 20px;text-align:center}
+.error h2{font-size:18px;margin:0 0 10px}
+.error a{color:#111}
+.skeleton{padding:60px 20px;text-align:center;color:#aaa}
+.empty-text{font-size:13px;color:#888;line-height:1.7}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;border-radius:9999px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:560px){main{padding:16px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back" href="./" onclick="return closeOrBack(event)" aria-label="戻る">← Buddies</a>
+    <h1>プロフィール</h1>
+  </header>
+  <main id="app"><div class="skeleton">読み込み中…</div></main>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const API = './api.php';
+const MEMBER_DATA = '../data/member.json';
+let profile = null;
+let me = null;
+let memberMap = {};
+
+function closeOrBack(e){
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : './' + url; }
+function toast(text){ const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),1800); }
+function getDisplayName(p){ return p.display_name || p.username || '名無し'; }
+function hasSns(p){ return Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim()); }
+function getOshiList(p){ return [p.oshi_member,p.oshi_member_2,p.oshi_member_3].filter(Boolean); }
+function stanceLabel(v){ return v === 'silent_ok' ? '無言フォローOK' : v === 'hello_please' ? '一言欲しい' : ''; }
+function snsLabel(type){ return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'Link'})[type] || 'Link'; }
+function snsIcon(type){
+  const icons = {
+    x:'<svg viewBox="0 0 1200 1227" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894L144.011 79.694h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>',
+    instagram:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    youtube:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6.5" width="18" height="11" rx="3"/><path d="M10 9.5 15 12l-5 2.5Z" fill="currentColor" stroke="none"/></svg>',
+    tiktok:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v11.2a4.2 4.2 0 1 1-4.2-4.2"/><path d="M14 5.5c1.1 2.4 2.8 3.8 5 4.1"/></svg>',
+    threads:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.8 10.7c-.4-3.1-2.4-5.1-5.7-5.1-3.8 0-6.1 2.7-6.1 6.4s2.5 6.4 6.3 6.4c3.2 0 5.5-1.6 5.5-4.1 0-2.2-1.7-3.5-4.2-3.5h-1.1"/><path d="M14.2 13.8c-.4 1.2-1.3 1.9-2.5 1.9-1.4 0-2.4-.9-2.4-2.2 0-1.4 1-2.2 2.7-2.2.7 0 1.4.1 2.2.3"/></svg>',
+    link:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+  };
+  return icons[type] || icons.link;
+}
+function getMember(name){ return name ? (memberMap[name] || null) : null; }
+function getAvatarUrl(p){
+  if (p && p.user_icon) return assetUrl(p.user_icon);
+  const firstOshi = p?.oshi_member || getOshiList(p)[0];
+  const m = getMember(firstOshi);
+  if (m && m.image) return assetUrl(m.image);
+  return '';
+}
+function getAvatarColor(p){
+  const firstOshi = p?.oshi_member || getOshiList(p)[0];
+  const m = getMember(firstOshi);
+  return (m && m.color) ? m.color : '#f2f2f2';
+}
+function avatarInner(p){
+  const url = getAvatarUrl(p);
+  if (url) return `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`;
+  return esc((getDisplayName(p)[0] || '？'));
+}
+function memberChip(name){
+  const m = getMember(name) || {};
+  const img = m.image ? `<img src="${esc(assetUrl(m.image))}" alt="" onerror="this.style.display='none'">` : esc((name[0]||'？'));
+  return `<div class="member-chip"><div class="member-chip-avatar">${img}</div><div class="member-chip-name">${esc(name)}</div></div>`;
+}
+function metaRows(p){
+  const rows = [];
+  if (p.location) rows.push(['住んでいる場所', p.location]);
+  if (p.age) rows.push(['年齢', `${p.age}歳`]);
+  if (p.gender) rows.push(['性別', p.gender]);
+  if (p.buddies_since) rows.push(['Buddies歴', p.buddies_since]);
+  return rows;
+}
+
+async function load(){
+  const params = new URLSearchParams(location.search);
+  const id = parseInt(params.get('id') || params.get('uid') || '0', 10);
+  if (!id) return renderError('プロフィールが指定されていません。');
+  try {
+    const [meRes, pRes, memberRes] = await Promise.all([
+      fetch(`${API}?action=auth_me`, { credentials:'include' }).catch(()=>null),
+      fetch(`${API}?action=buddies_public_profile_get&user_id=${id}`, { credentials:'include' }),
+      fetch(`${MEMBER_DATA}?_=${Date.now()}`).catch(()=>null)
+    ]);
+    if (meRes) { try { const j = await meRes.json(); me = j.ok ? j.data : null; } catch(e){} }
+    if (memberRes) {
+      try {
+        const raw = await memberRes.json();
+        const arr = Array.isArray(raw) ? raw : Object.values(raw || {});
+        arr.forEach(m => { if (m && m.name) memberMap[m.name] = m; });
+      } catch(e){}
+    }
+    const json = await pRes.json();
+    if (!json.ok) return renderError(json.error || 'プロフィールを取得できませんでした。');
+    profile = json.data;
+    if (profile.verified_account && profile.verified_account.id) {
+      location.replace('./verified/view.html?id=' + encodeURIComponent(profile.verified_account.id));
+      return;
+    }
+    render(profile);
+  } catch (e) { renderError('通信エラーが発生しました。'); }
+}
+
+function renderError(text){
+  document.title = 'Buddies profile';
+  document.getElementById('app').innerHTML = `<div class="error"><h2>${esc(text)}</h2><p><a href="./">← Buddies トップへ戻る</a></p></div>`;
+}
+
+function render(p){
+  const name = getDisplayName(p);
+  document.title = `${name} - Buddies profile`;
+  const sns = hasSns(p);
+  const stance = stanceLabel(p.follow_stance);
+  const badge = sns ? `<div class="badge sns" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>` : '';
+  const heroIcon = avatarInner(p);
+  const heroBg = getAvatarColor(p);
+  const links = (p.sns_links || []).filter(s => s && s.url && String(s.url).trim()).slice(0,10);
+  const linkHtml = links.map(s => {
+    const label = s.label && String(s.label).trim() ? s.label : snsLabel(s.type);
+    return `<a class="link" href="${esc(s.url)}" target="_blank" rel="noopener">${snsIcon(s.type)}<span>${esc(label)}</span></a>`;
+  }).join('');
+  const rows = metaRows(p);
+  const aboutHtml = rows.length
+    ? `<div class="meta-grid">${rows.map(([label,val])=>`<div class="meta-item"><div class="meta-label">${esc(label)}</div><div class="meta-value">${esc(val)}</div></div>`).join('')}</div>`
+    : `<div class="empty-text">まだ登録されていません。</div>`;
+  const oshis = getOshiList(p);
+  const interests = Array.isArray(p.tags) ? p.tags : [];
+  const songs = Array.isArray(p.favorite_songs) ? p.favorite_songs : [];
+  const snsSection = `
+    <div class="section">
+      <div class="section-title">SNSリンク</div>
+      <div class="${linkHtml ? 'links' : 'card'}">${linkHtml || '<div class="empty-text">まだ登録されていません。</div>'}</div>
+    </div>`;
+  const myOshiSection = `
+    <div class="section">
+      <div class="section-title">My推し</div>
+      <div class="card">
+        <div class="oshi-group">
+          <div class="oshi-label">推しメン</div>
+          ${oshis.length ? `<div class="oshi-members">${oshis.map(memberChip).join('')}</div>` : `<div class="empty-text">まだ登録されていません。</div>`}
+        </div>
+        <div class="oshi-group">
+          <div class="oshi-label">興味</div>
+          ${interests.length ? `<div class="tag-list">${interests.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div>` : `<div class="empty-text">まだ登録されていません。</div>`}
+        </div>
+        <div class="oshi-group">
+          <div class="oshi-label">好きな曲</div>
+          ${songs.length ? `<div class="tag-list">${songs.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div>` : `<div class="empty-text">まだ登録されていません。</div>`}
+        </div>
+      </div>
+    </div>`;
+  const upperSections = myOshiSection + snsSection;
+
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <div class="icon-wrap"><div class="icon" style="background:${esc(heroBg)}">${heroIcon}</div>${badge}</div>
+      ${sns ? `<div class="kind sns">SNS登録済み</div>${stance ? `<div class="kind-note">${esc(stance)}</div>` : ''}` : `<div class="kind">一般ユーザー</div>`}
+      <div class="name">${esc(name)}</div>
+    </div>
+
+    ${upperSections}
+
+    <div class="section">
+      <div class="section-title">About me</div>
+      <div class="card">${aboutHtml}</div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Bio</div>
+      <div class="card"><div class="box">${p.bio ? esc(p.bio) : 'まだ登録されていません。'}</div></div>
+    </div>
+
+    <div class="spacer"></div>
+    <div id="favorite-area" class="section"></div>
+    <div class="footer">Buddies profile</div>
+  `;
+  renderFavoriteArea();
+}
+
+function openLoginForFavorite(){
+  if (!profile) return;
+  const redirect = `view.html?id=${encodeURIComponent(profile.id)}`;
+  location.href = `./?favorite_redirect=${encodeURIComponent(redirect)}`;
+}
+
+function renderFavoriteArea(){
+  const area = document.getElementById('favorite-area');
+  if (!area || !profile) return;
+  const canFavoriteTarget = profile.account_role === 'user';
+  if (!me) {
+    area.innerHTML = `<button class="btn favorite-add" onclick="openLoginForFavorite()">ログインしてお気に入り</button><div class="notice">お気に入りはログイン中の一般ユーザー同士で利用できます。</div>`;
+    return;
+  }
+  const meIsGeneral = me.account_role === 'user';
+  if (profile.is_self || Number(me.id) === Number(profile.id)) {
+    area.innerHTML = `<button class="btn" onclick="location.href='./?edit=1'">プロフィールを編集</button>`;
+    return;
+  }
+  if (!meIsGeneral || !canFavoriteTarget) {
+    area.innerHTML = `<div class="notice">お気に入りは一般ユーザー同士で利用できます。</div>`;
+    return;
+  }
+  const active = !!profile.favorited;
+  area.innerHTML = `<button class="btn ${active ? 'favorite-done' : 'favorite-add'}" onclick="toggleFavorite()">${active ? 'お気に入り済み' : 'お気に入りに追加'}</button>`;
+}
+
+async function toggleFavorite(){
+  if (!profile || !me) return;
+  try {
+    const res = await fetch(`${API}?action=buddies_favorite_toggle`, {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ target_id: profile.id })
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      if (res.status === 401) {
+        toast('ログイン後にもう一度お試しください');
+        setTimeout(openLoginForFavorite, 300);
+        return;
+      }
+      toast(json.error || '更新できませんでした');
+      return;
+    }
+    profile.favorited = !!json.data.favorited;
+    renderFavoriteArea();
+    toast(profile.favorited ? 'お気に入りに追加しました' : 'お気に入りから削除しました');
+  } catch(e) { toast('通信エラーが発生しました'); }
+}
+
+load();
+</script>
+</body>
+</html>

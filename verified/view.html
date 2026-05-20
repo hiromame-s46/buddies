@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>認証アカウント - Buddies profile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--gold:#e6b422;--soft:#f7f7f7}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
+header h1{font-size:15px;margin:0;font-weight:700;flex:1;color:#555}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
+.back:hover{background:#f3f3f3}
+main{padding:20px}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 16px 8px}
+.icon-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.icon{width:100%;height:100%;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;font-size:48px;font-weight:800;color:#888;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.icon img{width:100%;height:100%;object-fit:cover}
+.gold-badge{position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;background:var(--gold);border:3px solid #fff;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:2}
+.gold-badge svg{width:14px;height:14px}
+.kind{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:#fff;border:1px solid var(--gold);color:#7c5600;font-size:12px;font-weight:800;padding:4px 12px;margin-top:14px}
+.name{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em;color:#111}
+.subnote{font-size:12px;color:var(--muted)}
+.desc{font-size:14px;line-height:1.8;color:#333;white-space:pre-wrap;background:#f5f5f5;border-radius:20px;padding:14px 18px;margin:18px 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 16px}
+.tags span{font-size:12px;font-weight:700;border-radius:9999px;background:#f2f2f2;color:#555;padding:5px 10px}
+.section-title{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.5px;margin:24px 0 10px}
+.links{display:grid;gap:8px}
+.link{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;border-radius:9999px;text-decoration:none;font-weight:700;font-size:14px;padding:0 20px;border:1px solid var(--line);cursor:pointer}
+.link svg{display:block;flex-shrink:0}
+.link.primary{background:#111;color:#fff;border-color:#111}
+.link.gold{background:#111;color:#fff;border-color:#111}
+.link.secondary{background:#fff;color:#111}
+.empty{padding:40px 16px;text-align:center;color:#888}
+.footer{margin-top:32px;padding:16px;text-align:center;font-size:12px;color:#aaa}
+.error{padding:40px 20px;text-align:center}
+.error h2{font-size:18px;margin:0 0 10px}
+.error a{color:#111}
+.skeleton{padding:60px 20px;text-align:center;color:#aaa}
+.events{display:grid;gap:10px;margin-top:8px}
+.event-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px;text-decoration:none;color:#111}
+.event-card:hover{background:#fafafa}
+.event-card .cover{width:64px;height:64px;border-radius:12px;background:#f2f2f2;flex-shrink:0;overflow:hidden;display:grid;place-items:center;color:#999;font-size:22px}
+.event-card .cover img{width:100%;height:100%;object-fit:cover}
+.event-card .body{flex:1;min-width:0}
+.event-card .t{font-weight:700;font-size:15px;margin-bottom:4px;color:#111}
+.event-card .m{font-size:12px;color:#666}
+.edit-fab{position:fixed;right:18px;bottom:18px;z-index:30;width:56px;height:56px;border-radius:50%;background:#111;color:#fff;display:none;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.22);border:1px solid #111}
+.edit-fab:hover{background:#222}
+.edit-fab svg{width:22px;height:22px}
+@media(max-width:560px){.name{font-size:22px}.icon-wrap{width:104px;height:104px}.edit-fab{right:16px;bottom:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back" href="../" onclick="return closeOrBack(event)" aria-label="戻る">← Buddies</a>
+    <h1>認証アカウント</h1>
+  </header>
+  <main id="app"><div class="skeleton">読み込み中…</div></main>
+</div>
+<a id="edit-fab" class="edit-fab" href="./index.html" target="_blank" rel="noopener" aria-label="編集画面を開く" title="編集">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+</a>
+<script>
+const API = '../api.php';
+let currentAccount = null;
+function showEditFabIfOwner(a){
+  const fab = document.getElementById('edit-fab');
+  if (!fab || !a || !currentAccount) return;
+  if (Number(currentAccount.id) === Number(a.id)) fab.style.display = 'flex';
+}
+function closeOrBack(e){
+  // 別タブで開かれた場合(opener あり) → タブを閉じる
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : '../' + url; }
+function kindLabel(type){ return type === 'developer' ? '開発者アカウント' : type === 'official' ? '公式アカウント' : '認証アカウント'; }
+function kindDef(type){
+  return type === 'developer' ? 'Buddies profile の開発・運営を行うアカウントです。'
+       : type === 'official'  ? '極めて信頼性の高いことを証明するアカウントです。'
+                              : '開発者が認証したアカウントです。';
+}
+function snsLabel(type){ return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'リンク'})[type] || 'リンク'; }
+function snsIcon(type){
+  const icons = {
+    x:'<svg viewBox="0 0 1200 1227" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/></svg>',
+    threads:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221z"/></svg>',
+    instagram:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    tiktok:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19.321 7.532a5.88 5.88 0 0 1-3.442-1.103 5.91 5.91 0 0 1-2.146-3.043 5.86 5.86 0 0 1-.165-1.386h-3.14v12.63a3.02 3.02 0 1 1-2.137-2.895v-3.2a6.23 6.23 0 0 0-1.24-.124 6.22 6.22 0 1 0 6.22 6.22V9.59a8.91 8.91 0 0 0 4.93 1.49v-3.14a5.9 5.9 0 0 1-.88-.408Z"/></svg>',
+    youtube:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.388.52A2.997 2.997 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a2.997 2.997 0 0 0 2.11 2.12c1.883.52 9.388.52 9.388.52s7.505 0 9.388-.52a2.997 2.997 0 0 0 2.11-2.12C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.546 15.568V8.432L15.818 12l-6.272 3.568Z"/></svg>',
+    link:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+  };
+  return icons[type] || icons.link;
+}
+
+async function load(){
+  const id = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
+  if (!id) return renderError('アカウントが指定されていません。');
+  try {
+    try {
+      const meRes = await fetch(`${API}?action=verified_me`, { credentials:'include' });
+      const meJson = await meRes.json();
+      currentAccount = meJson.ok ? meJson.data : null;
+    } catch(e) {}
+    const res = await fetch(`${API}?action=verified_public_get&id=${id}`, { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok) return renderError(json.error || 'アカウントを取得できませんでした。');
+    render(json.data);
+  } catch (e) { renderError('通信エラーが発生しました。'); }
+}
+
+function renderError(text){
+  document.title = '認証アカウント - Buddies profile';
+  document.getElementById('app').innerHTML = `<div class="error"><h2>${esc(text)}</h2><p><a href="../">← Buddies トップへ戻る</a></p></div>`;
+}
+
+function render(a){
+  document.title = `${a.display_name} - Buddies認証アカウント`;
+  const icon = a.icon_url
+    ? `<img src="${esc(assetUrl(a.icon_url))}" alt="" onerror="this.style.display='none'">`
+    : esc((a.display_name||'？')[0]);
+  const tags = (a.hashtags || []).slice(0, 8).map(t => `<span>#${esc(String(t).replace(/^#/, ''))}</span>`).join('');
+  const links = [];
+  if (a.primary_link_url)   links.push({ url:a.primary_link_url,   label:a.primary_link_label   || 'リンクを開く', cls:'gold' });
+  if (a.secondary_link_url) links.push({ url:a.secondary_link_url, label:a.secondary_link_label || 'リンクを開く', cls:'primary' });
+  if (a.cta_url && a.cta_url !== a.primary_link_url) links.push({ url:a.cta_url, label:a.cta_label || 'リンクを開く', cls:'secondary' });
+  const seen = new Set(links.map(l => l.url));
+  (a.sns_links || []).filter(s => s && s.url && String(s.url).trim()).slice(0, 10).forEach(s => {
+    if (seen.has(s.url)) return;
+    seen.add(s.url);
+    links.push({ url:s.url, label:s.label || snsLabel(s.type), type:s.type || 'link', cls:'secondary' });
+  });
+  if (a.x_url && !seen.has(a.x_url)) links.push({ url:a.x_url, label:'X', type:'x', cls:'secondary' });
+
+  const label = a.label || kindLabel(a.account_type);
+  const def   = a.account_definition || kindDef(a.account_type);
+
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <div class="icon-wrap">
+        <div class="icon">${icon}</div>
+        <div class="gold-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      </div>
+      <div class="kind">✓ ${esc(label)}</div>
+      <div class="name">${esc(a.display_name)}</div>
+      <div class="subnote">${esc(def)}</div>
+    </div>
+    ${a.description ? `<div class="desc">${esc(a.description)}</div>` : ''}
+    ${tags ? `<div class="tags">${tags}</div>` : ''}
+    ${links.length ? `
+      <div class="section-title">リンク</div>
+      <div class="links">
+        ${links.map(l => `<a class="link ${l.cls}" href="${esc(l.url)}" target="_blank" rel="noopener">${l.type ? snsIcon(l.type) : ''}<span>${esc(l.label)}</span></a>`).join('')}
+      </div>
+    ` : ''}
+    <div id="events-title" class="section-title" style="display:none;">主催イベント</div>
+    <div id="events" class="events"></div>
+    <div class="footer">このアカウントは Buddies profile の認証アカウントです。</div>
+  `;
+  showEditFabIfOwner(a);
+  loadEvents(a.id);
+}
+function fmtDate(s){
+  if (!s) return '日時未定';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+async function loadEvents(accountId){
+  const wrap = document.getElementById('events');
+  const title = document.getElementById('events-title');
+  // まず空状態。エラー時もイベント無しと同じ見た目にする（読み込み失敗を派手に出さない）
+  wrap.innerHTML = '';
+  if (title) title.style.display = 'none';
+  let events = [];
+  try {
+    const res = await fetch(`${API}?action=event_list_by_account&account_id=${accountId}`, { credentials:'include' });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); }
+    catch (e) { console.warn('event_list_by_account: non-JSON response', res.status, text.slice(0, 200)); return; }
+    if (!json.ok) { console.warn('event_list_by_account error:', json.error); return; }
+    events = json.data || [];
+  } catch (e) {
+    console.warn('event_list_by_account fetch failed:', e);
+    return;
+  }
+  if (!events.length) return;
+  if (title) title.style.display = '';
+  wrap.innerHTML = events.map(e => `
+    <a class="event-card" href="./event.html?id=${e.id}">
+      <div class="cover">${e.cover_url ? `<img src="${esc(assetUrl(e.cover_url))}" alt="">` : '🎫'}</div>
+      <div class="body">
+        <div class="t">${esc(e.title)}</div>
+        <div class="m">${esc(fmtDate(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
+        <div class="m">参加 ${e.join_count} 人${e.capacity ? ' / 定員 ' + e.capacity : ''}</div>
+      </div>
+    </a>
+  `).join('');
+}
+load();
+</script>
+</body>
+</html>

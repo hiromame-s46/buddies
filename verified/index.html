@@ -1,0 +1,894 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>認証アカウント管理 - Buddies profile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--gold:#e6b422}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.5;padding-bottom:120px}
+.app{max-width:760px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:8px}
+header h1{font-size:17px;margin:0;font-weight:800;flex:1}
+.crumb{font-size:12px;color:#777;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.crumb:hover{color:#111}
+.small{font-size:12px;color:var(--muted);line-height:1.6}
+main{padding:16px;display:grid;gap:14px}
+.card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff}
+.login{max-width:380px;margin:60px auto}
+.field{display:grid;gap:6px;margin-bottom:10px}
+.field label{font-size:12px;font-weight:700;color:#555}
+.field-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media(max-width:560px){.field-row{grid-template-columns:minmax(0,1fr)}}
+.field{min-width:0}
+input,textarea,select{width:100%;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font:inherit;font-size:14px;outline:none;background:#fff;color:#111;min-width:0;display:block;box-sizing:border-box}
+input[type=datetime-local]{font-size:13px;padding:10px 12px;width:100%;min-width:0;-webkit-min-logical-width:0;appearance:none;-webkit-appearance:none}
+.modal-body .field-row{grid-template-columns:minmax(0,1fr) !important}
+.modal-body{overflow-x:hidden}
+input:focus,textarea:focus,select:focus{border-color:#111}
+textarea{min-height:96px;resize:vertical;line-height:1.7}
+.btn{height:44px;border-radius:9999px;border:1px solid var(--line);background:#fff;color:#111;font:700 14px inherit;padding:0 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:#111;color:#fff;border-color:#111}
+.btn.danger{color:#d33;border-color:#f3c2c2;background:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:#555}
+.btn.sm{height:36px;font-size:13px;padding:0 14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.section-title{font-size:14px;font-weight:800;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.account-head{display:flex;gap:14px;align-items:center}
+.account-icon-btn{width:72px;height:72px;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;color:#888;font-weight:800;font-size:28px;overflow:hidden;flex-shrink:0;border:none;cursor:pointer;padding:0;position:relative}
+.account-icon-btn img{width:100%;height:100%;object-fit:cover}
+.account-icon-btn .edit-hint{position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:2px 0}
+.account-head h2{margin:2px 0 2px;font-size:18px}
+.verified-label{display:inline-flex;align-items:center;gap:5px;border-radius:9999px;background:#fff;border:1px solid var(--gold);color:#7c5600;font-size:11px;font-weight:800;padding:3px 9px}
+.kind{display:inline-block;padding:3px 9px;border-radius:9999px;background:#f3f3f3;color:#555;font-size:11px;font-weight:700;margin-left:6px}
+.msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin-top:10px}
+.msg.show{display:block}
+.msg.ok{background:#f0fff4;color:#276749}
+.msg.err{background:#fff5f5;color:#d33}
+
+/* リンクカード */
+.link-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fafafa;margin-bottom:10px}
+.link-card .link-card-title{font-size:11px;font-weight:800;color:#7c5600;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase}
+.link-card .field{margin-bottom:8px}
+.link-card .field:last-child{margin-bottom:0}
+.sns-editor{display:grid;gap:8px;margin-top:8px}
+.sns-row{display:grid;grid-template-columns:128px minmax(0,1fr) 44px;gap:8px;align-items:center}
+.sns-row .btn{width:44px;padding:0}
+@media(max-width:560px){.sns-row{grid-template-columns:minmax(0,1fr) 44px}.sns-row input{grid-column:1 / -1;grid-row:2}.sns-row .btn{grid-column:2;grid-row:1}}
+
+/* 固定保存バー */
+.save-bar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;justify-content:flex-end}
+.save-bar .status{flex:1;font-size:12px;color:#666}
+.save-bar .status.dirty{color:#b45309;font-weight:700}
+
+/* ハーフモーダル */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:90dvh;display:flex;flex-direction:column;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.modal-head h3{margin:0;font-size:16px;font-weight:800;flex:1}
+.modal-close{background:none;border:none;cursor:pointer;font-size:22px;color:#666;width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.modal-close:hover{background:#f3f3f3}
+.modal-body{padding:18px;overflow:auto;flex:1}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+
+/* アイコンクロップ */
+.crop-area{display:grid;gap:14px;justify-items:center}
+.crop-stage{width:240px;height:240px;border-radius:50%;background:#fafafa;position:relative;overflow:hidden;touch-action:none;border:2px solid #111;cursor:grab;user-select:none}
+.crop-stage.grabbing{cursor:grabbing}
+.crop-stage canvas{width:100%;height:100%;display:block;pointer-events:none}
+.crop-stage-empty{position:absolute;inset:0;display:grid;place-items:center;color:#999;font-size:12px;text-align:center;padding:24px;pointer-events:none}
+.crop-controls{display:grid;gap:12px;width:100%;max-width:340px}
+.range-row{display:grid;gap:4px}
+.range-row label{font-size:12px;color:#555;font-weight:700}
+
+/* イベント */
+.event-list{display:grid;gap:10px}
+.event-row{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px;background:#fff}
+.event-row .title{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.event-row .vis{font-size:10px;font-weight:800;padding:2px 8px;border-radius:9999px;background:#f3f3f3;color:#666}
+.event-row .vis.unlisted{background:#fff4d6;color:#7c5600}
+.event-row .meta{font-size:12px;color:var(--muted)}
+.event-row .row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.event-empty{padding:18px;text-align:center;color:#999;font-size:13px;border:1px dashed var(--line);border-radius:14px}
+.subevent-box{margin-top:10px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid var(--line);display:grid;gap:8px}
+.subevent-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.subevent-title{font-size:12px;font-weight:800;color:#555}
+.subevent-list{display:grid;gap:6px}
+.subevent-row{display:grid;gap:4px;padding:8px 10px;border-radius:12px;background:#fff;border:1px solid #eee}
+.subevent-row-title{font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.subevent-row-meta{font-size:11px;color:var(--muted)}
+.subevent-row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.subevent-cover-preview{width:100%;max-width:240px;aspect-ratio:16/9;border-radius:12px;object-fit:cover;border:1px solid var(--line);display:block;margin-bottom:8px;background:#f2f2f2}
+.attachment-list{display:grid;gap:8px;margin-bottom:10px}
+.attachment-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px 10px}
+.attachment-row .file-icon{width:32px;height:32px;border-radius:10px;background:#f3f3f3;display:grid;place-items:center;font-weight:800;font-size:11px;color:#555;flex-shrink:0}
+.attachment-row .file-body{min-width:0;flex:1}
+.attachment-row .file-name{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attachment-row .file-meta{font-size:11px;color:var(--muted)}
+
+.developer-banner{background:#fff8e1;border:1px solid #f3e3a8;border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.developer-banner svg{flex-shrink:0;color:#b45309}
+.developer-banner strong{font-size:13px;color:#7c5600}
+.developer-banner span{font-size:12px;color:#7c5600}
+
+/* 確認モーダル */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:#fff;border-radius:18px;max-width:380px;width:100%;padding:20px;display:grid;gap:12px}
+.confirm-box h3{margin:0;font-size:16px;font-weight:800}
+.confirm-box p{margin:0;font-size:13px;color:#555;line-height:1.6}
+.confirm-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="crumb" href="../" onclick="return closeOrBack(event)">← Buddies</a>
+    <h1>認証アカウント管理</h1>
+    <button class="btn sm danger" id="logout-btn" type="button" data-act="logout" hidden>ログアウト</button>
+  </header>
+  <main id="app"></main>
+</div>
+
+<!-- 固定保存バー -->
+<div class="save-bar" id="save-bar" hidden>
+  <div class="status" id="save-status">変更はありません</div>
+  <button class="btn primary" id="save-btn" type="button" data-act="save-all">すべて保存</button>
+</div>
+
+<!-- アイコン編集モーダル -->
+<div class="modal-overlay" id="icon-modal" onclick="if(event.target===this)closeIconModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>アイコンを編集</h3>
+      <button class="modal-close" type="button" data-act="close-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="crop-area">
+        <div class="crop-stage" id="crop-stage">
+          <canvas id="crop-canvas" width="400" height="400"></canvas>
+          <div class="crop-stage-empty" id="crop-empty">画像が選択されていません</div>
+        </div>
+        <div class="crop-controls">
+          <button class="btn" type="button" onclick="document.getElementById('icon-file').click()">画像を選択</button>
+          <input type="file" id="icon-file" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="loadImageFile(this.files[0])">
+          <div class="range-row">
+            <label>拡大 <span id="zoom-val" class="small">1.0×</span></label>
+            <input type="range" min="1" max="3" step="0.05" value="1" id="zoom-range" oninput="crop.scale=Number(this.value);document.getElementById('zoom-val').textContent=crop.scale.toFixed(2)+'×';drawCrop()">
+          </div>
+          <p class="small" style="margin:0;">PNG / JPEG / WebP（最大3MB）</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" type="button" data-act="close-icon">キャンセル</button>
+      <button class="btn primary" type="button" data-act="upload-icon">アイコンを保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- イベント編集モーダル -->
+<div class="modal-overlay" id="event-modal" onclick="if(event.target===this)closeEventForm()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="event-modal-title">イベントを編集</h3>
+      <button class="modal-close" type="button" data-act="close-event">×</button>
+    </div>
+    <div class="modal-body" id="event-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" type="button" data-act="close-event">キャンセル</button>
+      <button class="btn primary" id="event-save-btn" type="button" data-act="save-event">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- サブイベント編集モーダル -->
+<div class="modal-overlay" id="subevent-modal" onclick="if(event.target===this)closeSubeventForm()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="subevent-modal-title">サブイベントを編集</h3>
+      <button class="modal-close" type="button" data-act="close-subevent">×</button>
+    </div>
+    <div class="modal-body" id="subevent-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" type="button" data-act="close-subevent">キャンセル</button>
+      <button class="btn primary" id="subevent-save-btn" type="button" data-act="save-subevent">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 確認モーダル -->
+<div class="confirm-overlay" id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <h3 id="confirm-title">確認</h3>
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="btn" type="button" data-act="close-confirm">キャンセル</button>
+      <button class="btn primary" id="confirm-ok" type="button">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '../api.php';
+let account = null;
+let isDeveloper = false;
+const crop = { img:null, scale:1, x:0, y:0, dragStart:null, startX:0, startY:0 };
+let pendingIcon = null; // 未保存のアイコンデータURL
+let dirty = false;
+let verifiedSns = [];
+let myEvents = [];
+let subeventsByEvent = {};
+let editingEventId = null;
+let editingSubeventId = null;
+let editingSubeventEventId = null;
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function tagsText(a){return (a.hashtags||[]).join(', ')}
+function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'その他リンク'})[type] || 'その他リンク';}
+function accountSnsLinks(a){
+  const links = Array.isArray(a.sns_links) ? a.sns_links.filter(s => s && s.url) : [];
+  if (a.x_url && !links.some(s => s.url === a.x_url)) links.unshift({ type:'x', url:a.x_url, label:'X' });
+  return links.slice(0, 10).map(s => ({ type:s.type || 'link', url:s.url || '', label:s.label || '' }));
+}
+function snsEditorHtml(){
+  const options = ['x','threads','instagram','tiktok','youtube','link'];
+  return `<div class="sns-editor" id="sns-editor">
+    ${verifiedSns.map((s,i)=>`
+      <div class="sns-row">
+        <select onchange="updateVerifiedSns(${i},'type',this.value)">
+          ${options.map(type => `<option value="${type}" ${s.type===type?'selected':''}>${snsLabel(type)}</option>`).join('')}
+        </select>
+        <input value="${esc(s.url||'')}" placeholder="https://..." oninput="updateVerifiedSns(${i},'url',this.value)">
+        <button class="btn" type="button" onclick="removeVerifiedSns(${i})" aria-label="削除">×</button>
+      </div>
+    `).join('')}
+  </div>
+  <button class="btn sm" type="button" onclick="addVerifiedSns()" ${verifiedSns.length >= 10 ? 'disabled' : ''}>+ SNSリンクを追加</button>`;
+}
+function renderVerifiedSns(){
+  const wrap = document.getElementById('sns-editor-wrap');
+  if (wrap) wrap.innerHTML = snsEditorHtml();
+}
+function addVerifiedSns(){ if (verifiedSns.length >= 10) return; verifiedSns.push({type:'x',url:'',label:''}); renderVerifiedSns(); setDirty(true); }
+function updateVerifiedSns(i,k,v){ if (!verifiedSns[i]) return; verifiedSns[i][k] = v; setDirty(true); }
+function removeVerifiedSns(i){ verifiedSns.splice(i,1); renderVerifiedSns(); setDirty(true); }
+function closeOrBack(e){
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+function msg(id, text, ok=true){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => { if (el.textContent === text) el.classList.remove('show'); }, 4000);
+}
+function setDirty(v){
+  dirty = v;
+  const bar = document.getElementById('save-bar');
+  const status = document.getElementById('save-status');
+  if (!bar || !status) return;
+  bar.hidden = !account;
+  if (v) { status.textContent = '未保存の変更があります'; status.classList.add('dirty'); }
+  else   { status.textContent = '変更はありません'; status.classList.remove('dirty'); }
+}
+function confirmDialog(title, text){
+  return new Promise(resolve => {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-text').textContent = text;
+    const ov = document.getElementById('confirm-overlay');
+    ov.classList.add('open');
+    const okBtn = document.getElementById('confirm-ok');
+    const handler = () => { okBtn.removeEventListener('click', handler); ov.classList.remove('open'); resolve(true); };
+    okBtn.addEventListener('click', handler);
+    window._confirmReject = () => { okBtn.removeEventListener('click', handler); resolve(false); };
+  });
+}
+function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); if(window._confirmReject) window._confirmReject(); }
+
+async function api(action, payload=null){
+  const opt = { credentials:'include' };
+  if (payload) { opt.method='POST'; opt.headers={'Content-Type':'application/json'}; opt.body=JSON.stringify(payload); }
+  const res = await fetch(`${API}?action=${action}`, opt);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) {
+    console.error(`[api:${action}] non-JSON response (HTTP ${res.status})`, text.slice(0, 1000));
+    return { ok:false, error:`サーバーエラー (HTTP ${res.status})。詳細はコンソールを確認してください。` };
+  }
+}
+
+async function init(){
+  const json = await api('verified_me').catch(() => ({ ok:false }));
+  account = json.ok ? json.data : null;
+  isDeveloper = !!(account && account.account_type === 'developer');
+  document.getElementById('logout-btn').hidden = !account;
+  render();
+  setTimeout(handleAdminOpenParams, 600);
+}
+
+function render(){
+  const root = document.getElementById('app');
+  if (!account) {
+    root.innerHTML = `<div class="card login">
+      <h2 style="margin:0 0 8px;font-size:22px;">認証アカウントログイン</h2>
+      <p class="small" style="margin:0 0 16px;">認証アカウント専用ページです。開発者は通常ログイン状態のままアクセスできます。</p>
+      <div class="field"><label>ログインID</label><input id="login-id" autocomplete="username"></div>
+      <div class="field"><label>パスワード</label><input id="login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px;" onclick="login()">ログイン</button>
+      <div id="login-msg" class="msg"></div>
+    </div>`;
+    document.getElementById('save-bar').hidden = true;
+    return;
+  }
+
+  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? '公式アカウント' : '認証アカウント';
+  verifiedSns = accountSnsLinks(account);
+  root.innerHTML = `
+    ${isDeveloper ? `
+      <div class="developer-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div><strong>開発者セッション</strong><br><span>管理者向け機能と認証アカウントの管理が利用できます。<a href="../admin.html" style="color:#7c5600;font-weight:800;">認証アカウント一覧へ →</a></span></div>
+      </div>
+    ` : ''}
+
+    <section class="card">
+      <div class="account-head">
+        <button class="account-icon-btn" type="button" data-act="open-icon" title="タップしてアイコンを編集">
+          ${account.icon_url ? `<img src="../${esc(account.icon_url)}?_=${Date.now()}" alt="">` : esc((account.display_name||'？')[0])}
+          <span class="edit-hint">編集</span>
+        </button>
+        <div style="min-width:0;flex:1;">
+          <span class="verified-label">✓ ${esc(account.label || kindLabel)}</span><span class="kind">${esc(kindLabel)}</span>
+          <h2>${esc(account.display_name)}</h2>
+          <div class="small">${esc(account.account_definition || '')}</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">公開情報</h2>
+      <div class="field"><label>表示名</label><input id="display_name" maxlength="100" value="${esc(account.display_name)}" oninput="setDirty(true)"></div>
+      <div class="field"><label>ラベル（バッジ表示文言）</label><input id="label" maxlength="80" value="${esc(account.label||'')}" placeholder="${esc(kindLabel)}" oninput="setDirty(true)"></div>
+      <div class="field"><label>説明文</label><textarea id="description" maxlength="2000" placeholder="アカウントの説明（プロフィール詳細に表示されます）" oninput="setDirty(true)">${esc(account.description||'')}</textarea></div>
+      <div class="field"><label>ハッシュタグ（カンマ区切り・最大6つ）</label><input id="hashtags" value="${esc(tagsText(account))}" placeholder="例: 推し活, イベント" oninput="setDirty(true)"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">リンク</h2>
+      <div class="link-card">
+        <div class="link-card-title">メインリンク</div>
+        <div class="field"><label>ボタン文言</label><input id="primary_link_label" maxlength="80" value="${esc(account.primary_link_label||'')}" placeholder="例: 公式サイトを見る" oninput="setDirty(true)"></div>
+        <div class="field"><label>URL</label><input id="primary_link_url" value="${esc(account.primary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+      </div>
+      <div class="link-card">
+        <div class="link-card-title">サブリンク1</div>
+        <div class="field"><label>ボタン文言</label><input id="secondary_link_label" maxlength="80" value="${esc(account.secondary_link_label||'')}" placeholder="例: お知らせを見る" oninput="setDirty(true)"></div>
+        <div class="field"><label>URL</label><input id="secondary_link_url" value="${esc(account.secondary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+      </div>
+      <div class="link-card">
+        <div class="link-card-title">サブリンク2</div>
+        <div class="field"><label>ボタン文言</label><input id="cta_label" maxlength="80" value="${esc(account.cta_label||'')}" placeholder="例: 申し込みページ" oninput="setDirty(true)"></div>
+        <div class="field"><label>URL</label><input id="cta_url" value="${esc(account.cta_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+      </div>
+      <div class="link-card">
+        <div class="link-card-title">SNSリンク</div>
+        <div id="sns-editor-wrap">${snsEditorHtml()}</div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">イベント管理</h2>
+      <p class="small" style="margin:0 0 10px;">主催イベントを作成・編集できます。「非公開」は URL を知っている人のみアクセスできます。</p>
+      <div class="actions" style="margin-bottom:10px;">
+        <button class="btn primary" id="new-event-btn" type="button" data-act="new-event">+ 新しいイベント</button>
+      </div>
+      <div id="event-list" class="event-list"></div>
+      <div id="event-msg" class="msg"></div>
+    </section>
+
+    <section class="card">
+      <h2 class="section-title">パスワード変更</h2>
+      <div class="field-row">
+        <div class="field"><label>現在のパスワード</label><input id="current_password" type="password" autocomplete="current-password"></div>
+        <div class="field"><label>新しいパスワード（8文字以上）</label><input id="new_password" type="password" autocomplete="new-password"></div>
+      </div>
+      <div class="actions" style="margin-top:8px;"><button class="btn" type="button" data-act="change-password">変更</button></div>
+      <div id="pw-msg" class="msg"></div>
+    </section>`;
+
+  setDirty(false);
+  loadEvents();
+}
+
+async function login(){
+  const json = await api('verified_login', { login_id:val('login-id'), password:val('login-pass') });
+  if (!json.ok) { msg('login-msg', json.error||'ログインできませんでした', false); return; }
+  account = json.data.account;
+  isDeveloper = account.account_type === 'developer';
+  document.getElementById('logout-btn').hidden = false;
+  render();
+}
+async function logout(){
+  await api('verified_logout', {});
+  account=null; isDeveloper=false;
+  document.getElementById('logout-btn').hidden=true;
+  render();
+}
+
+async function saveAll(){
+  const payload = {
+    display_name: val('display_name'), label: val('label'), account_type: account.account_type || 'verified',
+    description: val('description'),
+    primary_link_label: val('primary_link_label'), primary_link_url: val('primary_link_url'),
+    secondary_link_label: val('secondary_link_label'), secondary_link_url: val('secondary_link_url'),
+    cta_label: val('cta_label'), cta_url: val('cta_url'),
+    x_url: (verifiedSns.find(s => s.type === 'x' && s.url && s.url.trim()) || {}).url || '',
+    sns_links: verifiedSns.filter(s => s.url && s.url.trim()).slice(0, 10),
+    hashtags: val('hashtags').split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '保存中…';
+  const json = await api('verified_update', payload);
+  btn.disabled = false; btn.textContent = 'すべて保存';
+  if (!json.ok) {
+    document.getElementById('save-status').textContent = json.error || '保存できませんでした';
+    document.getElementById('save-status').classList.add('dirty');
+    return;
+  }
+  account = json.data;
+  setDirty(false);
+  document.getElementById('save-status').textContent = '保存しました ✓';
+}
+
+// ── アイコン編集モーダル ─────────────────────────────────
+function openIconModal(){
+  document.getElementById('icon-modal').classList.add('open');
+  setupCropDrag();
+  drawCrop();
+}
+function closeIconModal(){
+  document.getElementById('icon-modal').classList.remove('open');
+}
+function loadImageFile(file){
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    crop.img = img; crop.x = 0; crop.y = 0; crop.scale = 1;
+    const zr = document.getElementById('zoom-range');
+    if (zr) { zr.value = 1; document.getElementById('zoom-val').textContent = '1.00×'; }
+    const empty = document.getElementById('crop-empty');
+    if (empty) empty.style.display = 'none';
+    drawCrop();
+  };
+  img.src = URL.createObjectURL(file);
+}
+function drawCrop(){
+  const canvas = document.getElementById('crop-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if (!crop.img) return;
+  const base = Math.max(canvas.width / crop.img.width, canvas.height / crop.img.height) * crop.scale;
+  const w = crop.img.width * base;
+  const h = crop.img.height * base;
+  ctx.drawImage(crop.img, (canvas.width-w)/2 + crop.x, (canvas.height-h)/2 + crop.y, w, h);
+}
+function setupCropDrag(){
+  const stage = document.getElementById('crop-stage');
+  if (!stage || stage.dataset.bound) return;
+  stage.dataset.bound = '1';
+  const getPoint = (e) => e.touches && e.touches[0] ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+  const onDown = (e) => {
+    if (!crop.img) return;
+    const p = getPoint(e);
+    crop.dragStart = p;
+    crop.startX = crop.x; crop.startY = crop.y;
+    stage.classList.add('grabbing');
+    e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!crop.dragStart) return;
+    const p = getPoint(e);
+    const rect = stage.getBoundingClientRect();
+    if (!rect.width) return;
+    const k = 400 / rect.width;
+    crop.x = crop.startX + (p.x - crop.dragStart.x) * k;
+    crop.y = crop.startY + (p.y - crop.dragStart.y) * k;
+    drawCrop();
+    e.preventDefault();
+  };
+  const onUp = () => { crop.dragStart = null; stage.classList.remove('grabbing'); };
+  stage.addEventListener('mousedown', onDown);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  stage.addEventListener('touchstart', onDown, {passive:false});
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('touchend', onUp);
+}
+async function uploadImage(){
+  const canvas = document.getElementById('crop-canvas');
+  if (!crop.img) { return; }
+  const out = document.createElement('canvas');
+  out.width = 400; out.height = 400;
+  const octx = out.getContext('2d');
+  octx.save(); octx.beginPath(); octx.arc(200,200,200,0,Math.PI*2); octx.clip();
+  octx.drawImage(canvas, 0, 0); octx.restore();
+  const data = out.toDataURL('image/png');
+  const json = await api('verified_upload_icon', { image:data });
+  if (!json.ok) { alert(json.error||'画像を保存できませんでした'); return; }
+  const me = await api('verified_me');
+  account = me.data;
+  closeIconModal();
+  render();
+}
+
+// ── イベント ────────────────────────────────────────────
+function fmtDateLocalInput(s){
+  if (!s) return '';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtDateDisplay(s){
+  if (!s) return '';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function fmtFileSize(bytes){
+  bytes = Number(bytes || 0);
+  if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+  if (bytes >= 1024) return Math.ceil(bytes / 1024) + 'KB';
+  return bytes + 'B';
+}
+function eventAttachmentHtml(e){
+  const files = Array.isArray(e?.attachments) ? e.attachments : [];
+  const rows = files.map(f => {
+    const isPdf = String(f.mime || '').includes('pdf') || String(f.url || '').toLowerCase().endsWith('.pdf');
+    return `<div class="attachment-row">
+      <div class="file-icon">${isPdf ? 'PDF' : 'IMG'}</div>
+      <div class="file-body">
+        <div class="file-name">${esc(f.name || '添付ファイル')}</div>
+        <div class="file-meta">${esc(fmtFileSize(f.size))}</div>
+      </div>
+      <a class="btn sm" href="../${esc(f.url)}" target="_blank" rel="noopener">開く</a>
+      <button class="btn sm danger" type="button" onclick="deleteEventAttachment(${e.id}, '${esc(f.id)}')">削除</button>
+    </div>`;
+  }).join('');
+  return `<div class="field">
+    <label>添付ファイル（画像/PDF・各5MBまで・最大3件）</label>
+    <div class="attachment-list">${rows || '<div class="small">まだ添付ファイルはありません</div>'}</div>
+    ${files.length < 3 ? `<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onchange="uploadEventAttachment(${e.id}, this.files[0])">` : '<p class="small" style="margin:0;">添付ファイルは3件までです。</p>'}
+  </div>`;
+}
+async function loadEvents(){
+  const json = await api('event_mine_list');
+  myEvents = json.ok ? (json.data || []) : [];
+  await loadAllSubevents();
+  renderEventList();
+}
+async function loadAllSubevents(){
+  subeventsByEvent = {};
+  await Promise.all((myEvents || []).map(async e => {
+    try {
+      const json = await api('subevent_mine_list&event_id=' + encodeURIComponent(e.id));
+      subeventsByEvent[e.id] = json.ok ? (json.data || []) : [];
+    } catch(err) {
+      subeventsByEvent[e.id] = [];
+    }
+  }));
+}
+function renderEventList(){
+  const wrap = document.getElementById('event-list');
+  if (!wrap) return;
+  if (!myEvents.length) { wrap.innerHTML = `<div class="event-empty">まだイベントはありません</div>`; return; }
+  wrap.innerHTML = myEvents.map(e => {
+    const subs = subeventsByEvent[e.id] || [];
+    const subHtml = `
+      <div class="subevent-box">
+        <div class="subevent-head">
+          <div class="subevent-title">サブイベント</div>
+          <button class="btn sm" type="button" data-act="new-subevent" data-event-id="${e.id}">+ 追加</button>
+        </div>
+        <div class="subevent-list">
+          ${subs.length ? subs.map(s => `
+            <div class="subevent-row">
+              ${s.cover_url ? `<img class="subevent-cover-preview" src="../${esc(s.cover_url)}" alt="">` : ''}
+              <div class="subevent-row-title">
+                <span>${esc(s.title)}</span>
+                <span class="small">参加 ${s.join_count || 0} 人${s.capacity ? ' / ' + s.capacity : ''}</span>
+              </div>
+              <div class="subevent-row-meta">${esc(fmtDateDisplay(s.starts_at) || '日時未定')}${s.venue ? ' ・ ' + esc(s.venue) : ''}</div>
+              <div class="subevent-row-actions">
+                <button class="btn sm" type="button" data-act="edit-subevent" data-event-id="${e.id}" data-id="${s.id}">編集</button>
+                <button class="btn sm danger" type="button" data-act="delete-subevent" data-id="${s.id}">削除</button>
+              </div>
+            </div>
+          `).join('') : `<div class="small">まだサブイベントはありません</div>`}
+        </div>
+      </div>`;
+    return `
+    <div class="event-row">
+      <div class="title">${esc(e.title)}<span class="vis ${e.visibility === 'unlisted' ? 'unlisted' : ''}">${e.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
+      <div class="meta">${esc(fmtDateDisplay(e.starts_at) || '日時未定')}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
+      <div class="meta">参加 ${e.join_count} 人${e.visibility === 'public' ? ' / お気に入り ' + (e.like_count || 0) + ' 件' : ' / 非公開は参加のみ'}${e.capacity ? ' ・ 定員 ' + e.capacity : ''}</div>
+      <div class="row-actions">
+        <a class="btn sm" href="./event.html?id=${e.id}" target="_blank" rel="noopener">ページを開く</a>
+        <button class="btn sm" type="button" data-act="edit-event" data-id="${e.id}">編集</button>
+        <button class="btn sm danger" type="button" data-act="delete-event" data-id="${e.id}">削除</button>
+      </div>
+      ${subHtml}
+    </div>`;
+  }).join('');
+}
+function openEventForm(id = null){
+  editingEventId = id;
+  const e = id ? myEvents.find(x => x.id === id) : null;
+  document.getElementById('event-modal-title').textContent = id ? 'イベントを編集' : '新しいイベント';
+  document.getElementById('event-save-btn').textContent = id ? '更新' : '作成';
+  const body = document.getElementById('event-modal-body');
+  body.innerHTML = `
+    <div class="field"><label>タイトル *</label><input id="ev-title" maxlength="160" value="${esc(e?.title || '')}"></div>
+    <div class="field"><label>説明</label><textarea id="ev-desc" maxlength="4000">${esc(e?.description || '')}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>開催日時</label><input id="ev-starts" type="datetime-local" value="${esc(fmtDateLocalInput(e?.starts_at))}"></div>
+      <div class="field"><label>終了日時</label><input id="ev-ends" type="datetime-local" value="${esc(fmtDateLocalInput(e?.ends_at))}"></div>
+    </div>
+    <div class="field"><label>会場</label><input id="ev-venue" maxlength="200" value="${esc(e?.venue || '')}" placeholder="例: 大阪城ホール"></div>
+    <div class="field-row">
+      <div class="field"><label>満員数（任意）</label><input id="ev-capacity" type="number" min="1" max="100000" value="${e?.capacity || ''}"></div>
+      <div class="field"><label>公開設定</label>
+        <select id="ev-visibility">
+          <option value="public" ${(!e || e.visibility === 'public') ? 'selected' : ''}>公開（一覧に表示）</option>
+          <option value="unlisted" ${e?.visibility === 'unlisted' ? 'selected' : ''}>非公開（URLを知る人のみ）</option>
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>外部リンク文言</label><input id="ev-extlabel" maxlength="80" value="${esc(e?.external_label || '')}" placeholder="例: チケット購入"></div>
+    <div class="field"><label>外部リンクURL</label><input id="ev-exturl" value="${esc(e?.external_url || '')}" placeholder="https://..."></div>
+    ${id ? `<div class="field">
+      <label>カバー画像</label>
+      ${e?.cover_url ? `<img src="../${esc(e.cover_url)}" alt="" style="max-width:240px;border-radius:12px;display:block;margin-bottom:8px;">` : ''}
+      <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadEventCover(${id}, this.files[0])">
+    </div>${eventAttachmentHtml(e)}` : '<p class="small">※カバー画像と添付ファイルは保存後にアップロードできます</p>'}
+  `;
+  document.getElementById('event-modal').classList.add('open');
+}
+function closeEventForm(){
+  editingEventId = null;
+  document.getElementById('event-modal').classList.remove('open');
+}
+async function saveEvent(){
+  const payload = {
+    title: val('ev-title'),
+    description: val('ev-desc'),
+    venue: val('ev-venue'),
+    starts_at: val('ev-starts'),
+    ends_at: val('ev-ends'),
+    capacity: val('ev-capacity'),
+    external_label: val('ev-extlabel'),
+    external_url: val('ev-exturl'),
+    visibility: val('ev-visibility') || 'public',
+  };
+  const action = editingEventId ? 'event_update' : 'event_create';
+  if (editingEventId) payload.id = editingEventId;
+  const json = await api(action, payload);
+  if (!json.ok) { msg('event-msg', json.error || '保存できませんでした', false); return; }
+  msg('event-msg', editingEventId ? 'イベントを更新しました' : 'イベントを作成しました', true);
+  closeEventForm();
+  loadEvents();
+}
+async function deleteEvent(id){
+  const ok = await confirmDialog('イベントを削除', 'このイベントを削除しますか？この操作は取り消せません。');
+  if (!ok) return;
+  const json = await api('event_delete', { id });
+  if (!json.ok) { msg('event-msg', json.error || '削除できませんでした', false); return; }
+  msg('event-msg', 'イベントを削除しました', true);
+  loadEvents();
+}
+async function uploadEventCover(id, file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const json = await api('event_upload_cover', { id, image: reader.result });
+    if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
+    msg('event-msg', 'カバー画像を更新しました', true);
+    loadEvents();
+  };
+  reader.readAsDataURL(file);
+}
+async function uploadEventAttachment(id, file){
+  if (!file) return;
+  const okTypes = ['image/png','image/jpeg','image/webp','application/pdf'];
+  if (!okTypes.includes(file.type)) { msg('event-msg', '画像（PNG/JPEG/WebP）またはPDFのみ添付できます', false); return; }
+  if (file.size > 5 * 1024 * 1024) { msg('event-msg', '添付ファイルは5MB以内にしてください', false); return; }
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const json = await api('event_upload_attachment', { id, name:file.name, file: reader.result });
+    if (!json.ok) { msg('event-msg', json.error || '添付ファイルを保存できませんでした', false); return; }
+    msg('event-msg', '添付ファイルを追加しました', true);
+    const fresh = await api('event_mine_list');
+    if (fresh.ok) myEvents = fresh.data || [];
+    openEventForm(id);
+    renderEventList();
+  };
+  reader.readAsDataURL(file);
+}
+async function deleteEventAttachment(id, fileId){
+  const ok = await confirmDialog('添付ファイルを削除', 'この添付ファイルを削除しますか？');
+  if (!ok) return;
+  const json = await api('event_delete_attachment', { id, file_id:fileId });
+  if (!json.ok) { msg('event-msg', json.error || '添付ファイルを削除できませんでした', false); return; }
+  msg('event-msg', '添付ファイルを削除しました', true);
+  const fresh = await api('event_mine_list');
+  if (fresh.ok) myEvents = fresh.data || [];
+  openEventForm(id);
+  renderEventList();
+}
+async function uploadSubeventCover(id, file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const json = await api('subevent_upload_cover', { id, image: reader.result });
+    if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
+    msg('event-msg', 'サブイベントのカバー画像を更新しました', true);
+    closeSubeventForm();
+    loadEvents();
+  };
+  reader.readAsDataURL(file);
+}
+
+
+function openSubeventForm(eventId, id = null){
+  editingSubeventEventId = eventId;
+  editingSubeventId = id;
+  const list = subeventsByEvent[eventId] || [];
+  const s = id ? list.find(x => Number(x.id) === Number(id)) : null;
+  document.getElementById('subevent-modal-title').textContent = id ? 'サブイベントを編集' : '新しいサブイベント';
+  document.getElementById('subevent-save-btn').textContent = id ? '更新' : '作成';
+  const body = document.getElementById('subevent-modal-body');
+  body.innerHTML = `
+    <div class="field"><label>サブイベント名 *</label><input id="sub-title" maxlength="160" value="${esc(s?.title || '')}"></div>
+    <div class="field"><label>説明</label><textarea id="sub-desc" maxlength="4000">${esc(s?.description || '')}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>開始日時</label><input id="sub-starts" type="datetime-local" value="${esc(fmtDateLocalInput(s?.starts_at))}"></div>
+      <div class="field"><label>終了日時</label><input id="sub-ends" type="datetime-local" value="${esc(fmtDateLocalInput(s?.ends_at))}"></div>
+    </div>
+    <div class="field"><label>場所</label><input id="sub-venue" maxlength="200" value="${esc(s?.venue || '')}" placeholder="例: グッズ列集合 / 配信待機"></div>
+    <div class="field"><label>定員（任意）</label><input id="sub-capacity" type="number" min="1" max="100000" value="${s?.capacity || ''}"></div>
+    <div class="field"><label>外部リンク文言</label><input id="sub-extlabel" maxlength="80" value="${esc(s?.external_label || '')}" placeholder="例: 詳細を見る"></div>
+    <div class="field"><label>外部リンクURL</label><input id="sub-exturl" value="${esc(s?.external_url || '')}" placeholder="https://..."></div>
+    ${id ? `<div class="field">
+      <label>カバー画像</label>
+      ${s?.cover_url ? `<img class="subevent-cover-preview" src="../${esc(s.cover_url)}" alt="">` : ''}
+      <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadSubeventCover(${id}, this.files[0])">
+    </div>` : '<p class="small">※カバー画像は保存後にアップロードできます</p>'}
+    <p class="small" style="margin:0;">サブイベントでは参加のみ利用できます。表示順は開始日時が早い順で自動調整されます。お気に入り機能はありません。</p>
+  `;
+  document.getElementById('subevent-modal').classList.add('open');
+}
+function closeSubeventForm(){
+  editingSubeventId = null;
+  editingSubeventEventId = null;
+  document.getElementById('subevent-modal').classList.remove('open');
+}
+async function saveSubevent(){
+  const payload = {
+    event_id: editingSubeventEventId,
+    title: val('sub-title'),
+    description: val('sub-desc'),
+    venue: val('sub-venue'),
+    starts_at: val('sub-starts'),
+    ends_at: val('sub-ends'),
+    capacity: val('sub-capacity'),
+    external_label: val('sub-extlabel'),
+    external_url: val('sub-exturl'),
+  };
+  const action = editingSubeventId ? 'subevent_update' : 'subevent_create';
+  if (editingSubeventId) payload.id = editingSubeventId;
+  const json = await api(action, payload);
+  if (!json.ok) { msg('event-msg', json.error || '保存できませんでした', false); return; }
+  msg('event-msg', editingSubeventId ? 'サブイベントを更新しました' : 'サブイベントを作成しました', true);
+  closeSubeventForm();
+  loadEvents();
+}
+async function deleteSubevent(id){
+  const ok = await confirmDialog('サブイベントを削除', 'このサブイベントを削除しますか？この操作は取り消せません。');
+  if (!ok) return;
+  const json = await api('subevent_delete', { id });
+  if (!json.ok) { msg('event-msg', json.error || '削除できませんでした', false); return; }
+  msg('event-msg', 'サブイベントを削除しました', true);
+  loadEvents();
+}
+
+
+function handleAdminOpenParams(){
+  if (!account) return;
+  const qs = new URLSearchParams(location.search);
+  const editEventId = parseInt(qs.get('edit_event') || '0', 10);
+  if (editEventId && myEvents.some(e => Number(e.id) === Number(editEventId))) {
+    openEventForm(editEventId);
+    qs.delete('edit_event');
+    const rest = qs.toString();
+    history.replaceState(null, '', location.pathname + (rest ? '?' + rest : ''));
+  }
+}
+
+// ── パスワード変更 ───────────────────────────────────────
+async function changePassword(){
+  const cur = val('current_password'), nw = val('new_password');
+  if (!cur || !nw) { msg('pw-msg', '両方入力してください', false); return; }
+  const ok = await confirmDialog('パスワード変更', 'パスワードを変更しますか？変更後は再ログインが必要になります。');
+  if (!ok) return;
+  const json = await api('verified_change_password', { current_password:cur, new_password:nw });
+  msg('pw-msg', json.ok ? 'パスワードを変更しました' : (json.error||'変更できませんでした'), !!json.ok);
+  if (json.ok) {
+    document.getElementById('current_password').value = '';
+    document.getElementById('new_password').value = '';
+  }
+}
+// グローバルに明示的に公開（onclick 属性から確実に呼べるように）
+window.openEventForm = openEventForm;
+window.closeEventForm = closeEventForm;
+window.saveEvent = saveEvent;
+window.deleteEvent = deleteEvent;
+window.uploadEventCover = uploadEventCover;
+window.uploadEventAttachment = uploadEventAttachment;
+window.deleteEventAttachment = deleteEventAttachment;
+window.uploadSubeventCover = uploadSubeventCover;
+window.openSubeventForm = openSubeventForm;
+window.closeSubeventForm = closeSubeventForm;
+window.saveSubevent = saveSubevent;
+window.deleteSubevent = deleteSubevent;
+window.openIconModal = openIconModal;
+window.closeIconModal = closeIconModal;
+window.uploadImage = uploadImage;
+window.saveAll = saveAll;
+window.changePassword = changePassword;
+window.logout = logout;
+window.login = login;
+window.loadImageFile = loadImageFile;
+window.closeOrBack = closeOrBack;
+window.closeConfirm = closeConfirm;
+window.setDirty = setDirty;
+init();
+
+// 全てのクリックを委譲して処理（onclick 属性が何らかの理由で動かない場合のフェールセーフ）
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-act]');
+  if (!t) return;
+  const act = t.dataset.act;
+  const id = t.dataset.id ? parseInt(t.dataset.id, 10) : null;
+  switch (act) {
+    case 'new-event':    openEventForm(); break;
+    case 'edit-event':   openEventForm(id); break;
+    case 'delete-event': deleteEvent(id); break;
+    case 'new-subevent': openSubeventForm(parseInt(t.dataset.eventId, 10)); break;
+    case 'edit-subevent': openSubeventForm(parseInt(t.dataset.eventId, 10), id); break;
+    case 'delete-subevent': deleteSubevent(id); break;
+    case 'close-subevent': closeSubeventForm(); break;
+    case 'save-subevent': saveSubevent(); break;
+    case 'open-icon':    openIconModal(); break;
+    case 'close-icon':   closeIconModal(); break;
+    case 'upload-icon':  uploadImage(); break;
+    case 'close-event':  closeEventForm(); break;
+    case 'save-event':   saveEvent(); break;
+    case 'save-all':     saveAll(); break;
+    case 'logout':       logout(); break;
+    case 'change-password': changePassword(); break;
+    case 'close-confirm': closeConfirm(); break;
+  }
+});
+</script>
+</body>
+</html>

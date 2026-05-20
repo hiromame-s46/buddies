@@ -9,7 +9,7 @@
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 [hidden]{display:none!important}
-:root{--ink:#171313;--muted:#766a63;--paper:#fff9f3;--line:#eadbd0;--pink:#f2b5cf;--pink-deep:#d98fb0;--sky:#c7dff0;--mint:#d8eadf;--butter:#f7e4a6}
+:root{--ink:#231b19;--muted:#786d66;--paper:#fff9f3;--line:#eadbd0;--pink:#f2b5cf;--pink-deep:#d98fb0;--sky:#c7dff0;--mint:#d8eadf;--butter:#f7e4a6;--profile-font:"Hannotate SC","Tsukushi A Round Gothic","YuKyokasho","Hiragino Maru Gothic ProN","Yu Gothic","YuGothic","Hiragino Kaku Gothic ProN",Meiryo,sans-serif}
 body{margin:0;min-height:100dvh;background:#f7f7f7;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;padding:14px 14px 96px}
 .toolbar{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:10px 14px calc(12px + env(safe-area-inset-bottom));background:rgba(255,255,255,.9);backdrop-filter:blur(16px);border-top:1px solid #eee;display:flex;gap:8px;justify-content:center}
 .btn{height:44px;border-radius:9999px;border:1px solid #ddd;background:#fff;color:#111;font:700 14px inherit;padding:0 16px;display:inline-flex;align-items:center;justify-content:center;gap:7px;cursor:pointer;min-width:0}
@@ -18,49 +18,34 @@ body{margin:0;min-height:100dvh;background:#f7f7f7;color:var(--ink);font-family:
 .stage{width:min(100%,980px);margin:0 auto;display:grid;gap:12px;justify-items:center}
 .hint{font-size:12px;color:#777;text-align:center;line-height:1.6}
 .card-wrap{width:100%;padding:6px 0 12px;display:flex;justify-content:center;overflow:hidden}
-#profile-card{width:1200px;height:630px;flex:0 0 auto;position:relative;overflow:hidden;background:#fff9f3;background-image:linear-gradient(135deg,rgba(242,181,207,.22),transparent 36%,rgba(199,223,240,.20)),radial-gradient(rgba(217,143,176,.42) 1px,transparent 1.4px);background-size:100% 100%,24px 24px;border-radius:0;transform-origin:top center;box-shadow:0 12px 36px rgba(0,0,0,.10)}
-.wash-pink{position:absolute;right:66px;top:26px;width:310px;height:94px;border-radius:50%;background:rgba(242,181,207,.44);transform:rotate(-4deg)}
-.wash-sky{position:absolute;left:26px;bottom:-8px;width:330px;height:86px;border-radius:50%;background:rgba(199,223,240,.56)}
-.brand{position:absolute;left:58px;top:34px;font-size:26px;font-weight:900;color:rgba(70,57,50,.58);letter-spacing:.08em}
-.badge{position:absolute;right:54px;top:42px;width:284px;height:42px;border:3px solid var(--ink);border-radius:9999px;background:#fffefc;display:grid;place-items:center;font-size:22px;font-weight:900;color:var(--muted);letter-spacing:.04em}
-.book{position:absolute;left:72px;top:104px;width:1056px;height:446px;border:3px solid var(--ink);border-radius:34px;background:#fffdfb;box-shadow:16px 16px 0 rgba(56,42,34,.12);overflow:hidden}
-.book:before{content:"";position:absolute;left:348px;top:20px;bottom:20px;width:16px;background:#f1dfd4;border-left:2px solid #d4b9aa;border-right:2px solid #f7ebe3;box-shadow:7px 0 0 rgba(234,219,208,.55)}
-.book:after{content:"";position:absolute;left:390px;top:20px;bottom:20px;width:2px;background:rgba(234,219,208,.75)}
-.rule{position:absolute;left:26px;right:26px;height:2px;background:var(--line)}
-.r1{top:52px}.r2{top:82px}.r3{top:112px}.r4{top:142px}.r5{top:172px}.r6{top:202px}.r7{top:232px}.r8{top:262px}.r9{top:292px}.r10{top:322px}.r11{top:352px}.r12{top:382px}.r13{top:412px}
-.ticket{position:absolute;left:44px;top:154px;width:142px;height:40px;background:var(--pink);border:3px solid var(--ink);font-size:23px;font-weight:950;display:grid;place-items:center;z-index:6;transform:rotate(-2deg)}
-.ticket:before,.ticket:after{content:"";position:absolute;top:10px;width:18px;height:18px;border-radius:50%;background:var(--paper);border:0}.ticket:before{left:-10px}.ticket:after{right:-10px}
-.polaroid{position:absolute;left:112px;top:142px;width:276px;height:346px;background:#fff;border:3px solid var(--ink);z-index:5;padding:24px 24px 0;transform:rotate(-1deg);box-shadow:0 8px 0 rgba(234,219,208,.9)}
-.photo{width:222px;height:222px;background:linear-gradient(135deg,#f6c4d9,#f9d7e5);display:grid;place-items:center;overflow:hidden;border:1px solid #f4cfe0}
-.avatar{width:180px;height:180px;border-radius:50%;background:var(--pink);border:5px solid #fff;box-shadow:0 0 0 2px #efd3bf;display:grid;place-items:center;font-size:72px;font-weight:950;color:var(--ink);overflow:hidden}
+#profile-card{width:1200px;height:630px;flex:0 0 auto;position:relative;overflow:hidden;background:#fff9f3 url("assets/profile-card-base.svg") center/100% 100% no-repeat;transform-origin:top center;box-shadow:0 12px 36px rgba(0,0,0,.10)}
+.wash-pink,.wash-sky,.brand,.badge,.book,.rule,.ticket,.tape,.mini-stamp,.memo-dot,.petal{display:none}
+.polaroid{position:absolute;left:88px;top:120px;width:222px;height:286px;background:transparent;border:0;z-index:5;padding:0;transform:rotate(-3deg);box-shadow:none}
+.photo{width:222px;height:222px;background:transparent;display:grid;place-items:center;overflow:hidden;border:0}
+.avatar{width:182px;height:182px;border-radius:50%;background:rgba(242,181,207,.84);border:5px solid #fff;box-shadow:0 0 0 2px rgba(217,143,176,.55);display:grid;place-items:center;font-size:62px;font-weight:850;color:var(--ink);overflow:hidden}
 .avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
-.caption{text-align:center;margin-top:18px;color:var(--muted);font-size:23px;font-weight:800;line-height:1.1}
-.label{color:var(--pink-deep);font-weight:950;font-size:25px;line-height:1;letter-spacing:.02em}
-.name-label{position:absolute;left:432px;top:136px}
-.name{position:absolute;left:432px;top:168px;width:286px;height:82px;font-size:34px;font-weight:900;line-height:1.13;letter-spacing:0;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden}
-.oshi-label{position:absolute;left:432px;top:282px}
-.oshi-list{position:absolute;left:432px;top:318px;width:286px;height:94px;display:flex;gap:9px;align-content:flex-start;flex-wrap:wrap;overflow:hidden}
-.chip{display:inline-flex;align-items:center;max-width:100%;min-height:34px;border-radius:9999px;padding:6px 13px;background:#111;color:#fff;font-size:19px;font-weight:900;line-height:1;white-space:nowrap}
-.profile-label{position:absolute;left:432px;top:438px}
-.meta{position:absolute;left:432px;top:472px;width:286px;height:52px;font-size:23px;line-height:1.15;font-weight:850;white-space:normal;overflow-wrap:anywhere;overflow:hidden}
-.songs-label{position:absolute;left:764px;top:136px}
-.song-list{position:absolute;left:764px;top:178px;width:292px;display:grid;gap:11px}
-.song{display:grid;grid-template-columns:30px 1fr;align-items:center;gap:11px;min-height:34px}
-.song-no{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--sky);font-size:17px;font-weight:950}
+.caption{text-align:center;margin-top:28px;color:#9a706d;font-size:13px;font-weight:750;line-height:1.15;text-shadow:0 1px 0 #fff;font-family:var(--profile-font)}
+.label{position:absolute;color:#d98fb0;font-weight:850;font-size:15px;line-height:1;letter-spacing:0;text-shadow:0 1px 0 #fff}
+.label::before{content:"";position:absolute;left:-9px;top:50%;width:5px;height:5px;border-radius:50%;background:#e7a6c0;transform:translateY(-50%)}
+.name-label{left:356px;top:145px}
+.name{position:absolute;left:356px;top:178px;width:172px;height:45px;font-size:20px;font-weight:850;line-height:1.18;letter-spacing:0;white-space:normal;word-break:keep-all;overflow-wrap:anywhere;overflow:hidden;color:var(--ink);font-family:var(--profile-font)}
+.oshi-label{left:356px;top:307px}
+.oshi-list{position:absolute;left:356px;top:340px;width:172px;height:48px;display:flex;gap:7px;align-content:flex-start;flex-wrap:wrap;overflow:hidden;font-family:var(--profile-font)}
+.chip{display:inline-flex;align-items:center;max-width:100%;min-height:24px;border-radius:9999px;padding:4px 10px;background:rgba(35,27,25,.92);color:#fff;font-size:12px;font-weight:800;line-height:1;white-space:nowrap;box-shadow:0 1px 0 rgba(0,0,0,.10)}
+.profile-label{left:356px;top:433px}
+.meta{position:absolute;left:356px;top:464px;width:172px;height:27px;font-size:12px;line-height:1.35;font-weight:750;white-space:normal;overflow-wrap:anywhere;overflow:hidden;color:var(--ink);font-family:var(--profile-font)}
+.songs-label{left:684px;top:132px}
+.song-list{position:absolute;left:684px;top:166px;width:312px;display:grid;gap:7px;font-family:var(--profile-font)}
+.song{display:grid;grid-template-columns:21px 1fr;align-items:center;gap:10px;min-height:23px}
+.song-no{width:20px;height:20px;border-radius:50%;display:grid;place-items:center;background:rgba(199,223,240,.92);font-size:11px;font-weight:850;color:#211816}
 .song:nth-child(1) .song-no{background:var(--pink)}.song:nth-child(3) .song-no{background:var(--mint)}
-.song-title{font-size:20px;font-weight:800;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.empty-songs{width:286px;min-height:64px;border:2px solid #efd3bf;border-radius:18px;background:#fff1f7;display:grid;place-items:center;color:var(--muted);font-size:22px;font-weight:850}
-.bio-label{position:absolute;left:764px;top:330px}
-.bio{position:absolute;left:764px;top:360px;width:292px;height:100px;border:2px solid #efd3bf;border-radius:18px;background:#fff1f7;padding:12px 18px;font-size:18px;font-weight:700;line-height:1.28;overflow:hidden;overflow-wrap:anywhere}
-.tags{position:absolute;left:764px;top:486px;width:300px;height:40px;display:flex;gap:9px;flex-wrap:wrap;overflow:hidden}
-.tag{display:inline-flex;align-items:center;min-height:34px;border-radius:9999px;padding:5px 14px;background:var(--butter);font-size:19px;font-weight:950;white-space:nowrap;max-width:144px;overflow:hidden;text-overflow:ellipsis}
-.footer{position:absolute;left:450px;bottom:38px;color:var(--muted);font-size:20px;font-weight:850}.footer-brand{position:absolute;right:74px;bottom:36px;font-size:28px;font-weight:950}
-.petal{position:absolute;width:18px;height:14px;border-radius:70% 20% 70% 20%;background:var(--pink);opacity:.85}.p1{left:84px;top:492px}.p2{right:112px;top:178px}.p3{right:156px;bottom:116px;background:var(--sky)}
-.tape{position:absolute;height:34px;border:2px solid rgba(23,19,19,.18);background:rgba(247,228,166,.78);z-index:7;box-shadow:0 3px 0 rgba(234,219,208,.65)}
-.tape-left{left:122px;top:122px;width:96px;transform:rotate(-5deg)}
-.tape-right{right:222px;top:112px;width:116px;transform:rotate(4deg);background:rgba(199,223,240,.72)}
-.mini-stamp{position:absolute;right:86px;bottom:82px;width:118px;height:118px;border:3px solid rgba(217,143,176,.9);border-radius:50%;display:grid;place-items:center;color:rgba(217,143,176,.86);font-size:23px;font-weight:950;transform:rotate(-10deg);z-index:2}
-.memo-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--pink);z-index:4}.d1{left:418px;top:166px}.d2{left:740px;top:166px}.d3{left:740px;top:362px}.d4{left:1048px;top:474px;background:var(--sky)}
+.song-title{font-size:14px;font-weight:750;line-height:1.12;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink)}
+.empty-songs{width:300px;min-height:38px;border:0;border-radius:0;background:transparent;display:grid;place-items:center;color:var(--muted);font-size:13px;font-weight:750}
+.bio-label{left:684px;top:316px}
+.bio{position:absolute;left:684px;top:350px;width:312px;height:42px;border:0;border-radius:0;background:transparent;padding:0 2px;font-size:10px;font-weight:650;line-height:1.48;overflow:hidden;overflow-wrap:anywhere;color:var(--ink);font-family:var(--profile-font)}
+.tags{position:absolute;left:684px;top:468px;width:312px;height:42px;display:flex;gap:7px;flex-wrap:wrap;overflow:hidden;align-content:center;font-family:var(--profile-font)}
+.tag{display:inline-flex;align-items:center;min-height:24px;border-radius:9999px;padding:4px 10px;background:rgba(247,228,166,.92);font-size:12px;font-weight:800;white-space:nowrap;max-width:120px;overflow:hidden;text-overflow:ellipsis;color:var(--ink);box-shadow:0 1px 0 rgba(234,190,92,.28)}
+.footer{display:none}.footer-brand{display:none}
 .loading,.error{min-height:60vh;display:grid;place-items:center;color:#777;text-align:center;line-height:1.8}
 @media (max-width:720px){body{padding:10px 10px 96px}.toolbar{justify-content:stretch}.btn{flex:1;padding:0 10px;font-size:13px}.btn span{display:none}.hint{display:none}}
 </style>
@@ -79,14 +64,14 @@ body{margin:0;min-height:100dvh;background:#f7f7f7;color:var(--ink);font-family:
         <div class="rule r1"></div><div class="rule r2"></div><div class="rule r3"></div><div class="rule r4"></div><div class="rule r5"></div><div class="rule r6"></div><div class="rule r7"></div><div class="rule r8"></div><div class="rule r9"></div><div class="rule r10"></div><div class="rule r11"></div><div class="rule r12"></div><div class="rule r13"></div>
       </div>
       <div class="ticket">SAKURA</div>
-      <div class="polaroid"><div class="photo"><div class="avatar" id="avatar"></div></div><div class="caption">推しとつながる名刺</div></div>
+      <div class="polaroid"><div class="photo"><div class="avatar" id="avatar"></div></div><div class="caption">Buddies profile</div></div>
       <div class="label name-label">名前</div><div class="name" id="name"></div>
       <div class="label oshi-label">推しメン</div><div class="oshi-list" id="oshis"></div>
       <div class="label profile-label">プロフィール</div><div class="meta" id="meta"></div>
       <div class="label songs-label" id="songs-label">好きな曲</div><div class="song-list" id="songs"></div>
       <div class="label bio-label">ひとこと</div><div class="bio" id="bio"></div>
       <div class="tags" id="tags"></div>
-      <div class="footer">リンクを開くとプロフィールを確認できます</div><div class="footer-brand">Buddies</div>
+      <div class="footer-brand">Buddies</div>
       <div class="petal p1"></div><div class="petal p2"></div><div class="petal p3"></div>
     </div>
   </div>
@@ -107,6 +92,11 @@ function qs(k){return new URLSearchParams(location.search).get(k);}
 function getDisplayName(p){return p.display_name || p.name || '名無し';}
 function getOshis(p){return [p.oshi_member,p.oshi_member_2,p.oshi_member_3].filter(Boolean);}
 function getAvatarUrl(p){const first=p.oshi_member;return p.user_icon || (first && members[first] && members[first].image) || '';}
+function proxiedImageUrl(url){
+  if (!url || url.startsWith('data:') || url.startsWith('blob:')) return url;
+  if (location.protocol === 'file:') return url;
+  return 'image-proxy.php?url=' + encodeURIComponent(url);
+}
 function fitText(el, max, min){
   el.style.fontSize = max + 'px';
   let size = max;
@@ -179,7 +169,7 @@ function render(){
   const name = getDisplayName(profile);
   const avatar = document.getElementById('avatar');
   const avatarUrl = getAvatarUrl(profile);
-  avatar.innerHTML = avatarUrl ? `<img src="${esc(avatarUrl)}" alt="">` : esc(name[0] || '？');
+  avatar.innerHTML = avatarUrl ? `<img src="${esc(proxiedImageUrl(avatarUrl))}" crossorigin="anonymous" alt="">` : esc(name[0] || '？');
 
   const nameEl = document.getElementById('name');
   nameEl.textContent = name;
@@ -192,8 +182,8 @@ function render(){
   const meta = [profile.location, profile.age ? profile.age + '歳' : '', profile.buddies_since ? profile.buddies_since + '年から' : ''].filter(Boolean).join(' / ');
   document.getElementById('meta').textContent = meta || 'Buddies profile';
 
-  const songs = (profile.favorite_songs || []).filter(Boolean).slice(0,3);
-  document.getElementById('songs-label').textContent = songs.length >= 3 ? '好きな曲 TOP3' : '好きな曲';
+  const songs = (profile.favorite_songs || []).filter(Boolean).slice(0,4);
+  document.getElementById('songs-label').textContent = '好きな曲';
   document.getElementById('songs').innerHTML = songs.length
     ? songs.map((s,i)=>`<div class="song"><span class="song-no">${i+1}</span><span class="song-title">${esc(s)}</span></div>`).join('')
     : '<div class="empty-songs">プロフィールでチェック</div>';
@@ -201,10 +191,10 @@ function render(){
   document.getElementById('bio').textContent = profile.bio || '同じ推しのBuddiesとつながりたいです。';
   document.getElementById('tags').innerHTML = (profile.tags || []).filter(Boolean).slice(0,2).map(t=>`<span class="tag">#${esc(t)}</span>`).join('');
 
-  fitText(nameEl, 32, 20);
-  fitText(document.getElementById('meta'), 26, 18);
-  fitText(document.getElementById('bio'), 18, 12);
-  document.querySelectorAll('.song-title').forEach(el => fitText(el, 22, 15));
+  fitText(nameEl, 20, 11);
+  fitText(document.getElementById('meta'), 12, 8);
+  fitText(document.getElementById('bio'), 10, 7);
+  document.querySelectorAll('.song-title').forEach(el => fitText(el, 14, 9));
   updateScale();
 }
 

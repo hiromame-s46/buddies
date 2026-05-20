@@ -12,6 +12,7 @@
  *   auth_me                   GET  ログインユーザー情報（Buddies拡張フィールド含む）
  *
  *   buddies_profile_get       GET  Buddiesプロフィール取得（自分 or 他ユーザー）
+ *   buddies_public_profile_get GET  公開プロフィール取得（一般ユーザー用 view.html）
  *   buddies_profile_update    POST Buddiesプロフィール更新
  *   buddies_icon_update       POST プロフィール画像更新（ブログ画像から選択）
  *   buddies_icon_clear        POST プロフィール画像をクリア
@@ -33,9 +34,8 @@
 $config = require __DIR__ . '/../../../api/config.php';
 
 define('SESSION_EXPIRE_HOURS', 720);
-define('ADMIN_KEY', '447686');
 define('ALLOWED_ORIGINS', ['*']);
-define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v4.lock');
+define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v9.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
 define('MEMBER_DATA_PATH', __DIR__ . '/../data/member.json');
 
@@ -50,7 +50,7 @@ if (in_array('*', ALLOWED_ORIGINS, true) || in_array($origin, ALLOWED_ORIGINS, t
     header('Access-Control-Allow-Credentials: true');
 }
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Session-Token');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Session-Token, X-Verified-Token');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(204); exit; }
 
 // ── DB 接続 ──────────────────────────────────────────────
@@ -138,6 +138,138 @@ function runMigrations(PDO $pdo): void {
         UNIQUE KEY uq_favorite (user_id, target_id),
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ─ 認証アカウント（公式協力・イベント用） ─
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_accounts (
+        id                       BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id                  BIGINT UNSIGNED NULL DEFAULT NULL UNIQUE,
+        login_id                 VARCHAR(64) NOT NULL UNIQUE,
+        password_hash            VARCHAR(255) NOT NULL,
+        display_name             VARCHAR(100) NOT NULL,
+        account_type             VARCHAR(32) NOT NULL DEFAULT 'verified',
+        label                    VARCHAR(80) NOT NULL DEFAULT '認証アカウント',
+        description              TEXT NULL DEFAULT NULL,
+        icon_url                 VARCHAR(2048) NULL DEFAULT NULL,
+        banner_url               VARCHAR(2048) NULL DEFAULT NULL,
+        primary_link_url         VARCHAR(2048) NULL DEFAULT NULL,
+        primary_link_label       VARCHAR(80) NULL DEFAULT NULL,
+        secondary_link_url       VARCHAR(2048) NULL DEFAULT NULL,
+        secondary_link_label     VARCHAR(80) NULL DEFAULT NULL,
+        x_url                    VARCHAR(2048) NULL DEFAULT NULL,
+        sns_links                TEXT NULL DEFAULT NULL COMMENT 'JSON array of {type,url,label}',
+        cta_label                VARCHAR(80) NULL DEFAULT NULL,
+        cta_url                  VARCHAR(2048) NULL DEFAULT NULL,
+        promotion_title          VARCHAR(160) NULL DEFAULT NULL,
+        promotion_body           TEXT NULL DEFAULT NULL,
+        hashtags                 TEXT NULL DEFAULT NULL COMMENT 'JSON array',
+        recommend_priority       INT NOT NULL DEFAULT 0,
+        status                   VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_by_admin_user_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        last_login_at            DATETIME NULL DEFAULT NULL,
+        created_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at               TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_status_priority (status, recommend_priority),
+        KEY idx_user (user_id),
+        KEY idx_login (login_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $verifiedCols = array_column($pdo->query('DESCRIBE buddies_verified_accounts')->fetchAll(), 'Field');
+    if (!in_array('user_id', $verifiedCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_verified_accounts ADD COLUMN user_id BIGINT UNSIGNED NULL DEFAULT NULL AFTER id");
+    }
+    if (!in_array('sns_links', $verifiedCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_verified_accounts ADD COLUMN sns_links TEXT NULL DEFAULT NULL COMMENT 'JSON array of {type,url,label}' AFTER x_url");
+    }
+    if (!in_array('cta_label', $verifiedCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_verified_accounts ADD COLUMN cta_label VARCHAR(80) NULL DEFAULT NULL AFTER sns_links");
+    }
+    if (!in_array('cta_url', $verifiedCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_verified_accounts ADD COLUMN cta_url VARCHAR(2048) NULL DEFAULT NULL AFTER cta_label");
+    }
+    try {
+        $pdo->exec("UPDATE buddies_verified_accounts a
+                   JOIN sakulabo_users u ON u.username = a.login_id
+                   SET a.user_id = u.id
+                   WHERE a.user_id IS NULL");
+    } catch (\Throwable $e) {}
+
+    // ─ イベント ─
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_events (
+        id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id    BIGINT UNSIGNED NOT NULL COMMENT '主催認証アカウント',
+        title         VARCHAR(160) NOT NULL,
+        description   TEXT NULL DEFAULT NULL,
+        venue         VARCHAR(200) NULL DEFAULT NULL,
+        starts_at     DATETIME NULL DEFAULT NULL,
+        ends_at       DATETIME NULL DEFAULT NULL,
+        cover_url     VARCHAR(2048) NULL DEFAULT NULL,
+        attachments   TEXT NULL DEFAULT NULL COMMENT 'JSON array of event files',
+        capacity      INT NULL DEFAULT NULL,
+        external_url  VARCHAR(2048) NULL DEFAULT NULL,
+        external_label VARCHAR(80) NULL DEFAULT NULL,
+        visibility    VARCHAR(16) NOT NULL DEFAULT 'public' COMMENT 'public | unlisted',
+        status        VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_account (account_id, status),
+        KEY idx_starts (starts_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $eventCols = array_column($pdo->query('DESCRIBE buddies_events')->fetchAll(), 'Field');
+    if (!in_array('visibility', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN visibility VARCHAR(16) NOT NULL DEFAULT 'public' AFTER external_label");
+    }
+    if (!in_array('attachments', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN attachments TEXT NULL DEFAULT NULL COMMENT 'JSON array of event files' AFTER cover_url");
+    }
+
+    // ─ イベント参加（join=公開, like=非公開いいね） ─
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_event_participants (
+        id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        event_id   BIGINT UNSIGNED NOT NULL,
+        user_id    BIGINT UNSIGNED NOT NULL,
+        kind       VARCHAR(10) NOT NULL DEFAULT 'join' COMMENT 'join | like',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_event_user_kind (event_id, user_id, kind),
+        KEY idx_event_kind (event_id, kind),
+        KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    // 既存テーブルの UNIQUE 制約を (event_id, user_id) → (event_id, user_id, kind) に置き換え
+    try {
+        $idx = $pdo->query("SHOW INDEX FROM buddies_event_participants WHERE Key_name='uq_event_user'")->fetchAll();
+        if ($idx) {
+            $pdo->exec("ALTER TABLE buddies_event_participants DROP INDEX uq_event_user");
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD UNIQUE KEY uq_event_user_kind (event_id, user_id, kind)");
+        }
+        $subCols = array_column($pdo->query('DESCRIBE buddies_subevents')->fetchAll(), 'Field');
+        $subRequired = [
+            'description' => "ALTER TABLE buddies_subevents ADD COLUMN description TEXT NULL DEFAULT NULL AFTER title",
+            'venue' => "ALTER TABLE buddies_subevents ADD COLUMN venue VARCHAR(200) NULL DEFAULT NULL AFTER description",
+            'starts_at' => "ALTER TABLE buddies_subevents ADD COLUMN starts_at DATETIME NULL DEFAULT NULL AFTER venue",
+            'ends_at' => "ALTER TABLE buddies_subevents ADD COLUMN ends_at DATETIME NULL DEFAULT NULL AFTER starts_at",
+            'cover_url' => "ALTER TABLE buddies_subevents ADD COLUMN cover_url VARCHAR(2048) NULL DEFAULT NULL AFTER ends_at",
+            'capacity' => "ALTER TABLE buddies_subevents ADD COLUMN capacity INT NULL DEFAULT NULL AFTER cover_url",
+            'external_url' => "ALTER TABLE buddies_subevents ADD COLUMN external_url VARCHAR(2048) NULL DEFAULT NULL AFTER capacity",
+            'external_label' => "ALTER TABLE buddies_subevents ADD COLUMN external_label VARCHAR(80) NULL DEFAULT NULL AFTER external_url",
+            'sort_order' => "ALTER TABLE buddies_subevents ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER external_label",
+            'status' => "ALTER TABLE buddies_subevents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER sort_order",
+            'created_at' => "ALTER TABLE buddies_subevents ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER status",
+            'updated_at' => "ALTER TABLE buddies_subevents ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at",
+        ];
+        foreach ($subRequired as $col => $sql) {
+            if (!in_array($col, $subCols, true)) $pdo->exec($sql);
+        }
+    } catch (\Throwable $e) {}
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_sessions (
+        id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        token      VARCHAR(128) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_account (account_id),
+        KEY idx_expires (expires_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 // ── ヘルパー ─────────────────────────────────────────────
@@ -200,6 +332,99 @@ function setSessionCookie(string $token): void {
         'samesite' => 'Lax',
     ]);
 }
+function getVerifiedToken(): ?string {
+    $h = $_SERVER['HTTP_X_VERIFIED_TOKEN'] ?? ($_COOKIE['buddies_verified_token'] ?? null);
+    return $h ? trim($h) : null;
+}
+function setVerifiedCookie(string $token): void {
+    setcookie('buddies_verified_token', $token, [
+        'expires'  => time() + SESSION_EXPIRE_HOURS * 3600,
+        'path'     => '/',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+}
+function verifiedAccountByUserId(int $userId): ?array {
+    if ($userId <= 0) return null;
+    $st = db()->prepare("SELECT * FROM buddies_verified_accounts WHERE user_id = ? AND status != 'disabled' LIMIT 1");
+    $st->execute([$userId]);
+    return $st->fetch() ?: null;
+}
+function developerVerifiedAccount(?array $u = null): ?array {
+    $u ??= currentUser();
+    if (!isHiromameAdmin($u)) return null;
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE user_id = ? AND account_type = ? LIMIT 1');
+    $st->execute([(int)$u['id'], 'developer']);
+    $a = $st->fetch();
+    if ($a) return $a;
+
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE created_by_admin_user_id = ? AND account_type = ? LIMIT 1');
+    $st->execute([(int)$u['id'], 'developer']);
+    $a = $st->fetch();
+    if ($a) {
+        if (empty($a['user_id'])) {
+            db()->prepare('UPDATE buddies_verified_accounts SET user_id=? WHERE id=?')->execute([(int)$u['id'], $a['id']]);
+            $a['user_id'] = (int)$u['id'];
+        }
+        return $a;
+    }
+
+    $login = $u['username'] ?: ('developer_' . (int)$u['id']);
+    $hash = $u['password_hash'] ?? password_hash(bin2hex(random_bytes(16)), PASSWORD_BCRYPT, ['cost' => 12]);
+    db()->prepare('INSERT INTO buddies_verified_accounts
+        (user_id, login_id, password_hash, display_name, account_type, label, description,
+         primary_link_label, recommend_priority, status, created_by_admin_user_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?)')
+    ->execute([
+        (int)$u['id'],
+        $login,
+        $hash,
+        $u['display_name'] ?: 'Hiromame',
+        'developer',
+        '開発者アカウント',
+        'Buddies profile の開発・運営を行うアカウントです。',
+        'Buddies profileを見る',
+        1000,
+        'active',
+        (int)$u['id'],
+    ]);
+    $id = (int)db()->lastInsertId();
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+function currentVerifiedAccount(): ?array {
+    $u = currentUser();
+    if ($u) {
+        $a = verifiedAccountByUserId((int)$u['id']);
+        if ($a) return $a;
+        if (isHiromameAdmin($u)) return developerVerifiedAccount($u);
+    }
+
+    $token = getVerifiedToken();
+    if (!$token) return null;
+    $st = db()->prepare(
+        "SELECT a.* FROM buddies_verified_accounts a
+         JOIN buddies_verified_sessions s ON s.account_id = a.id
+         WHERE s.token = ? AND s.expires_at > NOW() AND a.status != 'disabled'
+         LIMIT 1"
+    );
+    $st->execute([$token]);
+    return $st->fetch() ?: null;
+}
+function requireVerifiedAccount(): array {
+    $a = currentVerifiedAccount();
+    if (!$a) err('認証アカウントでのログインが必要です。', 401);
+    return $a;
+}
+function isHiromameAdmin(?array $u): bool {
+    return $u && (int)$u['id'] === 1;
+}
+function requireHiromameAdmin(): array {
+    $u = requireAuth();
+    if (!isHiromameAdmin($u)) err('開発者アカウント（uid=1）でのログインが必要です。', 403);
+    return $u;
+}
 
 // ── 誕生日から年齢計算 ────────────────────────────────────
 function calcAgeFromBirthday(string $birthday): ?int {
@@ -257,6 +482,10 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['follow_stance']  = null;
         $data['post_template']  = null;
     }
+    $verified = verifiedAccountByUserId((int)$u['id']);
+    if (!$verified && isHiromameAdmin($u)) $verified = developerVerifiedAccount($u);
+    $data['account_role'] = $verified ? normalizeVerifiedType($verified['account_type'] ?? 'verified') : 'user';
+    $data['verified_account'] = $verified ? buildVerifiedData($verified, $includePrivate) : null;
     return $data;
 }
 
@@ -290,6 +519,95 @@ function buildRowData(array $r): array {
     ];
 }
 
+function decodeJsonArray(?string $json): array {
+    if (!$json) return [];
+    $arr = json_decode($json, true);
+    return is_array($arr) ? array_values(array_filter($arr, fn($v) => is_string($v) && trim($v) !== '')) : [];
+}
+function cleanUrl(?string $url): ?string {
+    $url = trim((string)$url);
+    if ($url === '') return null;
+    if (strlen($url) > 2048 || !filter_var($url, FILTER_VALIDATE_URL)) err('URLの形式が正しくありません。');
+    return $url;
+}
+function normalizeSnsLinks($links, int $limit = 10): array {
+    if (!is_array($links)) return [];
+    $allowed = ['x', 'threads', 'instagram', 'tiktok', 'youtube', 'link'];
+    $out = [];
+    foreach ($links as $link) {
+        if (!is_array($link)) continue;
+        $url = cleanUrl($link['url'] ?? null);
+        if (!$url) continue;
+        $type = strtolower(trim((string)($link['type'] ?? 'link')));
+        if (!in_array($type, $allowed, true)) $type = 'link';
+        $label = trim((string)($link['label'] ?? ''));
+        if (mb_strlen($label) > 80) err('SNSリンクのラベルは80文字以内で入力してください。');
+        $out[] = ['type' => $type, 'url' => $url, 'label' => $label ?: null];
+        if (count($out) >= $limit) break;
+    }
+    return $out;
+}
+function buildVerifiedData(array $a, bool $includePrivate = false): array {
+    $type = normalizeVerifiedType($a['account_type'] ?? 'verified');
+    $data = [
+        'id'                   => (int)$a['id'],
+        'user_id'              => isset($a['user_id']) ? (int)$a['user_id'] : null,
+        'login_id'             => $includePrivate ? $a['login_id'] : null,
+        'display_name'         => $a['display_name'],
+        'account_type'         => $type,
+        'label'                => $a['label'] ?: verifiedTypeLabel($type),
+        'account_definition'   => verifiedTypeDefinition($type),
+        'description'          => $a['description'] ?? '',
+        'icon_url'             => $a['icon_url'] ?? null,
+        'banner_url'           => $a['banner_url'] ?? null,
+        'primary_link_url'     => $a['primary_link_url'] ?? null,
+        'primary_link_label'   => $a['primary_link_label'] ?? null,
+        'secondary_link_url'   => $a['secondary_link_url'] ?? null,
+        'secondary_link_label' => $a['secondary_link_label'] ?? null,
+        'x_url'                => $a['x_url'] ?? null,
+        'sns_links'            => isset($a['sns_links']) && $a['sns_links'] ? (json_decode($a['sns_links'], true) ?: []) : [],
+        'cta_label'            => $a['cta_label'] ?? null,
+        'cta_url'              => $a['cta_url'] ?? null,
+        'promotion_title'      => $a['promotion_title'] ?? null,
+        'promotion_body'       => $a['promotion_body'] ?? null,
+        'hashtags'             => decodeJsonArray($a['hashtags'] ?? null),
+        'recommend_priority'   => (int)($a['recommend_priority'] ?? 0),
+        'status'               => $a['status'] ?? 'active',
+        'updated_at'           => $a['updated_at'] ?? null,
+    ];
+    if (!$includePrivate) unset($data['login_id']);
+    return $data;
+}
+function normalizeVerifiedType(string $type): string {
+    return match ($type) {
+        'developer' => 'developer',
+        'official', 'official_account', 'official_collab', 'event', 'partner' => 'official',
+        default => 'verified',
+    };
+}
+function verifiedTypeLabel(string $type): string {
+    return match ($type) {
+        'developer' => '開発者アカウント',
+        'official' => '公式アカウント',
+        default => '認証アカウント',
+    };
+}
+function verifiedTypeDefinition(string $type): string {
+    return match ($type) {
+        'developer' => 'Buddies profile の開発・運営を行うアカウントです。',
+        'official' => '極めて信頼性の高いことを証明するアカウントです。',
+        default => '開発者が認証したアカウントです。',
+    };
+}
+function verifiedUploadDir(string $kind, int $accountId): string {
+    $dir = __DIR__ . '/uploads/verified/' . $accountId . '/' . $kind;
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    return $dir;
+}
+function publicUploadUrl(string $kind, int $accountId, string $file): string {
+    return 'uploads/verified/' . $accountId . '/' . $kind . '/' . $file;
+}
+
 // ── アクション振り分け ────────────────────────────────────
 $action = $_GET['action'] ?? $_POST['action'] ?? body()['action'] ?? '';
 
@@ -302,6 +620,7 @@ match ($action) {
     'auth_password_change'    => actionPasswordChange(),
 
     'buddies_profile_get'     => actionProfileGet(),
+    'buddies_public_profile_get' => actionPublicProfileGet(),
     'buddies_profile_update'  => actionProfileUpdate(),
     'buddies_icon_update'     => actionIconUpdate(),
     'buddies_icon_clear'      => actionIconClear(),
@@ -321,6 +640,45 @@ match ($action) {
 
     'admin_tag_list'          => actionAdminTagList(),
     'admin_tag_merge'         => actionAdminTagMerge(),
+
+    'verified_login'          => actionVerifiedLogin(),
+    'verified_logout'         => actionVerifiedLogout(),
+    'verified_me'             => actionVerifiedMe(),
+    'verified_update'         => actionVerifiedUpdate(),
+    'verified_change_password'=> actionVerifiedChangePassword(),
+    'verified_upload_icon'    => actionVerifiedUpload('icons'),
+    'verified_upload_banner'  => actionVerifiedUpload('banners'),
+    'verified_public_list'    => actionVerifiedPublicList(),
+    'verified_public_get'     => actionVerifiedPublicGet(),
+    'verified_admin_list'     => actionVerifiedAdminList(),
+    'verified_admin_create'   => actionVerifiedAdminCreate(),
+    'verified_admin_update'   => actionVerifiedAdminUpdate(),
+    'verified_admin_disable'  => actionVerifiedAdminDisable(),
+    'verified_admin_reset_password' => actionVerifiedAdminResetPassword(),
+
+    'event_list_by_account'   => actionEventListByAccount(),
+    'event_get'               => actionEventGet(),
+    'event_participants'      => actionEventParticipants(),
+    'event_mine_list'         => actionEventMineList(),
+    'event_create'            => actionEventCreate(),
+    'event_update'            => actionEventUpdate(),
+    'event_delete'            => actionEventDelete(),
+    'event_upload_cover'      => actionEventUploadCover(),
+    'event_upload_attachment' => actionEventUploadAttachment(),
+    'event_delete_attachment' => actionEventDeleteAttachment(),
+    'event_join'              => actionEventJoin(),
+    'event_my_status'         => actionEventMyStatus(),
+    'event_my_participations' => actionEventMyParticipations(),
+
+    'subevent_list'           => actionSubeventList(),
+    'subevent_get'            => actionSubeventGet(),
+    'subevent_mine_list'      => actionSubeventMineList(),
+    'subevent_create'         => actionSubeventCreate(),
+    'subevent_update'         => actionSubeventUpdate(),
+    'subevent_delete'         => actionSubeventDelete(),
+    'subevent_upload_cover'   => actionSubeventUploadCover(),
+    'subevent_join'           => actionSubeventJoin(),
+    'subevent_participants'   => actionSubeventParticipants(),
 
     default => err('不明なアクションです。'),
 };
@@ -487,6 +845,34 @@ function actionProfileGet(): void {
 
     $bp = getBuddiesProfile($targetId);
     ok(buildUserData($u, $bp));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  公開プロフィール取得（一般ユーザー用 view.html）
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function actionPublicProfileGet(): void {
+    $targetId = (int)($_GET['user_id'] ?? $_GET['id'] ?? 0);
+    if ($targetId <= 0) err('user_id は必須です。');
+
+    $st = db()->prepare('SELECT * FROM sakulabo_users WHERE id = ? LIMIT 1');
+    $st->execute([$targetId]);
+    $u = $st->fetch();
+    if (!$u) err('ユーザーが見つかりません。', 404);
+
+    $bp = getBuddiesProfile($targetId);
+    $data = buildUserData($u, $bp);
+    unset($data['birthday'], $data['post_template']);
+
+    $me = currentUser();
+    $data['is_self'] = $me ? ((int)$me['id'] === $targetId) : false;
+    $data['favorited'] = false;
+    if ($me && (int)$me['id'] !== $targetId) {
+        $ck = db()->prepare('SELECT id FROM buddies_favorites WHERE user_id=? AND target_id=? LIMIT 1');
+        $ck->execute([(int)$me['id'], $targetId]);
+        $data['favorited'] = (bool)$ck->fetch();
+    }
+
+    ok($data);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -657,6 +1043,18 @@ function actionFavoriteToggle(): void {
     $me       = requireAuth();
     $targetId = (int)req('target_id');
     if ($targetId === (int)$me['id']) err('自分自身はお気に入りにできません。');
+    if ($targetId <= 0) err('対象ユーザーが正しくありません。');
+
+    // 一般ユーザー同士のみ利用可能
+    $meVerified = verifiedAccountByUserId((int)$me['id']);
+    if ($meVerified || isHiromameAdmin($me)) err('お気に入りは一般ユーザー同士でのみ利用できます。', 403);
+
+    $exists = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
+    $exists->execute([$targetId]);
+    $targetUser = $exists->fetch();
+    if (!$targetUser) err('対象ユーザーが見つかりません。', 404);
+    $targetVerified = verifiedAccountByUserId($targetId);
+    if ($targetVerified || isHiromameAdmin($targetUser)) err('お気に入りは一般ユーザー同士でのみ利用できます。', 403);
 
     $ck = db()->prepare('SELECT id FROM buddies_favorites WHERE user_id=? AND target_id=? LIMIT 1');
     $ck->execute([$me['id'], $targetId]);
@@ -689,7 +1087,13 @@ function actionFavoriteList(): void {
          ORDER BY f.created_at DESC'
     );
     $st->execute([$me['id']]);
-    ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
+    $rows = [];
+    foreach ($st->fetchAll() as $r) {
+        $verified = verifiedAccountByUserId((int)$r['id']);
+        if ($verified || ((int)$r['id'] === 1)) continue;
+        $rows[] = buildRowData($r);
+    }
+    ok($rows);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -1174,11 +1578,7 @@ function actionBlogImages(): void {
 //  管理者: タグ一覧取得 / タグ統合
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function requireAdmin(): void {
-    $key = $_SERVER['HTTP_X_ADMIN_KEY'] ?? '';
-    if ($key !== ADMIN_KEY) {
-        http_response_code(403);
-        err('管理者認証が必要です。');
-    }
+    requireHiromameAdmin();
 }
 
 // タグ一覧（tags / favorite_songs 両方）を件数付きで返す
@@ -1249,4 +1649,1067 @@ function actionAdminTagMerge(): void {
     }
 
     ok(['updated' => $updated, 'from' => $from, 'to' => $to, 'type' => $type]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  認証アカウント
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function verifiedEditableFields(array $b, bool $preserveDeveloperType = true): array {
+    $hashtags = isset($b['hashtags']) && is_array($b['hashtags'])
+        ? array_slice(array_values(array_filter(array_map(fn($v) => trim((string)$v), $b['hashtags']))), 0, 6)
+        : null;
+    $snsLinks = normalizeSnsLinks($b['sns_links'] ?? [], 10);
+    $legacyXUrl = cleanUrl($b['x_url'] ?? null);
+    if (!$legacyXUrl) {
+        foreach ($snsLinks as $link) {
+            if (($link['type'] ?? '') === 'x') {
+                $legacyXUrl = $link['url'];
+                break;
+            }
+        }
+    }
+
+    $fields = [
+        'display_name'         => trim((string)($b['display_name'] ?? '')),
+        'account_type'         => normalizeVerifiedType(trim((string)($b['account_type'] ?? 'verified'))),
+        'label'                => trim((string)($b['label'] ?? '')),
+        'description'          => trim((string)($b['description'] ?? '')),
+        'primary_link_url'     => cleanUrl($b['primary_link_url'] ?? null),
+        'primary_link_label'   => trim((string)($b['primary_link_label'] ?? '')),
+        'secondary_link_url'   => cleanUrl($b['secondary_link_url'] ?? null),
+        'secondary_link_label' => trim((string)($b['secondary_link_label'] ?? '')),
+        'x_url'                => $legacyXUrl,
+        'sns_links'            => json_encode($snsLinks, JSON_UNESCAPED_UNICODE),
+        'cta_label'            => trim((string)($b['cta_label'] ?? '')),
+        'cta_url'              => cleanUrl($b['cta_url'] ?? null),
+        'promotion_title'      => trim((string)($b['promotion_title'] ?? '')),
+        'promotion_body'       => trim((string)($b['promotion_body'] ?? '')),
+        'hashtags'             => $hashtags !== null ? json_encode($hashtags, JSON_UNESCAPED_UNICODE) : null,
+    ];
+
+    if ($fields['display_name'] === '' || mb_strlen($fields['display_name']) > 100) err('表示名は1〜100文字で入力してください。');
+    $current = $preserveDeveloperType ? currentVerifiedAccount() : null;
+    if ($current && normalizeVerifiedType($current['account_type'] ?? '') === 'developer') {
+        $fields['account_type'] = 'developer';
+    }
+    if ($fields['label'] === '') $fields['label'] = verifiedTypeLabel($fields['account_type']);
+    if ($fields['label'] === '' || mb_strlen($fields['label']) > 80) err('ラベルは1〜80文字で入力してください。');
+    if (mb_strlen($fields['description']) > 2000) err('説明文は2000文字以内で入力してください。');
+    if (mb_strlen($fields['promotion_title']) > 160) err('告知タイトルは160文字以内で入力してください。');
+    if (mb_strlen($fields['promotion_body']) > 3000) err('告知本文は3000文字以内で入力してください。');
+    foreach (['primary_link_label', 'secondary_link_label', 'cta_label'] as $k) {
+        if (mb_strlen($fields[$k]) > 80) err('リンクボタン文言は80文字以内で入力してください。');
+        if ($fields[$k] === '') $fields[$k] = null;
+    }
+    foreach (['description', 'promotion_title', 'promotion_body'] as $k) {
+        if ($fields[$k] === '') $fields[$k] = null;
+    }
+    return $fields;
+}
+
+function actionVerifiedLogin(): void {
+    $login = req('login_id');
+    $pass  = req('password');
+    $st = db()->prepare('SELECT * FROM sakulabo_users WHERE username = ? LIMIT 1');
+    $st->execute([$login]);
+    $user = $st->fetch();
+    if (!$user || !password_verify($pass, $user['password_hash'])) err('ログインIDまたはパスワードが正しくありません。', 401);
+
+    $a = verifiedAccountByUserId((int)$user['id']);
+    if (!$a && isHiromameAdmin($user)) $a = developerVerifiedAccount($user);
+    if (!$a) err('認証アカウントではありません。', 403);
+
+    db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id = ? OR expires_at < NOW()')->execute([$user['id']]);
+    $token = generateToken();
+    $exp   = date('Y-m-d H:i:s', strtotime('+' . SESSION_EXPIRE_HOURS . ' hours'));
+    db()->prepare('INSERT INTO sakulabo_sessions (token, user_id, expires_at) VALUES (?,?,?)')->execute([$token, $user['id'], $exp]);
+    db()->prepare('UPDATE buddies_verified_accounts SET last_login_at = NOW() WHERE id = ?')->execute([$a['id']]);
+    setSessionCookie($token);
+    ok(['token' => $token, 'account' => buildVerifiedData($a, true)]);
+}
+
+function actionVerifiedLogout(): void {
+    $token = getToken();
+    if ($token) db()->prepare('DELETE FROM sakulabo_sessions WHERE token = ?')->execute([$token]);
+    $legacyToken = getVerifiedToken();
+    if ($legacyToken) db()->prepare('DELETE FROM buddies_verified_sessions WHERE token = ?')->execute([$legacyToken]);
+    setcookie('sakulabo_token', '', ['expires' => time() - 3600, 'path' => '/']);
+    setcookie('buddies_verified_token', '', ['expires' => time() - 3600, 'path' => '/']);
+    ok();
+}
+
+function actionVerifiedMe(): void {
+    $a = currentVerifiedAccount() ?: developerVerifiedAccount();
+    ok($a ? buildVerifiedData($a, true) : null);
+}
+
+function actionVerifiedUpdate(): void {
+    $a = requireVerifiedAccount();
+    $f = verifiedEditableFields(body());
+    db()->prepare('UPDATE buddies_verified_accounts SET
+        display_name=?, account_type=?, label=?, description=?,
+        primary_link_url=?, primary_link_label=?, secondary_link_url=?, secondary_link_label=?,
+        x_url=?, sns_links=?, cta_label=?, cta_url=?, promotion_title=?, promotion_body=?, hashtags=?
+        WHERE id=?')
+    ->execute([
+        $f['display_name'], $f['account_type'], $f['label'], $f['description'],
+        $f['primary_link_url'], $f['primary_link_label'], $f['secondary_link_url'], $f['secondary_link_label'],
+        $f['x_url'], $f['sns_links'], $f['cta_label'], $f['cta_url'], $f['promotion_title'], $f['promotion_body'], $f['hashtags'],
+        $a['id'],
+    ]);
+    if (!empty($a['user_id'])) {
+        db()->prepare('UPDATE sakulabo_users SET display_name=? WHERE id=?')->execute([$f['display_name'], $a['user_id']]);
+    }
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$a['id']]);
+    ok(buildVerifiedData($st->fetch(), true));
+}
+
+function actionVerifiedChangePassword(): void {
+    $a = requireVerifiedAccount();
+    if (empty($a['user_id'])) err('連携ユーザーが見つかりません。管理者に連絡してください。', 409);
+    $current = (string)(body()['current_password'] ?? '');
+    $new = (string)(body()['new_password'] ?? '');
+    if (strlen($new) < 8) err('新しいパスワードは8文字以上で入力してください。');
+    $st = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
+    $st->execute([(int)$a['user_id']]);
+    $user = $st->fetch();
+    if (!$user || !password_verify($current, $user['password_hash'])) err('現在のパスワードが正しくありません。');
+    $hash = password_hash($new, PASSWORD_BCRYPT, ['cost' => 12]);
+    db()->prepare('UPDATE sakulabo_users SET password_hash=? WHERE id=?')->execute([$hash, $a['user_id']]);
+    db()->prepare('UPDATE buddies_verified_accounts SET password_hash=? WHERE id=?')->execute([$hash, $a['id']]);
+    db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id=?')->execute([$a['user_id']]);
+    ok();
+}
+
+function actionVerifiedUpload(string $kind): void {
+    $a = requireVerifiedAccount();
+    $dataUrl = (string)(body()['image'] ?? '');
+    if (!preg_match('/^data:image\/(png|jpeg|webp);base64,/', $dataUrl, $m)) err('PNG/JPEG/WebP画像を指定してください。');
+    $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+    if ($raw === false) err('画像データを読み込めませんでした。');
+    if (!@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+    $limit = $kind === 'icons' ? 3 * 1024 * 1024 : 5 * 1024 * 1024;
+    if (strlen($raw) > $limit) err('画像サイズが大きすぎます。');
+    $ext = $m[1] === 'jpeg' ? 'jpg' : $m[1];
+    $accountId = (int)$a['id'];
+    $file = $kind . '.' . $ext;
+    $dir = verifiedUploadDir($kind, $accountId);
+    // 旧フォーマット（拡張子違い）のファイルがあれば削除
+    foreach (['png','jpg','webp'] as $oldExt) {
+        $oldPath = $dir . '/' . $kind . '.' . $oldExt;
+        if ($oldExt !== $ext && is_file($oldPath)) @unlink($oldPath);
+    }
+    $path = $dir . '/' . $file;
+    if (file_put_contents($path, $raw) === false) err('画像を保存できませんでした。', 500);
+    $url = publicUploadUrl($kind, $accountId, $file) . '?v=' . time();
+    $col = $kind === 'icons' ? 'icon_url' : 'banner_url';
+    db()->prepare("UPDATE buddies_verified_accounts SET $col=? WHERE id=?")->execute([$url, $a['id']]);
+    ok([$col => $url]);
+}
+
+function actionVerifiedPublicList(): void {
+    $limit = min(max((int)($_GET['limit'] ?? 12), 1), 50);
+    $st = db()->prepare("SELECT * FROM buddies_verified_accounts WHERE status = 'active' ORDER BY recommend_priority DESC, updated_at DESC LIMIT ?");
+    $st->bindValue(1, $limit, PDO::PARAM_INT);
+    $st->execute();
+    ok(array_map(fn($a) => buildVerifiedData($a), $st->fetchAll()));
+}
+
+function actionVerifiedPublicGet(): void {
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_verified_accounts WHERE id=? AND status='active' LIMIT 1");
+    $st->execute([$id]);
+    $a = $st->fetch();
+    if (!$a) err('認証アカウントが見つかりません。', 404);
+    ok(buildVerifiedData($a));
+}
+
+function actionVerifiedAdminList(): void {
+    requireHiromameAdmin();
+    $st = db()->query('SELECT * FROM buddies_verified_accounts ORDER BY status ASC, recommend_priority DESC, updated_at DESC');
+    ok(array_map(fn($a) => buildVerifiedData($a, true), $st->fetchAll()));
+}
+
+function actionVerifiedAdminCreate(): void {
+    $admin = requireHiromameAdmin();
+    $b = body();
+    $login = trim((string)($b['login_id'] ?? ''));
+    $pass  = (string)($b['password'] ?? '');
+    if (!preg_match('/^[a-zA-Z0-9_]{3,64}$/', $login)) err('ログインIDは3〜64文字の半角英数字・アンダースコアで入力してください。');
+    if (strlen($pass) < 8) err('初期パスワードは8文字以上で入力してください。');
+    $ck = db()->prepare('SELECT id FROM sakulabo_users WHERE username=? LIMIT 1');
+    $ck->execute([$login]);
+    if ($ck->fetch()) err('そのログインIDはすでに使用されています。');
+    $f = verifiedEditableFields($b, false);
+    if ($f['account_type'] === 'developer') err('開発者アカウントは新規作成できません。');
+    $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
+    db()->prepare('INSERT INTO sakulabo_users (username, password_hash, display_name) VALUES (?,?,?)')
+       ->execute([$login, $hash, $f['display_name']]);
+    $uid = (int)db()->lastInsertId();
+    db()->prepare('INSERT IGNORE INTO buddies_profiles (user_id) VALUES (?)')->execute([$uid]);
+    db()->prepare('INSERT INTO buddies_verified_accounts
+        (user_id, login_id, password_hash, display_name, account_type, label, description,
+         primary_link_url, primary_link_label, secondary_link_url, secondary_link_label,
+         x_url, sns_links, cta_label, cta_url, promotion_title, promotion_body, hashtags,
+         recommend_priority, status, created_by_admin_user_id)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)')
+    ->execute([
+        $uid, $login, $hash, $f['display_name'], $f['account_type'], $f['label'], $f['description'],
+        $f['primary_link_url'], $f['primary_link_label'], $f['secondary_link_url'], $f['secondary_link_label'],
+        $f['x_url'], $f['sns_links'], $f['cta_label'], $f['cta_url'], $f['promotion_title'], $f['promotion_body'], $f['hashtags'],
+        (int)($b['recommend_priority'] ?? 0), 'active', $admin['id'],
+    ]);
+    $id = (int)db()->lastInsertId();
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    ok(buildVerifiedData($st->fetch(), true));
+}
+
+function actionVerifiedAdminUpdate(): void {
+    requireHiromameAdmin();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $before = $st->fetch();
+    if (!$before) err('認証アカウントが見つかりません。', 404);
+    $f = verifiedEditableFields($b, false);
+    $status = in_array(($b['status'] ?? 'active'), ['active', 'paused', 'disabled'], true) ? $b['status'] : 'active';
+    db()->prepare('UPDATE buddies_verified_accounts SET
+        display_name=?, account_type=?, label=?, description=?,
+        primary_link_url=?, primary_link_label=?, secondary_link_url=?, secondary_link_label=?,
+        x_url=?, sns_links=?, cta_label=?, cta_url=?, promotion_title=?, promotion_body=?, hashtags=?,
+        recommend_priority=?, status=?
+        WHERE id=?')
+    ->execute([
+        $f['display_name'], $f['account_type'], $f['label'], $f['description'],
+        $f['primary_link_url'], $f['primary_link_label'], $f['secondary_link_url'], $f['secondary_link_label'],
+        $f['x_url'], $f['sns_links'], $f['cta_label'], $f['cta_url'], $f['promotion_title'], $f['promotion_body'], $f['hashtags'],
+        (int)($b['recommend_priority'] ?? 0), $status, $id,
+    ]);
+    if (!empty($before['user_id'])) {
+        db()->prepare('UPDATE sakulabo_users SET display_name=? WHERE id=?')->execute([$f['display_name'], $before['user_id']]);
+    }
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    ok(buildVerifiedData($st->fetch(), true));
+}
+
+function actionVerifiedAdminDisable(): void {
+    requireHiromameAdmin();
+    $id = (int)req('id');
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $a = $st->fetch();
+    db()->prepare("UPDATE buddies_verified_accounts SET status='disabled' WHERE id=?")->execute([$id]);
+    db()->prepare('DELETE FROM buddies_verified_sessions WHERE account_id=?')->execute([$id]);
+    if ($a && !empty($a['user_id'])) db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id=?')->execute([$a['user_id']]);
+    ok(['disabled' => true]);
+}
+
+function actionVerifiedAdminResetPassword(): void {
+    requireHiromameAdmin();
+    $id = (int)req('id');
+    $pass = (string)(body()['password'] ?? '');
+    if (strlen($pass) < 8) err('新しいパスワードは8文字以上で入力してください。');
+    $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $a = $st->fetch();
+    if (!$a) err('認証アカウントが見つかりません。', 404);
+    if (empty($a['user_id'])) err('連携ユーザーが見つかりません。', 409);
+    $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
+    db()->prepare('UPDATE sakulabo_users SET password_hash=? WHERE id=?')->execute([$hash, $a['user_id']]);
+    db()->prepare('UPDATE buddies_verified_accounts SET password_hash=? WHERE id=?')->execute([$hash, $id]);
+    db()->prepare('DELETE FROM buddies_verified_sessions WHERE account_id=?')->execute([$id]);
+    db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id=?')->execute([$a['user_id']]);
+    ok();
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  イベント
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function ensureEventTables(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    $pdo = db();
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_events (
+        id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id    BIGINT UNSIGNED NOT NULL,
+        title         VARCHAR(160) NOT NULL,
+        description   TEXT NULL DEFAULT NULL,
+        venue         VARCHAR(200) NULL DEFAULT NULL,
+        starts_at     DATETIME NULL DEFAULT NULL,
+        ends_at       DATETIME NULL DEFAULT NULL,
+        cover_url     VARCHAR(2048) NULL DEFAULT NULL,
+        attachments   TEXT NULL DEFAULT NULL,
+        capacity      INT NULL DEFAULT NULL,
+        external_url  VARCHAR(2048) NULL DEFAULT NULL,
+        external_label VARCHAR(80) NULL DEFAULT NULL,
+        visibility    VARCHAR(16) NOT NULL DEFAULT 'public',
+        status        VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_account (account_id, status),
+        KEY idx_starts (starts_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_event_participants (
+        id         BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        event_id   BIGINT UNSIGNED NOT NULL,
+        user_id    BIGINT UNSIGNED NOT NULL,
+        kind       VARCHAR(10) NOT NULL DEFAULT 'join',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_event_user_kind (event_id, user_id, kind),
+        KEY idx_event_kind (event_id, kind),
+        KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_subevents (
+        id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        event_id       BIGINT UNSIGNED NOT NULL,
+        title          VARCHAR(160) NOT NULL,
+        description    TEXT NULL DEFAULT NULL,
+        venue          VARCHAR(200) NULL DEFAULT NULL,
+        starts_at      DATETIME NULL DEFAULT NULL,
+        ends_at        DATETIME NULL DEFAULT NULL,
+        cover_url      VARCHAR(2048) NULL DEFAULT NULL,
+        capacity       INT NULL DEFAULT NULL,
+        external_url   VARCHAR(2048) NULL DEFAULT NULL,
+        external_label VARCHAR(80) NULL DEFAULT NULL,
+        sort_order     INT NOT NULL DEFAULT 0,
+        status         VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_event (event_id, status),
+        KEY idx_starts (starts_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_subevent_participants (
+        id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        subevent_id BIGINT UNSIGNED NOT NULL,
+        user_id     BIGINT UNSIGNED NOT NULL,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_subevent_user (subevent_id, user_id),
+        KEY idx_subevent (subevent_id),
+        KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    try {
+        $cols = array_column($pdo->query('DESCRIBE buddies_events')->fetchAll(), 'Field');
+        if (!in_array('visibility', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN visibility VARCHAR(16) NOT NULL DEFAULT 'public' AFTER external_label");
+        }
+        if (!in_array('attachments', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN attachments TEXT NULL DEFAULT NULL AFTER cover_url");
+        }
+        $idx = $pdo->query("SHOW INDEX FROM buddies_event_participants WHERE Key_name='uq_event_user'")->fetchAll();
+        if ($idx) {
+            $pdo->exec("ALTER TABLE buddies_event_participants DROP INDEX uq_event_user");
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD UNIQUE KEY uq_event_user_kind (event_id, user_id, kind)");
+        }
+        $subCols = array_column($pdo->query('DESCRIBE buddies_subevents')->fetchAll(), 'Field');
+        $subRequired = [
+            'description' => "ALTER TABLE buddies_subevents ADD COLUMN description TEXT NULL DEFAULT NULL AFTER title",
+            'venue' => "ALTER TABLE buddies_subevents ADD COLUMN venue VARCHAR(200) NULL DEFAULT NULL AFTER description",
+            'starts_at' => "ALTER TABLE buddies_subevents ADD COLUMN starts_at DATETIME NULL DEFAULT NULL AFTER venue",
+            'ends_at' => "ALTER TABLE buddies_subevents ADD COLUMN ends_at DATETIME NULL DEFAULT NULL AFTER starts_at",
+            'cover_url' => "ALTER TABLE buddies_subevents ADD COLUMN cover_url VARCHAR(2048) NULL DEFAULT NULL AFTER ends_at",
+            'capacity' => "ALTER TABLE buddies_subevents ADD COLUMN capacity INT NULL DEFAULT NULL AFTER cover_url",
+            'external_url' => "ALTER TABLE buddies_subevents ADD COLUMN external_url VARCHAR(2048) NULL DEFAULT NULL AFTER capacity",
+            'external_label' => "ALTER TABLE buddies_subevents ADD COLUMN external_label VARCHAR(80) NULL DEFAULT NULL AFTER external_url",
+            'sort_order' => "ALTER TABLE buddies_subevents ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER external_label",
+            'status' => "ALTER TABLE buddies_subevents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER sort_order",
+            'created_at' => "ALTER TABLE buddies_subevents ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER status",
+            'updated_at' => "ALTER TABLE buddies_subevents ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP AFTER created_at",
+        ];
+        foreach ($subRequired as $col => $sql) {
+            if (!in_array($col, $subCols, true)) $pdo->exec($sql);
+        }
+    } catch (\Throwable $e) {}
+}
+
+function eventVisibleDateCondition(string $alias = ''): string {
+    $p = $alias !== '' ? $alias . '.' : '';
+    // 終了日時が指定されている場合だけ終了判定する。
+    // ends_at が null のイベントは「終了未定」として、開始日時が過去でも表示を維持する。
+    return "({$p}ends_at IS NULL OR {$p}ends_at >= NOW())";
+}
+function sortEventsSql(string $alias = ''): string {
+    $p = $alias !== '' ? $alias . '.' : '';
+    return "(COALESCE({$p}starts_at, {$p}ends_at) IS NULL), COALESCE({$p}starts_at, {$p}ends_at) ASC, {$p}created_at ASC";
+}
+function eventAttachments(array $e): array {
+    $raw = $e['attachments'] ?? null;
+    if (!$raw) return [];
+    $arr = json_decode($raw, true);
+    if (!is_array($arr)) return [];
+    return array_values(array_filter(array_map(function($f) {
+        if (!is_array($f) || empty($f['url']) || empty($f['name'])) return null;
+        return [
+            'id' => (string)($f['id'] ?? ''),
+            'name' => (string)$f['name'],
+            'url' => (string)$f['url'],
+            'mime' => (string)($f['mime'] ?? ''),
+            'size' => (int)($f['size'] ?? 0),
+            'uploaded_at' => $f['uploaded_at'] ?? null,
+        ];
+    }, $arr)));
+}
+function cleanUploadFileName(string $name, string $fallback): string {
+    $name = trim(basename($name));
+    $name = preg_replace('/[^\p{L}\p{N}._ -]+/u', '_', $name);
+    $name = trim((string)$name, " .\t\n\r\0\x0B");
+    if ($name === '') $name = $fallback;
+    return mb_substr($name, 0, 120);
+}
+
+function eventEditableFields(array $b): array {
+    $title = trim((string)($b['title'] ?? ''));
+    if ($title === '' || mb_strlen($title) > 160) err('タイトルは1〜160文字で入力してください。');
+    $description = trim((string)($b['description'] ?? ''));
+    if (mb_strlen($description) > 4000) err('説明は4000文字以内で入力してください。');
+    $venue = trim((string)($b['venue'] ?? ''));
+    if (mb_strlen($venue) > 200) err('会場は200文字以内で入力してください。');
+    $startsAt = trim((string)($b['starts_at'] ?? ''));
+    $endsAt   = trim((string)($b['ends_at'] ?? ''));
+    foreach (['startsAt' => &$startsAt, 'endsAt' => &$endsAt] as $k => &$v) {
+        if ($v === '') { $v = null; continue; }
+        $ts = strtotime($v);
+        if ($ts === false) err('日時の形式が正しくありません。');
+        $v = date('Y-m-d H:i:s', $ts);
+    }
+    unset($v);
+    $externalUrl = cleanUrl($b['external_url'] ?? null);
+    $externalLabel = trim((string)($b['external_label'] ?? ''));
+    if (mb_strlen($externalLabel) > 80) err('リンク文言は80文字以内で入力してください。');
+    if ($externalLabel === '') $externalLabel = null;
+    $capacity = isset($b['capacity']) && $b['capacity'] !== '' ? (int)$b['capacity'] : null;
+    if ($capacity !== null && ($capacity < 1 || $capacity > 100000)) err('満員数は1〜100000で入力してください。');
+    $visibility = (string)($b['visibility'] ?? 'public');
+    if (!in_array($visibility, ['public','unlisted'], true)) $visibility = 'public';
+    return [
+        'title'          => $title,
+        'description'    => $description !== '' ? $description : null,
+        'venue'          => $venue !== '' ? $venue : null,
+        'starts_at'      => $startsAt,
+        'ends_at'        => $endsAt,
+        'capacity'       => $capacity,
+        'external_url'   => $externalUrl,
+        'external_label' => $externalLabel,
+        'visibility'     => $visibility,
+    ];
+}
+function buildEventData(array $e, ?int $viewerId = null, bool $includeAttachments = false): array {
+    $eventId = (int)$e['id'];
+    $countSt = db()->prepare("SELECT kind, COUNT(*) c FROM buddies_event_participants WHERE event_id=? GROUP BY kind");
+    $countSt->execute([$eventId]);
+    $counts = ['join' => 0, 'like' => 0];
+    foreach ($countSt->fetchAll() as $row) { $counts[$row['kind']] = (int)$row['c']; }
+    $visibility = $e['visibility'] ?? 'public';
+    if ($visibility !== 'public') $counts['like'] = 0;
+    $myKinds = [];
+    if ($viewerId) {
+        $mySt = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
+        $mySt->execute([$eventId, $viewerId]);
+        foreach ($mySt->fetchAll() as $row) {
+            if ($visibility !== 'public' && $row['kind'] === 'like') continue;
+            $myKinds[] = $row['kind'];
+        }
+    }
+    if (!$includeAttachments && $viewerId && in_array('join', $myKinds, true)) $includeAttachments = true;
+    return [
+        'id'             => $eventId,
+        'account_id'     => (int)$e['account_id'],
+        'title'          => $e['title'],
+        'description'    => $e['description'],
+        'venue'          => $e['venue'],
+        'starts_at'      => $e['starts_at'],
+        'ends_at'        => $e['ends_at'],
+        'cover_url'      => $e['cover_url'],
+        'attachments'    => $includeAttachments ? eventAttachments($e) : [],
+        'capacity'       => $e['capacity'] !== null ? (int)$e['capacity'] : null,
+        'external_url'   => $e['external_url'],
+        'external_label' => $e['external_label'],
+        'visibility'     => $visibility,
+        'status'         => $e['status'],
+        'created_at'     => $e['created_at'],
+        'join_count'     => $counts['join'],
+        'like_count'     => $counts['like'],
+        'my_kinds'       => $myKinds,
+        'is_joined'      => in_array('join', $myKinds, true),
+        'is_liked'       => in_array('like', $myKinds, true),
+    ];
+}
+function actionEventListByAccount(): void { ensureEventTables();
+    $accountId = (int)($_GET['account_id'] ?? 0);
+    if ($accountId <= 0) err('account_id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE account_id=? AND status='active' AND visibility='public'
+                         AND " . eventVisibleDateCondition() . "
+                         ORDER BY " . sortEventsSql());
+    $st->execute([$accountId]);
+    $viewer = currentUser();
+    $viewerId = $viewer ? (int)$viewer['id'] : null;
+    ok(array_map(fn($e) => buildEventData($e, $viewerId), $st->fetchAll()));
+}
+function actionEventGet(): void { ensureEventTables();
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    $e = $st->fetch();
+    if (!$e || $e['status'] === 'disabled') err('イベントが見つかりません。', 404);
+    if (!empty($e['ends_at']) && strtotime($e['ends_at']) < time()) err('イベントが見つかりません。', 404);
+    $viewer = currentUser();
+    $viewerId = $viewer ? (int)$viewer['id'] : null;
+    $verified = currentVerifiedAccount();
+    $includeAttachments = $verified && (int)$verified['id'] === (int)$e['account_id'];
+    ok(buildEventData($e, $viewerId, $includeAttachments));
+}
+function actionEventParticipants(): void { ensureEventTables();
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    // join のみ公開
+    $st = db()->prepare(
+        "SELECT u.id, u.display_name, u.username, u.user_icon, u.oshi_member, p.location, p.bio
+           FROM buddies_event_participants ep
+           JOIN sakulabo_users u ON u.id = ep.user_id
+           LEFT JOIN buddies_profiles p ON p.user_id = u.id
+          WHERE ep.event_id=? AND ep.kind='join'
+          ORDER BY ep.created_at DESC"
+    );
+    $st->execute([$id]);
+    $rows = $st->fetchAll();
+    $data = array_map(fn($r) => [
+        'id'           => (int)$r['id'],
+        'display_name' => $r['display_name'] ?: $r['username'],
+        'user_icon'    => $r['user_icon'] ?? null,
+        'oshi_member'  => $r['oshi_member'] ?? null,
+        'location'     => $r['location'] ?? null,
+        'bio'          => $r['bio'] ?? null,
+    ], $rows);
+    ok($data);
+}
+function actionEventMineList(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE account_id=? AND status!='disabled'
+                         ORDER BY created_at DESC");
+    $st->execute([$a['id']]);
+    ok(array_map(fn($e) => buildEventData($e, null, true), $st->fetchAll()));
+}
+function actionEventCreate(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $f = eventEditableFields(body());
+    db()->prepare("INSERT INTO buddies_events
+        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, visibility)
+        VALUES (?,?,?,?,?,?,?,?,?,?)")
+       ->execute([(int)$a['id'], $f['title'], $f['description'], $f['venue'],
+                  $f['starts_at'], $f['ends_at'], $f['capacity'], $f['external_url'], $f['external_label'], $f['visibility']]);
+    $id = (int)db()->lastInsertId();
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    ok(buildEventData($st->fetch()));
+}
+function actionEventUpdate(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    $e = $st->fetch();
+    if (!$e || (int)$e['account_id'] !== (int)$a['id']) err('編集権限がありません。', 403);
+    $f = eventEditableFields($b);
+    db()->prepare("UPDATE buddies_events SET
+        title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
+        external_url=?, external_label=?, visibility=? WHERE id=?")
+       ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
+                  $f['capacity'], $f['external_url'], $f['external_label'], $f['visibility'], $id]);
+    if ($f['visibility'] !== 'public') {
+        db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND kind='like'")
+           ->execute([$id]);
+    }
+    $st->execute([$id]);
+    ok(buildEventData($st->fetch()));
+}
+function actionEventDelete(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? $_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT account_id FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    $e = $st->fetch();
+    if (!$e || (int)$e['account_id'] !== (int)$a['id']) err('削除権限がありません。', 403);
+    db()->prepare("UPDATE buddies_events SET status='disabled' WHERE id=?")->execute([$id]);
+    ok();
+}
+function actionEventUploadCover(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    $e = $st->fetch();
+    if (!$e || (int)$e['account_id'] !== (int)$a['id']) err('権限がありません。', 403);
+    $dataUrl = (string)($b['image'] ?? '');
+    if (!preg_match('/^data:image\/(png|jpeg|webp);base64,/', $dataUrl, $m)) err('PNG/JPEG/WebP画像を指定してください。');
+    $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+    if ($raw === false || !@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+    if (strlen($raw) > 5 * 1024 * 1024) err('画像サイズが大きすぎます。');
+    $ext = $m[1] === 'jpeg' ? 'jpg' : $m[1];
+    $accountId = (int)$a['id'];
+    $dir = __DIR__ . '/uploads/verified/' . $accountId . '/events';
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    foreach (['png','jpg','webp'] as $oldExt) {
+        $old = $dir . '/' . $id . '.' . $oldExt;
+        if ($oldExt !== $ext && is_file($old)) @unlink($old);
+    }
+    $path = $dir . '/' . $id . '.' . $ext;
+    if (file_put_contents($path, $raw) === false) err('画像を保存できませんでした。', 500);
+    $url = 'uploads/verified/' . $accountId . '/events/' . $id . '.' . $ext . '?v=' . time();
+    db()->prepare("UPDATE buddies_events SET cover_url=? WHERE id=?")->execute([$url, $id]);
+    ok(['cover_url' => $url]);
+}
+function actionEventUploadAttachment(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    $e = $st->fetch();
+    if (!$e || (int)$e['account_id'] !== (int)$a['id']) err('権限がありません。', 403);
+    $attachments = eventAttachments($e);
+    if (count($attachments) >= 3) err('添付ファイルは3件までです。');
+
+    $dataUrl = (string)($b['file'] ?? '');
+    $name = cleanUploadFileName((string)($b['name'] ?? ''), 'event-file');
+    if (!preg_match('/^data:(image\/png|image\/jpeg|image\/webp|application\/pdf);base64,/', $dataUrl, $m)) {
+        err('PNG/JPEG/WebP画像またはPDFファイルを指定してください。');
+    }
+    $mime = $m[1];
+    $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+    if ($raw === false) err('ファイルを読み込めませんでした。');
+    $limit = 5 * 1024 * 1024;
+    if (strlen($raw) > $limit) err('ファイルサイズは5MB以内にしてください。');
+    if (strpos($mime, 'image/') === 0 && !@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+    if ($mime === 'application/pdf' && substr($raw, 0, 4) !== '%PDF') err('有効なPDFファイルではありません。');
+
+    $ext = match ($mime) {
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        'image/webp' => 'webp',
+        default => 'pdf',
+    };
+    $fileId = bin2hex(random_bytes(8));
+    $accountId = (int)$a['id'];
+    $dir = __DIR__ . '/uploads/verified/' . $accountId . '/event_files/' . $id;
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    $path = $dir . '/' . $fileId . '.' . $ext;
+    if (file_put_contents($path, $raw) === false) err('ファイルを保存できませんでした。', 500);
+    $url = 'uploads/verified/' . $accountId . '/event_files/' . $id . '/' . $fileId . '.' . $ext;
+    $attachments[] = [
+        'id' => $fileId,
+        'name' => $name,
+        'url' => $url,
+        'mime' => $mime,
+        'size' => strlen($raw),
+        'uploaded_at' => date('Y-m-d H:i:s'),
+    ];
+    db()->prepare("UPDATE buddies_events SET attachments=? WHERE id=?")
+       ->execute([json_encode($attachments, JSON_UNESCAPED_UNICODE), $id]);
+    ok(['attachments' => $attachments]);
+}
+function actionEventDeleteAttachment(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $eventId = (int)($b['id'] ?? 0);
+    $fileId = trim((string)($b['file_id'] ?? ''));
+    if ($eventId <= 0 || $fileId === '') err('id と file_id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
+    $st->execute([$eventId]);
+    $e = $st->fetch();
+    if (!$e || (int)$e['account_id'] !== (int)$a['id']) err('権限がありません。', 403);
+    $attachments = eventAttachments($e);
+    $removed = null;
+    $next = [];
+    foreach ($attachments as $file) {
+        if (($file['id'] ?? '') === $fileId) $removed = $file;
+        else $next[] = $file;
+    }
+    if (!$removed) err('添付ファイルが見つかりません。', 404);
+    $rel = (string)$removed['url'];
+    if ($rel !== '' && !preg_match('/^https?:\/\//', $rel)) {
+        $path = __DIR__ . '/' . ltrim(strtok($rel, '?'), '/');
+        $base = realpath(__DIR__ . '/uploads/verified/' . (int)$a['id'] . '/event_files/' . $eventId);
+        $real = is_file($path) ? realpath($path) : false;
+        if ($base && $real && strpos($real, $base) === 0) @unlink($real);
+    }
+    db()->prepare("UPDATE buddies_events SET attachments=? WHERE id=?")
+       ->execute([json_encode($next, JSON_UNESCAPED_UNICODE), $eventId]);
+    ok(['attachments' => $next]);
+}
+function actionEventJoin(): void { ensureEventTables();
+    $u = requireAuth();
+    $b = body();
+    $eventId = (int)($b['event_id'] ?? 0);
+    $kind = (string)($b['kind'] ?? '');
+    $state = (string)($b['state'] ?? 'on');  // 'on' | 'off'
+    if ($eventId <= 0) err('event_id は必須です。');
+    if (!in_array($kind, ['join','like'], true)) err('kind が不正です。');
+    if (!in_array($state, ['on','off'], true)) err('state が不正です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? AND status='active' LIMIT 1");
+    $st->execute([$eventId]);
+    $e = $st->fetch();
+    if (!$e) err('イベントが見つかりません。', 404);
+    if (!empty($e['ends_at']) && strtotime($e['ends_at']) < time()) err('イベントが終了しています。', 410);
+    $uid = (int)$u['id'];
+
+    if ($kind === 'like' && ($e['visibility'] ?? 'public') !== 'public') {
+        if ($state === 'off') {
+            db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='like'")
+               ->execute([$eventId, $uid]);
+            ok(['my_kinds' => [], 'is_joined' => false, 'is_liked' => false]);
+        }
+        err('非公開イベントではお気に入り機能を利用できません。', 403);
+    }
+
+    if ($state === 'off') {
+        db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind=?")
+           ->execute([$eventId, $uid, $kind]);
+        if ($kind === 'join') {
+            db()->prepare("DELETE sp FROM buddies_subevent_participants sp
+                           JOIN buddies_subevents s ON s.id = sp.subevent_id
+                           WHERE s.event_id=? AND sp.user_id=?")
+               ->execute([$eventId, $uid]);
+        }
+    } else {
+        if ($kind === 'join' && $e['capacity'] !== null) {
+            $cntSt = db()->prepare("SELECT COUNT(*) c FROM buddies_event_participants WHERE event_id=? AND kind='join'");
+            $cntSt->execute([$eventId]);
+            $cur = (int)$cntSt->fetch()['c'];
+            $alreadySt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+            $alreadySt->execute([$eventId, $uid]);
+            if ($cur >= (int)$e['capacity'] && !$alreadySt->fetch()) err('参加枠が満員です。', 409);
+        }
+        db()->prepare("INSERT IGNORE INTO buddies_event_participants (event_id, user_id, kind) VALUES (?,?,?)")
+           ->execute([$eventId, $uid, $kind]);
+    }
+    // 最新状態を返す
+    $mySt = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
+    $mySt->execute([$eventId, $uid]);
+    $kinds = array_column($mySt->fetchAll(), 'kind');
+    ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true)]);
+}
+
+function subeventEditableFields(array $b): array {
+    $title = trim((string)($b['title'] ?? ''));
+    if ($title === '' || mb_strlen($title) > 160) err('サブイベント名は1〜160文字で入力してください。');
+    $description = trim((string)($b['description'] ?? ''));
+    if (mb_strlen($description) > 4000) err('説明は4000文字以内で入力してください。');
+    $venue = trim((string)($b['venue'] ?? ''));
+    if (mb_strlen($venue) > 200) err('会場は200文字以内で入力してください。');
+    $startsAt = trim((string)($b['starts_at'] ?? ''));
+    $endsAt   = trim((string)($b['ends_at'] ?? ''));
+    foreach (['startsAt' => &$startsAt, 'endsAt' => &$endsAt] as $k => &$v) {
+        if ($v === '') { $v = null; continue; }
+        $ts = strtotime($v);
+        if ($ts === false) err('日時の形式が正しくありません。');
+        $v = date('Y-m-d H:i:s', $ts);
+    }
+    unset($v);
+    $capacity = isset($b['capacity']) && $b['capacity'] !== '' ? (int)$b['capacity'] : null;
+    if ($capacity !== null && ($capacity < 1 || $capacity > 100000)) err('定員は1〜100000で入力してください。');
+    $externalUrl = cleanUrl($b['external_url'] ?? null);
+    $externalLabel = trim((string)($b['external_label'] ?? ''));
+    if (mb_strlen($externalLabel) > 80) err('リンク文言は80文字以内で入力してください。');
+    if ($externalLabel === '') $externalLabel = null;
+    return [
+        'title'          => $title,
+        'description'    => $description !== '' ? $description : null,
+        'venue'          => $venue !== '' ? $venue : null,
+        'starts_at'      => $startsAt,
+        'ends_at'        => $endsAt,
+        'capacity'       => $capacity,
+        'external_url'   => $externalUrl,
+        'external_label' => $externalLabel,
+        'sort_order'     => 0,
+    ];
+}
+function buildSubeventData(array $s, ?int $viewerId = null): array {
+    $id = (int)$s['id'];
+    $eventId = (int)$s['event_id'];
+    $cntSt = db()->prepare("SELECT COUNT(*) c FROM buddies_subevent_participants WHERE subevent_id=?");
+    $cntSt->execute([$id]);
+    $joinCount = (int)$cntSt->fetch()['c'];
+    $isJoined = false;
+    $canJoin = false;
+    if ($viewerId) {
+        $mySt = db()->prepare("SELECT id FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=? LIMIT 1");
+        $mySt->execute([$id, $viewerId]);
+        $isJoined = (bool)$mySt->fetch();
+
+        $mainSt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+        $mainSt->execute([$eventId, $viewerId]);
+        $canJoin = (bool)$mainSt->fetch();
+    }
+    return [
+        'id'             => $id,
+        'event_id'       => $eventId,
+        'title'          => $s['title'],
+        'description'    => $s['description'],
+        'venue'          => $s['venue'],
+        'starts_at'      => $s['starts_at'],
+        'ends_at'        => $s['ends_at'],
+        'cover_url'      => $s['cover_url'] ?? null,
+        'capacity'       => $s['capacity'] !== null ? (int)$s['capacity'] : null,
+        'external_url'   => $s['external_url'],
+        'external_label' => $s['external_label'],
+        'sort_order'     => isset($s['sort_order']) ? (int)$s['sort_order'] : 0,
+        'status'         => $s['status'],
+        'join_count'     => $joinCount,
+        'is_joined'      => $isJoined,
+        'can_join'       => $canJoin,
+    ];
+}
+function requireOwnEvent(int $eventId, array $account): array {
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? AND status!='disabled' LIMIT 1");
+    $st->execute([$eventId]);
+    $e = $st->fetch();
+    if (!$e || (int)$e['account_id'] !== (int)$account['id']) err('イベントの編集権限がありません。', 403);
+    return $e;
+}
+function requireOwnSubevent(int $subeventId, array $account): array {
+    $st = db()->prepare(
+        "SELECT s.* FROM buddies_subevents s
+         JOIN buddies_events e ON e.id = s.event_id
+         WHERE s.id=? AND s.status!='disabled' AND e.status!='disabled'
+         LIMIT 1"
+    );
+    $st->execute([$subeventId]);
+    $s = $st->fetch();
+    if (!$s) err('サブイベントが見つかりません。', 404);
+    requireOwnEvent((int)$s['event_id'], $account);
+    return $s;
+}
+function actionSubeventList(): void { ensureEventTables();
+    $eventId = (int)($_GET['event_id'] ?? $_GET['id'] ?? 0);
+    if ($eventId <= 0) err('event_id は必須です。');
+    $evSt = db()->prepare("SELECT id FROM buddies_events WHERE id=? AND status='active' LIMIT 1");
+    $evSt->execute([$eventId]);
+    if (!$evSt->fetch()) err('イベントが見つかりません。', 404);
+    $st = db()->prepare("SELECT * FROM buddies_subevents WHERE event_id=? AND status='active'
+                         AND " . eventVisibleDateCondition() . "
+                         ORDER BY (COALESCE(starts_at, ends_at) IS NULL), COALESCE(starts_at, ends_at) ASC, created_at ASC");
+    $st->execute([$eventId]);
+    $viewer = currentUser();
+    $viewerId = $viewer ? (int)$viewer['id'] : null;
+    ok(array_map(fn($s) => buildSubeventData($s, $viewerId), $st->fetchAll()));
+}
+
+function actionSubeventGet(): void { ensureEventTables();
+    $id = (int)($_GET['id'] ?? $_GET['subevent_id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare(
+        "SELECT s.*, e.account_id, e.title AS event_title, e.visibility AS event_visibility, e.status AS event_status,
+                e.starts_at AS event_starts_at, e.ends_at AS event_ends_at
+           FROM buddies_subevents s
+           JOIN buddies_events e ON e.id = s.event_id
+          WHERE s.id=? AND s.status='active' AND e.status='active'
+          LIMIT 1"
+    );
+    $st->execute([$id]);
+    $s = $st->fetch();
+    if (!$s) err('サブイベントが見つかりません。', 404);
+    if (!empty($s['ends_at']) && strtotime($s['ends_at']) < time()) err('サブイベントが見つかりません。', 404);
+    if (!empty($s['event_ends_at']) && strtotime($s['event_ends_at']) < time()) err('イベントが見つかりません。', 404);
+
+    $viewer = currentUser();
+    $viewerId = $viewer ? (int)$viewer['id'] : null;
+    $data = buildSubeventData($s, $viewerId);
+    $data['account_id'] = (int)$s['account_id'];
+    $data['event_title'] = $s['event_title'];
+    $data['event_visibility'] = $s['event_visibility'] ?? 'public';
+    $data['event_starts_at'] = $s['event_starts_at'];
+    $data['event_ends_at'] = $s['event_ends_at'];
+    ok($data);
+}
+function actionSubeventMineList(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $eventId = (int)($_GET['event_id'] ?? 0);
+    if ($eventId <= 0) err('event_id は必須です。');
+    requireOwnEvent($eventId, $a);
+    $st = db()->prepare("SELECT * FROM buddies_subevents WHERE event_id=? AND status!='disabled'
+                         ORDER BY (COALESCE(starts_at, ends_at) IS NULL), COALESCE(starts_at, ends_at) ASC, created_at ASC");
+    $st->execute([$eventId]);
+    ok(array_map(fn($s) => buildSubeventData($s), $st->fetchAll()));
+}
+function actionSubeventCreate(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $eventId = (int)($b['event_id'] ?? 0);
+    if ($eventId <= 0) err('event_id は必須です。');
+    requireOwnEvent($eventId, $a);
+    $f = subeventEditableFields($b);
+    db()->prepare("INSERT INTO buddies_subevents
+        (event_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, sort_order)
+        VALUES (?,?,?,?,?,?,?,?,?,?)")
+       ->execute([$eventId, $f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
+                  $f['capacity'], $f['external_url'], $f['external_label'], $f['sort_order']]);
+    $id = (int)db()->lastInsertId();
+    $st = db()->prepare("SELECT * FROM buddies_subevents WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    ok(buildSubeventData($st->fetch()));
+}
+function actionSubeventUpdate(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $s = requireOwnSubevent($id, $a);
+    $f = subeventEditableFields($b + ['event_id' => (int)$s['event_id']]);
+    db()->prepare("UPDATE buddies_subevents SET
+        title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
+        external_url=?, external_label=?, sort_order=? WHERE id=?")
+       ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
+                  $f['capacity'], $f['external_url'], $f['external_label'], $f['sort_order'], $id]);
+    $st = db()->prepare("SELECT * FROM buddies_subevents WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    ok(buildSubeventData($st->fetch()));
+}
+function actionSubeventDelete(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? $_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    requireOwnSubevent($id, $a);
+    db()->prepare("UPDATE buddies_subevents SET status='disabled' WHERE id=?")->execute([$id]);
+    ok();
+}
+
+function actionSubeventUploadCover(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $s = requireOwnSubevent($id, $a);
+    $dataUrl = (string)($b['image'] ?? '');
+    if (!preg_match('/^data:image\/(png|jpeg|webp);base64,/', $dataUrl, $m)) err('PNG/JPEG/WebP画像を指定してください。');
+    $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+    if ($raw === false || !@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+    if (strlen($raw) > 5 * 1024 * 1024) err('画像サイズが大きすぎます。');
+    $ext = $m[1] === 'jpeg' ? 'jpg' : $m[1];
+
+    $eventId = (int)$s['event_id'];
+    $eventSt = db()->prepare("SELECT account_id FROM buddies_events WHERE id=? LIMIT 1");
+    $eventSt->execute([$eventId]);
+    $event = $eventSt->fetch();
+    $accountId = $event ? (int)$event['account_id'] : (int)$a['id'];
+
+    $dir = __DIR__ . '/uploads/verified/' . $accountId . '/subevents';
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    foreach (['png','jpg','webp'] as $oldExt) {
+        $old = $dir . '/' . $id . '.' . $oldExt;
+        if (is_file($old)) @unlink($old);
+    }
+    $file = $dir . '/' . $id . '.' . $ext;
+    if (file_put_contents($file, $raw) === false) err('画像を保存できませんでした。', 500);
+    $rel = 'uploads/verified/' . $accountId . '/subevents/' . $id . '.' . $ext;
+    db()->prepare("UPDATE buddies_subevents SET cover_url=? WHERE id=?")->execute([$rel, $id]);
+
+    $st = db()->prepare("SELECT * FROM buddies_subevents WHERE id=? LIMIT 1");
+    $st->execute([$id]);
+    ok(buildSubeventData($st->fetch()));
+}
+function actionSubeventJoin(): void { ensureEventTables();
+    $u = requireAuth();
+    $b = body();
+    $id = (int)($b['subevent_id'] ?? $b['id'] ?? 0);
+    $state = (string)($b['state'] ?? 'on');
+    if ($id <= 0) err('subevent_id は必須です。');
+    if (!in_array($state, ['on','off'], true)) err('state が不正です。');
+    $st = db()->prepare(
+        "SELECT s.*, e.status AS event_status FROM buddies_subevents s
+         JOIN buddies_events e ON e.id = s.event_id
+         WHERE s.id=? AND s.status='active' AND e.status='active'
+         LIMIT 1"
+    );
+    $st->execute([$id]);
+    $s = $st->fetch();
+    if (!$s) err('サブイベントが見つかりません。', 404);
+    if (!empty($s['ends_at']) && strtotime($s['ends_at']) < time()) err('サブイベントが終了しています。', 410);
+    $uid = (int)$u['id'];
+
+    if ($state === 'off') {
+        db()->prepare("DELETE FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=?")
+           ->execute([$id, $uid]);
+    } else {
+        $mainJoinSt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+        $mainJoinSt->execute([(int)$s['event_id'], $uid]);
+        if (!$mainJoinSt->fetch()) err('メインイベントに参加してからサブイベントに参加できます。', 403);
+
+        if ($s['capacity'] !== null) {
+            $cntSt = db()->prepare("SELECT COUNT(*) c FROM buddies_subevent_participants WHERE subevent_id=?");
+            $cntSt->execute([$id]);
+            $cur = (int)$cntSt->fetch()['c'];
+            $alreadySt = db()->prepare("SELECT id FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=? LIMIT 1");
+            $alreadySt->execute([$id, $uid]);
+            if ($cur >= (int)$s['capacity'] && !$alreadySt->fetch()) err('参加枠が満員です。', 409);
+        }
+        db()->prepare("INSERT IGNORE INTO buddies_subevent_participants (subevent_id, user_id) VALUES (?,?)")
+           ->execute([$id, $uid]);
+    }
+    $fresh = db()->prepare("SELECT * FROM buddies_subevents WHERE id=? LIMIT 1");
+    $fresh->execute([$id]);
+    ok(buildSubeventData($fresh->fetch(), $uid));
+}
+function actionSubeventParticipants(): void { ensureEventTables();
+    $id = (int)($_GET['subevent_id'] ?? $_GET['id'] ?? 0);
+    if ($id <= 0) err('subevent_id は必須です。');
+    $st = db()->prepare(
+        "SELECT u.id, u.display_name, u.username, u.user_icon, u.oshi_member, p.location, p.bio
+           FROM buddies_subevent_participants sp
+           JOIN sakulabo_users u ON u.id = sp.user_id
+           LEFT JOIN buddies_profiles p ON p.user_id = u.id
+          WHERE sp.subevent_id=?
+          ORDER BY sp.created_at DESC"
+    );
+    $st->execute([$id]);
+    $rows = $st->fetchAll();
+    $data = array_map(fn($r) => [
+        'id'           => (int)$r['id'],
+        'display_name' => $r['display_name'] ?: $r['username'],
+        'user_icon'    => $r['user_icon'] ?? null,
+        'oshi_member'  => $r['oshi_member'] ?? null,
+        'location'     => $r['location'] ?? null,
+        'bio'          => $r['bio'] ?? null,
+    ], $rows);
+    ok($data);
+}
+
+function actionEventMyStatus(): void { ensureEventTables();
+    $u = currentUser();
+    if (!$u) ok(['my_kinds' => [], 'is_joined' => false, 'is_liked' => false]);
+    $id = (int)($_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
+    $st->execute([$id, (int)$u['id']]);
+    $kinds = array_column($st->fetchAll(), 'kind');
+    ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true)]);
+}
+
+// ユーザー自身の参加中/いいね中のイベント一覧
+function actionEventMyParticipations(): void { ensureEventTables();
+    $u = requireAuth();
+    $kind = (string)($_GET['kind'] ?? 'join');
+    if (!in_array($kind, ['join','like'], true)) err('kind が不正です。');
+    $st = db()->prepare(
+        "SELECT e.* FROM buddies_event_participants ep
+         JOIN buddies_events e ON e.id = ep.event_id
+         WHERE ep.user_id=? AND ep.kind=? AND e.status='active'
+         ORDER BY (e.starts_at IS NULL), e.starts_at ASC, e.created_at DESC"
+    );
+    $st->execute([(int)$u['id'], $kind]);
+    ok(array_map(fn($e) => buildEventData($e, (int)$u['id']), $st->fetchAll()));
 }

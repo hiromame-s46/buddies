@@ -422,19 +422,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .profile-mini-admin-badge svg { width:8px; height:8px; }
 .profile-mini-sns-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#3b82f6; border:2px solid #fff; display:flex; align-items:center; justify-content:center; z-index:1; }
 .profile-mini-sns-badge svg { width:8px; height:8px; }
-.profile-mini-verified-badge { position:absolute; bottom:0; right:0; width:16px; height:16px; border-radius:50%; background:#e6b422; border:2px solid #fff; display:flex; align-items:center; justify-content:center; z-index:2; }
-.profile-mini-verified-badge svg { width:8px; height:8px; }
-.event-mini-list { display:grid; gap:8px; margin-top:8px; margin-bottom:12px; }
-.event-mini-card { display:flex; gap:10px; align-items:center; background:#fff; border:1px solid var(--eee, #eee); border-radius:14px; padding:10px 12px; text-decoration:none; color:#111; }
-.event-mini-card:hover { background:#fafafa; }
-.event-mini-card .ev-cover { width:48px; height:48px; border-radius:10px; background:#f2f2f2; flex-shrink:0; overflow:hidden; display:grid; place-items:center; color:#999; font-size:18px; }
-.event-mini-card .ev-cover img { width:100%; height:100%; object-fit:cover; }
-.event-mini-card .ev-body { flex:1; min-width:0; }
-.event-mini-card .ev-t { font-weight:700; font-size:14px; margin-bottom:2px; }
-.event-mini-card .ev-m { font-size:11px; color:#666; }
-.profile-link-button { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; min-height:46px; padding:10px 18px; border-radius:9999px; background:#111; color:#fff; text-decoration:none; font-weight:700; font-size:14px; border:none; cursor:pointer; }
-.profile-link-button.secondary { background:#f3f3f3; color:#111; }
-.profile-link-list { display:grid; gap:8px; }
 .profile-mini-info { flex:1; min-width:0; }
 .badge-popup-overlay { position:fixed; inset:0; z-index:9000; }
 .badge-popup { position:fixed; z-index:9001; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.18); padding:14px 16px; max-width:240px; font-size:13px; line-height:1.5; color:#333; }
@@ -445,20 +432,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .profile-mini-exchanged-at { font-size:11px; color:#aaa; margin-top:3px; white-space:nowrap; }
 .profile-mini-reasons { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
 .match-reason { font-size:10px; font-weight:600; padding:2px 7px; border-radius:9999px; background:#f0f0f0; color:#555; white-space:nowrap; }
-.verified-section{display:grid;gap:10px;margin-top:20px}
-.verified-card{border:1px solid #ead8c8;border-radius:20px;background:#fffdf9;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.04)}
-.verified-banner{height:86px;background:linear-gradient(135deg,#fff1f7,#edf7ff);overflow:hidden}
-.verified-banner img{width:100%;height:100%;object-fit:cover}
-.verified-body{padding:14px;display:grid;gap:10px}
-.verified-head{display:flex;gap:12px;align-items:center}
-.verified-icon{width:54px;height:54px;border-radius:50%;background:#f2b5cf;display:grid;place-items:center;overflow:hidden;font-weight:800;font-size:22px;flex-shrink:0}
-.verified-icon img{width:100%;height:100%;object-fit:cover}
-.verified-label{display:inline-flex;width:max-content;align-items:center;gap:5px;border-radius:9999px;background:#fff4d6;color:#7c5600;font-size:11px;font-weight:800;padding:4px 9px}
-.verified-name{font-size:17px;font-weight:800;margin-top:4px}.verified-desc{font-size:12px;color:#555;line-height:1.6}
-.verified-actions{display:grid;gap:8px}.verified-main-link{min-height:46px;border-radius:14px;background:#111;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:14px;padding:0 14px}.verified-sub-link{min-height:40px;border-radius:12px;background:#f3f3f3;color:#111;text-decoration:none;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;padding:0 14px}
-.verified-tags{display:flex;gap:6px;flex-wrap:wrap}.verified-tags span{font-size:11px;font-weight:700;border-radius:9999px;background:#f8edf2;color:#9a5072;padding:4px 8px}
-.verified-mypage-card{display:grid;gap:14px}.verified-mypage-top{display:flex;gap:14px;align-items:center}.verified-mypage-title{font-size:20px;font-weight:800}.verified-mypage-link{min-height:52px;border-radius:16px;background:#111;color:#fff;text-decoration:none;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;padding:0 16px}.verified-mypage-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.verified-mypage-note{font-size:12px;color:#666;line-height:1.7}
-.developer-panel{border:1px solid #f3d49b;border-radius:18px;background:#fffaf0;padding:14px;display:grid;gap:10px}.developer-panel-title{font-size:15px;font-weight:800}.developer-panel-desc{font-size:12px;color:#765d27;line-height:1.6}
 
 .header-icon-btn { width:36px; height:36px; border-radius:50%; border:none; background:transparent; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#666; transition:background .15s, color .15s; text-decoration:none; appearance:none; }
 .header-icon-btn:hover { background:#f2f2f2; color:#000; }
@@ -680,8 +653,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
   <div id="home-page" hidden>
     <div id="my-home-card"></div>
-    <div id="verified-home-section"></div>
-    <h2 id="similar-title" class="section-title">おすすめのBuddies</h2>
+    <h2 class="section-title">おすすめのBuddies</h2>
     <div id="similar-list" class="profile-list"></div>
   </div>
 
@@ -718,17 +690,12 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
   <div id="mypage-page" hidden>
     <div id="my-page-card" class="card"></div>
-    <div id="verified-mypage-section"></div>
-    <h2 id="my-events-joined-title" class="section-title" hidden>参加中のイベント</h2>
-    <div id="my-events-joined" class="event-mini-list"></div>
-    <h2 id="my-events-liked-title" class="section-title" hidden>気になるイベント</h2>
-    <div id="my-events-liked" class="event-mini-list"></div>
-    <h2 id="favorites-title" class="section-title">お気に入り</h2>
+    <h2 class="section-title">お気に入り</h2>
     <div id="favorites-list" class="profile-list"></div>
     <div id="favorites-more-wrap" style="text-align:center; margin-top:12px; display:none;">
       <button class="pill-button" onclick="showMoreFavorites()">もっと見る</button>
     </div>
-    <h2 id="exchanged-title" class="section-title">交換したプロフィール</h2>
+    <h2 class="section-title">交換したプロフィール</h2>
     <div id="exchanged-list" class="profile-list"></div>
     <div id="exchanged-more-wrap" style="text-align:center; margin-top:12px; display:none;">
       <button class="pill-button" onclick="showMoreExchanged()">もっと見る</button>
@@ -1136,18 +1103,6 @@ function shuffleArray(arr) {
   }
   return a;
 }
-function intermixVerifiedProfiles(verifiedItems, regularItems) {
-  const verified = shuffleArray(verifiedItems);
-  const regular = [...regularItems];
-  const mixed = regular;
-  verified.forEach(v => {
-    const max = mixed.length;
-    const upper = max <= 0 ? 0 : Math.min(max, Math.max(1, Math.ceil(max * 0.75)));
-    const pos = Math.floor(Math.random() * (upper + 1));
-    mixed.splice(pos, 0, v);
-  });
-  return mixed;
-}
 
 const PREF_ROMAJI = {
   '北海道':'Hokkaido','青森県':'Aomori','岩手県':'Iwate','宮城県':'Miyagi','秋田県':'Akita',
@@ -1165,7 +1120,6 @@ const PREF_ROMAJI = {
 let me = null;              // ログインユーザー（DB）
 let memberMap = {};         // メンバーJSONマップ
 let allBlogs = [];          // ブログJSON
-let verifiedAccounts = [];  // 認証アカウント（公式協力・イベント）
 let exchangedProfiles = []; // 交換済み（DBから）
 let favoriteProfiles = [];  // お気に入り（DBから）
 let currentPopupProfile = null;
@@ -1187,18 +1141,17 @@ const ICON_PAGE_SIZE = 60;
 let selectedIconUrl = null;
 
 const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
-const DEVELOPER_IDS = new Set([1]); // 開発者アカウント uid
+const ADMIN_IDS = new Set([1]); // 管理者ユーザーID（追加はここに）
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 // ── 初期化 ───────────────────────────────────────────────
 async function init() {
   try {
-    const [meRes, bRes, mRes, vRes] = await Promise.all([
+    const [meRes, bRes, mRes] = await Promise.all([
       fetch(API + '?action=auth_me', { credentials:'include' }),
       fetch(BLOG_DATA + '?_=' + Date.now()).catch(() => null),
       fetch(MEMBER_DATA + '?_=' + Date.now()).catch(() => null),
-      fetch(API + '?action=verified_public_list&limit=6', { credentials:'include' }).catch(() => null),
     ]);
     const meJson = await meRes.json();
     me = meJson.ok ? meJson.data : null;
@@ -1211,14 +1164,6 @@ async function init() {
         arr.forEach(m => { memberMap[m.name] = m; });
       } catch(e){}
     }
-    if (vRes) {
-      try {
-        const vJson = await vRes.json();
-        if (vJson.ok) verifiedAccounts = vJson.data || [];
-      } catch(e){}
-    }
-    // 認証データを me に合体（重複は認証側を優先）
-    if (me) me = mergeVerifiedOntoProfile(me);
   } catch(e){}
 
   document.getElementById('page-loading').style.display = 'none';
@@ -1226,15 +1171,12 @@ async function init() {
   if (me) {
     await loadUserData();
     showMainUI();
-    if (prepareFavoriteRedirectLogin()) return;
   } else {
     showMainUI();
-    // 共有URLで開いた場合はログインモーダルを出さずそのまま閲覧させる。
-    // お気に入り用ログイン導線の場合だけ、ログイン後に view.html へ戻すためモーダルを出す。
+    // 共有URLで開いた場合はログインモーダルを出さずそのまま閲覧させる
     const qs = new URLSearchParams(location.search);
     const hashParams = new URLSearchParams(location.hash.slice(1));
     const hasSharedUid = qs.get('uid') || hashParams.get('uid') || sessionStorage.getItem('buddies_shared_uid');
-    if (prepareFavoriteRedirectLogin()) return;
     if (!hasSharedUid) showAuthModal();
   }
 
@@ -1293,42 +1235,6 @@ function showAuthModal() {
 function closeAuthModal() {
   document.getElementById('auth-modal').style.display = 'none';
 }
-function getFavoriteRedirectUrl() {
-  const qs = new URLSearchParams(location.search);
-  const raw = qs.get('favorite_redirect') || sessionStorage.getItem('buddies_favorite_redirect') || '';
-  if (!raw) return '';
-  let decoded = raw;
-  try { decoded = decodeURIComponent(raw); } catch(e) {}
-  if (!/^view\.html\?id=\d+$/.test(decoded)) return '';
-  return decoded;
-}
-function clearFavoriteRedirectParam() {
-  sessionStorage.removeItem('buddies_favorite_redirect');
-  const qs = new URLSearchParams(location.search);
-  if (!qs.has('favorite_redirect')) return;
-  qs.delete('favorite_redirect');
-  const rest = qs.toString();
-  history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
-}
-function redirectAfterFavoriteLogin() {
-  const redirect = getFavoriteRedirectUrl();
-  if (!redirect || !me) return false;
-  clearFavoriteRedirectParam();
-  location.href = redirect;
-  return true;
-}
-function prepareFavoriteRedirectLogin() {
-  const redirect = getFavoriteRedirectUrl();
-  if (!redirect) return false;
-  sessionStorage.setItem('buddies_favorite_redirect', redirect);
-  if (me) {
-    redirectAfterFavoriteLogin();
-  } else {
-    showAuthModal();
-    switchAuthTab('login');
-  }
-  return true;
-}
 function switchAuthTab(tab) {
   document.getElementById('auth-login-form').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('auth-register-form').style.display = tab === 'register' ? 'block' : 'none';
@@ -1354,7 +1260,6 @@ async function doLogin() {
     renderHeaderAuth();
     renderAll();
     toast('ログインしました');
-    if (redirectAfterFavoriteLogin()) return;
     reopenPendingProfile();
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
@@ -1382,7 +1287,6 @@ async function doRegister() {
     renderHeaderAuth();
     renderAll();
     toast('アカウントを作成しました');
-    if (redirectAfterFavoriteLogin()) return;
     reopenPendingProfile();
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
@@ -1449,85 +1353,6 @@ function getOshi1Color(profile) {
   return profile.oshi?.[0]?.color || '#ffb7c5';
 }
 function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
-function isDeveloperAccount(p) { return p && DEVELOPER_IDS.has(Number(p.id)); }
-function currentVerifiedAccount() { return me && me.verified_account ? me.verified_account : null; }
-// 認証アカウントが紐づくユーザー（developer 含む）。通常編集を禁止し、認証管理ページで編集させる
-function isVerifiedManagedUser(p) {
-  if (!p) return false;
-  if (p.verified_account) return true;
-  if (isDeveloperAccount(p)) return true;
-  return false;
-}
-function isVerifiedOnlySession() {
-  const a = currentVerifiedAccount();
-  return !!(a && a.account_type !== 'developer');
-}
-// 認証アカウントの uid→アカウント データ マップ。me.verified_account や verifiedAccounts から構築。
-function verifiedAccountForUid(uid) {
-  if (!uid) return null;
-  uid = Number(uid);
-  if (me && Number(me.id) === uid && me.verified_account) return me.verified_account;
-  for (const a of verifiedAccounts) {
-    if (a && Number(a.user_id) === uid) return a;
-  }
-  return null;
-}
-// プロフィール（通常ユーザー）に verified_account を合体させ、認証側を優先して表示用フィールドを書き換える
-function verifiedLinkItems(v) {
-  const links = [];
-  if (v.primary_link_url) links.push({ type:'link', url: v.primary_link_url, label: v.primary_link_label || 'リンクを開く' });
-  if (v.secondary_link_url) links.push({ type:'link', url: v.secondary_link_url, label: v.secondary_link_label || 'リンクを開く' });
-  if (v.cta_url && v.cta_url !== v.primary_link_url) links.push({ type:'link', url: v.cta_url, label: v.cta_label || 'リンクを開く' });
-  (v.sns_links || []).filter(s => s && s.url && String(s.url).trim()).slice(0,10).forEach(s => {
-    if (!links.some(x => x.url === s.url)) links.push({ type:s.type || 'link', url:s.url, label:s.label || '' });
-  });
-  if (v.x_url && !links.some(x => x.url === v.x_url)) links.push({ type:'x', url: v.x_url, label: 'X' });
-  return links;
-}
-function mergeVerifiedOntoProfile(p) {
-  if (!p) return p;
-  let v = p.verified_account || null;
-  if (!v && p.id) v = verifiedAccountForUid(p.id);
-  if (!v) return p;
-  const merged = { ...p, verified_account: v };
-  if (v.display_name) merged.display_name = v.display_name;
-  if (v.icon_url) merged.user_icon = assetUrl(v.icon_url);
-  if (v.description) merged.bio = v.description;
-  // 認証アカウント側のリンクを SNS リンクへ合体（先頭に追加）
-  const extraLinks = verifiedLinkItems(v);
-  const existing = Array.isArray(p.sns_links) ? p.sns_links.filter(s => s && s.url && String(s.url).trim()) : [];
-  merged.sns_links = extraLinks.concat(existing.filter(e => !extraLinks.some(x => x.url === e.url)));
-  return merged;
-}
-// 認証アカウント（紐づくユーザー無し）を一覧表示用の擬似プロフィールに変換
-function verifiedAsProfile(v) {
-  if (!v) return null;
-  return {
-    id: v.user_id || (-1 - v.id),  // 重複回避のため負のID
-    _verifiedOnly: !v.user_id,
-    display_name: v.display_name,
-    user_icon: v.icon_url ? assetUrl(v.icon_url) : null,
-    bio: v.description || '',
-    sns_links: verifiedLinkItems(v),
-    verified_account: v,
-    location: '',
-  };
-}
-function accountBadgeInfo(p) {
-  if (p && p.verified_account) {
-    const a = p.verified_account;
-    return { type:a.account_type, label:a.label || accountTypeLabel(a.account_type), color:'#e6b422', desc:a.account_definition || accountTypeDefinition(a.account_type) };
-  }
-  if (isDeveloperAccount(p)) {
-    return { type:'developer', label:'開発者アカウント', color:'#e6b422', desc:'Buddies profile の開発・運営を行うアカウントです。' };
-  }
-  return null;
-}
-function assetUrl(url) {
-  if (!url) return '';
-  if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url;
-  return url.startsWith('/') ? url : './' + url;
-}
 
 function isProfileEmpty(p) {
   if (!p) return false;
@@ -1585,16 +1410,13 @@ function getOshiList(p) {
 async function renderHome() {
   const card = document.getElementById('my-home-card');
   if (!me) {
-    setHomeSimilarVisible(true);
     card.innerHTML = `<div class="card" style="margin-top:16px; text-align:center;">
       <p style="color:#666; font-size:14px; margin-bottom:12px;">ログインしてプロフィールを作成しましょう</p>
       <button class="pill-button black" onclick="showAuthModal()">ログイン / 新規登録</button>
     </div>`;
-    renderVerifiedHome();
     document.getElementById('similar-list').innerHTML = '';
     return;
   }
-  setHomeSimilarVisible(true);
   const meHasSns = Array.isArray(me.sns_links) && me.sns_links.some(s => s && s.url && String(s.url).trim());
   const meSnsBadge = meHasSns
     ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
@@ -1612,106 +1434,21 @@ async function renderHome() {
     </div>
   </div>`;
 
-  renderVerifiedHome();
-
   // おすすめ読み込み
   const list = document.getElementById('similar-list');
   list.innerHTML = '<div class="empty-state">読み込み中…</div>';
   try {
     const res = await fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' });
     const json = await res.json();
-    const similars = (json.ok && json.data) ? json.data.map(mergeVerifiedOntoProfile) : [];
-    // 認証アカウントを混ぜる（重複ユーザーは既にマージ済み）
-    const existingUids = new Set(similars.map(p => Number(p.id)));
-    const verifiedExtras = verifiedAccounts
-      .filter(v => !v.user_id || !existingUids.has(Number(v.user_id)))
-      .map(verifiedAsProfile)
-      .filter(Boolean);
-    const merged = intermixVerifiedProfiles(verifiedExtras, similars);
-    if (merged.length) {
-      list.innerHTML = merged.map(p => profileMini(p, {showReasons: true})).join('');
-      list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(merged[i], false));
+    if (json.ok && json.data.length) {
+      const similars = json.data;
+      list.innerHTML = similars.map(p => profileMini(p, {showReasons: true})).join('');
+      list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(similars[i], false));
     } else {
       list.innerHTML = '<div class="empty-state">まだおすすめがいません</div>';
     }
   } catch(e) { list.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; }
   if(window.lucide) window.lucide.createIcons();
-}
-
-function setHomeSimilarVisible(show) {
-  const title = document.getElementById('similar-title');
-  const list = document.getElementById('similar-list');
-  if (title) title.hidden = !show;
-  if (list) {
-    list.hidden = !show;
-    if (!show) list.innerHTML = '';
-  }
-}
-
-function renderVerifiedAccountHome() {
-  const card = document.getElementById('my-home-card');
-  const a = currentVerifiedAccount();
-  if (!card || !a) return;
-  const icon = a.icon_url ? `<img src="${esc(assetUrl(a.icon_url))}" alt="">` : esc((a.display_name||'認')[0]);
-  const mainUrl = a.primary_link_url || a.cta_url || a.x_url;
-  const mainLabel = a.primary_link_label || a.cta_label || 'プロフィールリンクを開く';
-  card.innerHTML = `<div class="card verified-mypage-card" style="margin-top:16px;">
-    <div class="verified-mypage-top">
-      <div class="verified-icon" style="width:60px;height:60px;">${icon}</div>
-      <div style="min-width:0;flex:1;">
-        <div class="verified-label">✓ ${esc(a.label || accountTypeLabel(a.account_type))}</div>
-        <div class="verified-mypage-title">${esc(a.display_name)}</div>
-      </div>
-    </div>
-    <div class="verified-mypage-note">${esc(a.account_definition || accountTypeDefinition(a.account_type))}</div>
-    ${mainUrl ? `<a class="verified-mypage-link" href="${esc(mainUrl)}" target="_blank" rel="noopener">${esc(mainLabel)}</a>` : ''}
-    <a class="pill-button black" href="./verified/" style="text-decoration:none;">認証アカウントページ</a>
-  </div>`;
-}
-
-function renderVerifiedHome() {
-  // 認証アカウントは通常ユーザーと同じおすすめ/検索リストに混ぜて表示するため、専用枠は無し。
-  const wrap = document.getElementById('verified-home-section');
-  if (wrap) wrap.innerHTML = '';
-}
-
-function verifiedCard(a) {
-  const icon = a.icon_url ? `<img src="${esc(assetUrl(a.icon_url))}" alt="">` : esc((a.display_name||'認')[0]);
-  const banner = a.banner_url ? `<img src="${esc(assetUrl(a.banner_url))}" alt="">` : '';
-  const tags = (a.hashtags || []).slice(0, 4).map(t => `<span>#${esc(t.replace(/^#/, ''))}</span>`).join('');
-  const mainUrl = a.primary_link_url || a.cta_url || a.x_url;
-  const mainLabel = a.primary_link_label || a.cta_label || 'プロフィールリンクを開く';
-  const subUrl = a.secondary_link_url || (mainUrl !== a.x_url ? a.x_url : '');
-  const subLabel = a.secondary_link_label || 'Xを見る';
-  return `<article class="verified-card">
-    <div class="verified-banner">${banner}</div>
-    <div class="verified-body">
-      <div class="verified-head">
-        <div class="verified-icon">${icon}</div>
-        <div style="min-width:0;flex:1;">
-          <div class="verified-label">✓ ${esc(a.label || accountTypeLabel(a.account_type))}</div>
-          <div class="verified-name">${esc(a.display_name)}</div>
-        </div>
-      </div>
-      <div class="small">${esc(a.account_definition || accountTypeDefinition(a.account_type))}</div>
-      ${a.description ? `<div class="verified-desc">${esc(a.description)}</div>` : ''}
-      ${tags ? `<div class="verified-tags">${tags}</div>` : ''}
-      <div class="verified-actions">
-        ${mainUrl ? `<a class="verified-main-link" href="${esc(mainUrl)}" target="_blank" rel="noopener">${esc(mainLabel)}</a>` : ''}
-        ${subUrl ? `<a class="verified-sub-link" href="${esc(subUrl)}" target="_blank" rel="noopener">${esc(subLabel)}</a>` : ''}
-      </div>
-    </div>
-  </article>`;
-}
-function accountTypeLabel(type) {
-  if (type === 'developer') return '開発者アカウント';
-  return type === 'official' ? '公式アカウント' : '認証アカウント';
-}
-function accountTypeDefinition(type) {
-  if (type === 'developer') return 'Buddies profile の開発・運営を行うアカウントです。';
-  return type === 'official'
-    ? '極めて信頼性の高いことを証明するアカウントです。'
-    : '開発者が認証したアカウントです。';
 }
 
 // ── 検索 ─────────────────────────────────────────────────
@@ -1809,25 +1546,7 @@ async function loadMoreSearch() {
 
 function appendSearchResults(items, isFirst) {
   const results = document.getElementById('search-results');
-  // 認証アカウントを 1ページ目に混ぜる（クエリ・フィルター無しの時のみ）
-  if (isFirst) {
-    const noFilters = !lastSearchQuery && !searchOshis.length && !searchTags.length && !searchSongs.length && !searchHasSns;
-    if (noFilters && verifiedAccounts.length) {
-      const existingUids = new Set(items.map(p => Number(p.id)));
-      const verifiedExtras = verifiedAccounts
-        .filter(v => !v.user_id || !existingUids.has(Number(v.user_id)))
-        .map(verifiedAsProfile)
-        .filter(Boolean);
-      if (verifiedExtras.length) {
-        const baseLength = items.length;
-        lastSearchFiltered = lastSearchFiltered.slice(0, -baseLength);
-        items = intermixVerifiedProfiles(verifiedExtras, items);
-        lastSearchFiltered = lastSearchFiltered.concat(items);
-      }
-    }
-  }
-  // 認証データが紐づくユーザーは認証側を優先表示
-  items = items.map(mergeVerifiedOntoProfile);
+  if (isFirst && !items.length) return;
   const startIndex = lastSearchFiltered.length - items.length;
   const html = items.map(p => {
     const reasons = calcMatchReasons(p);
@@ -2245,20 +1964,14 @@ function calcMatchReasons(p) {
 // ── マイページ ───────────────────────────────────────────
 function renderMyPage() {
   const card = document.getElementById('my-page-card');
-  const verifiedWrap = document.getElementById('verified-mypage-section');
   if (!me) {
-    setMyPageListSectionsVisible(false);
     card.innerHTML = `<div style="text-align:center; padding:20px;">
       <button class="pill-button black" onclick="showAuthModal()">ログインしてください</button>
     </div>`;
-    if (verifiedWrap) verifiedWrap.innerHTML = '';
     document.getElementById('exchanged-list').innerHTML = '';
     document.getElementById('favorites-list').innerHTML = '';
-    ['my-events-joined','my-events-liked'].forEach(id => { const el = document.getElementById(id); if (el) el.innerHTML = ''; });
-    ['my-events-joined-title','my-events-liked-title'].forEach(id => { const el = document.getElementById(id); if (el) el.hidden = true; });
     return;
   }
-  setMyPageListSectionsVisible(true);
   card.innerHTML = `
     <div style="display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="openProfile(me, true)">
       ${avatarHtml(me)}
@@ -2268,20 +1981,17 @@ function renderMyPage() {
       </div>
     </div>
     <div style="display:flex; gap:8px; margin-top:16px;">
-      ${isVerifiedManagedUser(me)
-        ? `<a class="pill-button" style="flex:1; text-decoration:none; background:#fff8e1; border-color:#f3e3a8; color:#7c5600;" href="./verified/"><i data-lucide="shield-check" style="width:16px;height:16px;"></i>認証管理</a>`
-        : `<button class="pill-button" style="flex:1;" onclick="openEdit()"><i data-lucide="edit-2" style="width:16px;height:16px;"></i>編集</button>`}
+      <button class="pill-button" style="flex:1;" onclick="openEdit()"><i data-lucide="edit-2" style="width:16px;height:16px;"></i>編集</button>
       <button class="pill-button black" style="flex:1;" onclick="openQR('show')"><i data-lucide="qr-code" style="width:16px;height:16px;"></i>QRで交換</button>
     </div>
-    ${isDeveloperAccount(me) ? `<div style="display:flex; gap:8px; margin-top:8px;">
-      <a class="pill-button" style="flex:1; text-decoration:none; background:#fff8e1; border-color:#f3e3a8; color:#7c5600;" href="./admin.html"><i data-lucide="settings" style="width:16px;height:16px;"></i>認証アカウントを管理</a>
-    </div>` : ''}
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button class="pill-button" style="flex:1;" onclick="copyProfileURL()"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
       <button class="pill-button" style="flex:1;" onclick="shareToX()"><svg viewBox="0 0 1200 1227" width="15" height="15" fill="currentColor" style="flex-shrink:0;display:block;"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/></svg>X</button>
       <button class="pill-button" style="flex:1;" onclick="shareProfile()"><i data-lucide="share" style="width:16px;height:16px;"></i>共有</button>
     </div>
-    `;
+    <div style="display:flex; gap:8px; margin-top:8px;">
+      <button class="pill-button" style="flex:1;" onclick="openProfileCardPage()"><i data-lucide="id-card" style="width:16px;height:16px;"></i>プロフィールカードを表示(beta)</button>
+    </div>`;
 
   // プロフィール未入力ヒントバナー
   if (!sessionStorage.getItem('buddies_hint_dismissed') && isProfileEmpty(me)) {
@@ -2307,97 +2017,9 @@ function renderMyPage() {
 
   favoritesShowAll = false;
   exchangedShowAll = false;
-  renderVerifiedMyPage();
-  loadMyEvents();
   renderFavoritesSection();
   renderExchangedSection();
   if(window.lucide) window.lucide.createIcons();
-}
-
-async function loadMyEvents(){
-  if (!me) return;
-  const wrapJ = document.getElementById('my-events-joined');
-  const wrapL = document.getElementById('my-events-liked');
-  const titleJ = document.getElementById('my-events-joined-title');
-  const titleL = document.getElementById('my-events-liked-title');
-  if (!wrapJ || !wrapL) return;
-  const fetchKind = async (kind) => {
-    try {
-      const res = await fetch(API + '?action=event_my_participations&kind=' + kind, { credentials:'include' });
-      const json = await res.json();
-      return json.ok ? (json.data || []) : [];
-    } catch(e) { return []; }
-  };
-  const [joined, liked] = await Promise.all([fetchKind('join'), fetchKind('like')]);
-  const fmt = (s) => {
-    if (!s) return '日時未定';
-    const d = new Date(s.replace(' ', 'T'));
-    if (isNaN(d)) return '';
-    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-  };
-  const card = (e) => `<a class="event-mini-card" href="./verified/event.html?id=${e.id}" target="_blank" rel="noopener">
-    <div class="ev-cover">${e.cover_url ? `<img src="${esc(assetUrl(e.cover_url))}" alt="">` : '🎫'}</div>
-    <div class="ev-body">
-      <div class="ev-t">${esc(e.title)}</div>
-      <div class="ev-m">${esc(fmt(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
-    </div>
-  </a>`;
-  if (joined.length) { wrapJ.innerHTML = joined.map(card).join(''); titleJ.hidden = false; }
-  else { wrapJ.innerHTML = ''; titleJ.hidden = true; }
-  if (liked.length)  { wrapL.innerHTML = liked.map(card).join('');  titleL.hidden = false; }
-  else { wrapL.innerHTML = ''; titleL.hidden = true; }
-}
-
-function setMyPageListSectionsVisible(show) {
-  ['favorites-title', 'favorites-list', 'favorites-more-wrap', 'exchanged-title', 'exchanged-list', 'exchanged-more-wrap'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.hidden = !show;
-  });
-}
-
-async function copyText(text) {
-  try {
-    await navigator.clipboard.writeText(text);
-    toast('コピーしました');
-  } catch (e) {
-    prompt('コピーしてください', text);
-  }
-}
-
-function renderVerifiedAccountMyPage() {
-  const card = document.getElementById('my-page-card');
-  const wrap = document.getElementById('verified-mypage-section');
-  const a = currentVerifiedAccount();
-  if (wrap) wrap.innerHTML = '';
-  if (!a) return;
-  const icon = a.icon_url ? `<img src="${esc(assetUrl(a.icon_url))}" alt="">` : esc((a.display_name||'認')[0]);
-  const banner = a.banner_url ? `<div class="verified-banner" style="height:110px;border-radius:14px;">${`<img src="${esc(assetUrl(a.banner_url))}" alt="">`}</div>` : '';
-  const mainUrl = a.primary_link_url || a.cta_url || a.x_url;
-  const mainLabel = a.primary_link_label || a.cta_label || 'プロフィールリンクを開く';
-  const tags = (a.hashtags || []).slice(0, 6).map(t => `<span>#${esc(String(t).replace(/^#/, ''))}</span>`).join('');
-  card.innerHTML = `<div class="verified-mypage-card">
-    ${banner}
-    <div class="verified-mypage-top">
-      <div class="verified-icon" style="width:64px;height:64px;">${icon}</div>
-      <div style="min-width:0;flex:1;">
-        <div class="verified-label">✓ ${esc(a.label || accountTypeLabel(a.account_type))}</div>
-        <div class="verified-mypage-title">${esc(a.display_name)}</div>
-        <div class="verified-mypage-note">${esc(a.account_definition || accountTypeDefinition(a.account_type))}</div>
-      </div>
-    </div>
-    ${a.description ? `<div class="verified-desc">${esc(a.description)}</div>` : ''}
-    ${tags ? `<div class="verified-tags">${tags}</div>` : ''}
-    ${mainUrl ? `<a class="verified-mypage-link" href="${esc(mainUrl)}" target="_blank" rel="noopener">${esc(mainLabel)}</a>` : ''}
-    <div class="verified-mypage-actions">
-      <a class="pill-button black" href="./verified/" style="text-decoration:none;">認証アカウントページ</a>
-      <button class="pill-button" onclick="copyText(location.origin + location.pathname.replace(/index\\.html$/, '') + 'verified/')">ページURL</button>
-    </div>
-  </div>`;
-}
-
-function renderVerifiedMyPage() {
-  const wrap = document.getElementById('verified-mypage-section');
-  if (wrap) wrap.innerHTML = '';
 }
 
 function renderExchangedSection() {
@@ -2439,20 +2061,17 @@ function profileMini(p, opts = {}) {
   const color = getOshi1Color(p);
   const url = getAvatarUrl(p);
   const isExchanged = exchangedProfiles.some(e => e.id === p.id);
-  const accountBadge = accountBadgeInfo(p);
+  const isAdmin = ADMIN_IDS.has(p.id);
   const avatarInner = url
     ? `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`
     : esc(name[0]||'？');
-  const badge = accountBadge
-    ? `<div class="profile-mini-admin-badge" title="${esc(accountBadge.label)}"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
+  const badge = isAdmin
+    ? `<div class="profile-mini-admin-badge" title="管理者"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : isExchanged
     ? `<div class="profile-mini-exchanged-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
   const hasSns = Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim());
-  const isVerified = !!p.verified_account;
-  const snsBadge = isVerified
-    ? `<div class="profile-mini-verified-badge" title="認証アカウント"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
-    : hasSns
+  const snsBadge = hasSns
     ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
     : '';
   const filteredReasons = opts.showReasons && Array.isArray(p.match_reasons)
@@ -2494,17 +2113,6 @@ function getSnsIcon(type) {
 }
 
 function openProfile(profile, isOwn, opts = {}) {
-  // 認証アカウントが紐づくユーザーは認証側を優先してマージ
-  if (!isOwn) profile = mergeVerifiedOntoProfile(profile);
-  // 自分以外のプロフィールは専用ページで表示する
-  if (!isOwn && !opts.forceModal) {
-    if (profile.verified_account && profile.verified_account.id) {
-      window.open('./verified/view.html?id=' + encodeURIComponent(profile.verified_account.id), '_blank');
-    } else if (profile.id) {
-      window.open('./view.html?id=' + encodeURIComponent(profile.id), '_blank');
-    }
-    return;
-  }
   // 共有経由フラグはプロフィールオブジェクトに保持（再描画時に維持するため）
   if (opts.source === 'shared') profile._sharedView = true;
   currentPopupProfile = profile;
@@ -2520,38 +2128,14 @@ function openProfile(profile, isOwn, opts = {}) {
   const songsHtml = (profile.favorite_songs||profile.favoriteSongs||[]).map(s=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(s)}" title="${esc(s)}を検索">${esc(s)}</button>`).join('');
   const snsNames  = {x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'Link'};
   const snsLinks  = (profile.sns_links||profile.sns||[]).filter(s => s.url && s.url.trim()).slice(0,10);
-  const isVerifiedProfile = !!profile.verified_account;
+  const snsItems  = snsLinks.map(s=>`<a href="${esc(s.url)}" target="_blank" rel="noopener" class="sns-chip" title="${esc(s.type)}">${getSnsIcon(s.type)}<span>${snsNames[s.type]||'Link'}</span></a>`).join('');
 
-  let linkSection = '';
-  let snsDiv = '';
-  if (isVerifiedProfile) {
-    // 認証アカウントは幅広の1行ピルボタンで表示し差別化
-    const snsButtons = snsLinks.map((s, i) => {
-      const label = s.label && String(s.label).trim() ? s.label : (snsNames[s.type] || 'リンクを開く');
-      const cls = i === 0 ? 'profile-link-button' : 'profile-link-button secondary';
-      return `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="${cls}">${getSnsIcon(s.type)}<span>${esc(label)}</span></a>`;
-    }).join('');
-    linkSection = snsButtons ? `<div class="profile-section"><div class="profile-section-title">リンク</div><div class="profile-link-list">${snsButtons}</div></div>` : '';
-    let stanceChip = '';
-    if (snsLinks.length && profile.follow_stance) {
-      if (profile.follow_stance === 'silent_ok') stanceChip = `<span class="stance-pill">無言フォローOK</span>`;
-      else if (profile.follow_stance === 'hello_please') stanceChip = `<span class="stance-pill hello">一言欲しい</span>`;
-    }
-    snsDiv = stanceChip ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:8px;">${stanceChip}</div>` : '';
-  } else {
-    // 一般ユーザーは old.html と同じ sns-chip 横並び
-    const snsItems = snsLinks.map(s =>
-      `<a href="${esc(s.url)}" target="_blank" rel="noopener" class="sns-chip" title="${esc(s.type)}">${getSnsIcon(s.type)}<span>${snsNames[s.type]||'Link'}</span></a>`
-    ).join('');
-    let stanceChip = '';
-    if (snsLinks.length && profile.follow_stance) {
-      if (profile.follow_stance === 'silent_ok') stanceChip = `<span class="stance-pill">無言フォローOK</span>`;
-      else if (profile.follow_stance === 'hello_please') stanceChip = `<span class="stance-pill hello">一言欲しい</span>`;
-    }
-    snsDiv = (snsItems || stanceChip)
-      ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:8px;">${snsItems}${stanceChip}</div>`
-      : '';
+  let stanceChip = '';
+  if (snsLinks.length && profile.follow_stance) {
+    if (profile.follow_stance === 'silent_ok') stanceChip = `<span class="stance-pill">無言フォローOK</span>`;
+    else if (profile.follow_stance === 'hello_please') stanceChip = `<span class="stance-pill hello">一言欲しい</span>`;
   }
+  const snsDiv = snsItems || stanceChip ? `<div style="display:flex; gap:8px; flex-wrap:wrap; justify-content:center; align-items:center; margin-top:8px;">${snsItems}${stanceChip}</div>` : '';
 
   let actionBtns = '';
   if (isOwn) {
@@ -2606,7 +2190,7 @@ function openProfile(profile, isOwn, opts = {}) {
       <div class="profile-header">
         <div style="position:relative;display:inline-flex;">
           <div class="profile-avatar" style="background:${color};">${avatarContent}</div>
-          ${(() => { const badge = accountBadgeInfo(profile); if (badge) return `<button onclick="showBadgePopup(this,'verified')" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:${badge.color};border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>`; if (snsLinks.length) return `<button onclick="showBadgePopup(this,'sns')" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>`; return ''; })()}
+          ${(() => { const isAdminProfile = ADMIN_IDS.has(profile.id); if (isAdminProfile) return `<button onclick="showBadgePopup(this,'admin')" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#f59e0b;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>`; if (snsLinks.length) return `<button onclick="showBadgePopup(this,'sns')" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>`; return ''; })()}
         </div>
         <div class="profile-info">
           <div class="profile-name">${esc(name)}</div>
@@ -2618,7 +2202,6 @@ function openProfile(profile, isOwn, opts = {}) {
       ${tagsHtml?`<div class="profile-section"><div class="profile-section-title">興味</div><div class="profile-tag-list">${tagsHtml}</div></div>`:''}
       ${songsHtml?`<div class="profile-section"><div class="profile-section-title">好きな曲</div><div class="profile-tag-list">${songsHtml}</div></div>`:''}
       ${profile.bio?`<div class="profile-section"><div class="profile-section-title">自己紹介</div><div class="profile-bio">${esc(profile.bio)}</div></div>`:''}
-      ${linkSection}
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap; padding:0; margin-top:20px;">${actionBtns}</div>
   `;
@@ -2636,18 +2219,12 @@ function openProfile(profile, isOwn, opts = {}) {
 }
 function showBadgePopup(btn, type) {
   closeBadgePopup();
-  let color, label, desc;
-  if (type === 'sns') {
-    color = '#3b82f6';
-    label = 'SNSバッジ';
-    desc  = 'SNSのリンクを設定しているユーザーに青バッジが表示されます。';
-  } else {
-    // 認証/開発者バッジ：現在開いているプロフィールから正確な情報を取得
-    const info = currentPopupProfile ? accountBadgeInfo(currentPopupProfile) : null;
-    color = info?.color || '#e6b422';
-    label = info?.label || '認証アカウント';
-    desc  = info?.desc  || '開発者が認証したアカウントです。';
-  }
+  const isAdmin = type === 'admin';
+  const color = isAdmin ? '#f59e0b' : '#3b82f6';
+  const label = isAdmin ? '管理者バッジ' : 'SNSバッジ';
+  const desc  = isAdmin
+    ? 'これは管理者のアカウントです。'
+    : 'SNSのリンクを設定しているユーザーに青バッジが表示されます。';
   const overlay = document.createElement('div');
   overlay.className = 'badge-popup-overlay';
   overlay.onclick = closeBadgePopup;
@@ -2758,11 +2335,6 @@ let editFollowStance = null; // 'silent_ok' | 'hello_please' | null
 
 function openEdit() {
   if (!me) { showAuthModal(); return; }
-  if (isVerifiedManagedUser(me)) {
-    // 認証アカウント所有ユーザーは通常編集を使えない。認証管理ページへ誘導
-    location.href = './verified/';
-    return;
-  }
   document.getElementById('edit-name').value = me.display_name || '';
   document.getElementById('edit-gender').value = me.gender || '';
   document.getElementById('edit-location').value = me.location || '';
@@ -3742,7 +3314,7 @@ function closeExchangeOverlay() {
 }
 
 function buildProfileURL(uid) {
-  return location.origin + location.pathname.replace(/[^/]*$/, '') + 'view.html?id=' + encodeURIComponent(uid);
+  return location.origin + location.pathname.replace(/[^/]*$/, '') + 'profile.php?uid=' + encodeURIComponent(uid);
 }
 function copyProfileURL() {
   if (!me) return;

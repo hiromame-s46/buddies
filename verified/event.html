@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>イベント - Buddies profile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--gold:#e6b422}
+body{margin:0;min-height:100dvh;background:#fafafa;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
+.back:hover{background:#f3f3f3}
+header h1{font-size:15px;margin:0;font-weight:700;flex:1;color:#555}
+main{padding:0 0 24px}
+.cover{width:100%;aspect-ratio:16/9;background:#fff4d6;display:grid;place-items:center;color:#b79100;font-size:48px;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+.head{padding:18px 20px 8px}
+.title{font-size:22px;font-weight:800;margin:0 0 8px}
+.meta{font-size:13px;color:#555;display:grid;gap:4px;margin-bottom:12px}
+.meta b{color:#111}
+.host{display:inline-flex;align-items:center;gap:10px;text-decoration:none;color:#111;background:#fff;border:1px solid var(--line);border-radius:9999px;padding:7px 12px 7px 7px;margin-bottom:12px;max-width:100%;box-shadow:0 2px 8px rgba(0,0,0,.03)}
+.host:hover{background:#fafafa}
+.host-icon{width:34px;height:34px;border-radius:50%;background:#fff4d6;color:#7c5600;display:grid;place-items:center;font-weight:800;overflow:hidden;flex-shrink:0}
+.host-icon img{width:100%;height:100%;object-fit:cover}
+.host-text{min-width:0;display:grid;line-height:1.25}
+.host-label{font-size:10px;font-weight:800;color:#7c5600;letter-spacing:.04em}
+.host-name{font-size:13px;font-weight:800;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desc{padding:0 20px;white-space:pre-wrap;font-size:14px;color:#333;margin:8px 0 18px}
+.cta{padding:12px 20px;display:grid;gap:8px}
+.attachments{padding:0 20px;display:grid;gap:8px}
+.attachment{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;background:#fff;color:#111;text-decoration:none;padding:10px 12px}
+.attachment:hover{background:#fafafa}
+.attachment .file-icon{width:34px;height:34px;border-radius:10px;background:#f3f3f3;display:grid;place-items:center;font-size:11px;font-weight:800;color:#555;flex-shrink:0}
+.attachment .file-body{min-width:0;flex:1}
+.attachment .file-name{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attachment .file-meta{font-size:11px;color:#777}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:9999px;border:none;font-weight:800;font-size:14px;padding:0 18px;cursor:pointer;text-decoration:none}
+.btn.primary{background:#111;color:#fff}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#d29a14);color:#fff;box-shadow:0 6px 16px rgba(230,180,34,.32)}
+.btn.secondary{background:#f3f3f3;color:#111}
+.btn.danger{background:#fff;color:#d33;border:1px solid #f3c2c2}
+.btn.active-join{background:#16a34a;color:#fff}
+.btn.full{background:#e5e5e5;color:#888;box-shadow:none;cursor:not-allowed}
+.btn.full:hover{background:#e5e5e5}
+.btn:disabled{opacity:1}
+.btn.active-like{background:#ffe4e6;color:#be123c;border:1px solid #fda4af}
+.counts{display:flex;gap:14px;justify-content:center;color:#555;font-size:13px;margin-top:6px}
+.section-title{padding:0 20px;font-size:12px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 8px}
+.subevents{padding:0 12px;display:grid;gap:10px}
+.subevents-toggle{margin:10px 20px 0}
+.subevent-card{border:1px solid var(--line);border-radius:16px;background:#fff;display:flex;gap:12px;align-items:center;padding:12px 14px;text-decoration:none;color:#111;overflow:hidden}
+.subevent-card:hover{background:#fafafa}
+.subevent-card.is-hidden{display:none}
+.subevent-thumb{width:72px;height:72px;border-radius:14px;background:#f3f3f3;display:grid;place-items:center;overflow:hidden;flex-shrink:0;color:#999;font-weight:800}
+.subevent-thumb img{width:100%;height:100%;object-fit:cover}
+.subevent-card .s-body{min-width:0;flex:1;display:grid;gap:3px}
+.subevent-card .s-title{font-weight:800;font-size:15px;line-height:1.35}
+.subevent-card .s-meta{font-size:12px;color:#666;line-height:1.45}
+.subevent-card .s-desc{font-size:12px;color:#888;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.subevent-card .s-arrow{color:#aaa;font-size:20px;flex-shrink:0}
+.participants{padding:0 12px;display:grid;gap:6px}
+.participant{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#fafafa;text-decoration:none;color:#111;border:1px solid transparent}
+.participant:hover{background:#f3f3f3;border-color:var(--line)}
+.avatar{width:40px;height:40px;border-radius:50%;background:#f2b5cf;color:#fff;font-weight:800;display:grid;place-items:center;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.p-name{font-weight:700;font-size:14px}
+.p-meta{font-size:12px;color:#888}
+.empty{padding:30px 16px;text-align:center;color:#888;font-size:13px}
+.msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin:8px 20px 0}
+.msg.show{display:block}.msg.err{background:#fff5f5;color:#d33}.msg.ok{background:#f0fff4;color:#276749}
+.edit-fab{position:fixed;right:18px;bottom:18px;z-index:30;width:56px;height:56px;border-radius:50%;background:#111;color:#fff;display:none;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.22);border:1px solid #111}
+.edit-fab:hover{background:#222}
+.edit-fab svg{width:22px;height:22px}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:#fff;border-radius:18px;max-width:360px;width:100%;padding:20px;display:grid;gap:12px;box-shadow:0 18px 44px rgba(0,0,0,.2)}
+.confirm-box h3{margin:0;font-size:16px;font-weight:800}
+.confirm-box p{margin:0;color:#555;font-size:13px;line-height:1.7}
+.confirm-actions{display:flex;gap:8px;justify-content:flex-end}
+@media(max-width:560px){.edit-fab{right:16px;bottom:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back" href="../" onclick="return closeOrBack(event)" aria-label="戻る">← Buddies</a>
+    <h1>イベント</h1>
+  </header>
+  <main id="app"><div class="empty">読み込み中…</div></main>
+</div>
+<a id="edit-fab" class="edit-fab" href="./index.html" target="_blank" rel="noopener" aria-label="イベント編集画面を開く" title="編集">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+</a>
+<div class="confirm-overlay" id="confirm-overlay" onclick="if(event.target===this)closeConfirm(false)">
+  <div class="confirm-box">
+    <h3 id="confirm-title">確認</h3>
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="btn secondary" type="button" onclick="closeConfirm(false)">キャンセル</button>
+      <button class="btn danger" id="confirm-ok" type="button">参加を取り消す</button>
+    </div>
+  </div>
+</div>
+<script>
+const API = '../api.php';
+const MEMBER_DATA = '../../data/member.json';
+let memberMap = {};
+async function loadMemberMap(){
+  try {
+    const res = await fetch(MEMBER_DATA + '?_=' + Date.now());
+    const raw = await res.json();
+    const arr = Array.isArray(raw) ? raw : Object.values(raw);
+    arr.forEach(m => { if (m && m.name) memberMap[m.name] = m; });
+  } catch(e){}
+}
+function closeOrBack(e){
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+let ev = null;
+let me = null;
+let currentAccount = null;
+let hostAccount = null;
+let subevents = [];
+let subeventsExpanded = false;
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : '../' + url; }
+function hostHtml(){
+  const href = `./view.html?id=${encodeURIComponent(ev.account_id)}`;
+  if (!hostAccount) {
+    return `<a class="host" href="${href}"><div class="host-icon">✓</div><div class="host-text"><span class="host-label">HOST</span><span class="host-name">主催アカウント</span></div></a>`;
+  }
+  const name = hostAccount.display_name || hostAccount.label || '主催アカウント';
+  const icon = hostAccount.icon_url
+    ? `<img src="${esc(assetUrl(hostAccount.icon_url))}" alt="" onerror="this.style.display='none'">`
+    : esc((name || '？')[0]);
+  return `<a class="host" href="${href}">
+    <div class="host-icon">${icon}</div>
+    <div class="host-text"><span class="host-label">HOST</span><span class="host-name">${esc(name)}</span></div>
+  </a>`;
+}
+function fmtDate(s){
+  if (!s) return '日時未定';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function msg(text, ok=true){
+  const el = document.getElementById('msg');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+let confirmResolve = null;
+function confirmDialog(title, text){
+  return new Promise(resolve => {
+    confirmResolve = resolve;
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-text').textContent = text;
+    document.getElementById('confirm-overlay').classList.add('open');
+    document.getElementById('confirm-ok').onclick = () => closeConfirm(true);
+  });
+}
+function closeConfirm(result){
+  document.getElementById('confirm-overlay').classList.remove('open');
+  if (confirmResolve) { confirmResolve(!!result); confirmResolve = null; }
+}
+function showEditFabIfOwner(){
+  const fab = document.getElementById('edit-fab');
+  if (!fab || !ev || !currentAccount) return;
+  if (Number(currentAccount.id) === Number(ev.account_id)) {
+    fab.href = './index.html?edit_event=' + encodeURIComponent(ev.id);
+    fab.style.display = 'flex';
+  }
+}
+function fmtFileSize(bytes){
+  bytes = Number(bytes || 0);
+  if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+  if (bytes >= 1024) return Math.ceil(bytes / 1024) + 'KB';
+  return bytes + 'B';
+}
+function attachmentSection(){
+  const files = Array.isArray(ev.attachments) ? ev.attachments : [];
+  if (!files.length) return '';
+  return `<div class="section-title">参加者向けファイル</div>
+    <div class="attachments">
+      ${files.map(f => {
+        const isPdf = String(f.mime || '').includes('pdf') || String(f.url || '').toLowerCase().endsWith('.pdf');
+        return `<a class="attachment" href="${esc(assetUrl(f.url))}" target="_blank" rel="noopener">
+          <div class="file-icon">${isPdf ? 'PDF' : 'IMG'}</div>
+          <div class="file-body">
+            <div class="file-name">${esc(f.name || '添付ファイル')}</div>
+            <div class="file-meta">${esc(fmtFileSize(f.size))}</div>
+          </div>
+          <span>開く</span>
+        </a>`;
+      }).join('')}
+    </div>`;
+}
+
+async function safeJson(url, opt = {}){
+  try {
+    const res = await fetch(url, { credentials:'include', ...opt });
+    const text = await res.text();
+    try { return { ok:true, data: JSON.parse(text), status: res.status }; }
+    catch (e) {
+      console.warn('non-JSON response', url, res.status, text.slice(0, 300));
+      return { ok:false, status: res.status, raw: text };
+    }
+  } catch (e) {
+    console.warn('fetch failed', url, e);
+    return { ok:false, network:true };
+  }
+}
+
+async function load(){
+  const id = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
+  if (!id) { document.getElementById('app').innerHTML = '<div class="empty">イベントが指定されていません。</div>'; return; }
+
+  // メンバーマップを並行ロード
+  loadMemberMap();
+
+  // me 取得（失敗しても閲覧は続行）
+  const meR = await safeJson(`${API}?action=auth_me`);
+  me = (meR.ok && meR.data && meR.data.ok) ? meR.data.data : null;
+
+  // 認証アカウントでログイン中か確認（対象イベントの主催者だけ編集ボタンを表示）
+  const vaR = await safeJson(`${API}?action=verified_me`);
+  currentAccount = (vaR.ok && vaR.data && vaR.data.ok) ? vaR.data.data : null;
+
+  // イベント取得（必要）
+  const evR = await safeJson(`${API}?action=event_get&id=${id}`);
+  if (!evR.ok || !evR.data) {
+    document.getElementById('app').innerHTML = `<div class="empty">イベントを読み込めませんでした。<br><a href="javascript:location.reload()">再読み込み</a></div>`;
+    return;
+  }
+  if (!evR.data.ok) {
+    document.getElementById('app').innerHTML = `<div class="empty">${esc(evR.data.error || 'イベントが見つかりません')}</div>`;
+    return;
+  }
+  ev = evR.data.data;
+  const hostR = await safeJson(`${API}?action=verified_public_get&id=${encodeURIComponent(ev.account_id)}`);
+  hostAccount = (hostR.ok && hostR.data && hostR.data.ok) ? hostR.data.data : null;
+  render();
+  showEditFabIfOwner();
+  loadSubevents(id);
+  loadParticipants(id);
+}
+
+function render(){
+  document.title = `${ev.title} - Buddies イベント`;
+  const fullDate = ev.starts_at && ev.ends_at ? `${fmtDate(ev.starts_at)} 〜 ${fmtDate(ev.ends_at)}` : fmtDate(ev.starts_at);
+  const isJoined = !!ev.is_joined;
+  const isLiked  = !!ev.is_liked;
+  const isFull = ev.capacity !== null && ev.join_count >= ev.capacity && !isJoined;
+
+  const isPublic = (ev.visibility || 'public') === 'public';
+  const joinButton = `
+      <button class="btn ${isJoined ? 'active-join' : isFull ? 'full' : 'gold'}" onclick="toggle('join')" ${isFull ? 'disabled' : ''}>
+        ${isJoined ? '✓ 参加中（タップでキャンセル）' : isFull ? '満員（受付終了）' : '参加する'}
+      </button>`;
+  const likeButton = isPublic
+    ? `
+      <button class="btn ${isLiked ? 'active-like' : 'secondary'}" onclick="toggle('like')">
+        ${isLiked ? '♡ お気に入り済み' : '♡ お気に入り'}
+      </button>`
+    : '';
+  const ctaButtons = me
+    ? joinButton + likeButton
+    : `<a class="btn primary" href="../">ログインして参加する</a>`;
+
+  const extLink = ev.external_url
+    ? `<a class="btn secondary" href="${esc(ev.external_url)}" target="_blank" rel="noopener">${esc(ev.external_label || '詳細を開く')}</a>`
+    : '';
+
+  document.getElementById('app').innerHTML = `
+    <div class="cover">${ev.cover_url ? `<img src="${esc(assetUrl(ev.cover_url))}" alt="">` : '🎫'}</div>
+    <div class="head">
+      ${hostHtml()}
+      <h1 class="title">${esc(ev.title)}</h1>
+      <div class="meta">
+        <div><b>📅 日時:</b> ${esc(fullDate)}</div>
+        ${ev.venue ? `<div><b>📍 会場:</b> ${esc(ev.venue)}</div>` : ''}
+        ${ev.capacity ? `<div><b>👥 定員:</b> ${ev.join_count} / ${ev.capacity}</div>` : `<div><b>👥 参加:</b> ${ev.join_count} 人</div>`}
+        ${(ev.visibility || 'public') === 'public' ? `<div><b>♡ お気に入り:</b> ${ev.like_count || 0} 件</div>` : ''}
+      </div>
+    </div>
+    ${ev.description ? `<div class="desc">${esc(ev.description)}</div>` : ''}
+    <div class="cta">
+      ${ctaButtons}
+      ${extLink}
+    </div>
+    ${attachmentSection()}
+    <div id="msg" class="msg"></div>
+    <div class="section-title" id="subevents-title" style="display:none;">サブイベント</div>
+    <div id="subevents" class="subevents"></div>
+    <div id="subevents-toggle" class="subevents-toggle" style="display:none;"></div>
+    <div class="section-title">参加者（${ev.join_count}人）</div>
+    <div id="participants" class="participants"><div class="empty">読み込み中…</div></div>
+  `;
+}
+
+async function toggle(kind){
+  if (!me) { location.href = '../'; return; }
+  if (kind === 'like' && (ev.visibility || 'public') !== 'public') {
+    msg('非公開イベントではお気に入り機能を利用できません。', false);
+    return;
+  }
+  const currentlyOn = kind === 'join' ? !!ev.is_joined : !!ev.is_liked;
+  const state = currentlyOn ? 'off' : 'on';
+  if (kind === 'join' && currentlyOn) {
+    const ok = await confirmDialog('参加を取り消しますか？', '参加を取り消すと、参加者向けファイルとサブイベント参加も解除されます。');
+    if (!ok) return;
+  }
+  const r = await safeJson(`${API}?action=event_join`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ event_id: ev.id, kind, state }),
+  });
+  if (!r.ok || !r.data || !r.data.ok) {
+    msg((r.data && r.data.error) || '操作できませんでした', false);
+    return;
+  }
+  // 再取得（カウント更新のため）
+  const evR = await safeJson(`${API}?action=event_get&id=${ev.id}`);
+  if (evR.ok && evR.data && evR.data.ok) {
+    ev = evR.data.data;
+    render();
+    renderSubevents();
+    loadSubevents(ev.id);
+    loadParticipants(ev.id);
+  }
+}
+
+
+async function loadSubevents(id){
+  const wrap = document.getElementById('subevents');
+  const title = document.getElementById('subevents-title');
+  if (!wrap || !title) return;
+  if (subevents.length) renderSubevents();
+  const r = await safeJson(`${API}?action=subevent_list&event_id=${id}`);
+  if (!r.ok || !r.data || !r.data.ok) {
+    if (subevents.length) renderSubevents();
+    return;
+  }
+  subevents = r.data.data || [];
+  renderSubevents();
+}
+function renderSubevents(){
+  const wrap = document.getElementById('subevents');
+  const title = document.getElementById('subevents-title');
+  const toggleWrap = document.getElementById('subevents-toggle');
+  if (!wrap) return;
+  if (!subevents.length) {
+    wrap.innerHTML = '';
+    if (title) title.style.display = 'none';
+    if (toggleWrap) { toggleWrap.style.display = 'none'; toggleWrap.innerHTML = ''; }
+    return;
+  }
+  if (title) title.style.display = '';
+  const shouldCollapse = subevents.length >= 3 && !subeventsExpanded;
+  wrap.innerHTML = subevents.map((s, i) => {
+    const dateText = s.starts_at && s.ends_at ? `${fmtDate(s.starts_at)} 〜 ${fmtDate(s.ends_at)}` : fmtDate(s.starts_at);
+    const thumb = s.cover_url ? `<img src="${esc(assetUrl(s.cover_url))}" alt="">` : '予定';
+    const desc = s.description ? `<div class="s-desc">${esc(s.description)}</div>` : '';
+    return `<a class="subevent-card ${shouldCollapse && i >= 2 ? 'is-hidden' : ''}" href="./subevent.html?id=${encodeURIComponent(s.id)}">
+      <div class="subevent-thumb">${thumb}</div>
+      <div class="s-body">
+        <div class="s-title">${esc(s.title)}</div>
+        <div class="s-meta">${esc(dateText)}${s.venue ? ' ・ ' + esc(s.venue) : ''}</div>
+        ${desc}
+      </div>
+      <div class="s-arrow">›</div>
+    </a>`;
+  }).join('');
+  if (toggleWrap) {
+    if (subevents.length >= 3) {
+      toggleWrap.style.display = '';
+      toggleWrap.innerHTML = `<button class="btn secondary" style="width:100%;" onclick="toggleSubeventsExpanded()">${subeventsExpanded ? 'サブイベントを折りたたむ' : `すべてのサブイベントを見る（${subevents.length}件）`}</button>`;
+    } else {
+      toggleWrap.style.display = 'none';
+      toggleWrap.innerHTML = '';
+    }
+  }
+}
+function toggleSubeventsExpanded(){
+  subeventsExpanded = !subeventsExpanded;
+  renderSubevents();
+}
+
+let participantsLoading = false;
+async function loadParticipants(id){
+  const wrap = document.getElementById('participants');
+  if (!wrap || participantsLoading) return;
+  participantsLoading = true;
+  const r = await safeJson(`${API}?action=event_participants&id=${id}`);
+  participantsLoading = false;
+  if (!r.ok || !r.data) {
+    // 静かに失敗（ネットワーク不安定時のリトライ余地のためボタン表示）
+    wrap.innerHTML = `<div class="empty">参加者一覧を読み込めませんでした。<br><button class="btn secondary" onclick="loadParticipants(${id})" style="margin-top:8px;">再試行</button></div>`;
+    return;
+  }
+  if (!r.data.ok) { wrap.innerHTML = `<div class="empty">${esc(r.data.error || '読み込みに失敗しました')}</div>`; return; }
+  const list = r.data.data || [];
+  if (!list.length) { wrap.innerHTML = '<div class="empty">まだ参加者はいません</div>'; return; }
+  wrap.innerHTML = list.map(p => {
+    let iconUrl = p.user_icon || null;
+    if (!iconUrl && p.oshi_member && memberMap[p.oshi_member]?.image) iconUrl = memberMap[p.oshi_member].image;
+    const color = (p.oshi_member && memberMap[p.oshi_member]?.color) || '#f2b5cf';
+    const icon = iconUrl
+      ? `<img src="${esc(assetUrl(iconUrl))}" alt="" onerror="this.parentElement.innerHTML=${JSON.stringify(esc((p.display_name||'？')[0]))}">`
+      : esc((p.display_name||'？')[0]);
+    const sub = [p.oshi_member, p.location].filter(Boolean).join(' ・ ');
+    return `<a class="participant" href="../?uid=${p.id}" target="_blank" rel="noopener">
+      <div class="avatar" style="background:${esc(color)}">${icon}</div>
+      <div style="min-width:0;flex:1;">
+        <div class="p-name">${esc(p.display_name || '名無し')}</div>
+        ${sub ? `<div class="p-meta">${esc(sub)}</div>` : ''}
+      </div>
+    </a>`;
+  }).join('');
+}
+
+window.toggleSubeventsExpanded = toggleSubeventsExpanded;
+load();
+</script>
+</body>
+</html>
