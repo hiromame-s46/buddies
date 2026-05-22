@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>認証アカウント管理 - Buddies profile</title>
+<title>コミュニティアカウント管理 - Buddies profile</title>
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--gold:#e6b422}
@@ -128,7 +128,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 <div class="app">
   <header>
     <a class="crumb" href="../" onclick="return closeOrBack(event)">← Buddies</a>
-    <h1>認証アカウント管理</h1>
+    <h1>コミュニティアカウント管理</h1>
     <button class="btn sm danger" id="logout-btn" type="button" data-act="logout" hidden>ログアウト</button>
   </header>
   <main id="app"></main>
@@ -320,8 +320,8 @@ function render(){
   const root = document.getElementById('app');
   if (!account) {
     root.innerHTML = `<div class="card login">
-      <h2 style="margin:0 0 8px;font-size:22px;">認証アカウントログイン</h2>
-      <p class="small" style="margin:0 0 16px;">認証アカウント専用ページです。開発者は通常ログイン状態のままアクセスできます。</p>
+      <h2 style="margin:0 0 8px;font-size:22px;">コミュニティアカウントログイン</h2>
+      <p class="small" style="margin:0 0 16px;">コミュニティアカウント専用ページです。開発者は通常ログイン状態のままアクセスできます。</p>
       <div class="field"><label>ログインID</label><input id="login-id" autocomplete="username"></div>
       <div class="field"><label>パスワード</label><input id="login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="btn primary" style="width:100%;margin-top:6px;" onclick="login()">ログイン</button>
@@ -331,13 +331,13 @@ function render(){
     return;
   }
 
-  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? 'プロアカウント' : '認証アカウント';
+  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント';
   verifiedSns = accountSnsLinks(account);
   root.innerHTML = `
     ${isDeveloper ? `
       <div class="developer-banner">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <div><strong>開発者セッション</strong><br><span>管理者向け機能と認証アカウントの管理が利用できます。<a href="../admin.html" style="color:#7c5600;font-weight:800;">認証アカウント一覧へ →</a></span></div>
+        <div><strong>開発者セッション</strong><br><span>管理者向け機能とコミュニティアカウントの管理が利用できます。<a href="../admin.html" style="color:#7c5600;font-weight:800;">コミュニティアカウント一覧へ →</a></span></div>
       </div>
     ` : ''}
 

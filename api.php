@@ -39,6 +39,9 @@ define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v12.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
 define('SAKUMIMI_DATA_PATH', __DIR__ . '/../data/sakumimi_data.json');
 define('MEMBER_DATA_PATH', __DIR__ . '/../data/member.json');
+define('SAKUMAP_EVENTS_PATH', __DIR__ . '/../sakumap/events.json');
+define('SAKUMAP_STAMPS_PATH', __DIR__ . '/../sakumap/stamps.json');
+define('SAKUMAP_BASE_URL', 'https://buddies46.stars.ne.jp/satellite/sakumap/');
 
 // ── ヘッダー ─────────────────────────────────────────────
 if (!headers_sent()) {
@@ -91,6 +94,7 @@ function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
     $alterMap = [
         'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
+        'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
     ];
 
     foreach ($alterMap as $col => $sql) {
@@ -132,6 +136,7 @@ function runMigrations(PDO $pdo): void {
         post_template  TEXT NULL DEFAULT NULL COMMENT 'SNS紹介テンプレート',
         show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示',
         show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示',
+        show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示',
         updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -144,6 +149,7 @@ function runMigrations(PDO $pdo): void {
         'birthday'      => "ALTER TABLE buddies_profiles ADD COLUMN birthday DATE NULL DEFAULT NULL",
         'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
+        'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
     ];
     foreach ($alterMap as $col => $sql) {
         if (!in_array($col, $bpCols, true)) {
@@ -174,7 +180,7 @@ function runMigrations(PDO $pdo): void {
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
-    // ─ 認証アカウント（公式協力・イベント用） ─
+    // ─ コミュニティアカウント（協力・イベント用） ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_accounts (
         id                       BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         user_id                  BIGINT UNSIGNED NULL DEFAULT NULL UNIQUE,
@@ -182,7 +188,7 @@ function runMigrations(PDO $pdo): void {
         password_hash            VARCHAR(255) NOT NULL,
         display_name             VARCHAR(100) NOT NULL,
         account_type             VARCHAR(32) NOT NULL DEFAULT 'verified',
-        label                    VARCHAR(80) NOT NULL DEFAULT '認証アカウント',
+        label                    VARCHAR(80) NOT NULL DEFAULT 'コミュニティアカウント',
         description              TEXT NULL DEFAULT NULL,
         icon_url                 VARCHAR(2048) NULL DEFAULT NULL,
         banner_url               VARCHAR(2048) NULL DEFAULT NULL,
@@ -239,7 +245,7 @@ function runMigrations(PDO $pdo): void {
     // ─ イベント ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_events (
         id            BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
-        account_id    BIGINT UNSIGNED NOT NULL COMMENT '主催認証アカウント',
+        account_id    BIGINT UNSIGNED NOT NULL COMMENT '主催コミュニティアカウント',
         title         VARCHAR(160) NOT NULL,
         description   TEXT NULL DEFAULT NULL,
         venue         VARCHAR(200) NULL DEFAULT NULL,
@@ -266,7 +272,7 @@ function runMigrations(PDO $pdo): void {
         $pdo->exec("ALTER TABLE buddies_events ADD COLUMN attachments TEXT NULL DEFAULT NULL COMMENT 'JSON array of event files' AFTER cover_url");
     }
 
-    // ─ 認証アカウント掲示板 ─
+    // ─ コミュニティアカウント掲示板 ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_posts (
         id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         account_id  BIGINT UNSIGNED NOT NULL,
@@ -481,7 +487,7 @@ function currentVerifiedAccount(): ?array {
 }
 function requireVerifiedAccount(): array {
     $a = currentVerifiedAccount();
-    if (!$a) err('認証アカウントでのログインが必要です。', 401);
+    if (!$a) err('コミュニティアカウントでのログインが必要です。', 401);
     return $a;
 }
 function isHiromameAdmin(?array $u): bool {
@@ -538,6 +544,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['post_template']  = $bp['post_template'] ?? null;
         $data['show_favorite_mimis'] = !empty($bp['show_favorite_mimis']);
         $data['show_favorite_blogs'] = !empty($bp['show_favorite_blogs']);
+        $data['show_sakumap_stamps'] = !empty($bp['show_sakumap_stamps']);
     } else {
         $data['birthday']       = null;
         $data['age']            = null;
@@ -552,7 +559,9 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['post_template']  = null;
         $data['show_favorite_mimis'] = false;
         $data['show_favorite_blogs'] = false;
+        $data['show_sakumap_stamps'] = false;
     }
+    $data['sakumap_linked'] = sakumapLinkStatus((int)$u['id'])['linked'];
     $verified = verifiedAccountByUserId((int)$u['id']);
     if (!$verified && isHiromameAdmin($u)) $verified = developerVerifiedAccount($u);
     $data['account_role'] = $verified ? normalizeVerifiedType($verified['account_type'] ?? 'verified') : 'user';
@@ -562,6 +571,9 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         !empty($data['show_favorite_mimis']),
         !empty($data['show_favorite_blogs'])
     );
+    $data['sakumap_stamps'] = !empty($data['show_sakumap_stamps'])
+        ? getSakumapStampsForProfile((int)$u['id'])
+        : [];
     return $data;
 }
 
@@ -592,6 +604,7 @@ function buildRowData(array $r): array {
         'post_template' => $r['post_template'] ?? null,
         'show_favorite_mimis' => !empty($r['show_favorite_mimis']),
         'show_favorite_blogs' => !empty($r['show_favorite_blogs']),
+        'show_sakumap_stamps' => !empty($r['show_sakumap_stamps']),
         'exchanged_at'  => $r['exchanged_at']  ?? null,
         'favorited_at'  => $r['favorited_at']  ?? null,
     ];
@@ -736,6 +749,155 @@ function getSakulaboFavoritesForProfile(int $userId, bool $includeMimis, bool $i
     return $out;
 }
 
+function sakumapLinkStatus(int $sakulaboUserId): array {
+    if ($sakulaboUserId <= 0) return ['linked' => false, 'map_user_id' => null];
+    try {
+        $st = db()->prepare('SELECT map_user_id, linked_at FROM map_buddies_links WHERE sakulabo_user_id = ? LIMIT 1');
+        $st->execute([$sakulaboUserId]);
+        $row = $st->fetch();
+        if (!$row) return ['linked' => false, 'map_user_id' => null];
+        return ['linked' => true, 'map_user_id' => (int)$row['map_user_id'], 'linked_at' => $row['linked_at'] ?? null];
+    } catch (\Throwable $e) {
+        return ['linked' => false, 'map_user_id' => null];
+    }
+}
+
+function loadSakumapEventsById(): array {
+    static $map = null;
+    if ($map !== null) return $map;
+    $map = [];
+    if (!is_file(SAKUMAP_EVENTS_PATH)) return $map;
+    $json = json_decode((string)file_get_contents(SAKUMAP_EVENTS_PATH), true);
+    foreach (($json['events'] ?? []) as $event) {
+        if (is_array($event) && !empty($event['id'])) $map[(string)$event['id']] = $event;
+    }
+    return $map;
+}
+
+function loadSakumapStampsById(): array {
+    static $map = null;
+    if ($map !== null) return $map;
+    $map = [];
+    if (!is_file(SAKUMAP_STAMPS_PATH)) return $map;
+    $json = json_decode((string)file_get_contents(SAKUMAP_STAMPS_PATH), true);
+    foreach (($json['stamps'] ?? []) as $stamp) {
+        if (is_array($stamp) && !empty($stamp['id'])) $map[(string)$stamp['id']] = $stamp;
+    }
+    return $map;
+}
+
+function loadSakumapStampCatalog(): array {
+    $events = loadSakumapEventsById();
+    $stamps = loadSakumapStampsById();
+    synthesizeSakumapAllSpotRally($events, $stamps);
+    return [$events, $stamps];
+}
+
+function synthesizeSakumapAllSpotRally(array &$events, array &$stamps): void {
+    $settings = [];
+    if (is_file(SAKUMAP_EVENTS_PATH)) {
+        $json = json_decode((string)file_get_contents(SAKUMAP_EVENTS_PATH), true);
+        $settings = is_array($json['settings'] ?? null) ? $json['settings'] : [];
+    }
+    $rally = is_array($settings['all_spots_rally'] ?? null) ? $settings['all_spots_rally'] : [];
+    if (array_key_exists('enabled', $rally) && $rally['enabled'] === false) return;
+
+    try {
+        $rows = db()->query(
+            'SELECT s.id, s.title, s.summary, s.address, s.lat, s.lng,
+                    (SELECT url FROM map_spot_images i WHERE i.spot_id = s.id ORDER BY i.sort_order LIMIT 1) AS thumb
+               FROM map_spots s
+              WHERE s.is_approved = 1
+              ORDER BY s.id DESC'
+        )->fetchAll();
+    } catch (\Throwable $e) {
+        return;
+    }
+
+    $eventId = 'all_spots';
+    $stampIds = [];
+    $defaultImage = trim((string)($rally['default_stamp_image'] ?? ''));
+    foreach ($rows as $spot) {
+        if (empty($spot['id'])) continue;
+        $stampId = 'spot:' . (int)$spot['id'];
+        $stampIds[] = $stampId;
+        if (!isset($stamps[$stampId])) {
+            $stamps[$stampId] = [
+                'id' => $stampId,
+                'spot_id' => (int)$spot['id'],
+                'name' => trim((string)($spot['title'] ?: $spot['summary'] ?: ('スポット ' . $spot['id']))),
+                'description' => trim((string)($spot['summary'] ?: $spot['address'] ?: '')),
+                'image' => trim((string)($spot['thumb'] ?? '')),
+                'stamp_image' => $defaultImage,
+                'icon_emoji' => (string)($rally['icon_emoji'] ?? '🌸'),
+            ];
+        }
+    }
+
+    $events[$eventId] = [
+        'id' => $eventId,
+        'name' => trim((string)($rally['name'] ?? 'SakuMap 全スポットラリー')),
+        'default_stamp_image' => $defaultImage,
+        'stamp_ids' => $stampIds,
+        'is_active' => true,
+    ];
+}
+
+function sakumapAssetUrl(?string $path): ?string {
+    $path = trim((string)$path);
+    if ($path === '') return null;
+    if (preg_match('#^https?://#i', $path)) return $path;
+    return SAKUMAP_BASE_URL . ltrim($path, '/');
+}
+
+function getSakumapStampsForProfile(int $sakulaboUserId): array {
+    $link = sakumapLinkStatus($sakulaboUserId);
+    if (empty($link['linked']) || empty($link['map_user_id'])) return [];
+    try {
+        $st = db()->prepare(
+            'SELECT event_id, stamp_id, claimed_at
+               FROM map_event_stamp_claims
+              WHERE user_id = ?
+              ORDER BY claimed_at DESC
+              LIMIT 100'
+        );
+        $st->execute([(int)$link['map_user_id']]);
+    } catch (\Throwable $e) {
+        return [];
+    }
+
+    [$events, $stamps] = loadSakumapStampCatalog();
+    $items = [];
+    foreach ($st->fetchAll() as $row) {
+        [$eventId, $stampId] = normalizeSakumapClaimIds((string)($row['event_id'] ?? ''), (string)($row['stamp_id'] ?? ''));
+        $stamp = $stamps[$stampId] ?? null;
+        if (!$stamp) continue;
+        $event = $events[$eventId] ?? null;
+        $rawImage = trim((string)($stamp['stamp_image'] ?? ''));
+        if ($rawImage === '') $rawImage = trim((string)($event['default_stamp_image'] ?? ''));
+        if ($rawImage === '') $rawImage = trim((string)($stamp['image'] ?? ''));
+        $image = sakumapAssetUrl($rawImage);
+        $items[] = [
+            'event_id' => $eventId,
+            'event_name' => (string)($event['name'] ?? ''),
+            'stamp_id' => $stampId,
+            'name' => (string)($stamp['name'] ?? 'スタンプ'),
+            'description' => (string)($stamp['description'] ?? ''),
+            'image_url' => $image,
+            'icon_emoji' => (string)($stamp['icon_emoji'] ?? '🌸'),
+            'claimed_at' => $row['claimed_at'] ?? null,
+        ];
+    }
+    return $items;
+}
+
+function normalizeSakumapClaimIds(string $eventId, string $stampId): array {
+    if ($eventId === '' && str_contains($stampId, '::')) {
+        [$eventId, $stampId] = explode('::', $stampId, 2);
+    }
+    return [trim($eventId), trim($stampId)];
+}
+
 function cleanUrl(?string $url): ?string {
     $url = trim((string)$url);
     if ($url === '') return null;
@@ -790,7 +952,7 @@ function buildVerifiedData(array $a, bool $includePrivate = false): array {
         'login_id'             => $includePrivate ? $a['login_id'] : null,
         'display_name'         => $a['display_name'],
         'account_type'         => $type,
-        'label'                => $a['label'] ?: verifiedTypeLabel($type),
+        'label'                => normalizeVerifiedLabel($a['label'] ?? '', $type),
         'account_definition'   => verifiedTypeDefinition($type),
         'description'          => $a['description'] ?? '',
         'icon_url'             => $a['icon_url'] ?? null,
@@ -823,9 +985,15 @@ function normalizeVerifiedType(string $type): string {
 function verifiedTypeLabel(string $type): string {
     return match ($type) {
         'developer' => '開発者アカウント',
-        'official' => 'プロアカウント',
-        default => '認証アカウント',
+        'official' => 'コミュニティパートナー',
+        default => 'コミュニティアカウント',
     };
+}
+function normalizeVerifiedLabel(?string $label, string $type): string {
+    $label = trim((string)$label);
+    if ($label === '' || $label === '認証アカウント') return verifiedTypeLabel($type);
+    if ($label === 'プロアカウント') return 'コミュニティパートナー';
+    return $label;
 }
 function verifiedTypeDefinition(string $type): string {
     return match ($type) {
@@ -1240,6 +1408,9 @@ function actionProfileUpdate(): void {
     $postTemplate = opt('post_template', null);
     $showFavoriteMimis = truthyFlag($b['show_favorite_mimis'] ?? 0);
     $showFavoriteBlogs = truthyFlag($b['show_favorite_blogs'] ?? 0);
+    $showSakumapStamps = sakumapLinkStatus((int)$me['id'])['linked']
+        ? truthyFlag($b['show_sakumap_stamps'] ?? 0)
+        : 0;
 
     if ($bio          && mb_strlen($bio)          > 500)  err('自己紹介は500文字以内で入力してください。');
     if ($postTemplate && mb_strlen($postTemplate) > 1000) err('SNS紹介タグは1000文字以内で入力してください。');
@@ -1254,8 +1425,8 @@ function actionProfileUpdate(): void {
 
     db()->prepare('INSERT INTO buddies_profiles
         (user_id, birthday, age, gender, location, buddies_since, bio,
-         tags, favorite_songs, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         tags, favorite_songs, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           birthday=VALUES(birthday), age=VALUES(age),
           gender=VALUES(gender), location=VALUES(location),
@@ -1264,7 +1435,8 @@ function actionProfileUpdate(): void {
           sns_links=VALUES(sns_links), follow_stance=VALUES(follow_stance),
           post_template=VALUES(post_template),
           show_favorite_mimis=VALUES(show_favorite_mimis),
-          show_favorite_blogs=VALUES(show_favorite_blogs)')
+          show_favorite_blogs=VALUES(show_favorite_blogs),
+          show_sakumap_stamps=VALUES(show_sakumap_stamps)')
     ->execute([
         $me['id'],
         $birthday,
@@ -1280,6 +1452,7 @@ function actionProfileUpdate(): void {
         $postTemplate ?: null,
         $showFavoriteMimis,
         $showFavoriteBlogs,
+        $showSakumapStamps,
     ]);
 
     $newUser = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
@@ -1339,6 +1512,7 @@ function actionExchangeList(): void {
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
                 bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template,
+                bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
                 e.created_at AS exchanged_at
          FROM buddies_exchanges e
          JOIN sakulabo_users u ON u.id = e.target_id
@@ -1404,6 +1578,7 @@ function actionFavoriteList(): void {
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
                 bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template,
+                bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
                 f.created_at AS favorited_at
          FROM buddies_favorites f
          JOIN sakulabo_users u ON u.id = f.target_id
@@ -1455,7 +1630,8 @@ function actionSearch(): void {
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-        bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template';
+        bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template,
+        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
 
     $where  = ['u.id != ?'];
     $params = [$myId ?: 0];
@@ -1679,7 +1855,8 @@ function actionSimilar(): void {
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-        bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template';
+        bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance, bp.post_template,
+        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
 
     // 候補を最大150件をランダム取得し PHP 側でスコアリング
     $st = db()->prepare("
@@ -1977,7 +2154,7 @@ function actionAdminTagMerge(): void {
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-//  認証アカウント
+//  コミュニティアカウント
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 function verifiedEditableFields(array $b, bool $preserveDeveloperType = true): array {
     $hashtags = isset($b['hashtags']) && is_array($b['hashtags'])
@@ -2042,7 +2219,7 @@ function actionVerifiedLogin(): void {
 
     $a = verifiedAccountByUserId((int)$user['id']);
     if (!$a && isHiromameAdmin($user)) $a = developerVerifiedAccount($user);
-    if (!$a) err('認証アカウントではありません。', 403);
+    if (!$a) err('コミュニティアカウントではありません。', 403);
 
     db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id = ? OR expires_at < NOW()')->execute([$user['id']]);
     $token = generateToken();
@@ -2147,7 +2324,7 @@ function actionVerifiedPublicGet(): void {
     $st = db()->prepare("SELECT * FROM buddies_verified_accounts WHERE id=? AND status='active' LIMIT 1");
     $st->execute([$id]);
     $a = $st->fetch();
-    if (!$a) err('認証アカウントが見つかりません。', 404);
+    if (!$a) err('コミュニティアカウントが見つかりません。', 404);
     ok(buildVerifiedData($a));
 }
 
@@ -2206,7 +2383,7 @@ function actionVerifiedAdminUpdate(): void {
     $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
     $st->execute([$id]);
     $before = $st->fetch();
-    if (!$before) err('認証アカウントが見つかりません。', 404);
+    if (!$before) err('コミュニティアカウントが見つかりません。', 404);
     $f = verifiedEditableFields($b, false);
     $status = in_array(($b['status'] ?? 'active'), ['active', 'paused', 'disabled'], true) ? $b['status'] : 'active';
     db()->prepare('UPDATE buddies_verified_accounts SET
@@ -2249,7 +2426,7 @@ function actionVerifiedAdminResetPassword(): void {
     $st = db()->prepare('SELECT * FROM buddies_verified_accounts WHERE id=? LIMIT 1');
     $st->execute([$id]);
     $a = $st->fetch();
-    if (!$a) err('認証アカウントが見つかりません。', 404);
+    if (!$a) err('コミュニティアカウントが見つかりません。', 404);
     if (empty($a['user_id'])) err('連携ユーザーが見つかりません。', 409);
     $hash = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
     db()->prepare('UPDATE sakulabo_users SET password_hash=? WHERE id=?')->execute([$hash, $a['user_id']]);
@@ -2276,7 +2453,7 @@ function actionVerifiedPostList(): void {
 function actionVerifiedPostCreate(): void {
     ensureVerifiedPostTables();
     $a = requireVerifiedAccount();
-    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・プロアカウントのみ利用できます。', 403);
+    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・コミュニティパートナーのみ利用できます。', 403);
     $b = body();
     $body = trim((string)($b['body'] ?? ''));
     if (mb_strlen($body) > 8000) err('本文は8000文字以内で入力してください。');
@@ -2353,7 +2530,7 @@ function actionVerifiedPostCreate(): void {
 function actionVerifiedPostDelete(): void {
     ensureVerifiedPostTables();
     $a = requireVerifiedAccount();
-    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・プロアカウントのみ利用できます。', 403);
+    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・コミュニティパートナーのみ利用できます。', 403);
     $id = (int)(body()['id'] ?? $_GET['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
     $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE id=? AND status='active' LIMIT 1");

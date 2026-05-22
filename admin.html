@@ -112,7 +112,7 @@ main{padding:20px;}
 	  <div class="tabs">
 	    <button class="tab active" onclick="switchTab('tags')">興味タグ</button>
 	    <button class="tab" onclick="switchTab('songs')">楽曲タグ</button>
-	    <button class="tab" onclick="switchTab('verified')">認証アカウント</button>
+	    <button class="tab" onclick="switchTab('verified')">コミュニティアカウント</button>
 	  </div>
 
   <div id="tab-content">
@@ -120,11 +120,11 @@ main{padding:20px;}
   </div>
 </div>
 
-<!-- 認証アカウント編集モーダル -->
+<!-- コミュニティアカウント編集モーダル -->
 <div class="modal-overlay" id="edit-verified-modal" onclick="if(event.target===this)closeEditVerified()">
   <div class="modal-sheet">
     <div class="modal-head">
-      <h3>認証アカウントを編集</h3>
+      <h3>コミュニティアカウントを編集</h3>
       <button class="modal-close" type="button" onclick="closeEditVerified()">×</button>
     </div>
     <div class="modal-body" id="edit-verified-body"></div>
@@ -360,7 +360,7 @@ async function loadVerifiedAccounts() {
   const res = await fetch(`${API}?action=verified_admin_list`, { credentials:'include' });
   const json = await res.json();
   if (!json.ok) {
-    document.getElementById('tab-content').innerHTML = `<div class="section"><div class="empty">認証/プロアカウント管理は、通常ログイン済みの開発者アカウント（uid=1）のみ利用できます。<br>${esc(json.error || '')}</div></div>`;
+    document.getElementById('tab-content').innerHTML = `<div class="section"><div class="empty">コミュニティアカウント管理は、通常ログイン済みの開発者アカウント（uid=1）のみ利用できます。<br>${esc(json.error || '')}</div></div>`;
     return;
   }
   verifiedAccounts = json.data || [];
@@ -370,17 +370,17 @@ async function loadVerifiedAccounts() {
 function renderVerifiedTab() {
   document.getElementById('tab-content').innerHTML = `
     <div class="section">
-      <div class="section-title">認証アカウント作成</div>
+      <div class="section-title">コミュニティアカウント作成</div>
       <div class="admin-form">
         <div class="form-grid">
           <input id="va-login" placeholder="ログインID 例: zenkoku_buddies">
           <input id="va-pass" placeholder="初期パスワード（8文字以上）">
           <input id="va-name" placeholder="表示名 例: 全国buddies会">
           <select id="va-type">
-            <option value="verified">認証アカウント</option>
-            <option value="official">プロアカウント</option>
+            <option value="verified">コミュニティアカウント</option>
+            <option value="official">コミュニティパートナー</option>
           </select>
-          <input id="va-label" value="認証アカウント" placeholder="ラベル">
+          <input id="va-label" value="コミュニティアカウント" placeholder="ラベル">
           <input id="va-priority" type="number" value="50" placeholder="おすすめ優先度">
         </div>
         <textarea id="va-desc" placeholder="説明文"></textarea>
@@ -401,7 +401,7 @@ function renderVerifiedTab() {
         <button class="btn btn-primary" onclick="createVerifiedAccount()">作成</button>
         <div id="verified-result" class="result-msg"></div>
       </div>
-      <div class="section-title">認証アカウント一覧（${verifiedAccounts.length}件）</div>
+      <div class="section-title">コミュニティアカウント一覧（${verifiedAccounts.length}件）</div>
       <div class="verified-list">
         ${verifiedAccounts.length ? verifiedAccounts.map(a => verifiedRow(a)).join('') : '<div class="empty">まだありません</div>'}
       </div>
@@ -436,8 +436,8 @@ function openEditVerified(id){
       <div class="field"><label>表示名</label><input id="ev-name" value="${esc(a.display_name||'')}"></div>
       <div class="field"><label>種別</label>
         <select id="ev-type">
-          <option value="verified" ${a.account_type==='verified'?'selected':''}>認証アカウント</option>
-          <option value="official" ${a.account_type==='official'?'selected':''}>プロアカウント</option>
+          <option value="verified" ${a.account_type==='verified'?'selected':''}>コミュニティアカウント</option>
+          <option value="official" ${a.account_type==='official'?'selected':''}>コミュニティパートナー</option>
           <option value="developer" ${a.account_type==='developer'?'selected':''} ${a.account_type==='developer'?'':'disabled'}>開発者アカウント</option>
         </select>
       </div>
@@ -567,7 +567,7 @@ async function promptResetVerifiedPassword(id) {
 }
 
 async function disableVerifiedAccount(id) {
-  if (!confirm('この認証アカウントを停止しますか？')) return;
+  if (!confirm('このコミュニティアカウントを停止しますか？')) return;
   const res = await fetch(`${API}?action=verified_admin_disable`, {
     method:'POST',
     credentials:'include',

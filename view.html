@@ -89,6 +89,12 @@ main{padding:20px}
 .sakulabo-fav-date{font-size:10px;color:#999;font-weight:800;line-height:1.2;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sakulabo-fav-title{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .sakulabo-fav-meta{font-size:12px;color:#666;margin-top:2px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakumap-stamps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.sakumap-stamp{border:1px solid #ececec;border-radius:16px;background:#fff;padding:10px;display:grid;gap:7px;justify-items:center;text-align:center;min-width:0}
+.sakumap-stamp-img{width:58px;height:58px;border-radius:14px;background:#fafafa;display:grid;place-items:center;overflow:hidden;color:#b86a7e;font-size:26px;border:1px solid #f0f0f0}
+.sakumap-stamp-img img{width:100%;height:100%;object-fit:contain;display:block}
+.sakumap-stamp-name{width:100%;font-size:11px;font-weight:800;color:#222;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakumap-stamp-date{font-size:10px;color:#777;font-weight:700;line-height:1.3}
 .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:flex-end;justify-content:center}
 .confirm-overlay.open{display:flex}
 .confirm-sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px;box-shadow:0 -8px 24px rgba(0,0,0,.12)}
@@ -235,6 +241,7 @@ function memberChip(name){
 }
 
 function favMeta(parts){return parts.filter(Boolean).join(' ・ ');}
+function favoriteMemberName(name){return typeof name === 'string' ? name.trim() : '';}
 function externalMark(){return '<span style="color:#aaa;font-size:13px;flex-shrink:0;margin-left:auto;">↗</span>';}
 function favWrap(url, body){return url ? `<a class="sakulabo-fav-item" href="${esc(url)}" target="_blank" rel="noopener">${body}${externalMark()}</a>` : `<div class="sakulabo-fav-item">${body}</div>`;}
 function sakulaboFavUrl(item){ if (!item) return ''; return (window.innerWidth >= 1024 && item.url_pc) ? item.url_pc : (item.url_mobile || item.url || ''); }
@@ -248,24 +255,41 @@ function sakulaboMimiFaces(item){
 }
 function renderSakulaboFavorites(p){
   const fav = p.sakulabo_favorites || {};
-  const mimis = Array.isArray(fav.mimis) ? fav.mimis : [];
-  const blogs = Array.isArray(fav.blogs) ? fav.blogs : [];
+  const mimis = Array.isArray(fav.mimis) ? fav.mimis.filter(Boolean) : [];
+  const blogs = Array.isArray(fav.blogs) ? fav.blogs.filter(Boolean) : [];
   const blocks = [];
   if (p.show_favorite_mimis && mimis.length) {
     blocks.push(`<div class="section"><div class="section-title">お気に入りのさくみみ</div><div class="card"><div class="sakulabo-favorites">${mimis.slice(0,10).map(item=>{
-      const members = Array.isArray(item.members) ? item.members.join('・') : '';
+      const members = Array.isArray(item.members) ? item.members.map(favoriteMemberName).filter(Boolean).join('・') : '';
       const body = `${sakulaboMimiFaces(item)}<div class="sakulabo-fav-main">${item.date ? `<div class="sakulabo-fav-date">${esc(item.date)}</div>` : ''}<div class="sakulabo-fav-title">${esc(item.title || item.id || 'さくみみ')}</div>${members ? `<div class="sakulabo-fav-meta">${esc(members)}</div>` : ''}</div>`;
       return favWrap(sakulaboFavUrl(item), body);
     }).join('')}</div></div></div>`);
   }
   if (p.show_favorite_blogs && blogs.length) {
     blocks.push(`<div class="section"><div class="section-title">お気に入りのブログ</div><div class="card"><div class="sakulabo-favorites">${blogs.slice(0,10).map(item=>{
-      const meta = favMeta([item.member, item.date]);
+      const meta = favMeta([favoriteMemberName(item.member), item.date]);
       const body = `<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
       return favWrap(item.url, body);
     }).join('')}</div></div></div>`);
   }
   return blocks.join('');
+}
+function fmtSakumapDate(s){
+  if (!s) return '';
+  const d = new Date(String(s).replace(' ', 'T'));
+  if (isNaN(d)) return String(s);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+function renderSakumapStamps(p){
+  const stamps = Array.isArray(p.sakumap_stamps) ? p.sakumap_stamps : [];
+  if (!p.show_sakumap_stamps || !stamps.length) return '';
+  return `<div class="section"><div class="section-title">SakuMapスタンプ</div><div class="card"><div class="sakumap-stamps">${stamps.slice(0,12).map(s=>`
+    <div class="sakumap-stamp">
+      <div class="sakumap-stamp-img">${s.image_url ? `<img src="${esc(s.image_url)}" alt="">` : esc(s.icon_emoji || '🌸')}</div>
+      <div class="sakumap-stamp-name">${esc(s.name || 'スタンプ')}</div>
+      <div class="sakumap-stamp-date">${esc(fmtSakumapDate(s.claimed_at))}</div>
+    </div>
+  `).join('')}</div></div></div>`;
 }
 
 function metaRows(p){
@@ -373,6 +397,7 @@ function render(p){
     </div>
 
     ${renderSakulaboFavorites(p)}
+    ${renderSakumapStamps(p)}
 
     <div class="spacer"></div>
     <div id="favorite-area" class="section"></div>
