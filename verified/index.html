@@ -331,7 +331,7 @@ function render(){
     return;
   }
 
-  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? '公式アカウント' : '認証アカウント';
+  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? 'プロアカウント' : '認証アカウント';
   verifiedSns = accountSnsLinks(account);
   root.innerHTML = `
     ${isDeveloper ? `

@@ -35,8 +35,9 @@ $config = require __DIR__ . '/../../../api/config.php';
 
 define('SESSION_EXPIRE_HOURS', 720);
 define('ALLOWED_ORIGINS', ['*']);
-define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v10.lock');
+define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v12.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
+define('SAKUMIMI_DATA_PATH', __DIR__ . '/../data/sakumimi_data.json');
 define('MEMBER_DATA_PATH', __DIR__ . '/../data/member.json');
 
 // ── ヘッダー ─────────────────────────────────────────────
@@ -68,13 +69,41 @@ function db(): PDO {
     if (!file_exists(SCHEMA_FLAG)) {
         runMigrations($pdo);
         @file_put_contents(SCHEMA_FLAG, date('Y-m-d H:i:s'));
+    } else {
+        ensureBuddiesProfileSakulaboColumns($pdo);
     }
     return $pdo;
 }
 
+function tableColumns(PDO $pdo, string $table): array {
+    try {
+        $rows = $pdo->query('DESCRIBE `' . str_replace('`', '``', $table) . '`')->fetchAll();
+        return array_column($rows, 'Field');
+    } catch (\Throwable $e) {
+        return [];
+    }
+}
+
+function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
+    $cols = tableColumns($pdo, 'buddies_profiles');
+    if (!$cols) return;
+
+    $alterMap = [
+        'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
+        'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
+    ];
+
+    foreach ($alterMap as $col => $sql) {
+        if (!in_array($col, $cols, true)) {
+            $pdo->exec($sql);
+            $cols[] = $col;
+        }
+    }
+}
+
 function runMigrations(PDO $pdo): void {
     // ─ sakulabo_users に Buddies 拡張カラムを追加 ─
-    $cols = array_column($pdo->query('DESCRIBE sakulabo_users')->fetchAll(), 'Field');
+    $cols = tableColumns($pdo, 'sakulabo_users');
 
     if (!in_array('oshi_member_2', $cols)) {
         $pdo->exec("ALTER TABLE sakulabo_users ADD COLUMN oshi_member_2 VARCHAR(64) NULL DEFAULT NULL");
@@ -101,22 +130,28 @@ function runMigrations(PDO $pdo): void {
         sns_links      TEXT NULL DEFAULT NULL COMMENT 'JSON array of {type,url}',
         follow_stance  VARCHAR(20) NULL DEFAULT NULL COMMENT 'silent_ok / hello_please',
         post_template  TEXT NULL DEFAULT NULL COMMENT 'SNS紹介テンプレート',
+        show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示',
+        show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示',
         updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 
     // ─ 既存テーブルへのカラム追加（冪等・新カラムのみ） ─
-    $bpCols = array_column($pdo->query('DESCRIBE buddies_profiles')->fetchAll(), 'Field');
+    $bpCols = tableColumns($pdo, 'buddies_profiles');
     $alterMap = [
         'follow_stance' => "ALTER TABLE buddies_profiles ADD COLUMN follow_stance VARCHAR(20) NULL DEFAULT NULL",
         'post_template' => "ALTER TABLE buddies_profiles ADD COLUMN post_template TEXT NULL DEFAULT NULL",
         'birthday'      => "ALTER TABLE buddies_profiles ADD COLUMN birthday DATE NULL DEFAULT NULL",
+        'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
+        'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
     ];
     foreach ($alterMap as $col => $sql) {
-        if (!in_array($col, $bpCols)) {
+        if (!in_array($col, $bpCols, true)) {
             $pdo->exec($sql);
+            $bpCols[] = $col;
         }
     }
+    ensureBuddiesProfileSakulaboColumns($pdo);
 
     // ─ 交換済みプロフィールテーブル ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_exchanges (
@@ -501,6 +536,8 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['sns_links']      = $bp['sns_links']      ? json_decode($bp['sns_links'],      true) : [];
         $data['follow_stance']  = $bp['follow_stance'] ?? null;
         $data['post_template']  = $bp['post_template'] ?? null;
+        $data['show_favorite_mimis'] = !empty($bp['show_favorite_mimis']);
+        $data['show_favorite_blogs'] = !empty($bp['show_favorite_blogs']);
     } else {
         $data['birthday']       = null;
         $data['age']            = null;
@@ -513,11 +550,18 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['sns_links']      = [];
         $data['follow_stance']  = null;
         $data['post_template']  = null;
+        $data['show_favorite_mimis'] = false;
+        $data['show_favorite_blogs'] = false;
     }
     $verified = verifiedAccountByUserId((int)$u['id']);
     if (!$verified && isHiromameAdmin($u)) $verified = developerVerifiedAccount($u);
     $data['account_role'] = $verified ? normalizeVerifiedType($verified['account_type'] ?? 'verified') : 'user';
     $data['verified_account'] = $verified ? buildVerifiedData($verified, $includePrivate) : null;
+    $data['sakulabo_favorites'] = getSakulaboFavoritesForProfile(
+        (int)$u['id'],
+        !empty($data['show_favorite_mimis']),
+        !empty($data['show_favorite_blogs'])
+    );
     return $data;
 }
 
@@ -546,6 +590,8 @@ function buildRowData(array $r): array {
         'sns_links'     => isset($r['sns_links'])      && $r['sns_links']      ? json_decode($r['sns_links'],      true) : [],
         'follow_stance' => $r['follow_stance'] ?? null,
         'post_template' => $r['post_template'] ?? null,
+        'show_favorite_mimis' => !empty($r['show_favorite_mimis']),
+        'show_favorite_blogs' => !empty($r['show_favorite_blogs']),
         'exchanged_at'  => $r['exchanged_at']  ?? null,
         'favorited_at'  => $r['favorited_at']  ?? null,
     ];
@@ -556,6 +602,140 @@ function decodeJsonArray(?string $json): array {
     $arr = json_decode($json, true);
     return is_array($arr) ? array_values(array_filter($arr, fn($v) => is_string($v) && trim($v) !== '')) : [];
 }
+
+function truthyFlag($value): int {
+    if (is_bool($value)) return $value ? 1 : 0;
+    if (is_int($value)) return $value ? 1 : 0;
+    $v = strtolower(trim((string)$value));
+    return in_array($v, ['1', 'true', 'on', 'yes'], true) ? 1 : 0;
+}
+
+function loadBlogIndexById(): array {
+    static $map = null;
+    if ($map !== null) return $map;
+    $map = [];
+    if (!file_exists(BLOG_DATA_PATH)) return $map;
+    $blogs = json_decode((string)file_get_contents(BLOG_DATA_PATH), true);
+    if (!is_array($blogs)) return $map;
+    foreach ($blogs as $b) {
+        if (!is_array($b)) continue;
+        foreach (['id', 'blog_id', 'link', 'url'] as $key) {
+            if (!empty($b[$key])) $map[(string)$b[$key]] = $b;
+        }
+    }
+    return $map;
+}
+
+function cleanDisplayText($value): string {
+    return trim(preg_replace('/[\s\x{3000}]+/u', ' ', (string)$value));
+}
+
+function loadSakumimiIndexById(): array {
+    static $map = null;
+    if ($map !== null) return $map;
+    $map = [];
+    if (!file_exists(SAKUMIMI_DATA_PATH)) return $map;
+    $items = json_decode((string)file_get_contents(SAKUMIMI_DATA_PATH), true);
+    if (!is_array($items)) return $map;
+    foreach ($items as $item) {
+        if (!is_array($item)) continue;
+        foreach (['id', 'episode_id'] as $key) {
+            if (!empty($item[$key])) $map[(string)$item[$key]] = $item;
+        }
+        if (isset($item['episode']) && $item['episode'] !== '') {
+            $map[(string)$item['episode']] = $item;
+        }
+    }
+    return $map;
+}
+
+function sakumimiLatestEpisode(): ?int {
+    $latest = null;
+    foreach (loadSakumimiIndexById() as $item) {
+        if (!is_array($item) || !isset($item['episode'])) continue;
+        $episode = (int)$item['episode'];
+        if ($episode <= 0) continue;
+        $latest = $latest === null ? $episode : max($latest, $episode);
+    }
+    return $latest;
+}
+
+function sakumimiOfficialPageUrl($episode, int $perPage): ?string {
+    $episode = (int)$episode;
+    $latest = sakumimiLatestEpisode();
+    if ($episode <= 0 || !$latest) return null;
+    $page = max(0, intdiv(max(0, $latest - $episode), $perPage));
+    return 'https://sakurazaka46.com/s/s46/diary/radio/list?ima=0000&page=' . $page . '&cd=radio';
+}
+
+function compactSakulaboBlogItem(array $row): array {
+    $blogId = (string)($row['blog_id'] ?? '');
+    $blog = loadBlogIndexById()[$blogId] ?? [];
+    $url = $blog['link'] ?? $blog['url'] ?? $blogId;
+    $title = cleanDisplayText($blog['title'] ?? $blog['name'] ?? '');
+    $member = cleanDisplayText($blog['member'] ?? $blog['author'] ?? '');
+    $date = cleanDisplayText($blog['date'] ?? $blog['published_at'] ?? '');
+    if ($title === '') {
+        $title = $member !== '' ? $member . 'のブログ' : 'ブログ';
+    }
+    return [
+        'id' => $blogId,
+        'title' => $title,
+        'member' => $member,
+        'date' => $date,
+        'url' => filter_var($url, FILTER_VALIDATE_URL) ? $url : null,
+        'created_at' => $row['created_at'] ?? null,
+    ];
+}
+
+function compactSakulaboMimiItem(array $row): array {
+    $episodeId = (string)($row['episode_id'] ?? '');
+    $item = loadSakumimiIndexById()[$episodeId] ?? [];
+    $episode = cleanDisplayText($item['episode'] ?? '');
+    $members = [];
+    if (!empty($item['members']) && is_array($item['members'])) {
+        $members = array_values(array_filter(array_map('cleanDisplayText', $item['members'])));
+    }
+    $date = cleanDisplayText($item['date'] ?? '');
+    $content = cleanDisplayText($item['content'] ?? '');
+    $title = $episode !== '' ? 'EP.' . $episode : 'さくみみ';
+    $link = cleanDisplayText($item['link'] ?? '');
+    $officialUrlMobile = sakumimiOfficialPageUrl($episode, 10);
+    $officialUrlPc = sakumimiOfficialPageUrl($episode, 12);
+    return [
+        'id' => $episodeId,
+        'title' => $title,
+        'episode' => $episode,
+        'members' => $members,
+        'date' => $date,
+        'content' => $content,
+        'official_link' => $link !== '' ? $link : null,
+        'url' => $officialUrlMobile,
+        'url_mobile' => $officialUrlMobile,
+        'url_pc' => $officialUrlPc,
+        'created_at' => $row['created_at'] ?? null,
+    ];
+}
+
+function getSakulaboFavoritesForProfile(int $userId, bool $includeMimis, bool $includeBlogs): array {
+    $out = ['mimis' => [], 'blogs' => []];
+    if ($includeMimis) {
+        try {
+            $st = db()->prepare('SELECT episode_id, created_at FROM sakulabo_mimi_favorites WHERE user_id = ? ORDER BY created_at DESC LIMIT 20');
+            $st->execute([$userId]);
+            $out['mimis'] = array_map('compactSakulaboMimiItem', $st->fetchAll());
+        } catch (\Throwable $e) { $out['mimis'] = []; }
+    }
+    if ($includeBlogs) {
+        try {
+            $st = db()->prepare('SELECT blog_id, created_at FROM sakulabo_blog_likes WHERE user_id = ? ORDER BY created_at DESC LIMIT 20');
+            $st->execute([$userId]);
+            $out['blogs'] = array_map('compactSakulaboBlogItem', $st->fetchAll());
+        } catch (\Throwable $e) { $out['blogs'] = []; }
+    }
+    return $out;
+}
+
 function cleanUrl(?string $url): ?string {
     $url = trim((string)$url);
     if ($url === '') return null;
@@ -643,7 +823,7 @@ function normalizeVerifiedType(string $type): string {
 function verifiedTypeLabel(string $type): string {
     return match ($type) {
         'developer' => '開発者アカウント',
-        'official' => '公式アカウント',
+        'official' => 'プロアカウント',
         default => '認証アカウント',
     };
 }
@@ -1007,6 +1187,10 @@ function actionPublicProfileGet(): void {
         $data['favorited'] = (bool)$ck->fetch();
     }
 
+    $showMimis = !empty($data['show_favorite_mimis']);
+    $showBlogs = !empty($data['show_favorite_blogs']);
+    $data['sakulabo_favorites'] = getSakulaboFavoritesForProfile($targetId, $showMimis, $showBlogs);
+
     ok($data);
 }
 
@@ -1054,6 +1238,8 @@ function actionProfileUpdate(): void {
     if ($followStance && !in_array($followStance, ['silent_ok', 'hello_please'], true)) $followStance = null;
 
     $postTemplate = opt('post_template', null);
+    $showFavoriteMimis = truthyFlag($b['show_favorite_mimis'] ?? 0);
+    $showFavoriteBlogs = truthyFlag($b['show_favorite_blogs'] ?? 0);
 
     if ($bio          && mb_strlen($bio)          > 500)  err('自己紹介は500文字以内で入力してください。');
     if ($postTemplate && mb_strlen($postTemplate) > 1000) err('SNS紹介タグは1000文字以内で入力してください。');
@@ -1068,15 +1254,17 @@ function actionProfileUpdate(): void {
 
     db()->prepare('INSERT INTO buddies_profiles
         (user_id, birthday, age, gender, location, buddies_since, bio,
-         tags, favorite_songs, sns_links, follow_stance, post_template)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
+         tags, favorite_songs, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           birthday=VALUES(birthday), age=VALUES(age),
           gender=VALUES(gender), location=VALUES(location),
           buddies_since=VALUES(buddies_since), bio=VALUES(bio),
           tags=VALUES(tags), favorite_songs=VALUES(favorite_songs),
           sns_links=VALUES(sns_links), follow_stance=VALUES(follow_stance),
-          post_template=VALUES(post_template)')
+          post_template=VALUES(post_template),
+          show_favorite_mimis=VALUES(show_favorite_mimis),
+          show_favorite_blogs=VALUES(show_favorite_blogs)')
     ->execute([
         $me['id'],
         $birthday,
@@ -1090,6 +1278,8 @@ function actionProfileUpdate(): void {
         $snsLinks     !== null ? json_encode(array_values($snsLinks), JSON_UNESCAPED_UNICODE) : null,
         $followStance,
         $postTemplate ?: null,
+        $showFavoriteMimis,
+        $showFavoriteBlogs,
     ]);
 
     $newUser = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
@@ -2086,7 +2276,7 @@ function actionVerifiedPostList(): void {
 function actionVerifiedPostCreate(): void {
     ensureVerifiedPostTables();
     $a = requireVerifiedAccount();
-    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・公式アカウントのみ利用できます。', 403);
+    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・プロアカウントのみ利用できます。', 403);
     $b = body();
     $body = trim((string)($b['body'] ?? ''));
     if (mb_strlen($body) > 8000) err('本文は8000文字以内で入力してください。');
@@ -2163,7 +2353,7 @@ function actionVerifiedPostCreate(): void {
 function actionVerifiedPostDelete(): void {
     ensureVerifiedPostTables();
     $a = requireVerifiedAccount();
-    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・公式アカウントのみ利用できます。', 403);
+    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・プロアカウントのみ利用できます。', 403);
     $id = (int)(body()['id'] ?? $_GET['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
     $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE id=? AND status='active' LIMIT 1");

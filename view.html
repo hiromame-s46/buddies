@@ -24,8 +24,8 @@
 :root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--blue:#3b82f6;--gold:#e6b422}
 body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
 .app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
-header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
-header h1{font-size:15px;margin:0;font-weight:700;flex:1;color:#555}
+header{position:relative;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:57px}
+header h1{font-size:15px;margin:0;font-weight:700;color:#555;position:absolute;left:50%;transform:translateX(-50%);max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;pointer-events:none}
 .back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
 .back:hover{background:#f3f3f3}
 main{padding:20px}
@@ -41,6 +41,9 @@ main{padding:20px}
 .kind.sns{border-color:#bfdbfe;color:#1d4ed8;background:#eff6ff}
 .kind-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
 .name{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em;color:#111}
+.hero-meta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px;max-width:100%}
+.hero-meta-chip{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:5px 10px;border-radius:9999px;background:#f7f7f7;border:1px solid #ececec;color:#333;font-size:12px;font-weight:700;line-height:1.2}
+.hero-meta-label{color:#777;font-size:10px;font-weight:800}
 .section{margin-top:24px}
 .section-title{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.5px;margin:0 0 10px}
 .card{background:#f7f7f7;border:1px solid #efefef;border-radius:24px;padding:16px 16px 18px}
@@ -74,6 +77,26 @@ main{padding:20px}
 .error a{color:#111}
 .skeleton{padding:60px 20px;text-align:center;color:#aaa}
 .empty-text{font-size:13px;color:#888;line-height:1.7}
+
+.sakulabo-favorites{display:grid;gap:8px}
+.sakulabo-fav-item{display:flex;align-items:center;justify-content:flex-start;gap:10px;padding:12px 14px;border-radius:16px;background:#fff;border:1px solid #ececec;color:#111;text-decoration:none}
+.sakulabo-fav-item:hover{background:#fafafa}
+.sakulabo-fav-faces{display:flex;flex-shrink:0;margin-right:2px}
+.sakulabo-fav-face{width:34px;height:34px;border-radius:50%;border:2px solid #fff;overflow:hidden;background:#fdf2f8;display:grid;place-items:center;color:#f9a8d4;font-size:12px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sakulabo-fav-face+.sakulabo-fav-face{margin-left:-10px}
+.sakulabo-fav-face img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.sakulabo-fav-main{min-width:0;flex:1}
+.sakulabo-fav-date{font-size:10px;color:#999;font-weight:800;line-height:1.2;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakulabo-fav-title{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakulabo-fav-meta{font-size:12px;color:#666;margin-top:2px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:flex-end;justify-content:center}
+.confirm-overlay.open{display:flex}
+.confirm-sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px;box-shadow:0 -8px 24px rgba(0,0,0,.12)}
+.confirm-title{font-size:16px;font-weight:800;margin:0 0 8px;color:#111}
+.confirm-body{font-size:13px;color:#666;line-height:1.7;margin:0 0 16px}
+.confirm-actions{display:grid;gap:8px}
+.confirm-btn{min-height:46px;border-radius:9999px;border:1px solid #ddd;background:#fff;color:#111;font:800 14px inherit;cursor:pointer}
+.confirm-btn.danger{background:#e00;border-color:#e00;color:#fff}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;border-radius:9999px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:560px){main{padding:16px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}}
@@ -82,12 +105,22 @@ main{padding:20px}
 <body>
 <div class="app">
   <header>
-    <a class="back" href="./" onclick="return closeOrBack(event)" aria-label="戻る">← Buddies</a>
+    <a class="back" href="./" onclick="return closeOrBack(event)" aria-label="戻る">← 戻る</a>
     <h1>プロフィール</h1>
   </header>
   <main id="app"><div class="skeleton">読み込み中…</div></main>
 </div>
 <div id="toast" class="toast"></div>
+<div id="confirm-modal" class="confirm-overlay" onclick="if(event.target===this)closeConfirmModal()">
+  <div class="confirm-sheet">
+    <h2 id="confirm-title" class="confirm-title">確認</h2>
+    <p id="confirm-body" class="confirm-body"></p>
+    <div class="confirm-actions">
+      <button id="confirm-ok" class="confirm-btn danger" type="button">解除する</button>
+      <button class="confirm-btn" type="button" onclick="closeConfirmModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
 <script>
 const API = './api.php';
 const MEMBER_DATA = '../data/member.json';
@@ -150,6 +183,17 @@ function updateSeo(p){
   setCanonical(url);
 }
 function toast(text){ const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),1800); }
+function openConfirmModal(title, body, onOk){
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent = body;
+  document.getElementById('confirm-ok').onclick = () => { closeConfirmModal(); onOk(); };
+  document.getElementById('confirm-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeConfirmModal(){
+  document.getElementById('confirm-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
 function getDisplayName(p){ return p.display_name || p.username || '名無し'; }
 function hasSns(p){ return Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim()); }
 function getOshiList(p){ return [p.oshi_member,p.oshi_member_2,p.oshi_member_3].filter(Boolean); }
@@ -189,13 +233,52 @@ function memberChip(name){
   const img = m.image ? `<img src="${esc(assetUrl(m.image))}" alt="" onerror="this.style.display='none'">` : esc((name[0]||'？'));
   return `<div class="member-chip"><div class="member-chip-avatar">${img}</div><div class="member-chip-name">${esc(name)}</div></div>`;
 }
+
+function favMeta(parts){return parts.filter(Boolean).join(' ・ ');}
+function externalMark(){return '<span style="color:#aaa;font-size:13px;flex-shrink:0;margin-left:auto;">↗</span>';}
+function favWrap(url, body){return url ? `<a class="sakulabo-fav-item" href="${esc(url)}" target="_blank" rel="noopener">${body}${externalMark()}</a>` : `<div class="sakulabo-fav-item">${body}</div>`;}
+function sakulaboFavUrl(item){ if (!item) return ''; return (window.innerWidth >= 1024 && item.url_pc) ? item.url_pc : (item.url_mobile || item.url || ''); }
+function sakulaboMimiFaces(item){
+  const members = Array.isArray(item?.members) ? item.members.filter(Boolean) : [];
+  if (!members.length) return '<div class="sakulabo-fav-faces"><div class="sakulabo-fav-face">♪</div></div>';
+  return `<div class="sakulabo-fav-faces">${members.slice(0,4).map(name=>{
+    const img = memberMap[name]?.image || '';
+    return `<div class="sakulabo-fav-face">${img ? `<img src="${esc(assetUrl(img))}" alt="" onerror="this.style.display='none'">` : esc(name[0] || '?')}</div>`;
+  }).join('')}</div>`;
+}
+function renderSakulaboFavorites(p){
+  const fav = p.sakulabo_favorites || {};
+  const mimis = Array.isArray(fav.mimis) ? fav.mimis : [];
+  const blogs = Array.isArray(fav.blogs) ? fav.blogs : [];
+  const blocks = [];
+  if (p.show_favorite_mimis && mimis.length) {
+    blocks.push(`<div class="section"><div class="section-title">お気に入りのさくみみ</div><div class="card"><div class="sakulabo-favorites">${mimis.slice(0,10).map(item=>{
+      const members = Array.isArray(item.members) ? item.members.join('・') : '';
+      const body = `${sakulaboMimiFaces(item)}<div class="sakulabo-fav-main">${item.date ? `<div class="sakulabo-fav-date">${esc(item.date)}</div>` : ''}<div class="sakulabo-fav-title">${esc(item.title || item.id || 'さくみみ')}</div>${members ? `<div class="sakulabo-fav-meta">${esc(members)}</div>` : ''}</div>`;
+      return favWrap(sakulaboFavUrl(item), body);
+    }).join('')}</div></div></div>`);
+  }
+  if (p.show_favorite_blogs && blogs.length) {
+    blocks.push(`<div class="section"><div class="section-title">お気に入りのブログ</div><div class="card"><div class="sakulabo-favorites">${blogs.slice(0,10).map(item=>{
+      const meta = favMeta([item.member, item.date]);
+      const body = `<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
+      return favWrap(item.url, body);
+    }).join('')}</div></div></div>`);
+  }
+  return blocks.join('');
+}
+
 function metaRows(p){
   const rows = [];
-  if (p.location) rows.push(['住んでいる場所', p.location]);
+  if (p.location) rows.push(['都道府県', p.location]);
   if (p.age) rows.push(['年齢', `${p.age}歳`]);
   if (p.gender) rows.push(['性別', p.gender]);
   if (p.buddies_since) rows.push(['Buddies歴', p.buddies_since]);
   return rows;
+}
+function heroMeta(rows){
+  if (!rows.length) return '';
+  return `<div class="hero-meta">${rows.map(([label,val])=>`<span class="hero-meta-chip"><span class="hero-meta-label">${esc(label)}</span>${esc(val)}</span>`).join('')}</div>`;
 }
 
 async function load(){
@@ -246,9 +329,6 @@ function render(p){
     return `<a class="link" href="${esc(s.url)}" target="_blank" rel="noopener">${snsIcon(s.type)}<span>${esc(label)}</span></a>`;
   }).join('');
   const rows = metaRows(p);
-  const aboutHtml = rows.length
-    ? `<div class="meta-grid">${rows.map(([label,val])=>`<div class="meta-item"><div class="meta-label">${esc(label)}</div><div class="meta-value">${esc(val)}</div></div>`).join('')}</div>`
-    : `<div class="empty-text">まだ登録されていません。</div>`;
   const oshis = getOshiList(p);
   const interests = Array.isArray(p.tags) ? p.tags : [];
   const songs = Array.isArray(p.favorite_songs) ? p.favorite_songs : [];
@@ -282,19 +362,17 @@ function render(p){
       <div class="icon-wrap"><div class="icon" style="background:${esc(heroBg)}">${heroIcon}</div>${badge}</div>
       ${sns ? `<div class="kind sns">SNS登録済み</div>${stance ? `<div class="kind-note">${esc(stance)}</div>` : ''}` : `<div class="kind">一般ユーザー</div>`}
       <div class="name">${esc(name)}</div>
+      ${heroMeta(rows)}
     </div>
 
     ${upperSections}
 
     <div class="section">
-      <div class="section-title">About me</div>
-      <div class="card">${aboutHtml}</div>
-    </div>
-
-    <div class="section">
       <div class="section-title">Bio</div>
       <div class="card"><div class="box">${p.bio ? esc(p.bio) : 'まだ登録されていません。'}</div></div>
     </div>
+
+    ${renderSakulaboFavorites(p)}
 
     <div class="spacer"></div>
     <div id="favorite-area" class="section"></div>
@@ -331,6 +409,15 @@ function renderFavoriteArea(){
 }
 
 async function toggleFavorite(){
+  if (!profile || !me) return;
+  if (profile.favorited) {
+    openConfirmModal('お気に入りの解除', `${getDisplayName(profile)} さんをお気に入りから解除しますか？`, doToggleFavorite);
+    return;
+  }
+  await doToggleFavorite();
+}
+
+async function doToggleFavorite(){
   if (!profile || !me) return;
   try {
     const res = await fetch(`${API}?action=buddies_favorite_toggle`, {

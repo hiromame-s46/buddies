@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>認証アカウント - Buddies profile</title>
-<meta name="description" content="Buddies profile の認証アカウントページです。公式アカウント・開発者アカウントの情報、イベント、掲示板を確認できます。">
+<meta name="description" content="Buddies profile の認証アカウントページです。プロアカウント・開発者アカウントの情報、イベント、掲示板を確認できます。">
 <meta name="robots" content="index,follow">
 <meta property="og:title" content="認証アカウント - Buddies profile">
-<meta property="og:description" content="Buddies profile の認証アカウントページです。公式アカウント・開発者アカウントの情報、イベント、掲示板を確認できます。">
+<meta property="og:description" content="Buddies profile の認証アカウントページです。プロアカウント・開発者アカウントの情報、イベント、掲示板を確認できます。">
 <meta property="og:type" content="profile">
 <meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/verified/view.html">
 <meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
@@ -24,8 +24,8 @@
 :root{--line:#e8e8e8;--ink:#111;--muted:#666;--gold:#e6b422;--soft:#f7f7f7}
 body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
 .app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
-header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px}
-header h1{font-size:15px;margin:0;font-weight:700;flex:1;color:#555}
+header{position:relative;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:57px}
+header h1{font-size:15px;margin:0;font-weight:700;color:#555;position:absolute;left:50%;transform:translateX(-50%);max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;pointer-events:none}
 .back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
 .back:hover{background:#f3f3f3}
 main{padding:20px}
@@ -102,7 +102,7 @@ main{padding:20px}
 <body>
 <div class="app">
   <header>
-    <a class="back" href="../" onclick="return closeOrBack(event)" aria-label="戻る">← Buddies</a>
+    <a class="back" href="../" onclick="return closeOrBack(event)" aria-label="戻る">← 戻る</a>
     <h1>認証アカウント</h1>
   </header>
   <main id="app"><div class="skeleton">読み込み中…</div></main>
@@ -228,7 +228,7 @@ function updateSeo(a){
   setMeta('meta[name="twitter:image"]', 'content', image);
   setCanonical(url);
 }
-function kindLabel(type){ return type === 'developer' ? '開発者アカウント' : type === 'official' ? '公式アカウント' : '認証アカウント'; }
+function kindLabel(type){ return type === 'developer' ? '開発者アカウント' : type === 'official' ? 'プロアカウント' : '認証アカウント'; }
 function kindDef(type){
   return type === 'developer' ? 'Buddies profile の開発・運営を行うアカウントです。'
        : type === 'official'  ? '極めて信頼性の高いことを証明するアカウントです。'

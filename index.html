@@ -380,6 +380,32 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   transform:translateX(18px);
 }
 
+.sakulabo-toggle-card {
+  display:flex; align-items:center; gap:14px; cursor:pointer;
+  padding:14px 16px; border:1.5px solid #e5e7eb; border-radius:16px; background:#fff;
+  transition:all .15s;
+}
+.sakulabo-toggle-card:hover { border-color:#999; }
+.sakulabo-toggle-card:has(input:checked),
+.sakulabo-toggle-card.active { border-color:#000; background:#fafafa; }
+.sakulabo-toggle-card:has(input:checked) .filter-switch-track,
+.sakulabo-toggle-card.active .filter-switch-track { background:#000; }
+.sakulabo-toggle-card:has(input:checked) .filter-switch-track::after,
+.sakulabo-toggle-card.active .filter-switch-track::after { transform:translateX(18px); }
+.sakulabo-toggle-title { font-size:13px; font-weight:700; color:#111; line-height:1.35; }
+.sakulabo-toggle-desc { font-size:11px; color:#777; line-height:1.55; margin-top:2px; }
+.sakulabo-favorites-card { display:grid; gap:8px; }
+.sakulabo-fav-item { display:flex; align-items:center; justify-content:flex-start; gap:10px; padding:11px 13px; border-radius:14px; background:#f7f7f7; color:#111; text-decoration:none; }
+.sakulabo-fav-item:hover { background:#f0f0f0; }
+.sakulabo-fav-faces { display:flex; flex-shrink:0; margin-right:2px; }
+.sakulabo-fav-face { width:34px; height:34px; border-radius:50%; border:2px solid #fff; overflow:hidden; background:#fdf2f8; display:grid; place-items:center; color:#f9a8d4; font-size:12px; font-weight:800; box-shadow:0 1px 3px rgba(0,0,0,.06); }
+.sakulabo-fav-face + .sakulabo-fav-face { margin-left:-10px; }
+.sakulabo-fav-face img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+.sakulabo-fav-main { min-width:0; flex:1; }
+.sakulabo-fav-date { font-size:10px; color:#999; font-weight:700; line-height:1.2; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sakulabo-fav-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sakulabo-fav-meta { font-size:12px; color:#666; margin-top:2px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
 .stance-btn.active { background:#000; color:#fff; border-color:#000; }
 .stance-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9999px; font-size:12px; font-weight:500; background:#eef7ff; color:#0c63a8; border:1px solid #cce4f7; }
 .stance-pill.hello { background:#fff3e0; color:#a75a0c; border-color:#ffd9a8; }
@@ -878,6 +904,28 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       </div>
     </div>
 
+
+    <!-- SakuLabo連携 -->
+    <div class="edit-section">
+      <div class="edit-section-title">SakuLabo連携</div>
+      <label class="sakulabo-toggle-card">
+        <input id="edit-show-favorite-mimis" class="filter-switch" type="checkbox" onchange="syncSakulaboToggle(this)">
+        <span class="filter-switch-track" aria-hidden="true"></span>
+        <span>
+          <span class="sakulabo-toggle-title">お気に入りのさくみみを表示する</span>
+          <span class="sakulabo-toggle-desc">公開プロフィールのBio下に、SakuLaboでお気に入りにしたさくみみを表示します。</span>
+        </span>
+      </label>
+      <label class="sakulabo-toggle-card">
+        <input id="edit-show-favorite-blogs" class="filter-switch" type="checkbox" onchange="syncSakulaboToggle(this)">
+        <span class="filter-switch-track" aria-hidden="true"></span>
+        <span>
+          <span class="sakulabo-toggle-title">お気に入りのブログを表示する</span>
+          <span class="sakulabo-toggle-desc">公開プロフィールのBio下に、SakuLaboでお気に入りにしたブログを表示します。</span>
+        </span>
+      </label>
+      <div style="font-size:11px; color:#999; line-height:1.7; margin:0 4px;">どちらも初期状態はオフです。オンにした項目だけ公開プロフィールに表示されます。</div>
+    </div>
     <div style="display:flex; gap:8px; margin-top:8px; margin-bottom:80px;">
       <button type="button" class="pill-button" style="flex:1;" onclick="closeEdit()">キャンセル</button>
       <button type="button" class="pill-button black" style="flex:1;" onclick="saveEdit()">保存</button>
@@ -1705,7 +1753,7 @@ function verifiedCard(a) {
 }
 function accountTypeLabel(type) {
   if (type === 'developer') return '開発者アカウント';
-  return type === 'official' ? '公式アカウント' : '認証アカウント';
+  return type === 'official' ? 'プロアカウント' : '認証アカウント';
 }
 function accountTypeDefinition(type) {
   if (type === 'developer') return 'Buddies profile の開発・運営を行うアカウントです。';
@@ -2480,6 +2528,49 @@ function profileMini(p, opts = {}) {
   </div>`;
 }
 
+
+function sakulaboFavMeta(parts) {
+  return parts.filter(Boolean).join(' ・ ');
+}
+function sakulaboFavLink(url, body) {
+  if (url) return `<a class="sakulabo-fav-item" href="${esc(url)}" target="_blank" rel="noopener">${body}<i data-lucide="external-link" style="width:14px;height:14px;color:#aaa;flex-shrink:0;margin-left:auto;"></i></a>`;
+  return `<div class="sakulabo-fav-item">${body}</div>`;
+}
+function sakulaboFavUrl(item) {
+  if (!item) return '';
+  if (window.innerWidth >= 1024 && item.url_pc) return item.url_pc;
+  return item.url_mobile || item.url || '';
+}
+function sakulaboMimiFaces(item) {
+  const members = Array.isArray(item?.members) ? item.members.filter(Boolean) : [];
+  if (!members.length) return '<div class="sakulabo-fav-faces"><div class="sakulabo-fav-face"><i data-lucide="headphones" style="width:15px;height:15px;"></i></div></div>';
+  return `<div class="sakulabo-fav-faces">${members.slice(0, 4).map(name => {
+    const img = memberMap[name]?.image || '';
+    return `<div class="sakulabo-fav-face">${img ? `<img src="${esc(img)}" alt="" onerror="this.style.display='none'">` : esc(name[0] || '?')}</div>`;
+  }).join('')}</div>`;
+}
+function renderSakulaboFavorites(profile) {
+  const fav = profile.sakulabo_favorites || {};
+  const mimis = Array.isArray(fav.mimis) ? fav.mimis : [];
+  const blogs = Array.isArray(fav.blogs) ? fav.blogs : [];
+  const sections = [];
+  if (profile.show_favorite_mimis && mimis.length) {
+    sections.push(`<div class="profile-section"><div class="profile-section-title">お気に入りのさくみみ</div><div class="sakulabo-favorites-card">${mimis.slice(0,10).map(item => {
+      const members = Array.isArray(item.members) ? item.members.join('・') : '';
+      const body = `${sakulaboMimiFaces(item)}<div class="sakulabo-fav-main">${item.date ? `<div class="sakulabo-fav-date">${esc(item.date)}</div>` : ''}<div class="sakulabo-fav-title">${esc(item.title || item.id || 'さくみみ')}</div>${members ? `<div class="sakulabo-fav-meta">${esc(members)}</div>` : ''}</div>`;
+      return sakulaboFavLink(sakulaboFavUrl(item), body);
+    }).join('')}</div></div>`);
+  }
+  if (profile.show_favorite_blogs && blogs.length) {
+    sections.push(`<div class="profile-section"><div class="profile-section-title">お気に入りのブログ</div><div class="sakulabo-favorites-card">${blogs.slice(0,10).map(item => {
+      const meta = sakulaboFavMeta([item.member, item.date]);
+      const body = `<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
+      return sakulaboFavLink(item.url, body);
+    }).join('')}</div></div>`);
+  }
+  return sections.join('');
+}
+
 // ── プロフィール詳細モーダル ──────────────────────────────
 function getSnsIcon(type) {
   const icons = {
@@ -2618,6 +2709,7 @@ function openProfile(profile, isOwn, opts = {}) {
       ${tagsHtml?`<div class="profile-section"><div class="profile-section-title">興味</div><div class="profile-tag-list">${tagsHtml}</div></div>`:''}
       ${songsHtml?`<div class="profile-section"><div class="profile-section-title">好きな曲</div><div class="profile-tag-list">${songsHtml}</div></div>`:''}
       ${profile.bio?`<div class="profile-section"><div class="profile-section-title">自己紹介</div><div class="profile-bio">${esc(profile.bio)}</div></div>`:''}
+      ${renderSakulaboFavorites(profile)}
       ${linkSection}
     </div>
     <div style="display:flex; gap:8px; flex-wrap:wrap; padding:0; margin-top:20px;">${actionBtns}</div>
@@ -2756,6 +2848,15 @@ let editSongs = [];
 let editSns = [];
 let editFollowStance = null; // 'silent_ok' | 'hello_please' | null
 
+function syncSakulaboToggle(input) {
+  const card = input?.closest?.('.sakulabo-toggle-card');
+  if (card) card.classList.toggle('active', !!input.checked);
+}
+
+function syncSakulaboToggles() {
+  document.querySelectorAll('.sakulabo-toggle-card input[type="checkbox"]').forEach(syncSakulaboToggle);
+}
+
 function openEdit() {
   if (!me) { showAuthModal(); return; }
   if (isVerifiedManagedUser(me)) {
@@ -2767,6 +2868,9 @@ function openEdit() {
   document.getElementById('edit-gender').value = me.gender || '';
   document.getElementById('edit-location').value = me.location || '';
   document.getElementById('edit-bio').value = me.bio || '';
+  document.getElementById('edit-show-favorite-mimis').checked = !!me.show_favorite_mimis;
+  document.getElementById('edit-show-favorite-blogs').checked = !!me.show_favorite_blogs;
+  syncSakulaboToggles();
 
   setupBirthdaySelectors(me.birthday || '');
   setupBuddiesSinceSelectors(me.buddies_since || '');
@@ -3210,6 +3314,8 @@ async function saveEdit() {
     sns_links:     editSns.slice(0, 4),
     follow_stance: editSns.some(s => s.url && s.url.trim()) ? (editFollowStance || null) : null,
     post_template: buildPostTemplatePayload(),
+    show_favorite_mimis: document.getElementById('edit-show-favorite-mimis').checked,
+    show_favorite_blogs: document.getElementById('edit-show-favorite-blogs').checked,
   };
 
   setLoading(true, '保存中…');
