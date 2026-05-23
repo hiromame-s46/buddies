@@ -8,7 +8,7 @@
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--line:#e5e5e5;--danger:#e53e3e;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;background:#f6f6f6;color:#111;min-height:100vh;}
-.app{max-width:720px;margin:0 auto;min-height:100vh;background:#fff;}
+.app{max-width:720px;margin:0 auto;min-height:100vh;background:#fff;display:flex;flex-direction:column;}
 header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:10;}
 header h1{font-size:18px;font-weight:800;flex:1;}
 .btn{height:38px;padding:0 16px;border-radius:9999px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#111;font-family:inherit;}
@@ -17,7 +17,7 @@ header h1{font-size:18px;font-weight:800;flex:1;}
 .btn-primary:hover{background:#333;}
 .btn-danger{background:#fff;color:var(--danger);border-color:#fed7d7;}
 .btn-danger:hover{background:#fff5f5;}
-main{padding:20px;}
+#tab-content{flex:1;min-height:0;display:flex;flex-direction:column;}
 
 /* ログイン */
 .login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
@@ -35,8 +35,9 @@ main{padding:20px;}
 
 /* タグ統合UI */
 .section{padding:20px;}
+.section.fill-section{flex:1;min-height:0;display:flex;flex-direction:column;}
 .section-title{font-size:12px;font-weight:700;color:#999;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px;}
-.tag-list{display:flex;flex-direction:column;gap:6px;max-height:400px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;padding:8px;}
+.tag-list{display:flex;flex-direction:column;gap:6px;flex:1;min-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:14px;padding:8px;}
 .tag-row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;cursor:pointer;transition:background .12s;}
 .tag-row:hover{background:#f5f5f5;}
 .tag-row.selected{background:#f0f0f0;}
@@ -45,6 +46,15 @@ main{padding:20px;}
 .tag-checkbox{width:18px;height:18px;accent-color:#111;flex-shrink:0;cursor:pointer;}
 .merge-panel{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:14px;background:#fafafa;display:none;}
 .merge-panel.show{display:block;}
+.suggest-panel{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:12px;margin:0 0 12px;display:none;}
+.suggest-panel.show{display:block;}
+.suggest-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px;}
+.suggest-title{font-size:12px;font-weight:800;color:#555;}
+.suggest-list{display:grid;gap:8px;max-height:210px;overflow:auto;}
+.suggest-card{border:1px solid #eee;border-radius:12px;background:#fff;padding:10px;display:grid;gap:8px;}
+.suggest-tags{display:flex;flex-wrap:wrap;gap:6px;}
+.suggest-tag{font-size:12px;font-weight:700;background:#f1f1f1;border-radius:9999px;padding:4px 9px;}
+.suggest-meta{font-size:11px;color:#777;line-height:1.5;}
 .merge-label{font-size:12px;font-weight:700;color:#666;margin-bottom:6px;}
 .merge-selected{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;min-height:30px;}
 .merge-tag{padding:4px 12px;border-radius:9999px;background:#eee;font-size:13px;font-weight:600;}
@@ -222,7 +232,7 @@ function switchTab(type) {
   document.querySelectorAll('.tab').forEach(t => {
     const active = (type === 'tags' && t.textContent.includes('興味'))
       || (type === 'songs' && t.textContent.includes('楽曲'))
-      || (type === 'verified' && t.textContent.includes('認証'));
+      || (type === 'verified' && t.textContent.includes('コミュニティ'));
     t.classList.toggle('active', active);
   });
   if (type === 'verified') loadVerifiedAccounts();
@@ -330,11 +340,19 @@ function esc(s) {
 function renderTab() {
   if (currentType === 'verified') { renderVerifiedTab(); return; }
   const label = currentType === 'tags' ? '興味タグ' : '楽曲タグ';
+  const suggestions = buildMergeSuggestions(allItems);
   document.getElementById('tab-content').innerHTML = `
-    <div class="section">
+    <div class="section fill-section">
       <div class="section-title">${label}一覧（${allItems.length}件）　チェックして統合</div>
       <div class="search-wrap">
         <input type="text" id="tag-search" placeholder="${label}を検索…" oninput="filterList(this.value)">
+      </div>
+      <div class="suggest-panel ${suggestions.length ? 'show' : ''}" id="suggest-panel">
+        <div class="suggest-head">
+          <div class="suggest-title">似たタグの統合候補（${suggestions.length}件）</div>
+          <button class="btn" onclick="renderSuggestions()">再分析</button>
+        </div>
+        <div class="suggest-list" id="suggest-list"></div>
       </div>
       <div class="tag-list" id="tag-list"></div>
     </div>
@@ -352,7 +370,85 @@ function renderTab() {
       <div class="result-msg" id="result-msg"></div>
     </div>
   `;
+  renderSuggestions(suggestions);
   renderList();
+}
+
+function normalizeTagName(name) {
+  return String(name || '')
+    .toLowerCase()
+    .normalize('NFKC')
+    .replace(/[＃#]/g, '')
+    .replace(/[・･\s_\-ー〜～~!！?？.,，、。()[\]（）「」『』]/g, '');
+}
+
+function tagSimilarity(a, b) {
+  const x = normalizeTagName(a);
+  const y = normalizeTagName(b);
+  if (!x || !y || x === y) return x === y ? 1 : 0;
+  if (x.includes(y) || y.includes(x)) return Math.min(x.length, y.length) / Math.max(x.length, y.length) + .25;
+  const xs = new Set([...x]);
+  const ys = new Set([...y]);
+  const inter = [...xs].filter(ch => ys.has(ch)).length;
+  const union = new Set([...xs, ...ys]).size || 1;
+  return inter / union;
+}
+
+function buildMergeSuggestions(items) {
+  const out = [];
+  const used = new Set();
+  const sorted = [...items].sort((a,b) => String(a.name).localeCompare(String(b.name), 'ja'));
+  for (let i = 0; i < sorted.length; i++) {
+    const base = sorted[i];
+    if (used.has(base.name)) continue;
+    const group = [base];
+    for (let j = i + 1; j < sorted.length; j++) {
+      const other = sorted[j];
+      if (used.has(other.name)) continue;
+      const score = tagSimilarity(base.name, other.name);
+      if (score >= .72) group.push(other);
+    }
+    if (group.length >= 2) {
+      group.forEach(it => used.add(it.name));
+      const target = [...group].sort((a,b) => b.count - a.count || a.name.length - b.name.length)[0];
+      out.push({ target: target.name, items: group, score: Math.round(Math.max(...group.filter(it => it !== target).map(it => tagSimilarity(target.name, it.name))) * 100) });
+    }
+  }
+  return out.sort((a,b) => b.items.reduce((s,it)=>s+it.count,0) - a.items.reduce((s,it)=>s+it.count,0)).slice(0, 12);
+}
+
+function renderSuggestions(prebuilt = null) {
+  const suggestions = prebuilt || buildMergeSuggestions(allItems);
+  const panel = document.getElementById('suggest-panel');
+  const list = document.getElementById('suggest-list');
+  if (!panel || !list) return;
+  panel.classList.toggle('show', suggestions.length > 0);
+  const title = panel.querySelector('.suggest-title');
+  if (title) title.textContent = `似たタグの統合候補（${suggestions.length}件）`;
+  if (!suggestions.length) {
+    list.innerHTML = '';
+    return;
+  }
+  list.innerHTML = suggestions.map((s, i) => `
+    <div class="suggest-card">
+      <div class="suggest-tags">${s.items.map(it => `<span class="suggest-tag">${esc(it.name)} (${it.count})</span>`).join('')}</div>
+      <div class="suggest-meta">統合先候補: ${esc(s.target)} / 類似度 ${esc(s.score)}%</div>
+      <button class="btn" onclick="applySuggestion(${i})">この候補を選択</button>
+    </div>
+  `).join('');
+  window._tagMergeSuggestions = suggestions;
+}
+
+function applySuggestion(index) {
+  const suggestions = window._tagMergeSuggestions || [];
+  const s = suggestions[index];
+  if (!s) return;
+  selectedNames = new Set(s.items.map(it => it.name));
+  const to = document.getElementById('merge-to');
+  if (to) to.value = s.target;
+  renderList();
+  updateMergePanel();
+  document.getElementById('merge-panel')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
 }
 
 async function loadVerifiedAccounts() {

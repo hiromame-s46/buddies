@@ -256,93 +256,58 @@ function buddies_render_card(array $p): GdImage {
     imagesavealpha($im, true);
 
     $font = buddies_font_regular();
-    $bg = buddies_rgb($im, '#f6f7f9');
+    $bg = buddies_rgb($im, '#ffffff');
     $white = buddies_rgb($im, '#ffffff');
     $ink = buddies_rgb($im, '#111111');
-    $muted = buddies_rgb($im, '#666666');
-    $line = buddies_rgb($im, '#e8e8e8');
-    $soft = buddies_rgb($im, '#f3f5f7');
-    $accent = buddies_rgb($im, '#86c2cf');
-    $accentDark = buddies_rgb($im, '#27616d');
-    $chipBg = buddies_rgb($im, '#eef7f9');
+    $muted = buddies_rgb($im, '#747474');
+    $line = buddies_rgb($im, '#eeeeee');
+    $soft = buddies_rgb($im, '#f7f7f7');
 
     imagefilledrectangle($im, 0, 0, $w, $h, $bg);
-    imagefilledrectangle($im, 0, 0, $w, 18, $accent);
-    buddies_rounded_rect($im, 70, 66, 1130, 564, 34, buddies_rgba($im, '#000000', 118), true);
-    buddies_rounded_rect($im, 58, 54, 1118, 552, 34, $white, true);
-    buddies_rounded_rect($im, 58, 54, 1118, 552, 34, $line, false);
+    imagefilledrectangle($im, 78, 92, 82, 538, $ink);
+    imageline($im, 78, 538, 1122, 538, $line);
 
-    buddies_rounded_rect($im, 94, 94, 318, 132, 19, $chipBg, true);
-    buddies_text($im, 18, 118, 121, 'Buddies profile', $accentDark, $font);
+    buddies_text($im, 24, 110, 146, 'Buddies profile', $muted, $font);
 
-    $avatarSize = 198;
-    imagefilledellipse($im, 216, 286, $avatarSize + 18, $avatarSize + 18, $soft);
+    $avatarSize = 170;
+    imagefilledellipse($im, 222, 308, $avatarSize + 16, $avatarSize + 16, $soft);
     $src = buddies_load_image(buddies_avatar_url($p));
     if ($src) {
-        buddies_draw_cover_circle($im, $src, 216, 286, $avatarSize);
+        buddies_draw_cover_circle($im, $src, 222, 308, $avatarSize);
     } else {
-        imagefilledellipse($im, 216, 286, $avatarSize, $avatarSize, $chipBg);
-        buddies_text($im, 72, 188, 312, mb_substr((string)$p['display_name'], 0, 1), $accentDark, $font);
+        imagefilledellipse($im, 222, 308, $avatarSize, $avatarSize, $soft);
+        buddies_text($im, 66, 196, 334, mb_substr((string)$p['display_name'], 0, 1), $ink, $font);
     }
-    imageellipse($im, 216, 286, $avatarSize, $avatarSize, $white);
-    imageellipse($im, 216, 286, $avatarSize + 2, $avatarSize + 2, $line);
+    imageellipse($im, 222, 308, $avatarSize, $avatarSize, $line);
 
     $name = trim((string)$p['display_name']) ?: 'Buddies';
-    $nameLines = buddies_wrap($name, 13, 2);
+    $nameLines = buddies_wrap($name, 16, 2);
     foreach ($nameLines as $i => $lineText) {
-        buddies_text($im, $i === 0 ? 46 : 38, 380, 168 + $i * 56, $lineText, $ink, $font);
+        buddies_text($im, $i === 0 ? 58 : 46, 360, 222 + $i * 62, $lineText, $ink, $font);
     }
-    buddies_text($im, 22, 382, 282, '櫻坂46ファンのプロフィール', $muted, $font);
 
     $oshis = array_values(array_filter([$p['oshi_member'] ?? null, $p['oshi_member_2'] ?? null, $p['oshi_member_3'] ?? null]));
-    buddies_text($im, 22, 382, 348, '推しメン', $accentDark, $font);
-    $cx = 382; $cy = 366;
-    if ($oshis) {
-        foreach (array_slice($oshis, 0, 3) as $oshi) {
-            $cw = buddies_draw_chip($im, (string)$oshi, $cx, $cy, 232, $chipBg, $ink, $font);
-            $cx += $cw + 12;
-            if ($cx > 830) { $cx = 382; $cy += 52; }
-        }
-    } else {
-        buddies_text($im, 24, $cx, $cy + 31, 'まだ内緒', $muted, $font);
-    }
+    $summary = $oshis ? implode(' / ', array_slice($oshis, 0, 3)) . ' 推し' : '櫻坂46ファンのプロフィール';
+    buddies_text($im, 25, 364, 348, $summary, $muted, $font);
 
     $meta = array_values(array_filter([
         !empty($p['location']) ? $p['location'] : null,
         !empty($p['age']) ? $p['age'] . '歳' : null,
         !empty($p['buddies_since']) ? 'Buddies歴 ' . $p['buddies_since'] : null,
     ]));
-    if ($meta) buddies_text($im, 23, 382, 472, implode('  /  ', $meta), $muted, $font);
+    if ($meta) buddies_text($im, 22, 364, 398, implode('  /  ', $meta), $muted, $font);
 
-    $songs = array_slice(array_values(array_filter($p['favorite_songs'] ?? [])), 0, 3);
-    buddies_rounded_rect($im, 845, 122, 1068, 406, 24, $soft, true);
-    buddies_text($im, 20, 874, 166, '好きな曲', $accentDark, $font);
-    if ($songs) {
-        foreach ($songs as $i => $song) {
-            imagefilledellipse($im, 884, 212 + $i * 60, 30, 30, $white);
-            buddies_text($im, 15, 879, 218 + $i * 60, (string)($i + 1), $accentDark, $font);
-            $songText = mb_strlen((string)$song) > 8 ? mb_substr((string)$song, 0, 7) . '…' : (string)$song;
-            buddies_text($im, 18, 914, 220 + $i * 60, $songText, $ink, $font);
-        }
-    } else {
-        buddies_text($im, 22, 874, 224, 'プロフィールでチェック', $muted, $font);
+    $tags = array_values(array_filter(array_merge($p['tags'] ?? [], $p['favorite_songs'] ?? [])));
+    $lineText = $tags ? implode('  ・  ', array_slice($tags, 0, 3)) : 'プロフィールを開いて詳しく見る';
+    $lineText = mb_strlen($lineText) > 32 ? mb_substr($lineText, 0, 31) . '…' : $lineText;
+    buddies_rounded_rect($im, 364, 438, 972, 492, 27, $soft, true);
+    buddies_text($im, 21, 394, 474, $lineText, $muted, $font);
+
+    if (!empty($p['username'])) {
+        buddies_text($im, 20, 110, 500, '@' . (string)$p['username'], $muted, $font);
     }
 
-    $bio = trim((string)($p['bio'] ?? '同じ推しのBuddiesとつながりたいです。'));
-    buddies_rounded_rect($im, 382, 486, 812, 524, 19, $soft, true);
-    $bioLines = buddies_wrap($bio, 21, 1);
-    if ($bioLines) buddies_text($im, 19, 406, 512, $bioLines[0], $muted, $font);
-
-    $tags = array_slice(array_values(array_filter($p['tags'] ?? [])), 0, 2);
-    $tx = 94;
-    foreach ($tags as $tag) {
-        $tw = buddies_draw_chip($im, '#' . (string)$tag, $tx, 454, 210, $white, $muted, $font);
-        $tx += $tw + 10;
-    }
-
-    imageline($im, 94, 528, 1068, 528, $line);
-    buddies_text($im, 18, 94, 592, 'プロフィールを開いて詳しく見る', $muted, $font);
-    buddies_text($im, 24, 938, 592, 'Buddies', $ink, $font);
+    buddies_text($im, 26, 970, 592, 'Buddies', $ink, $font);
 
     return $im;
 }

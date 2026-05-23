@@ -16,6 +16,13 @@ header h1{font-size:17px;margin:0;font-weight:800;flex:1}
 .small{font-size:12px;color:var(--muted);line-height:1.6}
 main{padding:16px;display:grid;gap:14px}
 .card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff}
+.account-summary{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;display:grid;gap:14px}
+.settings-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.settings-tab{min-height:44px;border:1px solid var(--line);border-radius:14px;background:#fafafa;color:#555;font:800 13px inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+.settings-tab.active{background:#111;border-color:#111;color:#fff}
+.settings-panel{display:none}
+.settings-panel.active{display:grid;gap:14px}
+@media(max-width:560px){.settings-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tab{font-size:12px}}
 .login{max-width:380px;margin:60px auto}
 .field{display:grid;gap:6px;margin-bottom:10px}
 .field label{font-size:12px;font-weight:700;color:#555}
@@ -62,6 +69,13 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .save-bar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;justify-content:flex-end}
 .save-bar .status{flex:1;font-size:12px;color:#666}
 .save-bar .status.dirty{color:#b45309;font-weight:700}
+.save-bar.saving{background:rgba(255,251,235,.98)}
+.save-bar.saved{background:rgba(240,255,244,.98)}
+.save-bar.error{background:rgba(255,245,245,.98)}
+.save-bar.saving .status{color:#92400e;font-weight:800}
+.save-bar.saved .status{color:#276749;font-weight:800}
+.save-bar.error .status{color:#d33;font-weight:800}
+.save-bar .btn.primary:disabled{opacity:.85}
 
 /* ハーフモーダル */
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
@@ -217,6 +231,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 const API = '../api.php';
 let account = null;
 let isDeveloper = false;
+let activeSettingsTab = 'profile';
 const crop = { img:null, scale:1, x:0, y:0, dragStart:null, startX:0, startY:0 };
 let pendingIcon = null; // 未保存のアイコンデータURL
 let dirty = false;
@@ -278,8 +293,24 @@ function setDirty(v){
   const status = document.getElementById('save-status');
   if (!bar || !status) return;
   bar.hidden = !account;
+  bar.classList.remove('saving','saved','error');
   if (v) { status.textContent = '未保存の変更があります'; status.classList.add('dirty'); }
   else   { status.textContent = '変更はありません'; status.classList.remove('dirty'); }
+}
+function setSaveState(state, text){
+  const bar = document.getElementById('save-bar');
+  const status = document.getElementById('save-status');
+  if (!bar || !status) return;
+  bar.hidden = !account;
+  bar.classList.remove('saving','saved','error');
+  if (state) bar.classList.add(state);
+  status.textContent = text;
+  status.classList.toggle('dirty', state === 'error');
+}
+function switchSettingsTab(tab){
+  activeSettingsTab = tab;
+  document.querySelectorAll('.settings-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.settingsTab === tab));
+  document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.settingsPanel === tab));
 }
 function confirmDialog(title, text){
   return new Promise(resolve => {
@@ -341,7 +372,7 @@ function render(){
       </div>
     ` : ''}
 
-    <section class="card">
+    <section class="account-summary">
       <div class="account-head">
         <button class="account-icon-btn" type="button" data-act="open-icon" title="タップしてアイコンを編集">
           ${account.icon_url ? `<img src="../${esc(account.icon_url)}?_=${Date.now()}" alt="">` : esc((account.display_name||'？')[0])}
@@ -353,60 +384,75 @@ function render(){
           <div class="small">${esc(account.account_definition || '')}</div>
         </div>
       </div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">公開情報</h2>
-      <div class="field"><label>表示名</label><input id="display_name" maxlength="100" value="${esc(account.display_name)}" oninput="setDirty(true)"></div>
-      <div class="field"><label>ラベル（バッジ表示文言）</label><input id="label" maxlength="80" value="${esc(account.label||'')}" placeholder="${esc(kindLabel)}" oninput="setDirty(true)"></div>
-      <div class="field"><label>説明文</label><textarea id="description" maxlength="2000" placeholder="アカウントの説明（プロフィール詳細に表示されます）" oninput="setDirty(true)">${esc(account.description||'')}</textarea></div>
-      <div class="field"><label>ハッシュタグ（カンマ区切り・最大6つ）</label><input id="hashtags" value="${esc(tagsText(account))}" placeholder="例: 推し活, イベント" oninput="setDirty(true)"></div>
-    </section>
-
-    <section class="card">
-      <h2 class="section-title">リンク</h2>
-      <div class="link-card">
-        <div class="link-card-title">メインリンク</div>
-        <div class="field"><label>ボタン文言</label><input id="primary_link_label" maxlength="80" value="${esc(account.primary_link_label||'')}" placeholder="例: 公式サイトを見る" oninput="setDirty(true)"></div>
-        <div class="field"><label>URL</label><input id="primary_link_url" value="${esc(account.primary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
-      </div>
-      <div class="link-card">
-        <div class="link-card-title">サブリンク1</div>
-        <div class="field"><label>ボタン文言</label><input id="secondary_link_label" maxlength="80" value="${esc(account.secondary_link_label||'')}" placeholder="例: お知らせを見る" oninput="setDirty(true)"></div>
-        <div class="field"><label>URL</label><input id="secondary_link_url" value="${esc(account.secondary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
-      </div>
-      <div class="link-card">
-        <div class="link-card-title">サブリンク2</div>
-        <div class="field"><label>ボタン文言</label><input id="cta_label" maxlength="80" value="${esc(account.cta_label||'')}" placeholder="例: 申し込みページ" oninput="setDirty(true)"></div>
-        <div class="field"><label>URL</label><input id="cta_url" value="${esc(account.cta_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
-      </div>
-      <div class="link-card">
-        <div class="link-card-title">SNSリンク</div>
-        <div id="sns-editor-wrap">${snsEditorHtml()}</div>
+      <div class="settings-tabs" role="tablist" aria-label="設定カテゴリ">
+        <button class="settings-tab active" type="button" data-settings-tab="profile" onclick="switchSettingsTab('profile')">プロフィール</button>
+        <button class="settings-tab" type="button" data-settings-tab="links" onclick="switchSettingsTab('links')">リンク</button>
+        <button class="settings-tab" type="button" data-settings-tab="events" onclick="switchSettingsTab('events')">イベント</button>
+        <button class="settings-tab" type="button" data-settings-tab="security" onclick="switchSettingsTab('security')">セキュリティ</button>
       </div>
     </section>
 
-    <section class="card">
-      <h2 class="section-title">イベント管理</h2>
-      <p class="small" style="margin:0 0 10px;">主催イベントを作成・編集できます。「非公開」は URL を知っている人のみアクセスできます。</p>
-      <div class="actions" style="margin-bottom:10px;">
-        <button class="btn primary" id="new-event-btn" type="button" data-act="new-event">+ 新しいイベント</button>
-      </div>
-      <div id="event-list" class="event-list"></div>
-      <div id="event-msg" class="msg"></div>
-    </section>
+    <div class="settings-panel active" data-settings-panel="profile">
+      <section class="card">
+        <h2 class="section-title">公開情報</h2>
+        <div class="field"><label>表示名</label><input id="display_name" maxlength="100" value="${esc(account.display_name)}" oninput="setDirty(true)"></div>
+        <div class="field"><label>ラベル（バッジ表示文言）</label><input id="label" maxlength="80" value="${esc(account.label||'')}" placeholder="${esc(kindLabel)}" oninput="setDirty(true)"></div>
+        <div class="field"><label>説明文</label><textarea id="description" maxlength="2000" placeholder="アカウントの説明（プロフィール詳細に表示されます）" oninput="setDirty(true)">${esc(account.description||'')}</textarea></div>
+        <div class="field"><label>ハッシュタグ（カンマ区切り・最大6つ）</label><input id="hashtags" value="${esc(tagsText(account))}" placeholder="例: 推し活, イベント" oninput="setDirty(true)"></div>
+      </section>
+    </div>
 
-    <section class="card">
-      <h2 class="section-title">パスワード変更</h2>
-      <div class="field-row">
-        <div class="field"><label>現在のパスワード</label><input id="current_password" type="password" autocomplete="current-password"></div>
-        <div class="field"><label>新しいパスワード（8文字以上）</label><input id="new_password" type="password" autocomplete="new-password"></div>
-      </div>
-      <div class="actions" style="margin-top:8px;"><button class="btn" type="button" data-act="change-password">変更</button></div>
-      <div id="pw-msg" class="msg"></div>
-    </section>`;
+    <div class="settings-panel" data-settings-panel="links">
+      <section class="card">
+        <h2 class="section-title">リンク</h2>
+        <div class="link-card">
+          <div class="link-card-title">メインリンク</div>
+          <div class="field"><label>ボタン文言</label><input id="primary_link_label" maxlength="80" value="${esc(account.primary_link_label||'')}" placeholder="例: 公式サイトを見る" oninput="setDirty(true)"></div>
+          <div class="field"><label>URL</label><input id="primary_link_url" value="${esc(account.primary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+        </div>
+        <div class="link-card">
+          <div class="link-card-title">サブリンク1</div>
+          <div class="field"><label>ボタン文言</label><input id="secondary_link_label" maxlength="80" value="${esc(account.secondary_link_label||'')}" placeholder="例: お知らせを見る" oninput="setDirty(true)"></div>
+          <div class="field"><label>URL</label><input id="secondary_link_url" value="${esc(account.secondary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+        </div>
+        <div class="link-card">
+          <div class="link-card-title">サブリンク2</div>
+          <div class="field"><label>ボタン文言</label><input id="cta_label" maxlength="80" value="${esc(account.cta_label||'')}" placeholder="例: 申し込みページ" oninput="setDirty(true)"></div>
+          <div class="field"><label>URL</label><input id="cta_url" value="${esc(account.cta_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+        </div>
+        <div class="link-card">
+          <div class="link-card-title">SNSリンク</div>
+          <div id="sns-editor-wrap">${snsEditorHtml()}</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="events">
+      <section class="card">
+        <h2 class="section-title">イベント管理</h2>
+        <p class="small" style="margin:0 0 10px;">主催イベントを作成・編集できます。「非公開」は URL を知っている人のみアクセスできます。</p>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="new-event-btn" type="button" data-act="new-event">+ 新しいイベント</button>
+        </div>
+        <div id="event-list" class="event-list"></div>
+        <div id="event-msg" class="msg"></div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="security">
+      <section class="card">
+        <h2 class="section-title">パスワード変更</h2>
+        <div class="field-row">
+          <div class="field"><label>現在のパスワード</label><input id="current_password" type="password" autocomplete="current-password"></div>
+          <div class="field"><label>新しいパスワード（8文字以上）</label><input id="new_password" type="password" autocomplete="new-password"></div>
+        </div>
+        <div class="actions" style="margin-top:8px;"><button class="btn" type="button" data-act="change-password">変更</button></div>
+        <div id="pw-msg" class="msg"></div>
+      </section>
+    </div>`;
 
   setDirty(false);
+  switchSettingsTab(activeSettingsTab);
   loadEvents();
 }
 
@@ -438,16 +484,22 @@ async function saveAll(){
   };
   const btn = document.getElementById('save-btn');
   btn.disabled = true; btn.textContent = '保存中…';
-  const json = await api('verified_update', payload);
-  btn.disabled = false; btn.textContent = 'すべて保存';
-  if (!json.ok) {
-    document.getElementById('save-status').textContent = json.error || '保存できませんでした';
-    document.getElementById('save-status').classList.add('dirty');
-    return;
+  setSaveState('saving', '保存しています…');
+  try {
+    const json = await api('verified_update', payload);
+    if (!json.ok) {
+      setSaveState('error', json.error || '保存できませんでした');
+      return;
+    }
+    account = json.data;
+    dirty = false;
+    setSaveState('saved', '保存しました ✓');
+    setTimeout(() => { if (!dirty) setDirty(false); }, 1800);
+  } catch(e) {
+    setSaveState('error', '通信エラーで保存できませんでした');
+  } finally {
+    btn.disabled = false; btn.textContent = 'すべて保存';
   }
-  account = json.data;
-  setDirty(false);
-  document.getElementById('save-status').textContent = '保存しました ✓';
 }
 
 // ── アイコン編集モーダル ─────────────────────────────────
@@ -964,6 +1016,7 @@ function handleAdminOpenParams(){
   const qs = new URLSearchParams(location.search);
   const editEventId = parseInt(qs.get('edit_event') || '0', 10);
   if (editEventId && myEvents.some(e => Number(e.id) === Number(editEventId))) {
+    switchSettingsTab('events');
     openEventForm(editEventId);
     qs.delete('edit_event');
     const rest = qs.toString();

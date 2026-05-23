@@ -74,6 +74,7 @@ function db(): PDO {
         @file_put_contents(SCHEMA_FLAG, date('Y-m-d H:i:s'));
     } else {
         ensureBuddiesProfileSakulaboColumns($pdo);
+        ensureBuddiesHistoryTable($pdo);
     }
     return $pdo;
 }
@@ -95,6 +96,7 @@ function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
         'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
         'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
+        'show_sakumv_quiz' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumv_quiz TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにSakuMV Quiz自己ベストを表示'",
     ];
 
     foreach ($alterMap as $col => $sql) {
@@ -103,6 +105,23 @@ function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
             $cols[] = $col;
         }
     }
+}
+
+function ensureBuddiesHistoryTable(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_history (
+        id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id        BIGINT UNSIGNED NOT NULL,
+        happened_year  SMALLINT UNSIGNED NOT NULL,
+        happened_month TINYINT UNSIGNED NULL DEFAULT NULL,
+        happened_day   TINYINT UNSIGNED NULL DEFAULT NULL,
+        title          VARCHAR(160) NOT NULL,
+        note           VARCHAR(300) NULL DEFAULT NULL,
+        sort_order     INT NOT NULL DEFAULT 0,
+        created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_user_date (user_id, happened_year, happened_month, happened_day),
+        KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 function runMigrations(PDO $pdo): void {
@@ -137,6 +156,7 @@ function runMigrations(PDO $pdo): void {
         show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示',
         show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示',
         show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示',
+        show_sakumv_quiz TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにSakuMV Quiz自己ベストを表示',
         updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
@@ -150,6 +170,7 @@ function runMigrations(PDO $pdo): void {
         'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
         'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
+        'show_sakumv_quiz' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumv_quiz TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにSakuMV Quiz自己ベストを表示'",
     ];
     foreach ($alterMap as $col => $sql) {
         if (!in_array($col, $bpCols, true)) {
@@ -158,6 +179,7 @@ function runMigrations(PDO $pdo): void {
         }
     }
     ensureBuddiesProfileSakulaboColumns($pdo);
+    ensureBuddiesHistoryTable($pdo);
 
     // ─ 交換済みプロフィールテーブル ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_exchanges (
@@ -545,6 +567,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['show_favorite_mimis'] = !empty($bp['show_favorite_mimis']);
         $data['show_favorite_blogs'] = !empty($bp['show_favorite_blogs']);
         $data['show_sakumap_stamps'] = !empty($bp['show_sakumap_stamps']);
+        $data['show_sakumv_quiz'] = !array_key_exists('show_sakumv_quiz', $bp) || !empty($bp['show_sakumv_quiz']);
     } else {
         $data['birthday']       = null;
         $data['age']            = null;
@@ -560,6 +583,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['show_favorite_mimis'] = false;
         $data['show_favorite_blogs'] = false;
         $data['show_sakumap_stamps'] = false;
+        $data['show_sakumv_quiz'] = true;
     }
     $data['sakumap_linked'] = sakumapLinkStatus((int)$u['id'])['linked'];
     $verified = verifiedAccountByUserId((int)$u['id']);
@@ -574,6 +598,11 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
     $data['sakumap_stamps'] = !empty($data['show_sakumap_stamps'])
         ? getSakumapStampsForProfile((int)$u['id'])
         : [];
+    $data['sakumv_quiz_linked'] = hasSakumvQuizRecords((int)$u['id']);
+    $data['sakumv_quiz_records'] = (!empty($data['show_sakumv_quiz']) && $data['sakumv_quiz_linked'])
+        ? getSakumvQuizBestRecords((int)$u['id'])
+        : [];
+    $data['buddies_history'] = getBuddiesHistoryForProfile((int)$u['id']);
     return $data;
 }
 
@@ -621,6 +650,71 @@ function truthyFlag($value): int {
     if (is_int($value)) return $value ? 1 : 0;
     $v = strtolower(trim((string)$value));
     return in_array($v, ['1', 'true', 'on', 'yes'], true) ? 1 : 0;
+}
+
+function getBuddiesHistoryForProfile(int $userId): array {
+    try {
+        ensureBuddiesHistoryTable(db());
+        $st = db()->prepare(
+            'SELECT id, happened_year, happened_month, happened_day, title, note
+               FROM buddies_history
+              WHERE user_id = ?
+              ORDER BY happened_year DESC,
+                       COALESCE(happened_month, 0) DESC,
+                       COALESCE(happened_day, 0) DESC,
+                       sort_order ASC,
+                       id DESC
+              LIMIT 50'
+        );
+        $st->execute([$userId]);
+        return array_map(function($r) {
+            return [
+                'id' => (int)$r['id'],
+                'year' => (int)$r['happened_year'],
+                'month' => $r['happened_month'] !== null ? (int)$r['happened_month'] : null,
+                'day' => $r['happened_day'] !== null ? (int)$r['happened_day'] : null,
+                'title' => (string)$r['title'],
+                'note' => $r['note'] !== null ? (string)$r['note'] : '',
+            ];
+        }, $st->fetchAll());
+    } catch (\Throwable $e) {
+        return [];
+    }
+}
+
+function normalizeBuddiesHistoryItems($items): array {
+    if (!is_array($items)) err('My Buddies history の形式が正しくありません。');
+    $items = array_slice($items, 0, 50);
+    $out = [];
+    $maxYear = (int)date('Y') + 2;
+    foreach ($items as $i => $item) {
+        if (!is_array($item)) continue;
+        $year = (int)($item['year'] ?? 0);
+        $month = isset($item['month']) && $item['month'] !== '' && $item['month'] !== null ? (int)$item['month'] : null;
+        $day = isset($item['day']) && $item['day'] !== '' && $item['day'] !== null ? (int)$item['day'] : null;
+        $title = trim((string)($item['title'] ?? ''));
+        $note = trim((string)($item['note'] ?? ''));
+        if ($year < 1990 || $year > $maxYear) err('My Buddies history の年が正しくありません。');
+        if ($month !== null && ($month < 1 || $month > 12)) err('My Buddies history の月が正しくありません。');
+        if ($day !== null && $month === null) err('日を入力する場合は月も入力してください。');
+        if ($day !== null && ($day < 1 || $day > 31)) err('My Buddies history の日が正しくありません。');
+        if ($month !== null && $day !== null && !checkdate($month, $day, $year)) err('My Buddies history の日付が正しくありません。');
+        if ($title === '' || mb_strlen($title) > 160) err('My Buddies history のタイトルは1〜160文字で入力してください。');
+        if (mb_strlen($note) > 300) err('My Buddies history の一言は300文字以内で入力してください。');
+        $out[] = [
+            'year' => $year,
+            'month' => $month,
+            'day' => $day,
+            'title' => $title,
+            'note' => $note,
+            'sort_order' => $i,
+        ];
+    }
+    usort($out, function($a, $b) {
+        return [$b['year'], $b['month'] ?? 0, $b['day'] ?? 0, -$b['sort_order']]
+            <=> [$a['year'], $a['month'] ?? 0, $a['day'] ?? 0, -$a['sort_order']];
+    });
+    return array_values($out);
 }
 
 function loadBlogIndexById(): array {
@@ -848,6 +942,73 @@ function sakumapAssetUrl(?string $path): ?string {
     if ($path === '') return null;
     if (preg_match('#^https?://#i', $path)) return $path;
     return SAKUMAP_BASE_URL . ltrim($path, '/');
+}
+
+function sakumvQuizTableName(int $questionCount, string $soundMode): string {
+    return 'sakumv_rankings_' . $questionCount . '_' . $soundMode;
+}
+
+function sakumvQuizSections(): array {
+    return [
+        ['question_count' => 5, 'sound_mode' => 'muted', 'label' => '5問 音なし'],
+        ['question_count' => 5, 'sound_mode' => 'unmuted', 'label' => '5問 音あり'],
+        ['question_count' => 10, 'sound_mode' => 'muted', 'label' => '10問 音なし'],
+        ['question_count' => 10, 'sound_mode' => 'unmuted', 'label' => '10問 音あり'],
+    ];
+}
+
+function sakumvQuizTableExists(string $table): bool {
+    try {
+        $st = db()->prepare('SHOW TABLES LIKE ?');
+        $st->execute([$table]);
+        return (bool)$st->fetchColumn();
+    } catch (\Throwable $e) {
+        return false;
+    }
+}
+
+function hasSakumvQuizRecords(int $userId): bool {
+    foreach (sakumvQuizSections() as $section) {
+        $table = sakumvQuizTableName((int)$section['question_count'], (string)$section['sound_mode']);
+        if (!sakumvQuizTableExists($table)) continue;
+        try {
+            $st = db()->prepare("SELECT 1 FROM {$table} WHERE buddies_user_id = ? LIMIT 1");
+            $st->execute([$userId]);
+            if ($st->fetchColumn()) return true;
+        } catch (\Throwable $e) {}
+    }
+    return false;
+}
+
+function getSakumvQuizBestRecords(int $userId): array {
+    $records = [];
+    foreach (sakumvQuizSections() as $section) {
+        $table = sakumvQuizTableName((int)$section['question_count'], (string)$section['sound_mode']);
+        if (!sakumvQuizTableExists($table)) continue;
+        try {
+            $rows = db()->query(
+                "SELECT id, correct_count, time_seconds, buddies_user_id, created_at
+                 FROM {$table}
+                 ORDER BY correct_count DESC, time_seconds ASC, created_at ASC, id ASC"
+            )->fetchAll();
+        } catch (\Throwable $e) {
+            continue;
+        }
+        foreach ($rows as $index => $row) {
+            if ((int)($row['buddies_user_id'] ?? 0) !== $userId) continue;
+            $records[] = [
+                'section' => $section['label'],
+                'question_count' => (int)$section['question_count'],
+                'sound_mode' => (string)$section['sound_mode'],
+                'rank' => $index + 1,
+                'correct_count' => (int)$row['correct_count'],
+                'time_seconds' => (float)$row['time_seconds'],
+                'created_at' => $row['created_at'],
+            ];
+            break;
+        }
+    }
+    return $records;
 }
 
 function getSakumapStampsForProfile(int $sakulaboUserId): array {
@@ -1095,6 +1256,7 @@ match ($action) {
     'buddies_profile_get'     => actionProfileGet(),
     'buddies_public_profile_get' => actionPublicProfileGet(),
     'buddies_profile_update'  => actionProfileUpdate(),
+    'buddies_history_update'  => actionHistoryUpdate(),
     'buddies_icon_update'     => actionIconUpdate(),
     'buddies_icon_clear'      => actionIconClear(),
 
@@ -1411,6 +1573,9 @@ function actionProfileUpdate(): void {
     $showSakumapStamps = sakumapLinkStatus((int)$me['id'])['linked']
         ? truthyFlag($b['show_sakumap_stamps'] ?? 0)
         : 0;
+    $showSakumvQuiz = hasSakumvQuizRecords((int)$me['id'])
+        ? truthyFlag($b['show_sakumv_quiz'] ?? 0)
+        : 1;
 
     if ($bio          && mb_strlen($bio)          > 500)  err('自己紹介は500文字以内で入力してください。');
     if ($postTemplate && mb_strlen($postTemplate) > 1000) err('SNS紹介タグは1000文字以内で入力してください。');
@@ -1425,8 +1590,8 @@ function actionProfileUpdate(): void {
 
     db()->prepare('INSERT INTO buddies_profiles
         (user_id, birthday, age, gender, location, buddies_since, bio,
-         tags, favorite_songs, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         tags, favorite_songs, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps, show_sakumv_quiz)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           birthday=VALUES(birthday), age=VALUES(age),
           gender=VALUES(gender), location=VALUES(location),
@@ -1436,7 +1601,8 @@ function actionProfileUpdate(): void {
           post_template=VALUES(post_template),
           show_favorite_mimis=VALUES(show_favorite_mimis),
           show_favorite_blogs=VALUES(show_favorite_blogs),
-          show_sakumap_stamps=VALUES(show_sakumap_stamps)')
+          show_sakumap_stamps=VALUES(show_sakumap_stamps),
+          show_sakumv_quiz=VALUES(show_sakumv_quiz)')
     ->execute([
         $me['id'],
         $birthday,
@@ -1453,6 +1619,7 @@ function actionProfileUpdate(): void {
         $showFavoriteMimis,
         $showFavoriteBlogs,
         $showSakumapStamps,
+        $showSakumvQuiz,
     ]);
 
     $newUser = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
@@ -1460,6 +1627,39 @@ function actionProfileUpdate(): void {
     $u  = $newUser->fetch();
     $bp = getBuddiesProfile((int)$me['id']);
     ok(buildUserData($u, $bp, true));
+}
+
+function actionHistoryUpdate(): void {
+    $me = requireAuth();
+    $b = body();
+    $items = normalizeBuddiesHistoryItems($b['history'] ?? []);
+    ensureBuddiesHistoryTable(db());
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('DELETE FROM buddies_history WHERE user_id = ?')->execute([(int)$me['id']]);
+        $ins = $pdo->prepare(
+            'INSERT INTO buddies_history
+                (user_id, happened_year, happened_month, happened_day, title, note, sort_order)
+             VALUES (?,?,?,?,?,?,?)'
+        );
+        foreach ($items as $i => $item) {
+            $ins->execute([
+                (int)$me['id'],
+                $item['year'],
+                $item['month'],
+                $item['day'],
+                $item['title'],
+                $item['note'] !== '' ? $item['note'] : null,
+                $i,
+            ]);
+        }
+        $pdo->commit();
+    } catch (\Throwable $e) {
+        $pdo->rollBack();
+        err('My Buddies history の保存に失敗しました。');
+    }
+    ok(['history' => getBuddiesHistoryForProfile((int)$me['id'])]);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
