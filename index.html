@@ -1320,6 +1320,7 @@ let iconPickerOffset = 0;
 let iconFavOnlyActive = false;  // お気に入りのみモード
 const ICON_PAGE_SIZE = 60;
 let selectedIconUrl = null;
+let restoringProfileReturn = false;
 
 const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
 const DEVELOPER_IDS = new Set([1]); // 開発者アカウント uid
@@ -1413,6 +1414,8 @@ async function loadUserData() {
 function showMainUI() {
   renderHeaderAuth();
   renderAll();
+  restoreProfileReturnState();
+  if (restoringProfileReturn) return;
   const savedTab = sessionStorage.getItem('buddies_active_tab');
   if (['home','search','mypage'].includes(savedTab)) {
     switchTab(savedTab);
@@ -1560,11 +1563,36 @@ function switchTab(tab) {
   document.getElementById('mypage-page').hidden = tab !== 'mypage';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   sessionStorage.setItem('buddies_active_tab', tab);
-  window.scrollTo(0,0);
+  if (!restoringProfileReturn) window.scrollTo(0,0);
   if (tab === 'search') {
     setupSearchObserver();
     if (!searchOffset && !searchLoading) resetAndLoadSearch();
   }
+}
+
+function saveProfileReturnState() {
+  const currentTab = document.querySelector('.tab-btn.active')?.dataset?.tab || sessionStorage.getItem('buddies_active_tab') || 'home';
+  sessionStorage.setItem('buddies_active_tab', currentTab);
+  sessionStorage.setItem('buddies_return_from_profile', JSON.stringify({
+    tab: currentTab,
+    t: Date.now()
+  }));
+}
+
+function restoreProfileReturnState() {
+  let state = null;
+  try { state = JSON.parse(sessionStorage.getItem('buddies_return_from_profile') || 'null'); } catch(e) {}
+  if (!state || !['home','search','mypage'].includes(state.tab)) return;
+  sessionStorage.removeItem('buddies_return_from_profile');
+  restoringProfileReturn = true;
+  switchTab(state.tab);
+  requestAnimationFrame(() => {
+    window.scrollTo(0, 0);
+    setTimeout(() => {
+      window.scrollTo(0, 0);
+      restoringProfileReturn = false;
+    }, 80);
+  });
 }
 
 function renderAll() { renderHome(); renderMyPage(); }
@@ -2734,12 +2762,11 @@ function getSnsIcon(type) {
 
 async function openProfile(profile, isOwn, opts = {}) {
   profile = isOwn ? profile : mergeVerifiedOntoProfile(profile);
-  const currentTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
-  if (currentTab) sessionStorage.setItem('buddies_active_tab', currentTab);
+  saveProfileReturnState();
   if (profile?.verified_account?.id) {
-    window.open('./verified/view.html?id=' + encodeURIComponent(profile.verified_account.id), '_blank', 'noopener');
+    location.href = './verified/view.html?id=' + encodeURIComponent(profile.verified_account.id);
   } else if (profile?.id) {
-    window.open('./view.html?id=' + encodeURIComponent(profile.id), '_blank', 'noopener');
+    location.href = './view.html?id=' + encodeURIComponent(profile.id);
   }
   return;
   const needsFullProfile =
@@ -4164,12 +4191,13 @@ function buildProfileURL(uid) {
 }
 function openMyProfileView() {
   if (!me) return;
+  saveProfileReturnState();
   const a = currentVerifiedAccount();
   if (a && a.id) {
-    window.open('./verified/view.html?id=' + encodeURIComponent(a.id), '_blank');
+    location.href = './verified/view.html?id=' + encodeURIComponent(a.id);
     return;
   }
-  window.open(buildProfileURL(me.id), '_blank');
+  location.href = './view.html?id=' + encodeURIComponent(me.id);
 }
 function copyProfileURL() {
   if (!me) return;
@@ -4222,7 +4250,7 @@ function openProfileCardPage() {
     localStorage.setItem('buddies_card_members', membersJson);
   } catch(e) {}
   const url = 'card.html?uid=' + encodeURIComponent(me.id);
-  window.open(url, '_blank', 'noopener');
+  location.href = url;
 }
 
 function openXShareSheet(options) {
