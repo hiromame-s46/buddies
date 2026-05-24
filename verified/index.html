@@ -17,7 +17,7 @@ header h1{font-size:17px;margin:0;font-weight:800;flex:1}
 main{padding:16px;display:grid;gap:14px}
 .card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff}
 .account-summary{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;display:grid;gap:14px}
-.settings-tabs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+.settings-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
 .settings-tab{min-height:44px;border:1px solid var(--line);border-radius:14px;background:#fafafa;color:#555;font:800 13px inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
 .settings-tab.active{background:#111;border-color:#111;color:#fff}
 .settings-panel{display:none}
@@ -108,6 +108,45 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .event-row .meta{font-size:12px;color:var(--muted)}
 .event-row .row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .event-empty{padding:18px;text-align:center;color:#999;font-size:13px;border:1px dashed var(--line);border-radius:14px}
+.admin-table{display:grid;gap:8px}
+.admin-row{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;display:grid;gap:6px}
+.admin-row-title{font-size:14px;font-weight:800}
+.admin-detail{font-size:12px;color:#666;line-height:1.6}
+#form-modal .modal-sheet{max-width:680px}
+#responses-modal .modal-sheet{max-width:760px}
+.form-builder{display:grid;gap:14px}
+.form-builder-section{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px;display:grid;gap:12px}
+.form-builder-section h4{margin:0;font-size:14px;font-weight:800}
+.form-builder-section .hint{font-size:12px;color:var(--muted);margin-top:-6px}
+.form-setup-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:680px){.form-setup-grid{grid-template-columns:minmax(0,1fr)}}
+.form-setting-card{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:12px;display:grid;gap:8px}
+.form-setting-card label{font-size:12px;font-weight:800;color:#555}
+.form-setting-card .small{font-size:11px}
+.form-question-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.form-question-row{border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:12px;display:grid;gap:10px}
+.form-question-head{display:flex;align-items:center;gap:8px}
+.form-question-no{width:28px;height:28px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.form-question-title{font-size:13px;font-weight:800;flex:1}
+.form-question-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.form-question-row .field-row{grid-template-columns:minmax(0,1fr) 150px}
+.form-option-tools{display:flex;gap:6px;flex-wrap:wrap}
+.response-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.response-stat{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:10px 12px}
+.response-stat strong{display:block;font-size:18px;line-height:1.2}
+.response-stat span{font-size:11px;color:var(--muted);font-weight:700}
+.response-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.response-tools input{flex:1;min-width:180px}
+.response-card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px;display:grid;gap:10px}
+.response-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.response-name{font-size:14px;font-weight:800}
+.response-meta{font-size:12px;color:var(--muted)}
+.response-answer-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.response-answer{border:1px solid #eee;border-radius:12px;background:#fafafa;padding:10px;display:grid;gap:4px}
+.response-answer-label{font-size:11px;color:#666;font-weight:800}
+.response-answer-value{font-size:13px;color:#111;white-space:pre-wrap;word-break:break-word}
+.response-empty-value{color:#999}
+@media(max-width:560px){.response-summary{grid-template-columns:minmax(0,1fr)}.response-head{display:grid}.form-question-row .field-row{grid-template-columns:minmax(0,1fr)}}
 .subevent-box{margin-top:10px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid var(--line);display:grid;gap:8px}
 .subevent-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .subevent-title{font-size:12px;font-weight:800;color:#555}
@@ -215,6 +254,40 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
   </div>
 </div>
 
+<div class="modal-overlay" id="participants-modal" onclick="if(event.target===this)closeParticipantsModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>参加メンバー管理</h3>
+      <button class="modal-close" type="button" onclick="closeParticipantsModal()">×</button>
+    </div>
+    <div class="modal-body" id="participants-modal-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="form-modal" onclick="if(event.target===this)closeFormModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="form-modal-title">フォームを編集</h3>
+      <button class="modal-close" type="button" onclick="closeFormModal()">×</button>
+    </div>
+    <div class="modal-body" id="form-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" type="button" onclick="closeFormModal()">キャンセル</button>
+      <button class="btn primary" type="button" onclick="saveForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="responses-modal" onclick="if(event.target===this)closeResponsesModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>回答一覧</h3>
+      <button class="modal-close" type="button" onclick="closeResponsesModal()">×</button>
+    </div>
+    <div class="modal-body" id="responses-modal-body"></div>
+  </div>
+</div>
+
 <!-- 確認モーダル -->
 <div class="confirm-overlay" id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
   <div class="confirm-box">
@@ -231,7 +304,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 const API = '../api.php';
 let account = null;
 let isDeveloper = false;
-let activeSettingsTab = 'profile';
+let activeSettingsTab = sessionStorage.getItem('buddies_verified_settings_tab') || 'profile';
 const crop = { img:null, scale:1, x:0, y:0, dragStart:null, startX:0, startY:0 };
 let pendingIcon = null; // 未保存のアイコンデータURL
 let dirty = false;
@@ -242,6 +315,10 @@ let editingEventId = null;
 let pendingEventCover = null;
 let pendingEventAttachments = [];
 let pendingExistingAttachment = null;
+let myForms = [];
+let editingFormId = null;
+let formQuestions = [];
+let responseView = { form:null, questions:[], rows:[] };
 let editingSubeventId = null;
 let editingSubeventEventId = null;
 
@@ -309,6 +386,7 @@ function setSaveState(state, text){
 }
 function switchSettingsTab(tab){
   activeSettingsTab = tab;
+  sessionStorage.setItem('buddies_verified_settings_tab', tab);
   document.querySelectorAll('.settings-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.settingsTab === tab));
   document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.settingsPanel === tab));
 }
@@ -388,6 +466,7 @@ function render(){
         <button class="settings-tab active" type="button" data-settings-tab="profile" onclick="switchSettingsTab('profile')">プロフィール</button>
         <button class="settings-tab" type="button" data-settings-tab="links" onclick="switchSettingsTab('links')">リンク</button>
         <button class="settings-tab" type="button" data-settings-tab="events" onclick="switchSettingsTab('events')">イベント</button>
+        <button class="settings-tab" type="button" data-settings-tab="forms" onclick="switchSettingsTab('forms')">フォーム</button>
         <button class="settings-tab" type="button" data-settings-tab="security" onclick="switchSettingsTab('security')">セキュリティ</button>
       </div>
     </section>
@@ -433,9 +512,22 @@ function render(){
         <p class="small" style="margin:0 0 10px;">主催イベントを作成・編集できます。「非公開」は URL を知っている人のみアクセスできます。</p>
         <div class="actions" style="margin-bottom:10px;">
           <button class="btn primary" id="new-event-btn" type="button" data-act="new-event">+ 新しいイベント</button>
+          <button class="btn" type="button" onclick="openParticipantsModal()">全参加者管理</button>
         </div>
         <div id="event-list" class="event-list"></div>
         <div id="event-msg" class="msg"></div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="forms">
+      <section class="card">
+        <h2 class="section-title">アンケート&フォーム</h2>
+        <p class="small" style="margin:0 0 10px;">公開/非公開、匿名回答、Buddies profile情報の収集、1回まで回答を設定できます。</p>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" type="button" onclick="openFormModal()">+ 新しいフォーム</button>
+        </div>
+        <div id="form-list" class="event-list"></div>
+        <div id="form-msg" class="msg"></div>
       </section>
     </div>
 
@@ -454,6 +546,7 @@ function render(){
   setDirty(false);
   switchSettingsTab(activeSettingsTab);
   loadEvents();
+  loadForms();
 }
 
 async function login(){
@@ -786,6 +879,7 @@ function renderEventList(){
       <div class="meta">参加 ${e.join_count} 人${e.visibility === 'public' ? ' / お気に入り ' + (e.like_count || 0) + ' 件' : ' / 非公開は参加のみ'}${e.capacity ? ' ・ 定員 ' + e.capacity : ''}</div>
       <div class="row-actions">
         <a class="btn sm" href="./event.html?id=${e.id}" target="_blank" rel="noopener">ページを開く</a>
+        <button class="btn sm" type="button" onclick="openParticipantsModal(${e.id})">参加者管理</button>
         <button class="btn sm" type="button" data-act="edit-event" data-id="${e.id}">編集</button>
         <button class="btn sm danger" type="button" data-act="delete-event" data-id="${e.id}">削除</button>
       </div>
@@ -793,6 +887,25 @@ function renderEventList(){
     </div>`;
   }).join('');
 }
+
+async function openParticipantsModal(eventId = 0){
+  const body = document.getElementById('participants-modal-body');
+  body.innerHTML = '<div class="small">読み込み中…</div>';
+  document.getElementById('participants-modal').classList.add('open');
+  const json = await api('event_participants_admin' + (eventId ? '&event_id=' + encodeURIComponent(eventId) : ''), null, 'GET');
+  if (!json.ok) { body.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
+  const rows = json.data || [];
+  body.innerHTML = rows.length ? `<div class="admin-table">${rows.map(r => {
+    const u = r.user || {};
+    return `<div class="admin-row">
+      <div class="admin-row-title">${esc(u.display_name || u.username || '')}</div>
+      <div class="admin-detail">イベント: ${esc(r.event_title || '')}<br>参加日時: ${esc(fmtDateDisplay(r.joined_at) || '')}${u.location ? '<br>都道府県: ' + esc(u.location) : ''}${(u.oshi_members||[]).length ? '<br>推し: ' + esc((u.oshi_members||[]).join(' / ')) : ''}</div>
+      ${(r.subevents||[]).length ? `<div class="admin-detail">サブイベント: ${r.subevents.map(s=>esc(s.title)).join(' / ')}</div>` : ''}
+      <a class="btn sm" href="../view.html?id=${u.id}" target="_blank" rel="noopener">プロフィール詳細</a>
+    </div>`;
+  }).join('')}</div>` : '<div class="event-empty">参加者はいません</div>';
+}
+function closeParticipantsModal(){ document.getElementById('participants-modal').classList.remove('open'); }
 function openEventForm(id = null){
   editingEventId = id;
   pendingEventCover = null;
@@ -895,6 +1008,255 @@ async function deleteEvent(id){
   msg('event-msg', 'イベントを削除しました', true);
   loadEvents();
 }
+
+async function loadForms(){
+  const json = await api('form_mine_list');
+  myForms = json.ok ? (json.data || []) : [];
+  renderFormList();
+}
+function renderFormList(){
+  const wrap = document.getElementById('form-list');
+  if (!wrap) return;
+  if (!myForms.length) { wrap.innerHTML = '<div class="event-empty">まだフォームはありません</div>'; return; }
+  wrap.innerHTML = myForms.map(f => `
+    <div class="event-row">
+      <div class="title">${esc(f.title)}<span class="vis ${f.visibility === 'unlisted' ? 'unlisted' : ''}">${f.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
+      <div class="meta">回答 ${f.response_count || 0} 件 / ${f.collect_profile ? 'Buddies情報を収集' : '匿名'} / ${f.one_response ? '1回まで' : '複数回答可'}</div>
+      <div class="row-actions">
+        <a class="btn sm" href="./form.html?id=${f.id}" target="_blank" rel="noopener">ページを開く</a>
+        <button class="btn sm" type="button" onclick="openFormModal(${f.id})">編集</button>
+        <button class="btn sm" type="button" onclick="openResponsesModal(${f.id})">回答一覧</button>
+        <button class="btn sm danger" type="button" onclick="deleteForm(${f.id})">削除</button>
+      </div>
+    </div>`).join('');
+}
+function openFormModal(id = null){
+  editingFormId = id;
+  const f = id ? myForms.find(x => x.id === id) : null;
+  formQuestions = f ? JSON.parse(JSON.stringify(f.questions || [])) : [{id:'q1',label:'',type:'text',required:1,options:[]}];
+  document.getElementById('form-modal-title').textContent = id ? 'フォームを編集' : '新しいフォーム';
+  document.getElementById('form-modal-body').innerHTML = `
+    <div class="form-builder">
+      <section class="form-builder-section">
+        <h4>基本情報</h4>
+        <div class="field"><label>フォーム名 *</label><input id="form-title" maxlength="160" value="${esc(f?.title || '')}" placeholder="例：イベント参加後アンケート"></div>
+        <div class="field"><label>説明</label><textarea id="form-desc" maxlength="4000" placeholder="回答者に伝えたい補足があれば入力">${esc(f?.description || '')}</textarea></div>
+      </section>
+      <section class="form-builder-section">
+        <h4>回答設定</h4>
+        <div class="form-setup-grid">
+          <div class="form-setting-card">
+            <label for="form-visibility">公開範囲</label>
+            <select id="form-visibility">
+              <option value="public" ${(!f || f.visibility==='public')?'selected':''}>公開</option>
+              <option value="unlisted" ${f?.visibility==='unlisted'?'selected':''}>非公開URL</option>
+            </select>
+            <div class="small">非公開URLは一覧に出さず、URLを知っている人だけ回答できます。</div>
+          </div>
+          <div class="form-setting-card">
+            <label for="form-collect">回答者情報</label>
+            <select id="form-collect">
+              <option value="0" ${!f?.collect_profile?'selected':''}>匿名で表示</option>
+              <option value="1" ${f?.collect_profile?'selected':''}>Buddies profileを表示</option>
+            </select>
+            <div class="small">匿名でもDBにはユーザーIDを保存し、管理画面には表示しません。</div>
+          </div>
+          <div class="form-setting-card">
+            <label>回答回数</label>
+            <label class="small"><input id="form-one-response" type="checkbox" ${!f || f.one_response ? 'checked' : ''}> 1アカウント1回まで</label>
+            <div class="small">チェックを外すと同じユーザーが複数回回答できます。</div>
+          </div>
+        </div>
+      </section>
+      <section class="form-builder-section">
+        <h4>質問</h4>
+        <div class="hint">よく使う形式を選んで追加し、必要な質問文だけ編集できます。</div>
+        <div class="form-question-toolbar">
+          <button class="btn sm" type="button" onclick="addFormQuestion('text')">+ 短文</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('textarea')">+ 長文</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('radio')">+ 単一選択</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('checkbox')">+ 複数選択</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('select')">+ プルダウン</button>
+        </div>
+        <div id="form-question-list" class="admin-table"></div>
+      </section>
+    </div>
+  `;
+  renderFormQuestions();
+  document.getElementById('form-modal').classList.add('open');
+}
+function closeFormModal(){ document.getElementById('form-modal').classList.remove('open'); editingFormId=null; formQuestions=[]; }
+function formTypeLabel(type){
+  return ({text:'短文', textarea:'長文', radio:'単一選択', checkbox:'複数選択', select:'プルダウン'})[type] || '短文';
+}
+function ensureQuestionOptions(q){
+  if (!['radio','checkbox','select'].includes(q.type)) return;
+  if (!Array.isArray(q.options) || !q.options.length) q.options = ['選択肢1', '選択肢2'];
+}
+function renderFormQuestions(){
+  const wrap = document.getElementById('form-question-list');
+  if (!wrap) return;
+  if (!formQuestions.length) {
+    wrap.innerHTML = '<div class="event-empty">質問がありません。上のボタンから追加してください。</div>';
+    return;
+  }
+  wrap.innerHTML = formQuestions.map((q,i)=>`
+    <div class="form-question-row">
+      <div class="form-question-head">
+        <div class="form-question-no">${i + 1}</div>
+        <div class="form-question-title">${esc(formTypeLabel(q.type))}</div>
+        <div class="form-question-actions">
+          <button class="btn sm" type="button" ${i===0?'disabled':''} onclick="moveFormQuestion(${i},-1)">上へ</button>
+          <button class="btn sm" type="button" ${i===formQuestions.length-1?'disabled':''} onclick="moveFormQuestion(${i},1)">下へ</button>
+          <button class="btn sm danger" type="button" onclick="removeFormQuestion(${i})">削除</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <input value="${esc(q.label||'')}" placeholder="質問文" oninput="formQuestions[${i}].label=this.value">
+        <select onchange="formQuestions[${i}].type=this.value;ensureQuestionOptions(formQuestions[${i}]);renderFormQuestions()">
+          ${['text','textarea','radio','checkbox','select'].map(t=>`<option value="${t}" ${q.type===t?'selected':''}>${formTypeLabel(t)}</option>`).join('')}
+        </select>
+      </div>
+      ${['radio','checkbox','select'].includes(q.type) ? `
+        <div class="field">
+          <label>選択肢</label>
+          <input value="${esc((q.options||[]).join(', '))}" placeholder="例：参加, 不参加, 未定" oninput="formQuestions[${i}].options=this.value.split(',').map(s=>s.trim()).filter(Boolean)">
+          <div class="form-option-tools">
+            <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['はい','いいえ'])">はい/いいえ</button>
+            <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['参加','不参加','未定'])">参加確認</button>
+            <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['とても良い','良い','普通','改善してほしい'])">満足度</button>
+          </div>
+        </div>` : ''}
+      <label class="small"><input type="checkbox" ${q.required?'checked':''} onchange="formQuestions[${i}].required=this.checked?1:0"> 必須項目にする</label>
+    </div>`).join('');
+}
+function addFormQuestion(type = 'text'){
+  const q = {id:'q'+Date.now()+Math.random().toString(16).slice(2),label:'',type,required:0,options:[]};
+  ensureQuestionOptions(q);
+  formQuestions.push(q);
+  renderFormQuestions();
+}
+function removeFormQuestion(i){
+  formQuestions.splice(i,1);
+  renderFormQuestions();
+}
+function moveFormQuestion(i, dir){
+  const next = i + dir;
+  if (next < 0 || next >= formQuestions.length) return;
+  const tmp = formQuestions[i];
+  formQuestions[i] = formQuestions[next];
+  formQuestions[next] = tmp;
+  renderFormQuestions();
+}
+function setFormQuestionOptions(i, options){
+  if (!formQuestions[i]) return;
+  formQuestions[i].options = options;
+  renderFormQuestions();
+}
+async function saveForm(){
+  const payload = {
+    title: val('form-title'), description: val('form-desc'), visibility: val('form-visibility'),
+    collect_profile: val('form-collect') === '1', one_response: document.getElementById('form-one-response').checked,
+    questions: formQuestions.map((q,i)=>({...q,id:q.id||('q'+i)})),
+  };
+  if (editingFormId) payload.id = editingFormId;
+  const json = await api(editingFormId ? 'form_update' : 'form_create', payload);
+  if (!json.ok) { msg('form-msg', json.error || '保存できませんでした', false); return; }
+  closeFormModal(); msg('form-msg', '保存しました', true); loadForms();
+}
+async function deleteForm(id){
+  const ok = await confirmDialog('フォームを削除', 'このフォームを削除しますか？');
+  if (!ok) return;
+  const json = await api('form_delete', { id });
+  if (!json.ok) { msg('form-msg', json.error || '削除できませんでした', false); return; }
+  loadForms();
+}
+async function openResponsesModal(id){
+  const body = document.getElementById('responses-modal-body');
+  body.innerHTML = '<div class="small">読み込み中…</div>';
+  document.getElementById('responses-modal').classList.add('open');
+  const json = await api('form_responses&id=' + encodeURIComponent(id));
+  if (!json.ok) { body.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
+  const form = json.data.form;
+  const qs = form.questions || [];
+  const rows = json.data.responses || [];
+  responseView = { form, questions:qs, rows };
+  body.innerHTML = `
+    <div class="response-summary">
+      <div class="response-stat"><strong>${rows.length}</strong><span>回答数</span></div>
+      <div class="response-stat"><strong>${qs.length}</strong><span>質問数</span></div>
+      <div class="response-stat"><strong>${form.collect_profile ? '表示' : '匿名'}</strong><span>回答者情報</span></div>
+    </div>
+    <div class="response-tools">
+      <input id="response-search" placeholder="回答者名・回答内容で検索" oninput="renderResponsesTable()">
+      <button class="btn sm" type="button" onclick="downloadResponsesCsv()">CSV出力</button>
+    </div>
+    <div id="response-table"></div>
+  `;
+  renderResponsesTable();
+}
+function responseValueText(value){
+  if (Array.isArray(value)) return value.join('、');
+  return value == null ? '' : String(value);
+}
+function renderResponsesTable(){
+  const wrap = document.getElementById('response-table');
+  if (!wrap) return;
+  const keyword = val('response-search').toLowerCase();
+  const qs = responseView.questions || [];
+  const rows = (responseView.rows || []).filter(r => {
+    if (!keyword) return true;
+    const haystack = [r.respondent_name || '匿名', r.created_at || '']
+      .concat(qs.map(q => responseValueText((r.answers || {})[q.id])))
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(keyword);
+  });
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="event-empty">表示できる回答がありません</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="admin-table">${rows.map(r=>`
+    <div class="response-card">
+      <div class="response-head">
+        <div>
+          <div class="response-name">${esc(r.respondent_name || '匿名')}</div>
+          <div class="response-meta">${esc(fmtDateDisplay(r.created_at) || '')}</div>
+        </div>
+        ${r.user_id ? `<a class="btn sm" href="../view.html?id=${r.user_id}" target="_blank" rel="noopener">プロフィール</a>` : ''}
+      </div>
+      <div class="response-answer-grid">
+        ${qs.map(q=>{
+          const text = responseValueText((r.answers || {})[q.id]);
+          return `<div class="response-answer">
+            <div class="response-answer-label">${esc(q.label || '質問')}</div>
+            <div class="response-answer-value ${text ? '' : 'response-empty-value'}">${esc(text || '未回答')}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('')}</div>`;
+}
+function csvEscape(value){
+  return `"${String(value == null ? '' : value).replace(/"/g, '""')}"`;
+}
+function downloadResponsesCsv(){
+  const form = responseView.form || {};
+  const qs = responseView.questions || [];
+  const rows = responseView.rows || [];
+  const header = ['回答日時','回答者'].concat(qs.map(q => q.label || '質問'));
+  const lines = [header.map(csvEscape).join(',')];
+  rows.forEach(r => {
+    const values = [r.created_at || '', r.respondent_name || '匿名'].concat(qs.map(q => responseValueText((r.answers || {})[q.id])));
+    lines.push(values.map(csvEscape).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(form.title || 'form-responses').replace(/[\\/:*?"<>|]/g, '_')}_responses.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function closeResponsesModal(){ document.getElementById('responses-modal').classList.remove('open'); responseView = { form:null, questions:[], rows:[] }; }
 async function uploadEventCover(id, file){
   if (!file) return;
   if (!validateEventCoverFile(file)) return;

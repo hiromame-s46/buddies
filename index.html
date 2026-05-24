@@ -424,6 +424,11 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .history-edit-date { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; align-items:center; }
 .history-edit-item input, .history-edit-item textarea { width:100%; border:1px solid #e5e5e5; border-radius:12px; background:#fff; padding:10px 12px; font:inherit; font-size:14px; }
 .history-edit-item textarea { min-height:70px; resize:vertical; line-height:1.6; }
+.history-image-row { display:flex; gap:10px; align-items:center; min-width:0; }
+.history-image-preview { width:64px; height:64px; border-radius:14px; border:1px solid #eee; background:#fff; overflow:hidden; display:grid; place-items:center; flex-shrink:0; color:#aaa; font-size:11px; text-align:center; }
+.history-image-preview img { width:100%; height:100%; object-fit:cover; display:block; }
+.history-image-actions { min-width:0; flex:1; display:grid; gap:6px; }
+.history-image-actions input[type="file"] { padding:8px; font-size:12px; }
 .history-remove-btn { width:38px; height:38px; border-radius:12px; border:none; background:#fff5f5; color:#d33; cursor:pointer; display:grid; place-items:center; }
 .history-empty-note { border:1px dashed #ddd; border-radius:16px; padding:18px; color:#888; font-size:13px; text-align:center; line-height:1.7; }
 
@@ -1408,6 +1413,11 @@ async function loadUserData() {
 function showMainUI() {
   renderHeaderAuth();
   renderAll();
+  const savedTab = sessionStorage.getItem('buddies_active_tab');
+  if (['home','search','mypage'].includes(savedTab)) {
+    switchTab(savedTab);
+    return;
+  }
   // 未入力プロフィールがある場合はマイページタブを初期表示してヒントを見せる
   if (me && isProfileEmpty(me) && !sessionStorage.getItem('buddies_hint_dismissed')) {
     switchTab('mypage');
@@ -1549,6 +1559,7 @@ function switchTab(tab) {
   document.getElementById('search-page').hidden = tab !== 'search';
   document.getElementById('mypage-page').hidden = tab !== 'mypage';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  sessionStorage.setItem('buddies_active_tab', tab);
   window.scrollTo(0,0);
   if (tab === 'search') {
     setupSearchObserver();
@@ -2722,10 +2733,12 @@ function getSnsIcon(type) {
 
 async function openProfile(profile, isOwn, opts = {}) {
   profile = isOwn ? profile : mergeVerifiedOntoProfile(profile);
+  const currentTab = document.querySelector('.tab-btn.active')?.dataset?.tab;
+  if (currentTab) sessionStorage.setItem('buddies_active_tab', currentTab);
   if (profile?.verified_account?.id) {
-    location.href = './verified/view.html?id=' + encodeURIComponent(profile.verified_account.id);
+    window.open('./verified/view.html?id=' + encodeURIComponent(profile.verified_account.id), '_blank', 'noopener');
   } else if (profile?.id) {
-    location.href = './view.html?id=' + encodeURIComponent(profile.id);
+    window.open('./view.html?id=' + encodeURIComponent(profile.id), '_blank', 'noopener');
   }
   return;
   const needsFullProfile =
@@ -3011,11 +3024,14 @@ function syncSakulaboToggles() {
 
 function normalizeHistoryClient(items) {
   return (Array.isArray(items) ? items : []).filter(Boolean).map(item => ({
+    id: item.id || 0,
     year: item.year || '',
     month: item.month || '',
     day: item.day || '',
     title: item.title || '',
     note: item.note || '',
+    image_url: item.image_url || '',
+    image_data: '',
   }));
 }
 
@@ -3036,6 +3052,13 @@ function renderHistoryEditor() {
       </div>
       <input maxlength="160" placeholder="イベントタイトル" value="${esc(item.title)}" oninput="updateHistoryItem(${i},'title',this.value)">
       <textarea maxlength="300" placeholder="一言（任意）" oninput="updateHistoryItem(${i},'note',this.value)">${esc(item.note)}</textarea>
+      <div class="history-image-row">
+        <div class="history-image-preview">${item.image_data || item.image_url ? `<img src="${esc(assetUrl(item.image_data || item.image_url))}" alt="">` : '画像'}</div>
+        <div class="history-image-actions">
+          <input type="file" accept="image/png,image/jpeg,image/webp" onchange="selectHistoryImage(${i}, this.files[0])">
+          ${(item.image_data || item.image_url) ? `<button type="button" class="pill-button" style="min-height:34px;font-size:12px;" onclick="clearHistoryImage(${i})">画像を削除</button>` : ''}
+        </div>
+      </div>
     </div>
   `).join('');
   if (window.lucide) window.lucide.createIcons();
@@ -3053,7 +3076,7 @@ function closeHistoryEditor() {
 }
 
 function addHistoryItem(render = true) {
-  editHistory.unshift({ year: new Date().getFullYear(), month: '', day: '', title: '', note: '' });
+  editHistory.unshift({ id: 0, year: new Date().getFullYear(), month: '', day: '', title: '', note: '', image_url: '', image_data: '' });
   if (render) renderHistoryEditor();
 }
 
@@ -3067,13 +3090,43 @@ function removeHistoryItem(i) {
   renderHistoryEditor();
 }
 
+function selectHistoryImage(i, file) {
+  if (!editHistory[i] || !file) return;
+  if (!/^image\/(png|jpeg|webp)$/.test(file.type)) {
+    alert('画像はPNG/JPEG/WebPのみアップロードできます。');
+    return;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    alert('画像サイズは5MB以内にしてください。');
+    return;
+  }
+  const reader = new FileReader();
+  reader.onload = () => {
+    editHistory[i].image_data = reader.result;
+    editHistory[i].image_url = '';
+    renderHistoryEditor();
+  };
+  reader.onerror = () => alert('画像を読み込めませんでした。');
+  reader.readAsDataURL(file);
+}
+
+function clearHistoryImage(i) {
+  if (!editHistory[i]) return;
+  editHistory[i].image_data = '';
+  editHistory[i].image_url = '';
+  renderHistoryEditor();
+}
+
 function historyPayload() {
   return editHistory.map(item => ({
+    id: Number(item.id || 0),
     year: String(item.year || '').trim(),
     month: String(item.month || '').trim(),
     day: String(item.day || '').trim(),
     title: String(item.title || '').trim(),
     note: String(item.note || '').trim(),
+    image_url: String(item.image_url || '').trim(),
+    image_data: String(item.image_data || ''),
   })).filter(item => item.year || item.month || item.day || item.title || item.note);
 }
 

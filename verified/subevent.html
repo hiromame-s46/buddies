@@ -42,6 +42,15 @@ main{padding:0 0 24px}
 .empty{padding:30px 16px;text-align:center;color:#888;font-size:13px}
 .msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin:8px 20px 0}
 .msg.show{display:block}.msg.err{background:#fff5f5;color:#d33}.msg.ok{background:#f0fff4;color:#276749}
+.admin-panel{margin:18px 12px 0;border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px;display:grid;gap:12px}
+.admin-panel h2{font-size:14px;margin:0;font-weight:800}
+.admin-panel .admin-tools{display:flex;gap:8px;flex-wrap:wrap}
+.admin-list{display:grid;gap:8px}
+.admin-row{border:1px solid #eee;border-radius:14px;background:#fafafa;padding:12px;display:grid;gap:6px}
+.admin-row-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.admin-name{font-size:14px;font-weight:800}
+.admin-meta{font-size:12px;color:#666;line-height:1.6}
+.admin-empty{padding:16px;text-align:center;color:#888;font-size:13px;border:1px dashed var(--line);border-radius:14px}
 </style>
 </head>
 <body>
@@ -58,6 +67,7 @@ const MEMBER_DATA = '../../data/member.json';
 let memberMap = {};
 let subevent = null;
 let me = null;
+let currentAccount = null;
 
 async function loadMemberMap(){
   try {
@@ -104,6 +114,8 @@ async function load(){
 
   const meR = await safeJson(`${API}?action=auth_me`);
   me = (meR.ok && meR.data && meR.data.ok) ? meR.data.data : null;
+  const vaR = await safeJson(`${API}?action=verified_me`);
+  currentAccount = (vaR.ok && vaR.data && vaR.data.ok) ? vaR.data.data : null;
 
   const detail = await fetchSubeventDetail(id);
   if (!detail) {
@@ -113,6 +125,9 @@ async function load(){
   subevent = detail;
   render();
   loadParticipants(id);
+}
+function isOwner(){
+  return !!(subevent && currentAccount && Number(currentAccount.id) === Number(subevent.account_id));
 }
 
 function render(){
@@ -147,6 +162,15 @@ function render(){
     <div id="msg" class="msg"></div>
     <div class="section-title">参加者（${subevent.join_count}人）</div>
     <div id="participants" class="participants"><div class="empty">読み込み中…</div></div>
+    ${isOwner() ? `<section class="admin-panel">
+      <h2>管理用参加者情報</h2>
+      <div class="admin-meta">この情報は主催アカウントでログイン中のときだけ表示されます。</div>
+      <div class="admin-tools">
+        <button class="btn secondary" onclick="loadAdminParticipants()">詳細を表示</button>
+        <a class="btn secondary" href="./index.html?edit_event=${encodeURIComponent(subevent.event_id)}" target="_blank" rel="noopener">管理画面で編集</a>
+      </div>
+      <div id="admin-participants"></div>
+    </section>` : ''}
   `;
 }
 
@@ -203,7 +227,41 @@ async function loadParticipants(id){
     </a>`;
   }).join('');
 }
+async function loadAdminParticipants(){
+  const wrap = document.getElementById('admin-participants');
+  if (!wrap || !subevent) return;
+  wrap.innerHTML = '<div class="admin-empty">読み込み中…</div>';
+  const r = await safeJson(`${API}?action=subevent_participants_admin&id=${encodeURIComponent(subevent.id)}`);
+  if (!r.ok || !r.data || !r.data.ok) {
+    wrap.innerHTML = `<div class="admin-empty">${esc((r.data && r.data.error) || '管理情報を読み込めませんでした')}</div>`;
+    return;
+  }
+  const rows = r.data.data?.participants || r.data.participants || [];
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="admin-empty">参加者はまだいません</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="admin-list">${rows.map(row => {
+    const u = row.user || {};
+    const profile = `<a class="btn secondary" href="../view.html?id=${encodeURIComponent(u.id)}" target="_blank" rel="noopener">プロフィール</a>`;
+    const details = [
+      row.joined_at ? `参加: ${esc(fmtDate(row.joined_at))}` : '',
+      (u.oshi_members || []).length ? `推し: ${esc((u.oshi_members || []).join('、'))}` : '',
+      u.location ? `都道府県: ${esc(u.location)}` : '',
+      (u.tags || []).length ? `タグ: ${esc((u.tags || []).join('、'))}` : '',
+    ].filter(Boolean).join('<br>');
+    return `<div class="admin-row">
+      <div class="admin-row-head">
+        <div class="admin-name">${esc(u.display_name || u.username || '名無し')}</div>
+        ${profile}
+      </div>
+      ${details ? `<div class="admin-meta">${details}</div>` : ''}
+      ${u.bio ? `<div class="admin-meta">${esc(u.bio)}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
 
+window.loadAdminParticipants = loadAdminParticipants;
 load();
 </script>
 </body>

@@ -116,12 +116,27 @@ function ensureBuddiesHistoryTable(PDO $pdo): void {
         happened_day   TINYINT UNSIGNED NULL DEFAULT NULL,
         title          VARCHAR(160) NOT NULL,
         note           VARCHAR(300) NULL DEFAULT NULL,
+        image_url      VARCHAR(2048) NULL DEFAULT NULL,
+        image_mime     VARCHAR(64) NULL DEFAULT NULL,
+        image_size     INT UNSIGNED NULL DEFAULT NULL,
         sort_order     INT NOT NULL DEFAULT 0,
         created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         KEY idx_user_date (user_id, happened_year, happened_month, happened_day),
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $cols = tableColumns($pdo, 'buddies_history');
+    $alterMap = [
+        'image_url' => "ALTER TABLE buddies_history ADD COLUMN image_url VARCHAR(2048) NULL DEFAULT NULL AFTER note",
+        'image_mime' => "ALTER TABLE buddies_history ADD COLUMN image_mime VARCHAR(64) NULL DEFAULT NULL AFTER image_url",
+        'image_size' => "ALTER TABLE buddies_history ADD COLUMN image_size INT UNSIGNED NULL DEFAULT NULL AFTER image_mime",
+    ];
+    foreach ($alterMap as $col => $sql) {
+        if (!in_array($col, $cols, true)) {
+            $pdo->exec($sql);
+            $cols[] = $col;
+        }
+    }
 }
 
 function runMigrations(PDO $pdo): void {
@@ -656,7 +671,7 @@ function getBuddiesHistoryForProfile(int $userId): array {
     try {
         ensureBuddiesHistoryTable(db());
         $st = db()->prepare(
-            'SELECT id, happened_year, happened_month, happened_day, title, note
+            'SELECT id, happened_year, happened_month, happened_day, title, note, image_url, image_mime, image_size
                FROM buddies_history
               WHERE user_id = ?
               ORDER BY happened_year DESC,
@@ -675,6 +690,9 @@ function getBuddiesHistoryForProfile(int $userId): array {
                 'day' => $r['happened_day'] !== null ? (int)$r['happened_day'] : null,
                 'title' => (string)$r['title'],
                 'note' => $r['note'] !== null ? (string)$r['note'] : '',
+                'image_url' => $r['image_url'] !== null ? (string)$r['image_url'] : '',
+                'image_mime' => $r['image_mime'] !== null ? (string)$r['image_mime'] : '',
+                'image_size' => $r['image_size'] !== null ? (int)$r['image_size'] : 0,
             ];
         }, $st->fetchAll());
     } catch (\Throwable $e) {
@@ -702,11 +720,14 @@ function normalizeBuddiesHistoryItems($items): array {
         if ($title === '' || mb_strlen($title) > 160) err('My Buddies history のタイトルは1〜160文字で入力してください。');
         if (mb_strlen($note) > 300) err('My Buddies history の一言は300文字以内で入力してください。');
         $out[] = [
+            'id' => isset($item['id']) && is_numeric($item['id']) ? (int)$item['id'] : 0,
             'year' => $year,
             'month' => $month,
             'day' => $day,
             'title' => $title,
             'note' => $note,
+            'image_url' => trim((string)($item['image_url'] ?? '')),
+            'image_data' => (string)($item['image_data'] ?? ''),
             'sort_order' => $i,
         ];
     }
@@ -715,6 +736,57 @@ function normalizeBuddiesHistoryItems($items): array {
             <=> [$a['year'], $a['month'] ?? 0, $a['day'] ?? 0, -$a['sort_order']];
     });
     return array_values($out);
+}
+
+function historyUploadUserDirName(array $user): string {
+    $name = trim((string)($user['username'] ?? ('user_' . (int)$user['id'])));
+    $name = preg_replace('/[^\p{L}\p{N}._-]+/u', '_', $name);
+    $name = trim((string)$name, "._-\t\n\r\0\x0B ");
+    return $name !== '' ? mb_substr($name, 0, 80) : ('user_' . (int)$user['id']);
+}
+
+function historyUploadBaseDir(array $user): string {
+    return __DIR__ . '/uploads/history/img/' . historyUploadUserDirName($user);
+}
+
+function isHistoryImageUrlForUser(string $url, array $user): bool {
+    if ($url === '' || preg_match('/^https?:\/\//', $url)) return false;
+    $prefix = 'uploads/history/img/' . historyUploadUserDirName($user) . '/';
+    $clean = strtok($url, '?') ?: $url;
+    return strpos($clean, $prefix) === 0;
+}
+
+function saveHistoryImageData(string $dataUrl, array $user, array &$newFiles): array {
+    if (!preg_match('/^data:(image\/png|image\/jpeg|image\/webp);base64,/', $dataUrl, $m)) {
+        err('My Buddies history の画像はPNG/JPEG/WebPのみ指定できます。');
+    }
+    $mime = $m[1];
+    $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+    if ($raw === false) err('My Buddies history の画像を読み込めませんでした。');
+    if (strlen($raw) > 5 * 1024 * 1024) err('My Buddies history の画像サイズは5MB以内にしてください。');
+    if (!@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+    $ext = match ($mime) {
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        default => 'webp',
+    };
+    $dir = historyUploadBaseDir($user);
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    $fileId = bin2hex(random_bytes(16));
+    while (is_file($dir . '/' . $fileId . '.' . $ext)) $fileId = bin2hex(random_bytes(16));
+    $path = $dir . '/' . $fileId . '.' . $ext;
+    if (file_put_contents($path, $raw) === false) err('画像を保存できませんでした。', 500);
+    $newFiles[] = $path;
+    return [
+        'url' => 'uploads/history/img/' . historyUploadUserDirName($user) . '/' . $fileId . '.' . $ext,
+        'mime' => $mime,
+        'size' => strlen($raw),
+    ];
+}
+
+function deleteHistoryImageUrl(string $url, array $user): void {
+    if (!isHistoryImageUrlForUser($url, $user)) return;
+    deletePathInside(__DIR__ . '/' . ltrim((string)(strtok($url, '?') ?: $url), '/'), historyUploadBaseDir($user));
 }
 
 function loadBlogIndexById(): array {
@@ -1297,6 +1369,7 @@ match ($action) {
     'event_list_by_account'   => actionEventListByAccount(),
     'event_get'               => actionEventGet(),
     'event_participants'      => actionEventParticipants(),
+    'event_participants_admin'=> actionEventParticipantsAdmin(),
     'event_mine_list'         => actionEventMineList(),
     'event_create'            => actionEventCreate(),
     'event_update'            => actionEventUpdate(),
@@ -1317,6 +1390,15 @@ match ($action) {
     'subevent_upload_cover'   => actionSubeventUploadCover(),
     'subevent_join'           => actionSubeventJoin(),
     'subevent_participants'   => actionSubeventParticipants(),
+    'subevent_participants_admin' => actionSubeventParticipantsAdmin(),
+    'form_mine_list'          => actionFormMineList(),
+    'form_list_by_account'    => actionFormListByAccount(),
+    'form_create'             => actionFormCreate(),
+    'form_update'             => actionFormUpdate(),
+    'form_delete'             => actionFormDelete(),
+    'form_public_get'         => actionFormPublicGet(),
+    'form_submit'             => actionFormSubmit(),
+    'form_responses'          => actionFormResponses(),
 
     default => err('不明なアクションです。'),
 };
@@ -1635,13 +1717,41 @@ function actionHistoryUpdate(): void {
     $items = normalizeBuddiesHistoryItems($b['history'] ?? []);
     ensureBuddiesHistoryTable(db());
     $pdo = db();
+    $oldRows = $pdo->prepare('SELECT id, image_url, image_mime, image_size FROM buddies_history WHERE user_id = ?');
+    $oldRows->execute([(int)$me['id']]);
+    $oldById = [];
+    $oldImageUrls = [];
+    foreach ($oldRows->fetchAll() as $row) {
+        $oldById[(int)$row['id']] = $row;
+        if (!empty($row['image_url'])) $oldImageUrls[] = (string)$row['image_url'];
+    }
+    $newFiles = [];
+    $keptImageUrls = [];
+    foreach ($items as &$item) {
+        $image = ['url' => null, 'mime' => null, 'size' => null];
+        if ($item['image_data'] !== '') {
+            $image = saveHistoryImageData($item['image_data'], $me, $newFiles);
+        } elseif ($item['image_url'] !== '' && isHistoryImageUrlForUser($item['image_url'], $me)) {
+            $old = $oldById[$item['id']] ?? null;
+            if ($old && (string)($old['image_url'] ?? '') === $item['image_url']) {
+                $image = [
+                    'url' => (string)$old['image_url'],
+                    'mime' => $old['image_mime'] !== null ? (string)$old['image_mime'] : null,
+                    'size' => $old['image_size'] !== null ? (int)$old['image_size'] : null,
+                ];
+            }
+        }
+        $item['image'] = $image;
+        if (!empty($image['url'])) $keptImageUrls[] = $image['url'];
+    }
+    unset($item);
     $pdo->beginTransaction();
     try {
         $pdo->prepare('DELETE FROM buddies_history WHERE user_id = ?')->execute([(int)$me['id']]);
         $ins = $pdo->prepare(
             'INSERT INTO buddies_history
-                (user_id, happened_year, happened_month, happened_day, title, note, sort_order)
-             VALUES (?,?,?,?,?,?,?)'
+                (user_id, happened_year, happened_month, happened_day, title, note, image_url, image_mime, image_size, sort_order)
+             VALUES (?,?,?,?,?,?,?,?,?,?)'
         );
         foreach ($items as $i => $item) {
             $ins->execute([
@@ -1651,13 +1761,22 @@ function actionHistoryUpdate(): void {
                 $item['day'],
                 $item['title'],
                 $item['note'] !== '' ? $item['note'] : null,
+                $item['image']['url'] ?? null,
+                $item['image']['mime'] ?? null,
+                $item['image']['size'] ?? null,
                 $i,
             ]);
         }
         $pdo->commit();
     } catch (\Throwable $e) {
         $pdo->rollBack();
+        foreach ($newFiles as $path) {
+            if (is_file($path)) @unlink($path);
+        }
         err('My Buddies history の保存に失敗しました。');
+    }
+    foreach (array_diff(array_unique($oldImageUrls), array_unique($keptImageUrls)) as $url) {
+        deleteHistoryImageUrl((string)$url, $me);
     }
     ok(['history' => getBuddiesHistoryForProfile((int)$me['id'])]);
 }
@@ -3040,6 +3159,63 @@ function actionEventParticipants(): void { ensureEventTables();
     ], $rows);
     ok($data);
 }
+function actionEventParticipantsAdmin(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $eventId = (int)($_GET['event_id'] ?? 0);
+    $where = 'e.account_id=? AND e.status!="disabled"';
+    $params = [(int)$a['id']];
+    if ($eventId > 0) { $where .= ' AND e.id=?'; $params[] = $eventId; }
+    $sql = "SELECT ep.event_id, ep.created_at AS joined_at,
+                   e.title AS event_title, e.starts_at AS event_starts_at,
+                   u.id, u.username, u.display_name, u.user_icon, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
+                   p.location, p.bio, p.tags, p.favorite_songs, p.sns_links
+              FROM buddies_event_participants ep
+              JOIN buddies_events e ON e.id = ep.event_id
+              JOIN sakulabo_users u ON u.id = ep.user_id
+              LEFT JOIN buddies_profiles p ON p.user_id = u.id
+             WHERE {$where} AND ep.kind='join'
+             ORDER BY e.starts_at DESC, ep.created_at DESC";
+    $st = db()->prepare($sql);
+    $st->execute($params);
+    $subSt = db()->prepare(
+        "SELECT sp.user_id, s.id, s.event_id, s.title, sp.created_at
+           FROM buddies_subevent_participants sp
+           JOIN buddies_subevents s ON s.id = sp.subevent_id
+           JOIN buddies_events e ON e.id = s.event_id
+          WHERE e.account_id=? AND s.status='active'"
+    );
+    $subSt->execute([(int)$a['id']]);
+    $subs = [];
+    foreach ($subSt->fetchAll() as $r) {
+        $subs[(int)$r['event_id'] . ':' . (int)$r['user_id']][] = [
+            'id' => (int)$r['id'],
+            'title' => (string)$r['title'],
+            'joined_at' => $r['created_at'],
+        ];
+    }
+    ok(array_map(function($r) use ($subs) {
+        $key = (int)$r['event_id'] . ':' . (int)$r['id'];
+        return [
+            'event_id' => (int)$r['event_id'],
+            'event_title' => (string)$r['event_title'],
+            'event_starts_at' => $r['event_starts_at'],
+            'joined_at' => $r['joined_at'],
+            'user' => [
+                'id' => (int)$r['id'],
+                'username' => (string)$r['username'],
+                'display_name' => $r['display_name'] ?: $r['username'],
+                'user_icon' => $r['user_icon'] ?? null,
+                'oshi_members' => array_values(array_filter([$r['oshi_member'] ?? null, $r['oshi_member_2'] ?? null, $r['oshi_member_3'] ?? null])),
+                'location' => $r['location'] ?? null,
+                'bio' => $r['bio'] ?? null,
+                'tags' => !empty($r['tags']) ? (json_decode($r['tags'], true) ?: []) : [],
+                'favorite_songs' => !empty($r['favorite_songs']) ? (json_decode($r['favorite_songs'], true) ?: []) : [],
+                'sns_links' => !empty($r['sns_links']) ? (json_decode($r['sns_links'], true) ?: []) : [],
+            ],
+            'subevents' => $subs[$key] ?? [],
+        ];
+    }, $st->fetchAll()));
+}
 function actionEventMineList(): void { ensureEventTables();
     $a = requireVerifiedAccount();
     $st = db()->prepare("SELECT * FROM buddies_events WHERE account_id=? AND status!='disabled'
@@ -3095,12 +3271,19 @@ function actionEventDelete(): void { ensureEventTables();
     $subSt = db()->prepare("SELECT id, cover_url FROM buddies_subevents WHERE event_id=?");
     $subSt->execute([$id]);
     $base = __DIR__ . '/uploads/verified/' . (int)$a['id'];
-    foreach ($subSt->fetchAll() as $sub) {
+    $subs = $subSt->fetchAll();
+    foreach ($subs as $sub) {
         if (!empty($sub['cover_url'])) {
             $rel = strtok((string)$sub['cover_url'], '?');
             if ($rel && !preg_match('/^https?:\/\//', $rel)) deletePathInside(__DIR__ . '/' . ltrim($rel, '/'), $base);
         }
     }
+    $subIds = array_map('intval', array_column($subs, 'id'));
+    if ($subIds) {
+        $in = implode(',', array_fill(0, count($subIds), '?'));
+        db()->prepare("DELETE FROM buddies_subevent_participants WHERE subevent_id IN ($in)")->execute($subIds);
+    }
+    db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=?")->execute([$id]);
     db()->prepare("UPDATE buddies_events SET status='disabled', cover_url=NULL, attachments=NULL WHERE id=?")->execute([$id]);
     db()->prepare("UPDATE buddies_subevents SET status='disabled', cover_url=NULL WHERE event_id=?")->execute([$id]);
     ok();
@@ -3449,6 +3632,7 @@ function actionSubeventDelete(): void { ensureEventTables();
     $id = (int)($b['id'] ?? $_GET['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
     requireOwnSubevent($id, $a);
+    db()->prepare("DELETE FROM buddies_subevent_participants WHERE subevent_id=?")->execute([$id]);
     db()->prepare("UPDATE buddies_subevents SET status='disabled' WHERE id=?")->execute([$id]);
     ok();
 }
@@ -3552,6 +3736,50 @@ function actionSubeventParticipants(): void { ensureEventTables();
     ], $rows);
     ok($data);
 }
+function actionSubeventParticipantsAdmin(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $id = (int)($_GET['subevent_id'] ?? $_GET['id'] ?? 0);
+    if ($id <= 0) err('subevent_id は必須です。');
+    $own = db()->prepare(
+        "SELECT s.id, s.title, s.event_id, e.account_id
+           FROM buddies_subevents s
+           JOIN buddies_events e ON e.id = s.event_id
+          WHERE s.id=? AND s.status='active' AND e.status!='disabled'
+          LIMIT 1"
+    );
+    $own->execute([$id]);
+    $s = $own->fetch();
+    if (!$s || (int)$s['account_id'] !== (int)$a['id']) err('閲覧権限がありません。', 403);
+    $st = db()->prepare(
+        "SELECT sp.created_at AS joined_at,
+                u.id, u.username, u.display_name, u.user_icon, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
+                p.location, p.bio, p.tags, p.favorite_songs, p.sns_links
+           FROM buddies_subevent_participants sp
+           JOIN sakulabo_users u ON u.id = sp.user_id
+           LEFT JOIN buddies_profiles p ON p.user_id = u.id
+          WHERE sp.subevent_id=?
+          ORDER BY sp.created_at DESC"
+    );
+    $st->execute([$id]);
+    ok([
+        'subevent' => ['id'=>(int)$s['id'], 'event_id'=>(int)$s['event_id'], 'title'=>(string)$s['title']],
+        'participants' => array_map(fn($r) => [
+            'joined_at' => $r['joined_at'],
+            'user' => [
+                'id' => (int)$r['id'],
+                'username' => (string)$r['username'],
+                'display_name' => $r['display_name'] ?: $r['username'],
+                'user_icon' => $r['user_icon'] ?? null,
+                'oshi_members' => array_values(array_filter([$r['oshi_member'] ?? null, $r['oshi_member_2'] ?? null, $r['oshi_member_3'] ?? null])),
+                'location' => $r['location'] ?? null,
+                'bio' => $r['bio'] ?? null,
+                'tags' => !empty($r['tags']) ? (json_decode($r['tags'], true) ?: []) : [],
+                'favorite_songs' => !empty($r['favorite_songs']) ? (json_decode($r['favorite_songs'], true) ?: []) : [],
+                'sns_links' => !empty($r['sns_links']) ? (json_decode($r['sns_links'], true) ?: []) : [],
+            ],
+        ], $st->fetchAll()),
+    ]);
+}
 
 function actionEventMyStatus(): void { ensureEventTables();
     $u = currentUser();
@@ -3577,4 +3805,140 @@ function actionEventMyParticipations(): void { ensureEventTables();
     );
     $st->execute([(int)$u['id'], $kind]);
     ok(array_map(fn($e) => buildEventData($e, (int)$u['id']), $st->fetchAll()));
+}
+
+function ensureFormTables(): void {
+    static $done = false;
+    if ($done) return;
+    $done = true;
+    $pdo = db();
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_forms (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        title VARCHAR(160) NOT NULL,
+        description TEXT NULL DEFAULT NULL,
+        questions TEXT NOT NULL,
+        visibility VARCHAR(16) NOT NULL DEFAULT 'public',
+        collect_profile TINYINT(1) NOT NULL DEFAULT 0,
+        one_response TINYINT(1) NOT NULL DEFAULT 1,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_account (account_id, status),
+        KEY idx_visibility (visibility, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_form_responses (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        form_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        answers TEXT NOT NULL,
+        respondent_name VARCHAR(120) NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_form (form_id),
+        KEY idx_form_user (form_id, user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
+function normalizeFormQuestions($questions): array {
+    if (!is_array($questions)) err('質問の形式が正しくありません。');
+    $out = [];
+    foreach (array_slice($questions, 0, 30) as $q) {
+        if (!is_array($q)) continue;
+        $label = trim((string)($q['label'] ?? ''));
+        if ($label === '' || mb_strlen($label) > 160) continue;
+        $type = (string)($q['type'] ?? 'text');
+        if (!in_array($type, ['text','textarea','select','radio','checkbox'], true)) $type = 'text';
+        $options = isset($q['options']) && is_array($q['options']) ? array_values(array_filter(array_map(fn($v) => mb_substr(trim((string)$v), 0, 80), $q['options']), fn($v) => $v !== '')) : [];
+        if (in_array($type, ['select','radio','checkbox'], true) && !$options) $type = 'text';
+        $out[] = ['id' => preg_replace('/[^a-zA-Z0-9_-]/', '', (string)($q['id'] ?? '')) ?: bin2hex(random_bytes(4)), 'label' => $label, 'type' => $type, 'required' => truthyFlag($q['required'] ?? 0), 'options' => array_slice($options, 0, 20)];
+    }
+    if (!$out) err('質問を1件以上入力してください。');
+    return $out;
+}
+function formEditableFields(array $b): array {
+    $title = trim((string)($b['title'] ?? ''));
+    if ($title === '' || mb_strlen($title) > 160) err('タイトルは1〜160文字で入力してください。');
+    $description = trim((string)($b['description'] ?? ''));
+    if (mb_strlen($description) > 4000) err('説明は4000文字以内で入力してください。');
+    $visibility = (string)($b['visibility'] ?? 'public');
+    if (!in_array($visibility, ['public','unlisted'], true)) $visibility = 'public';
+    return ['title'=>$title, 'description'=>$description !== '' ? $description : null, 'questions'=>normalizeFormQuestions($b['questions'] ?? []), 'visibility'=>$visibility, 'collect_profile'=>truthyFlag($b['collect_profile'] ?? 0), 'one_response'=>truthyFlag($b['one_response'] ?? 1)];
+}
+function buildFormData(array $f, bool $includePrivate = false): array {
+    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
+    if ($includePrivate) {
+        $st = db()->prepare('SELECT COUNT(*) FROM buddies_form_responses WHERE form_id=?');
+        $st->execute([(int)$f['id']]);
+        $data['response_count'] = (int)$st->fetchColumn();
+    }
+    return $data;
+}
+function actionFormMineList(): void { ensureFormTables();
+    $a = requireVerifiedAccount();
+    $st = db()->prepare("SELECT * FROM buddies_forms WHERE account_id=? AND status!='disabled' ORDER BY created_at DESC");
+    $st->execute([(int)$a['id']]);
+    ok(array_map(fn($f) => buildFormData($f, true), $st->fetchAll()));
+}
+function actionFormListByAccount(): void { ensureFormTables();
+    $accountId = (int)($_GET['account_id'] ?? 0);
+    if ($accountId <= 0) err('account_id は必須です。');
+    $viewer = currentVerifiedAccount();
+    $isOwner = $viewer && (int)$viewer['id'] === $accountId;
+    $where = $isOwner
+        ? "account_id=? AND status='active'"
+        : "account_id=? AND status='active' AND visibility='public'";
+    $st = db()->prepare("SELECT * FROM buddies_forms WHERE {$where} ORDER BY created_at DESC");
+    $st->execute([$accountId]);
+    ok(array_map(fn($f) => buildFormData($f, true), $st->fetchAll()));
+}
+function actionFormCreate(): void { ensureFormTables();
+    $a = requireVerifiedAccount(); $f = formEditableFields(body());
+    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,visibility,collect_profile,one_response) VALUES (?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['visibility'], $f['collect_profile'], $f['one_response']]);
+    $id = (int)db()->lastInsertId(); $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=?'); $st->execute([$id]); ok(buildFormData($st->fetch(), true));
+}
+function actionFormUpdate(): void { ensureFormTables();
+    $a = requireVerifiedAccount(); $b = body(); $id = (int)($b['id'] ?? 0); if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=? LIMIT 1'); $st->execute([$id]); $form = $st->fetch();
+    if (!$form || (int)$form['account_id'] !== (int)$a['id']) err('編集権限がありません。', 403);
+    $f = formEditableFields($b);
+    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, visibility=?, collect_profile=?, one_response=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['visibility'], $f['collect_profile'], $f['one_response'], $id]);
+    $st->execute([$id]); ok(buildFormData($st->fetch(), true));
+}
+function actionFormDelete(): void { ensureFormTables();
+    $a = requireVerifiedAccount(); $id = (int)(body()['id'] ?? 0); if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=? LIMIT 1'); $st->execute([$id]); $form = $st->fetch();
+    if (!$form || (int)$form['account_id'] !== (int)$a['id']) err('削除権限がありません。', 403);
+    db()->prepare("DELETE FROM buddies_form_responses WHERE form_id=?")->execute([$id]);
+    db()->prepare("UPDATE buddies_forms SET status='disabled' WHERE id=?")->execute([$id]); ok();
+}
+function actionFormPublicGet(): void { ensureFormTables();
+    $id = (int)($_GET['id'] ?? 0); if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_forms WHERE id=? AND status='active' LIMIT 1"); $st->execute([$id]); $f = $st->fetch();
+    if (!$f) err('フォームが見つかりません。', 404);
+    $viewer = currentUser(); $data = buildFormData($f, false); $data['viewer'] = $viewer ? ['id'=>(int)$viewer['id'],'display_name'=>$viewer['display_name'] ?: $viewer['username'],'user_icon'=>$viewer['user_icon'] ?? null] : null; ok($data);
+}
+function actionFormSubmit(): void { ensureFormTables();
+    $b = body(); $id = (int)($b['form_id'] ?? 0); if ($id <= 0) err('form_id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_forms WHERE id=? AND status='active' LIMIT 1"); $st->execute([$id]); $f = $st->fetch();
+    if (!$f) err('フォームが見つかりません。', 404);
+    $u = currentUser(); $uid = $u ? (int)$u['id'] : null;
+    if (!$u) err('Buddies profileへのログインが必要です。', 401);
+    if (!empty($f['one_response']) && $uid) { $dup = db()->prepare('SELECT id FROM buddies_form_responses WHERE form_id=? AND user_id=? LIMIT 1'); $dup->execute([$id, $uid]); if ($dup->fetch()) err('回答は1回までです。', 409); }
+    $questions = json_decode((string)$f['questions'], true) ?: []; $answersIn = is_array($b['answers'] ?? null) ? $b['answers'] : []; $answers = [];
+    foreach ($questions as $q) {
+        $qid = (string)$q['id']; $val = $answersIn[$qid] ?? null;
+        if (!empty($q['required']) && ($val === null || $val === '' || $val === [])) err('必須項目が未入力です。');
+        $answers[$qid] = is_array($val) ? array_slice(array_map(fn($v) => mb_substr(trim((string)$v), 0, 500), $val), 0, 20) : mb_substr(trim((string)($val ?? '')), 0, 2000);
+    }
+    db()->prepare("INSERT INTO buddies_form_responses (form_id,user_id,answers,respondent_name) VALUES (?,?,?,?)")->execute([$id, $uid, json_encode($answers, JSON_UNESCAPED_UNICODE), !empty($f['collect_profile']) ? ($u['display_name'] ?: $u['username']) : null]);
+    ok(['submitted'=>true]);
+}
+function actionFormResponses(): void { ensureFormTables();
+    $a = requireVerifiedAccount(); $id = (int)($_GET['id'] ?? 0); if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=? LIMIT 1'); $st->execute([$id]); $f = $st->fetch();
+    if (!$f || (int)$f['account_id'] !== (int)$a['id']) err('閲覧権限がありません。', 403);
+    $r = db()->prepare("SELECT fr.*, u.username, u.display_name, u.user_icon, u.oshi_member, p.location FROM buddies_form_responses fr LEFT JOIN sakulabo_users u ON u.id = fr.user_id LEFT JOIN buddies_profiles p ON p.user_id = fr.user_id WHERE fr.form_id=? ORDER BY fr.created_at DESC");
+    $r->execute([$id]);
+    $collectProfile = !empty($f['collect_profile']);
+    ok(['form'=>buildFormData($f, true), 'responses'=>array_map(fn($row) => ['id'=>(int)$row['id'], 'user_id'=>$collectProfile && $row['user_id'] !== null ? (int)$row['user_id'] : null, 'respondent_name'=>$collectProfile ? ($row['respondent_name'] ?: ($row['display_name'] ?: $row['username'])) : '匿名', 'user_icon'=>$collectProfile ? ($row['user_icon'] ?? null) : null, 'oshi_member'=>$collectProfile ? ($row['oshi_member'] ?? null) : null, 'location'=>$collectProfile ? ($row['location'] ?? null) : null, 'answers'=>json_decode((string)$row['answers'], true) ?: [], 'created_at'=>$row['created_at']], $r->fetchAll())]);
 }

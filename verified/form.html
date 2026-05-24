@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>フォーム - Buddies profile</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;background:#f7f7f7;color:#111}.app{max-width:720px;margin:0 auto;min-height:100vh;background:#fff;padding:20px}.back{display:inline-block;color:#555;text-decoration:none;font-size:13px;margin-bottom:18px}.title{font-size:24px;font-weight:900;margin:0 0 8px}.desc{font-size:14px;color:#555;line-height:1.8;white-space:pre-wrap;margin:0 0 18px}.card{border:1px solid #eee;border-radius:18px;padding:16px;background:#fafafa;display:grid;gap:14px}.field{display:grid;gap:8px}.field label{font-size:13px;font-weight:900}.field small{color:#d33}.field input[type=text],.field textarea,.field select{width:100%;border:1px solid #ddd;border-radius:12px;padding:11px 12px;font:inherit;background:#fff}.field textarea{min-height:110px;resize:vertical}.choice{display:flex;gap:8px;align-items:center;font-size:14px}.btn{width:100%;min-height:48px;border:0;border-radius:999px;background:#111;color:#fff;font-weight:900;font:inherit;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.secondary{background:#f3f3f3;color:#111}.notice{padding:14px;border-radius:14px;background:#f3f3f3;color:#555;font-size:13px;line-height:1.7;display:grid;gap:10px}.viewer{display:flex;align-items:center;gap:10px;background:#fff;border:1px solid #e8e8e8;border-radius:999px;padding:7px 10px;width:max-content;max-width:100%}.viewer-icon{width:34px;height:34px;border-radius:50%;background:#ddd;display:grid;place-items:center;overflow:hidden;font-weight:900;color:#777;flex-shrink:0}.viewer-icon img{width:100%;height:100%;object-fit:cover}.viewer-text{min-width:0}.viewer-label{display:block;font-size:10px;color:#777;font-weight:900}.viewer-name{display:block;font-size:13px;color:#111;font-weight:900;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.msg{margin-top:14px;font-size:13px;font-weight:800}.ok{color:#276749}.err{color:#d33}.confirm-list{display:grid;gap:8px}.confirm-item{border:1px solid #eee;border-radius:14px;background:#fff;padding:11px;display:grid;gap:4px}.confirm-label{font-size:11px;color:#666;font-weight:900}.confirm-value{font-size:14px;white-space:pre-wrap;word-break:break-word}.agree-box{border:1px solid #e8e8e8;border-radius:14px;background:#fff;padding:12px;font-size:13px;line-height:1.7}.done{display:grid;gap:14px;text-align:center;padding:28px 10px}.done-mark{width:64px;height:64px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;margin:0 auto;font-size:30px;font-weight:900}.done h2{margin:0;font-size:22px}.done p{margin:0;color:#555;font-size:14px;line-height:1.7}.done-actions{display:grid;gap:8px}.admin-panel{margin-top:18px;border:1px solid #e8e8e8;border-radius:18px;background:#fff;padding:16px;display:grid;gap:12px}.admin-panel h2{font-size:15px;margin:0;font-weight:900}.admin-meta{font-size:12px;color:#666;line-height:1.6}.admin-tools{display:flex;gap:8px;flex-wrap:wrap}.admin-tools .btn{width:auto;min-height:40px;padding:0 16px;font-size:13px}.response-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.response-stat{border:1px solid #eee;border-radius:14px;background:#fafafa;padding:10px}.response-stat strong{display:block;font-size:18px;line-height:1.2}.response-stat span{font-size:11px;color:#666;font-weight:800}.response-search{width:100%;border:1px solid #ddd;border-radius:12px;padding:11px 12px;font:inherit}.response-list{display:grid;gap:8px}.response-card{border:1px solid #eee;border-radius:14px;background:#fafafa;padding:12px;display:grid;gap:8px}.response-head{display:flex;align-items:center;justify-content:space-between;gap:8px}.response-name{font-size:14px;font-weight:900}.response-date{font-size:12px;color:#666}.answer{background:#fff;border:1px solid #eee;border-radius:12px;padding:9px;display:grid;gap:3px}.answer-label{font-size:11px;color:#666;font-weight:900}.answer-value{font-size:13px;white-space:pre-wrap;word-break:break-word}.empty{padding:18px;text-align:center;color:#888;font-size:13px;border:1px dashed #ddd;border-radius:14px}@media(max-width:560px){.response-summary{grid-template-columns:minmax(0,1fr)}.admin-tools{display:grid}.admin-tools .btn{width:100%}.viewer{width:100%}}
+</style>
+</head>
+<body>
+<main class="app">
+  <a class="back" href="../">← 戻る</a>
+  <div id="root"><div class="notice">読み込み中…</div></div>
+</main>
+<script>
+const API = '../api.php';
+const id = new URLSearchParams(location.search).get('id');
+let form = null;
+let currentAccount = null;
+let responseView = { form:null, questions:[], rows:[] };
+let pendingAnswers = null;
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+async function api(action,payload=null){const opt={credentials:'include'};if(payload){opt.method='POST';opt.headers={'Content-Type':'application/json'};opt.body=JSON.stringify(payload)}const r=await fetch(`${API}?action=${action}`,opt);return r.json();}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : '../' + url; }
+function viewerHtml(){
+  if (!form.viewer) return '';
+  const name = form.viewer.display_name || 'ログイン中';
+  const icon = form.viewer.user_icon ? `<img src="${esc(assetUrl(form.viewer.user_icon))}" alt="">` : esc(name[0] || '？');
+  return `<div class="viewer"><div class="viewer-icon">${icon}</div><div class="viewer-text"><span class="viewer-label">ログイン中</span><span class="viewer-name">${esc(name)}</span></div></div>`;
+}
+function inputHtml(q){
+  const req = q.required ? '<small>必須</small>' : '';
+  if(q.type==='textarea') return `<textarea id="${esc(q.id)}"></textarea>`;
+  if(q.type==='select') return `<select id="${esc(q.id)}"><option value="">選択してください</option>${(q.options||[]).map(o=>`<option>${esc(o)}</option>`).join('')}</select>`;
+  if(q.type==='radio') return (q.options||[]).map(o=>`<label class="choice"><input type="radio" name="${esc(q.id)}" value="${esc(o)}">${esc(o)}</label>`).join('');
+  if(q.type==='checkbox') return (q.options||[]).map(o=>`<label class="choice"><input type="checkbox" name="${esc(q.id)}" value="${esc(o)}">${esc(o)}</label>`).join('');
+  return `<input id="${esc(q.id)}" type="text">`;
+}
+function render(){
+  document.title = `${form.title} - Buddies profile`;
+  const canManage = currentAccount && Number(currentAccount.id) === Number(form.account_id);
+  document.getElementById('root').innerHTML = `
+    <h1 class="title">${esc(form.title)}</h1>
+    ${form.description ? `<p class="desc">${esc(form.description)}</p>` : ''}
+    <div class="notice">
+      <div>${form.collect_profile ? 'このフォームはBuddies profileの情報を回答と一緒に収集します。' : '回答画面と管理画面では匿名として扱われます。回答にはBuddies profileログインが必要です。'}</div>
+      ${form.viewer ? viewerHtml() : '<div>回答にはログインが必要です。</div>'}
+    </div>
+    <div class="card">${(form.questions||[]).map(q=>`<div class="field"><label>${esc(q.label)} ${q.required?'<small>必須</small>':''}</label>${inputHtml(q)}</div>`).join('')}<button class="btn" onclick="confirmForm()">入力内容を確認する</button></div>
+    <div id="msg" class="msg"></div>
+    ${canManage ? `<section class="admin-panel">
+      <h2>管理用回答情報</h2>
+      <div class="admin-meta">この情報はフォームを管理しているコミュニティアカウントでログイン中のときだけ表示されます。</div>
+      <div class="admin-tools">
+        <button class="btn secondary" onclick="loadResponses()">回答を表示</button>
+        <a class="btn secondary" href="./index.html" target="_blank" rel="noopener">管理画面を開く</a>
+      </div>
+      <div id="responses"></div>
+    </section>` : ''}`;
+}
+function collect(){
+  const out={};
+  for(const q of form.questions||[]){
+    if(q.type==='radio') out[q.id]=document.querySelector(`input[name="${CSS.escape(q.id)}"]:checked`)?.value||'';
+    else if(q.type==='checkbox') out[q.id]=[...document.querySelectorAll(`input[name="${CSS.escape(q.id)}"]:checked`)].map(x=>x.value);
+    else out[q.id]=document.getElementById(q.id)?.value||'';
+  }
+  return out;
+}
+function answerText(value){
+  if (Array.isArray(value)) return value.join('、');
+  return value == null ? '' : String(value);
+}
+function validateAnswers(answers){
+  for (const q of form.questions || []) {
+    const v = answers[q.id];
+    if (q.required && (v === '' || v == null || (Array.isArray(v) && !v.length))) return `${q.label} は必須です。`;
+  }
+  return '';
+}
+function confirmForm(){
+  const answers = collect();
+  const error = validateAnswers(answers);
+  const msg = document.getElementById('msg');
+  if (error) {
+    msg.className = 'msg err';
+    msg.textContent = error;
+    return;
+  }
+  pendingAnswers = answers;
+  document.getElementById('root').innerHTML = `
+    <h1 class="title">入力内容の確認</h1>
+    <p class="desc">${esc(form.title)} への回答内容を確認してください。</p>
+    <div class="card">
+      <div class="confirm-list">
+        ${(form.questions || []).map(q => `<div class="confirm-item">
+          <div class="confirm-label">${esc(q.label)}</div>
+          <div class="confirm-value">${esc(answerText(answers[q.id]) || '未回答')}</div>
+        </div>`).join('')}
+      </div>
+      <label class="agree-box"><input id="agree-policy" type="checkbox" onchange="document.getElementById('send-confirmed').disabled=!this.checked"> 利用規約とプライバシーポリシーに同意して送信します。</label>
+      <button id="send-confirmed" class="btn" onclick="submitConfirmedForm()" disabled>同意して送信する</button>
+      <button class="btn secondary" onclick="render()">入力に戻る</button>
+    </div>
+    <div id="msg" class="msg"></div>`;
+}
+async function submitConfirmedForm(){
+  if (!pendingAnswers) return render();
+  const json = await api('form_submit',{form_id:Number(id),answers:pendingAnswers});
+  const msg=document.getElementById('msg');
+  if (!json.ok) {
+    msg.className='msg err';
+    msg.textContent=json.error||'送信できませんでした';
+    return;
+  }
+  renderDone();
+}
+function renderDone(){
+  document.getElementById('root').innerHTML = `
+    <div class="done">
+      <div class="done-mark">✓</div>
+      <h2>回答を送信しました</h2>
+      <p>${esc(form.title)} への回答を受け付けました。</p>
+      <div class="done-actions">
+        <a class="btn" href="./view.html?id=${encodeURIComponent(form.account_id)}">主催者ページへ戻る</a>
+        <a class="btn secondary" href="../">ホームへ戻る</a>
+      </div>
+    </div>`;
+}
+function fmtDate(s){
+  if(!s) return '';
+  const d = new Date(String(s).replace(' ', 'T'));
+  if (isNaN(d)) return String(s);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function responseValueText(value){
+  if (Array.isArray(value)) return value.join('、');
+  return value == null ? '' : String(value);
+}
+async function loadResponses(){
+  const wrap = document.getElementById('responses');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="empty">読み込み中…</div>';
+  const json = await api('form_responses&id=' + encodeURIComponent(id));
+  if (!json.ok) {
+    wrap.innerHTML = `<div class="empty">${esc(json.error || '回答を読み込めませんでした')}</div>`;
+    return;
+  }
+  responseView = { form:json.data.form, questions:json.data.form.questions || [], rows:json.data.responses || [] };
+  wrap.innerHTML = `
+    <div class="response-summary">
+      <div class="response-stat"><strong>${responseView.rows.length}</strong><span>回答数</span></div>
+      <div class="response-stat"><strong>${responseView.questions.length}</strong><span>質問数</span></div>
+      <div class="response-stat"><strong>${responseView.form.collect_profile ? '表示' : '匿名'}</strong><span>回答者情報</span></div>
+    </div>
+    <div class="admin-tools">
+      <input class="response-search" id="response-search" placeholder="回答者名・回答内容で検索" oninput="renderResponses()">
+      <button class="btn secondary" onclick="downloadResponsesCsv()">CSV出力</button>
+    </div>
+    <div id="response-list"></div>
+  `;
+  renderResponses();
+}
+function renderResponses(){
+  const list = document.getElementById('response-list');
+  if (!list) return;
+  const keyword = (document.getElementById('response-search')?.value || '').toLowerCase();
+  const qs = responseView.questions || [];
+  const rows = (responseView.rows || []).filter(r => {
+    if (!keyword) return true;
+    return [r.respondent_name || '匿名', r.created_at || ''].concat(qs.map(q => responseValueText((r.answers || {})[q.id]))).join(' ').toLowerCase().includes(keyword);
+  });
+  if (!rows.length) { list.innerHTML = '<div class="empty">表示できる回答がありません</div>'; return; }
+  list.innerHTML = `<div class="response-list">${rows.map(r => `
+    <div class="response-card">
+      <div class="response-head">
+        <div>
+          <div class="response-name">${esc(r.respondent_name || '匿名')}</div>
+          <div class="response-date">${esc(fmtDate(r.created_at))}</div>
+        </div>
+        ${r.user_id ? `<a class="btn secondary" style="width:auto;min-height:36px;padding:0 12px;font-size:12px" href="../view.html?id=${encodeURIComponent(r.user_id)}" target="_blank" rel="noopener">プロフィール</a>` : ''}
+      </div>
+      ${(qs || []).map(q => {
+        const text = responseValueText((r.answers || {})[q.id]);
+        return `<div class="answer"><div class="answer-label">${esc(q.label || '質問')}</div><div class="answer-value">${esc(text || '未回答')}</div></div>`;
+      }).join('')}
+    </div>`).join('')}</div>`;
+}
+function csvEscape(value){ return `"${String(value == null ? '' : value).replace(/"/g, '""')}"`; }
+function downloadResponsesCsv(){
+  const qs = responseView.questions || [];
+  const rows = responseView.rows || [];
+  const header = ['回答日時','回答者'].concat(qs.map(q => q.label || '質問'));
+  const lines = [header.map(csvEscape).join(',')];
+  rows.forEach(r => lines.push([r.created_at || '', r.respondent_name || '匿名'].concat(qs.map(q => responseValueText((r.answers || {})[q.id]))).map(csvEscape).join(',')));
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(form.title || 'form-responses').replace(/[\\/:*?"<>|]/g, '_')}_responses.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+(async()=>{
+  const accountJson = await api('verified_me');
+  currentAccount = accountJson.ok ? accountJson.data : null;
+  const json=await api('form_public_get&id='+encodeURIComponent(id));
+  if(!json.ok){document.getElementById('root').innerHTML=`<div class="notice">${esc(json.error||'フォームが見つかりません')}</div>`;return;}
+  form=json.data;
+  render();
+})();
+</script>
+</body>
+</html>

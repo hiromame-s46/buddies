@@ -69,6 +69,8 @@ main{padding:20px}
 .history-date{width:fit-content;max-width:100%;border-radius:9999px;background:#f2f2f2;color:#555;font-size:11px;font-weight:900;line-height:1.2;padding:5px 9px}
 .history-title{font-size:14px;font-weight:900;color:#111;line-height:1.5}
 .history-note{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap}
+.history-image{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#f2f2f2;border:1px solid #eee}
+.history-image img{width:100%;height:100%;object-fit:cover;display:block}
 .history-more-btn{width:100%;min-height:42px;border-radius:9999px;border:1px solid #ececec;background:#fff;color:#111;font:inherit;font-size:13px;font-weight:900;cursor:pointer}
 .history-more-btn:hover{background:#fafafa}
 .links{display:grid;gap:8px}
@@ -337,6 +339,7 @@ function renderBuddiesHistory(p){
       <div class="history-marker" aria-hidden="true"></div>
       <div class="history-body">
         <div class="history-date">${esc(historyDateLabel(item))}</div>
+        ${item.image_url ? `<div class="history-image"><img src="${esc(assetUrl(item.image_url))}" alt=""></div>` : ''}
         <div class="history-title">${esc(item.title || '')}</div>
         ${item.note ? `<div class="history-note">${esc(item.note)}</div>` : ''}
       </div>
@@ -348,6 +351,7 @@ function historyItemHtml(item){
     <div class="history-marker" aria-hidden="true"></div>
     <div class="history-body">
       <div class="history-date">${esc(historyDateLabel(item))}</div>
+      ${item.image_url ? `<div class="history-image"><img src="${esc(assetUrl(item.image_url))}" alt=""></div>` : ''}
       <div class="history-title">${esc(item.title || '')}</div>
       ${item.note ? `<div class="history-note">${esc(item.note)}</div>` : ''}
     </div>

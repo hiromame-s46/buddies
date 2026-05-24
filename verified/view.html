@@ -62,6 +62,12 @@ main{padding:20px}
 .event-card .body{flex:1;min-width:0}
 .event-card .t{font-weight:700;font-size:15px;margin-bottom:4px;color:#111}
 .event-card .m{font-size:12px;color:#666}
+.forms{display:grid;gap:10px;margin-top:8px}
+.form-card{display:grid;gap:6px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;text-decoration:none;color:#111}
+.form-card:hover{background:#fafafa}
+.form-card .t{font-weight:800;font-size:15px;color:#111}
+.form-card .m{font-size:12px;color:#666;line-height:1.5}
+.form-card .badge{display:inline-flex;width:max-content;border-radius:9999px;background:#f3f3f3;color:#555;font-size:11px;font-weight:800;padding:3px 8px}
 .posts{display:grid;gap:12px;margin-top:8px}
 .post{border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px;display:grid;gap:10px}
 .post-date{font-size:11px;color:#888;font-weight:700}
@@ -310,12 +316,15 @@ function render(a){
     ` : ''}
     <div id="events-title" class="section-title" style="display:none;">主催イベント</div>
     <div id="events" class="events"></div>
+    <div id="forms-title" class="section-title" style="display:none;">フォーム</div>
+    <div id="forms" class="forms"></div>
     <div id="posts-title" class="section-title" style="display:none;">掲示板</div>
     <div id="posts" class="posts"></div>
     <div class="footer">このアカウントは Buddies profile のコミュニティアカウントです。</div>
   `;
   showEditFabIfOwner(a);
   loadEvents(a.id);
+  loadForms(a.id);
   loadPosts(a.id);
 }
 function fmtDate(s){
@@ -353,6 +362,30 @@ async function loadEvents(accountId){
         <div class="m">${esc(fmtDate(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
         <div class="m">参加 ${e.join_count} 人${e.capacity ? ' / 定員 ' + e.capacity : ''}</div>
       </div>
+    </a>
+  `).join('');
+}
+async function loadForms(accountId){
+  const wrap = document.getElementById('forms');
+  const title = document.getElementById('forms-title');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (title) title.style.display = 'none';
+  let forms = [];
+  try {
+    const res = await fetch(`${API}?action=form_list_by_account&account_id=${encodeURIComponent(accountId)}`, { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok) return;
+    forms = json.data || [];
+  } catch(e) { return; }
+  if (!forms.length) return;
+  if (title) title.style.display = '';
+  wrap.innerHTML = forms.map(f => `
+    <a class="form-card" href="./form.html?id=${encodeURIComponent(f.id)}">
+      <div class="t">${esc(f.title)}</div>
+      ${f.description ? `<div class="m">${esc(f.description).slice(0, 100)}</div>` : ''}
+      <div class="m">${f.collect_profile ? 'Buddies profile情報を収集' : '匿名表示'} / ${f.one_response ? '1回まで' : '複数回答可'}${typeof f.response_count === 'number' ? ` / 回答 ${f.response_count} 件` : ''}</div>
+      ${f.visibility === 'unlisted' ? '<span class="badge">非公開URL</span>' : ''}
     </a>
   `).join('');
 }
