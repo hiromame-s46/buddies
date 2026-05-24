@@ -108,6 +108,16 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .event-row .meta{font-size:12px;color:var(--muted)}
 .event-row .row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 .event-empty{padding:18px;text-align:center;color:#999;font-size:13px;border:1px dashed var(--line);border-radius:14px}
+.event-options{display:grid;gap:10px;margin:4px 0 10px}
+.event-option-card{display:flex;align-items:flex-start;gap:12px;border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:14px;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s}
+.event-option-card:hover{background:#fff}
+.event-option-card:has(input:checked){border-color:#111;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.event-option-card input{width:22px;height:22px;min-width:22px;margin:1px 0 0;accent-color:#111}
+.event-option-body{min-width:0;display:grid;gap:4px}
+.event-option-title{font-size:14px;font-weight:900;color:#111;line-height:1.35}
+.event-option-desc{font-size:12px;color:#666;line-height:1.65}
+.event-option-badge{display:inline-flex;width:max-content;max-width:100%;align-items:center;border-radius:9999px;background:#fff4d6;color:#7c5600;border:1px solid #f3e3a8;font-size:11px;font-weight:900;padding:3px 8px;margin-top:2px}
+@media(max-width:560px){.event-option-card{padding:13px 12px}.event-option-title{font-size:13px}.event-option-desc{font-size:12px}}
 .admin-table{display:grid;gap:8px}
 .admin-row{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;display:grid;gap:6px}
 .admin-row-title{font-size:14px;font-weight:800}
@@ -325,14 +335,14 @@ let editingSubeventEventId = null;
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function tagsText(a){return (a.hashtags||[]).join(', ')}
 function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
-function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',link:'その他リンク'})[type] || 'その他リンク';}
+function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'その他リンク'})[type] || 'その他リンク';}
 function accountSnsLinks(a){
   const links = Array.isArray(a.sns_links) ? a.sns_links.filter(s => s && s.url) : [];
   if (a.x_url && !links.some(s => s.url === a.x_url)) links.unshift({ type:'x', url:a.x_url, label:'X' });
   return links.slice(0, 10).map(s => ({ type:s.type || 'link', url:s.url || '', label:s.label || '' }));
 }
 function snsEditorHtml(){
-  const options = ['x','threads','instagram','tiktok','youtube','link'];
+  const options = ['x','threads','instagram','tiktok','youtube','github','link'];
   return `<div class="sns-editor" id="sns-editor">
     ${verifiedSns.map((s,i)=>`
       <div class="sns-row">
@@ -861,7 +871,7 @@ function renderEventList(){
               ${s.cover_url ? `<img class="subevent-cover-preview" src="../${esc(s.cover_url)}" alt="">` : ''}
               <div class="subevent-row-title">
                 <span>${esc(s.title)}</span>
-                <span class="small">参加 ${s.join_count || 0} 人${s.capacity ? ' / ' + s.capacity : ''}</span>
+                <span class="small">${s.participant_enabled === false ? '参加集計なし' : `参加 ${s.join_count || 0} 人${s.capacity ? ' / ' + s.capacity : ''}`}</span>
               </div>
               <div class="subevent-row-meta">${esc(fmtDateDisplay(s.starts_at) || '日時未定')}${s.venue ? ' ・ ' + esc(s.venue) : ''}</div>
               <div class="subevent-row-actions">
@@ -876,10 +886,10 @@ function renderEventList(){
     <div class="event-row">
       <div class="title">${esc(e.title)}<span class="vis ${e.visibility === 'unlisted' ? 'unlisted' : ''}">${e.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
       <div class="meta">${esc(fmtDateDisplay(e.starts_at) || '日時未定')}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
-      <div class="meta">参加 ${e.join_count} 人${e.visibility === 'public' ? ' / お気に入り ' + (e.like_count || 0) + ' 件' : ' / 非公開は参加のみ'}${e.capacity ? ' ・ 定員 ' + e.capacity : ''}</div>
+      <div class="meta">${e.participant_enabled === false ? '参加集計なし' : `参加 ${e.join_count} 人${e.capacity ? ' ・ 定員 ' + e.capacity : ''}`}${e.visibility === 'public' ? ' / お気に入り ' + (e.like_count || 0) + ' 件' : ''}</div>
       <div class="row-actions">
         <a class="btn sm" href="./event.html?id=${e.id}" target="_blank" rel="noopener">ページを開く</a>
-        <button class="btn sm" type="button" onclick="openParticipantsModal(${e.id})">参加者管理</button>
+        ${e.participant_enabled === false ? '' : `<button class="btn sm" type="button" onclick="openParticipantsModal(${e.id})">参加者管理</button>`}
         <button class="btn sm" type="button" data-act="edit-event" data-id="${e.id}">編集</button>
         <button class="btn sm danger" type="button" data-act="delete-event" data-id="${e.id}">削除</button>
       </div>
@@ -932,8 +942,27 @@ function openEventForm(id = null){
         </select>
       </div>
     </div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="ev-participant-enabled" type="checkbox" ${!e || e.participant_enabled !== false ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">参加者を集計する</span>
+          <span class="event-option-desc">オンにするとイベントページに「参加する」ボタンと参加者数を表示します。オフの場合、参加ボタンと参加者一覧は表示されません。</span>
+        </span>
+      </label>
+    </div>
     <div class="field"><label>外部リンク文言</label><input id="ev-extlabel" maxlength="80" value="${esc(e?.external_label || '')}" placeholder="例: チケット購入"></div>
     <div class="field"><label>外部リンクURL</label><input id="ev-exturl" value="${esc(e?.external_url || '')}" placeholder="https://..."></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="ev-ext-highlight" type="checkbox" ${e?.external_button_highlight ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">外部リンクボタンを目立たせる</span>
+          <span class="event-option-desc">チケット購入、応募フォームなど特に見てほしいリンクを黄色の強調ボタンで表示します。</span>
+          <span class="event-option-badge">黄色ボタン</span>
+        </span>
+      </label>
+    </div>
     ${id ? `<div class="field">
       <label>カバー画像</label>
       ${e?.cover_url ? `<img src="../${esc(e.cover_url)}" alt="" style="max-width:240px;border-radius:12px;display:block;margin-bottom:8px;">` : ''}
@@ -961,6 +990,8 @@ async function saveEvent(){
     capacity: val('ev-capacity'),
     external_label: val('ev-extlabel'),
     external_url: val('ev-exturl'),
+    external_button_highlight: document.getElementById('ev-ext-highlight')?.checked || false,
+    participant_enabled: document.getElementById('ev-participant-enabled')?.checked !== false,
     visibility: val('ev-visibility') || 'public',
   };
   const action = editingEventId ? 'event_update' : 'event_create';
@@ -1071,6 +1102,7 @@ function openFormModal(id = null){
       <section class="form-builder-section">
         <h4>質問</h4>
         <div class="hint">よく使う形式を選んで追加し、必要な質問文だけ編集できます。</div>
+        <div id="form-question-list" class="admin-table"></div>
         <div class="form-question-toolbar">
           <button class="btn sm" type="button" onclick="addFormQuestion('text')">+ 短文</button>
           <button class="btn sm" type="button" onclick="addFormQuestion('textarea')">+ 長文</button>
@@ -1078,7 +1110,6 @@ function openFormModal(id = null){
           <button class="btn sm" type="button" onclick="addFormQuestion('checkbox')">+ 複数選択</button>
           <button class="btn sm" type="button" onclick="addFormQuestion('select')">+ プルダウン</button>
         </div>
-        <div id="form-question-list" class="admin-table"></div>
       </section>
     </div>
   `;
@@ -1327,8 +1358,27 @@ function openSubeventForm(eventId, id = null){
     </div>
     <div class="field"><label>場所</label><input id="sub-venue" maxlength="200" value="${esc(s?.venue || '')}" placeholder="例: グッズ列集合 / 配信待機"></div>
     <div class="field"><label>定員（任意）</label><input id="sub-capacity" type="number" min="1" max="100000" value="${s?.capacity || ''}"></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="sub-participant-enabled" type="checkbox" ${!s || s.participant_enabled !== false ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">参加者を集計する</span>
+          <span class="event-option-desc">オンにするとサブイベントページに「参加する」ボタンと参加者数を表示します。メインイベントと別に設定できます。</span>
+        </span>
+      </label>
+    </div>
     <div class="field"><label>外部リンク文言</label><input id="sub-extlabel" maxlength="80" value="${esc(s?.external_label || '')}" placeholder="例: 詳細を見る"></div>
     <div class="field"><label>外部リンクURL</label><input id="sub-exturl" value="${esc(s?.external_url || '')}" placeholder="https://..."></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="sub-ext-highlight" type="checkbox" ${s?.external_button_highlight ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">外部リンクボタンを目立たせる</span>
+          <span class="event-option-desc">集合場所や詳細ページなど、優先して開いてほしいリンクを黄色の強調ボタンで表示します。</span>
+          <span class="event-option-badge">黄色ボタン</span>
+        </span>
+      </label>
+    </div>
     ${id ? `<div class="field">
       <label>カバー画像</label>
       ${s?.cover_url ? `<img class="subevent-cover-preview" src="../${esc(s.cover_url)}" alt="">` : ''}
@@ -1354,6 +1404,8 @@ async function saveSubevent(){
     capacity: val('sub-capacity'),
     external_label: val('sub-extlabel'),
     external_url: val('sub-exturl'),
+    external_button_highlight: document.getElementById('sub-ext-highlight')?.checked || false,
+    participant_enabled: document.getElementById('sub-participant-enabled')?.checked !== false,
   };
   const action = editingSubeventId ? 'subevent_update' : 'subevent_create';
   if (editingSubeventId) payload.id = editingSubeventId;

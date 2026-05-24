@@ -293,6 +293,8 @@ function runMigrations(PDO $pdo): void {
         capacity      INT NULL DEFAULT NULL,
         external_url  VARCHAR(2048) NULL DEFAULT NULL,
         external_label VARCHAR(80) NULL DEFAULT NULL,
+        external_button_highlight TINYINT(1) NOT NULL DEFAULT 0,
+        participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public' COMMENT 'public | unlisted',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -307,6 +309,12 @@ function runMigrations(PDO $pdo): void {
     }
     if (!in_array('attachments', $eventCols, true)) {
         $pdo->exec("ALTER TABLE buddies_events ADD COLUMN attachments TEXT NULL DEFAULT NULL COMMENT 'JSON array of event files' AFTER cover_url");
+    }
+    if (!in_array('external_button_highlight', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN external_button_highlight TINYINT(1) NOT NULL DEFAULT 0 AFTER external_label");
+    }
+    if (!in_array('participant_enabled', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN participant_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER external_button_highlight");
     }
 
     // ─ コミュニティアカウント掲示板 ─
@@ -355,6 +363,8 @@ function runMigrations(PDO $pdo): void {
             'capacity' => "ALTER TABLE buddies_subevents ADD COLUMN capacity INT NULL DEFAULT NULL AFTER cover_url",
             'external_url' => "ALTER TABLE buddies_subevents ADD COLUMN external_url VARCHAR(2048) NULL DEFAULT NULL AFTER capacity",
             'external_label' => "ALTER TABLE buddies_subevents ADD COLUMN external_label VARCHAR(80) NULL DEFAULT NULL AFTER external_url",
+            'external_button_highlight' => "ALTER TABLE buddies_subevents ADD COLUMN external_button_highlight TINYINT(1) NOT NULL DEFAULT 0 AFTER external_label",
+            'participant_enabled' => "ALTER TABLE buddies_subevents ADD COLUMN participant_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER external_button_highlight",
             'sort_order' => "ALTER TABLE buddies_subevents ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER external_label",
             'status' => "ALTER TABLE buddies_subevents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER sort_order",
             'created_at' => "ALTER TABLE buddies_subevents ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER status",
@@ -1162,7 +1172,7 @@ function ensureLoginNameAvailable(string $name, ?int $excludeUserId = null, ?int
 }
 function normalizeSnsLinks($links, int $limit = 10): array {
     if (!is_array($links)) return [];
-    $allowed = ['x', 'threads', 'instagram', 'tiktok', 'youtube', 'link'];
+    $allowed = ['x', 'threads', 'instagram', 'tiktok', 'youtube', 'github', 'link'];
     $out = [];
     foreach ($links as $link) {
         if (!is_array($link)) continue;
@@ -2886,6 +2896,8 @@ function ensureEventTables(): void {
         capacity      INT NULL DEFAULT NULL,
         external_url  VARCHAR(2048) NULL DEFAULT NULL,
         external_label VARCHAR(80) NULL DEFAULT NULL,
+        external_button_highlight TINYINT(1) NOT NULL DEFAULT 0,
+        participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -2915,6 +2927,8 @@ function ensureEventTables(): void {
         capacity       INT NULL DEFAULT NULL,
         external_url   VARCHAR(2048) NULL DEFAULT NULL,
         external_label VARCHAR(80) NULL DEFAULT NULL,
+        external_button_highlight TINYINT(1) NOT NULL DEFAULT 0,
+        participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         sort_order     INT NOT NULL DEFAULT 0,
         status         VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -2939,6 +2953,12 @@ function ensureEventTables(): void {
         if (!in_array('attachments', $cols, true)) {
             $pdo->exec("ALTER TABLE buddies_events ADD COLUMN attachments TEXT NULL DEFAULT NULL AFTER cover_url");
         }
+        if (!in_array('external_button_highlight', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN external_button_highlight TINYINT(1) NOT NULL DEFAULT 0 AFTER external_label");
+        }
+        if (!in_array('participant_enabled', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN participant_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER external_button_highlight");
+        }
         $idx = $pdo->query("SHOW INDEX FROM buddies_event_participants WHERE Key_name='uq_event_user'")->fetchAll();
         if ($idx) {
             $pdo->exec("ALTER TABLE buddies_event_participants DROP INDEX uq_event_user");
@@ -2954,6 +2974,8 @@ function ensureEventTables(): void {
             'capacity' => "ALTER TABLE buddies_subevents ADD COLUMN capacity INT NULL DEFAULT NULL AFTER cover_url",
             'external_url' => "ALTER TABLE buddies_subevents ADD COLUMN external_url VARCHAR(2048) NULL DEFAULT NULL AFTER capacity",
             'external_label' => "ALTER TABLE buddies_subevents ADD COLUMN external_label VARCHAR(80) NULL DEFAULT NULL AFTER external_url",
+            'external_button_highlight' => "ALTER TABLE buddies_subevents ADD COLUMN external_button_highlight TINYINT(1) NOT NULL DEFAULT 0 AFTER external_label",
+            'participant_enabled' => "ALTER TABLE buddies_subevents ADD COLUMN participant_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER external_button_highlight",
             'sort_order' => "ALTER TABLE buddies_subevents ADD COLUMN sort_order INT NOT NULL DEFAULT 0 AFTER external_label",
             'status' => "ALTER TABLE buddies_subevents ADD COLUMN status VARCHAR(20) NOT NULL DEFAULT 'active' AFTER sort_order",
             'created_at' => "ALTER TABLE buddies_subevents ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP AFTER status",
@@ -3057,15 +3079,18 @@ function eventEditableFields(array $b): array {
     if ($capacity !== null && ($capacity < 1 || $capacity > 100000)) err('満員数は1〜100000で入力してください。');
     $visibility = (string)($b['visibility'] ?? 'public');
     if (!in_array($visibility, ['public','unlisted'], true)) $visibility = 'public';
+    $participantEnabled = truthyFlag($b['participant_enabled'] ?? 1);
     return [
         'title'          => $title,
         'description'    => $description !== '' ? $description : null,
         'venue'          => $venue !== '' ? $venue : null,
         'starts_at'      => $startsAt,
         'ends_at'        => $endsAt,
-        'capacity'       => $capacity,
+        'capacity'       => $participantEnabled ? $capacity : null,
         'external_url'   => $externalUrl,
         'external_label' => $externalLabel,
+        'external_button_highlight' => truthyFlag($b['external_button_highlight'] ?? 0),
+        'participant_enabled' => $participantEnabled,
         'visibility'     => $visibility,
     ];
 }
@@ -3100,6 +3125,8 @@ function buildEventData(array $e, ?int $viewerId = null, bool $includeAttachment
         'capacity'       => $e['capacity'] !== null ? (int)$e['capacity'] : null,
         'external_url'   => $e['external_url'],
         'external_label' => $e['external_label'],
+        'external_button_highlight' => !empty($e['external_button_highlight']),
+        'participant_enabled' => !isset($e['participant_enabled']) || !empty($e['participant_enabled']),
         'visibility'     => $visibility,
         'status'         => $e['status'],
         'created_at'     => $e['created_at'],
@@ -3227,10 +3254,11 @@ function actionEventCreate(): void { ensureEventTables();
     $a = requireVerifiedAccount();
     $f = eventEditableFields(body());
     db()->prepare("INSERT INTO buddies_events
-        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, visibility)
-        VALUES (?,?,?,?,?,?,?,?,?,?)")
+        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, visibility)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
        ->execute([(int)$a['id'], $f['title'], $f['description'], $f['venue'],
-                  $f['starts_at'], $f['ends_at'], $f['capacity'], $f['external_url'], $f['external_label'], $f['visibility']]);
+                  $f['starts_at'], $f['ends_at'], $f['capacity'], $f['external_url'], $f['external_label'],
+                  $f['external_button_highlight'], $f['participant_enabled'], $f['visibility']]);
     $id = (int)db()->lastInsertId();
     $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
     $st->execute([$id]);
@@ -3248,11 +3276,16 @@ function actionEventUpdate(): void { ensureEventTables();
     $f = eventEditableFields($b);
     db()->prepare("UPDATE buddies_events SET
         title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
-        external_url=?, external_label=?, visibility=? WHERE id=?")
+        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, visibility=? WHERE id=?")
        ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
-                  $f['capacity'], $f['external_url'], $f['external_label'], $f['visibility'], $id]);
+                  $f['capacity'], $f['external_url'], $f['external_label'], $f['external_button_highlight'],
+                  $f['participant_enabled'], $f['visibility'], $id]);
     if ($f['visibility'] !== 'public') {
         db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND kind='like'")
+           ->execute([$id]);
+    }
+    if (!$f['participant_enabled']) {
+        db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND kind='join'")
            ->execute([$id]);
     }
     $st->execute([$id]);
@@ -3422,6 +3455,9 @@ function actionEventJoin(): void { ensureEventTables();
         }
         err('非公開イベントではお気に入り機能を利用できません。', 403);
     }
+    if ($kind === 'join' && isset($e['participant_enabled']) && empty($e['participant_enabled'])) {
+        err('このイベントは参加登録を受け付けていません。', 403);
+    }
 
     if ($state === 'off') {
         db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind=?")
@@ -3473,21 +3509,30 @@ function subeventEditableFields(array $b): array {
     $externalLabel = trim((string)($b['external_label'] ?? ''));
     if (mb_strlen($externalLabel) > 80) err('リンク文言は80文字以内で入力してください。');
     if ($externalLabel === '') $externalLabel = null;
+    $participantEnabled = truthyFlag($b['participant_enabled'] ?? 1);
     return [
         'title'          => $title,
         'description'    => $description !== '' ? $description : null,
         'venue'          => $venue !== '' ? $venue : null,
         'starts_at'      => $startsAt,
         'ends_at'        => $endsAt,
-        'capacity'       => $capacity,
+        'capacity'       => $participantEnabled ? $capacity : null,
         'external_url'   => $externalUrl,
         'external_label' => $externalLabel,
+        'external_button_highlight' => truthyFlag($b['external_button_highlight'] ?? 0),
+        'participant_enabled' => $participantEnabled,
         'sort_order'     => 0,
     ];
 }
 function buildSubeventData(array $s, ?int $viewerId = null): array {
     $id = (int)$s['id'];
     $eventId = (int)$s['event_id'];
+    $participantEnabled = !isset($s['participant_enabled']) || !empty($s['participant_enabled']);
+    $parentParticipantEnabled = true;
+    $evSt = db()->prepare("SELECT participant_enabled FROM buddies_events WHERE id=? LIMIT 1");
+    $evSt->execute([$eventId]);
+    $evRow = $evSt->fetch();
+    if ($evRow && isset($evRow['participant_enabled'])) $parentParticipantEnabled = !empty($evRow['participant_enabled']);
     $cntSt = db()->prepare("SELECT COUNT(*) c FROM buddies_subevent_participants WHERE subevent_id=?");
     $cntSt->execute([$id]);
     $joinCount = (int)$cntSt->fetch()['c'];
@@ -3498,9 +3543,15 @@ function buildSubeventData(array $s, ?int $viewerId = null): array {
         $mySt->execute([$id, $viewerId]);
         $isJoined = (bool)$mySt->fetch();
 
-        $mainSt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
-        $mainSt->execute([$eventId, $viewerId]);
-        $canJoin = (bool)$mainSt->fetch();
+        if (!$participantEnabled) {
+            $canJoin = false;
+        } elseif (!$parentParticipantEnabled) {
+            $canJoin = true;
+        } else {
+            $mainSt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+            $mainSt->execute([$eventId, $viewerId]);
+            $canJoin = (bool)$mainSt->fetch();
+        }
     }
     return [
         'id'             => $id,
@@ -3514,6 +3565,9 @@ function buildSubeventData(array $s, ?int $viewerId = null): array {
         'capacity'       => $s['capacity'] !== null ? (int)$s['capacity'] : null,
         'external_url'   => $s['external_url'],
         'external_label' => $s['external_label'],
+        'external_button_highlight' => !empty($s['external_button_highlight']),
+        'participant_enabled' => $participantEnabled,
+        'parent_participant_enabled' => $parentParticipantEnabled,
         'sort_order'     => isset($s['sort_order']) ? (int)$s['sort_order'] : 0,
         'status'         => $s['status'],
         'join_count'     => $joinCount,
@@ -3601,10 +3655,11 @@ function actionSubeventCreate(): void { ensureEventTables();
     requireOwnEvent($eventId, $a);
     $f = subeventEditableFields($b);
     db()->prepare("INSERT INTO buddies_subevents
-        (event_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, sort_order)
-        VALUES (?,?,?,?,?,?,?,?,?,?)")
+        (event_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, sort_order)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
        ->execute([$eventId, $f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
-                  $f['capacity'], $f['external_url'], $f['external_label'], $f['sort_order']]);
+                  $f['capacity'], $f['external_url'], $f['external_label'], $f['external_button_highlight'],
+                  $f['participant_enabled'], $f['sort_order']]);
     $id = (int)db()->lastInsertId();
     $st = db()->prepare("SELECT * FROM buddies_subevents WHERE id=? LIMIT 1");
     $st->execute([$id]);
@@ -3619,9 +3674,13 @@ function actionSubeventUpdate(): void { ensureEventTables();
     $f = subeventEditableFields($b + ['event_id' => (int)$s['event_id']]);
     db()->prepare("UPDATE buddies_subevents SET
         title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
-        external_url=?, external_label=?, sort_order=? WHERE id=?")
+        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, sort_order=? WHERE id=?")
        ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
-                  $f['capacity'], $f['external_url'], $f['external_label'], $f['sort_order'], $id]);
+                  $f['capacity'], $f['external_url'], $f['external_label'], $f['external_button_highlight'],
+                  $f['participant_enabled'], $f['sort_order'], $id]);
+    if (!$f['participant_enabled']) {
+        db()->prepare("DELETE FROM buddies_subevent_participants WHERE subevent_id=?")->execute([$id]);
+    }
     $st = db()->prepare("SELECT * FROM buddies_subevents WHERE id=? LIMIT 1");
     $st->execute([$id]);
     ok(buildSubeventData($st->fetch()));
@@ -3679,7 +3738,7 @@ function actionSubeventJoin(): void { ensureEventTables();
     if ($id <= 0) err('subevent_id は必須です。');
     if (!in_array($state, ['on','off'], true)) err('state が不正です。');
     $st = db()->prepare(
-        "SELECT s.*, e.status AS event_status FROM buddies_subevents s
+        "SELECT s.*, e.status AS event_status, e.participant_enabled AS event_participant_enabled FROM buddies_subevents s
          JOIN buddies_events e ON e.id = s.event_id
          WHERE s.id=? AND s.status='active' AND e.status='active'
          LIMIT 1"
@@ -3688,15 +3747,18 @@ function actionSubeventJoin(): void { ensureEventTables();
     $s = $st->fetch();
     if (!$s) err('サブイベントが見つかりません。', 404);
     if (!empty($s['ends_at']) && strtotime($s['ends_at']) < time()) err('サブイベントが終了しています。', 410);
+    if (isset($s['participant_enabled']) && empty($s['participant_enabled'])) err('このサブイベントは参加登録を受け付けていません。', 403);
     $uid = (int)$u['id'];
 
     if ($state === 'off') {
         db()->prepare("DELETE FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=?")
            ->execute([$id, $uid]);
     } else {
-        $mainJoinSt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
-        $mainJoinSt->execute([(int)$s['event_id'], $uid]);
-        if (!$mainJoinSt->fetch()) err('メインイベントに参加してからサブイベントに参加できます。', 403);
+        if (!isset($s['event_participant_enabled']) || !empty($s['event_participant_enabled'])) {
+            $mainJoinSt = db()->prepare("SELECT id FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+            $mainJoinSt->execute([(int)$s['event_id'], $uid]);
+            if (!$mainJoinSt->fetch()) err('メインイベントに参加してからサブイベントに参加できます。', 403);
+        }
 
         if ($s['capacity'] !== null) {
             $cntSt = db()->prepare("SELECT COUNT(*) c FROM buddies_subevent_participants WHERE subevent_id=?");
