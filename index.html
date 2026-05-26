@@ -4038,6 +4038,11 @@ async function saveEditSection() {
 }
 
 function requestCloseEdit() {
+  const editPage = document.getElementById('edit-page');
+  if (!editPage?.classList.contains('section-mode')) {
+    closeEdit();
+    return;
+  }
   openConfirmModal(
     '編集を終了',
     '保存していない変更は破棄されます。編集を終了しますか？',
