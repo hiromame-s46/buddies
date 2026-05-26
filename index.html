@@ -374,14 +374,30 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 }
 .option-chip.selected .option-chip-count { background:rgba(255,255,255,.22); color:#fff; }
 .next-live-edit-list{display:grid;gap:8px}
-.next-live-edit-item{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;border:1px solid #eee;border-radius:16px;background:#fafafa}
+.next-live-edit-item{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid #eee;border-radius:16px;background:#fafafa}
 .next-live-edit-item input{margin-top:4px;accent-color:#000;flex-shrink:0}
 .next-live-edit-main{min-width:0;flex:1;display:block}
 .next-live-edit-date{font-size:12px;font-weight:800;color:#111;line-height:1.35}
 .next-live-edit-title{display:block;font-size:13px;font-weight:700;color:#222;line-height:1.45;margin-top:2px}
 .next-live-edit-venue{display:block;font-size:11px;color:#777;line-height:1.45;margin-top:2px}
 .next-live-edit-count{margin-left:auto;align-self:center;flex-shrink:0;border-radius:999px;background:#fff;border:1px solid #e8e8e8;padding:4px 8px;font-size:11px;font-weight:800;color:#555}
+.next-live-seat-editor{flex:0 0 calc(100% - 26px);margin:10px 0 0 26px;padding:10px;border-radius:14px;background:#fff;border:1px solid #eee;display:grid;gap:8px}
+.next-live-seat-grid{display:grid;grid-template-columns:80px 1fr 1fr;gap:8px}
+.next-live-seat-grid input,.next-live-seat-grid select{min-width:0;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;padding:9px 10px;font:inherit;font-size:12px}
+.next-live-seat-note{font-size:10px;color:#999;line-height:1.5}
+@media(max-width:480px){.next-live-seat-grid{grid-template-columns:1fr}.next-live-seat-editor{flex-basis:100%;margin-left:0}}
 .next-live-more-btn{border:1px solid #e5e5e5;background:#fff;border-radius:999px;min-height:38px;font-size:13px;font-weight:800;color:#111;cursor:pointer}
+.next-with-list{display:grid;gap:10px;margin:8px 0 18px}
+.next-with-card{border:1px solid #eee;border-radius:18px;background:#fff;padding:13px 14px;display:grid;gap:8px}
+.next-with-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
+.next-with-date{font-size:11px;font-weight:900;color:#777;white-space:nowrap}
+.next-with-title{font-size:14px;font-weight:900;color:#111;line-height:1.45}
+.next-with-seat{font-size:12px;font-weight:900;color:#333;background:#f7f7f7;border:1px solid #eee;border-radius:999px;width:fit-content;max-width:100%;padding:5px 9px}
+.next-with-buddies{display:grid;gap:6px}
+.next-with-buddy{display:flex;align-items:center;gap:8px;font-size:12px;color:#444}
+.next-with-avatar{width:26px;height:26px;border-radius:50%;background:#eee;overflow:hidden;display:grid;place-items:center;color:#777;font-weight:900;flex-shrink:0}
+.next-with-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.next-with-proximity{margin-left:auto;color:#777;font-weight:800;font-size:11px}
 .live-filter-group{display:grid;gap:8px}
 .live-filter-group + .live-filter-group{margin-top:18px;padding-top:16px;border-top:1px solid #f0f0f0}
 .live-filter-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 2px 2px}
@@ -1492,6 +1508,7 @@ let restoringProfileReturn = false;
 let historyActiveTab = 'history';
 let editNextLivesExpanded = false;
 let filterPastLivesExpanded = false;
+let editNextLiveSeats = {};
 
 const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
 const DEVELOPER_IDS = new Set([1]); // 開発者アカウント uid
@@ -1574,6 +1591,31 @@ function liveDisplay(id) {
   if (live) return live;
   const [date, title, venue] = String(id || '').split('|');
   return { id, date, title: title || 'ライブ', venue: venue || '', weekday:'' };
+}
+function seatAreaLabel(v) { return v === 'arena' ? 'アリーナ' : v === 'stand' ? 'スタンド' : ''; }
+function cleanSeatInfo(seat = {}) {
+  const floor = String(seat.floor || '').replace(/[^0-9]/g, '').slice(0, 2);
+  const area = ['arena','stand'].includes(seat.area) ? seat.area : '';
+  const block = String(seat.block || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 12);
+  return { floor, area, block };
+}
+function seatHasValue(seat) { const s = cleanSeatInfo(seat); return !!(s.floor || s.area || s.block); }
+function seatLabel(seat) {
+  const s = cleanSeatInfo(seat);
+  return [s.floor ? `${s.floor}階` : '', seatAreaLabel(s.area), s.block ? `${s.block}ブロック` : ''].filter(Boolean).join(' / ');
+}
+function blockNumber(block) {
+  const m = String(block || '').match(/^([A-Z]+)(\d+)$/);
+  return m ? { prefix:m[1], n:Number(m[2]) } : null;
+}
+function seatProximityLabel(a, b) {
+  const sa = cleanSeatInfo(a), sb = cleanSeatInfo(b);
+  if (sa.block && sb.block && sa.block === sb.block) return '同じブロック';
+  const ba = blockNumber(sa.block), bb = blockNumber(sb.block);
+  if (ba && bb && ba.prefix === bb.prefix && Math.abs(ba.n - bb.n) === 1) return '隣のブロック';
+  if (sa.area && sb.area && sa.area === sb.area) return '同じエリア';
+  if (sa.floor && sb.floor && sa.floor === sb.floor) return '同じ階';
+  return '';
 }
 function nextLiveIds(profile) {
   const ids = Array.isArray(profile?.next_lives) ? profile.next_lives : [];
@@ -2193,6 +2235,7 @@ async function renderHome() {
       .map(verifiedAsProfile)
       .filter(Boolean);
     const merged = intermixVerifiedProfiles(verifiedExtras, similars);
+    renderNextLiveWithBuddies(merged);
     if (merged.length) {
       list.innerHTML = merged.map(p => profileMini(p, {showReasons: true})).join('');
       list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(merged[i], false));
@@ -2201,6 +2244,47 @@ async function renderHome() {
     }
   } catch(e) { list.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; }
   if(window.lucide) window.lucide.createIcons();
+}
+
+function renderNextLiveWithBuddies(profiles) {
+  let wrap = document.getElementById('next-live-with-section');
+  if (!wrap) {
+    wrap = document.createElement('div');
+    wrap.id = 'next-live-with-section';
+    document.getElementById('similar-title')?.before(wrap);
+  }
+  wrap.innerHTML = '';
+  const mySeats = me?.next_live_seats && typeof me.next_live_seats === 'object' ? me.next_live_seats : {};
+  const liveIds = nextLiveIds(me).filter(id => seatHasValue(mySeats[id]));
+  if (!liveIds.length) return;
+  const clickProfiles = [];
+  const blocks = liveIds.slice(0, 3).map(id => {
+    const live = liveDisplay(id);
+    const mySeat = cleanSeatInfo(mySeats[id]);
+    const buddies = profiles
+      .filter(p => Array.isArray(p.next_lives) && p.next_lives.includes(id))
+      .map(p => ({ p, proximity: seatProximityLabel(mySeat, p.next_live_seats?.[id]) }))
+      .sort((a,b) => Number(!!b.proximity) - Number(!!a.proximity))
+      .slice(0, 4);
+    return `<div class="next-with-card">
+      <div class="next-with-head">
+        <div>
+          <div class="next-with-title">${esc(live.title)}</div>
+          ${live.venue ? `<div class="next-live-edit-venue">${esc(live.venue)}</div>` : ''}
+        </div>
+        <div class="next-with-date">${esc(liveDateLabel(live.date, live.weekday))}</div>
+      </div>
+      <div class="next-with-seat">${esc(seatLabel(mySeat))}</div>
+      ${buddies.length ? `<div class="next-with-buddies">${buddies.map(({p, proximity}) => `
+        <div class="next-with-buddy" onclick="openProfile(window.__nextWithProfiles[${clickProfiles.push(p) - 1}], false)">
+          <div class="next-with-avatar">${getAvatarUrl(p) ? `<img src="${esc(getAvatarUrl(p))}" alt="">` : esc(getDisplayName(p)[0] || '?')}</div>
+          <span>${esc(getDisplayName(p))}</span>
+          ${proximity ? `<span class="next-with-proximity">${esc(proximity)}</span>` : ''}
+        </div>`).join('')}</div>` : `<div class="next-live-edit-venue">同じ公演に参加予定のBuddiesが見つかるとここに表示されます。</div>`}
+    </div>`;
+  }).join('');
+  window.__nextWithProfiles = clickProfiles;
+  wrap.innerHTML = `<h2 class="section-title">NEXT LIVE with Buddies</h2><div class="next-with-list">${blocks}</div>`;
 }
 
 function setHomeSimilarVisible(show) {
@@ -3695,6 +3779,7 @@ function switchHistoryTab(tab) {
 function openHistoryPage() {
   editHistory = normalizeHistoryClient(me?.buddies_history || []);
   editNextLives = Array.isArray(me?.next_lives) ? [...me.next_lives] : [];
+  editNextLiveSeats = JSON.parse(JSON.stringify(me?.next_live_seats || {}));
   if (!editHistory.length) addHistoryItem(false);
   historyActiveTab = 'history';
   renderHistoryPage();
@@ -3803,6 +3888,7 @@ async function saveHistory(options = {}) {
     if (!json.ok) { alert(json.error || '保存に失敗しました'); return; }
     me.buddies_history = json.data.history || [];
     me.next_lives = Array.isArray(json.data.next_lives) ? json.data.next_lives : editNextLives;
+    me.next_live_seats = me.next_live_seats || {};
     editNextLives = Array.isArray(me.next_lives) ? [...me.next_lives] : [];
     renderEditNextLives();
     if (shouldClose) closeHistoryPage();
@@ -3888,6 +3974,7 @@ function loadEditFormFromCurrentUser() {
   editTags  = [...(me.tags || [])];
   editSongs = [...(me.favorite_songs || [])];
   editNextLives = Array.isArray(me.next_lives) ? [...me.next_lives] : [];
+  editNextLiveSeats = JSON.parse(JSON.stringify(me.next_live_seats || {}));
   editNextLivesExpanded = false;
   editSns   = JSON.parse(JSON.stringify(me.sns_links || []));
   editFollowStance = me.follow_stance || null;
@@ -3991,6 +4078,7 @@ function openEdit() {
   editTags  = [...(me.tags || [])];
   editSongs = [...(me.favorite_songs || [])];
   editNextLives = Array.isArray(me.next_lives) ? [...me.next_lives] : [];
+  editNextLiveSeats = JSON.parse(JSON.stringify(me.next_live_seats || {}));
   editNextLivesExpanded = false;
   editSns   = JSON.parse(JSON.stringify(me.sns_links || []));
   editFollowStance = me.follow_stance || null;
@@ -4216,6 +4304,7 @@ function renderEditNextLives() {
   }
   wrap.innerHTML = options.map(live => {
     const checked = editNextLives.includes(live.id);
+    const seat = cleanSeatInfo(editNextLiveSeats[live.id] || {});
     return `<label class="next-live-edit-item">
       <input type="checkbox" value="${esc(live.id)}" ${checked ? 'checked' : ''} onchange="toggleEditNextLive(this.value, this.checked)">
       <span class="next-live-edit-main">
@@ -4223,14 +4312,34 @@ function renderEditNextLives() {
         <span class="next-live-edit-title">${esc(live.title)}</span>
         ${live.venue ? `<span class="next-live-edit-venue">${esc(live.venue)}</span>` : ''}
       </span>
+      ${checked ? `<div class="next-live-seat-editor">
+        <div class="next-live-seat-grid">
+          <input data-live-id="${esc(live.id)}" inputmode="numeric" placeholder="階" value="${esc(seat.floor)}" oninput="updateNextLiveSeat(this.dataset.liveId,'floor',this.value)">
+          <select data-live-id="${esc(live.id)}" onchange="updateNextLiveSeat(this.dataset.liveId,'area',this.value)">
+            <option value="">エリア</option>
+            <option value="arena" ${seat.area === 'arena' ? 'selected' : ''}>アリーナ</option>
+            <option value="stand" ${seat.area === 'stand' ? 'selected' : ''}>スタンド</option>
+          </select>
+          <input data-live-id="${esc(live.id)}" placeholder="ブロック" value="${esc(seat.block)}" oninput="updateNextLiveSeat(this.dataset.liveId,'block',this.value)">
+        </div>
+        <div class="next-live-seat-note">階とブロックは半角英数字のみ保存されます。未入力でもOKです。</div>
+      </div>` : ''}
     </label>`;
   }).join('');
+}
+function updateNextLiveSeat(id, key, value) {
+  const current = cleanSeatInfo(editNextLiveSeats[id] || {});
+  current[key] = value;
+  const cleaned = cleanSeatInfo(current);
+  if (seatHasValue(cleaned)) editNextLiveSeats[id] = cleaned;
+  else delete editNextLiveSeats[id];
 }
 function toggleEditNextLive(id, checked) {
   if (checked) {
     if (!editNextLives.includes(id)) editNextLives.push(id);
   } else {
     editNextLives = editNextLives.filter(v => v !== id);
+    delete editNextLiveSeats[id];
   }
   editHistory.forEach(item => {
     if (item.live_id === id && !checked) item.live_id = '';
@@ -4464,6 +4573,7 @@ async function saveEdit(options = {}) {
     tags:          editTags,
     favorite_songs:editSongs,
     next_lives:    editNextLives,
+    next_live_seats: Object.fromEntries(Object.entries(editNextLiveSeats).filter(([id, seat]) => editNextLives.includes(id) && seatHasValue(seat)).map(([id, seat]) => [id, cleanSeatInfo(seat)])),
     sns_links:     editSns.slice(0, 4),
     follow_stance: editSns.some(s => s.url && s.url.trim()) ? (editFollowStance || null) : null,
     post_template: buildPostTemplatePayload(),

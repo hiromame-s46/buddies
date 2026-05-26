@@ -112,6 +112,7 @@ function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
         'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
         'show_sakumv_quiz' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumv_quiz TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにSakuMV Quiz自己ベストを表示'",
         'next_lives' => "ALTER TABLE buddies_profiles ADD COLUMN next_lives TEXT NULL DEFAULT NULL COMMENT 'JSON array of selected future live performance ids' AFTER favorite_songs",
+        'next_live_seats' => "ALTER TABLE buddies_profiles ADD COLUMN next_live_seats TEXT NULL DEFAULT NULL COMMENT 'JSON object of seat info by live id' AFTER next_lives",
     ];
 
     foreach ($alterMap as $col => $sql) {
@@ -183,6 +184,7 @@ function runMigrations(PDO $pdo): void {
         tags           TEXT NULL DEFAULT NULL COMMENT 'JSON array',
         favorite_songs TEXT NULL DEFAULT NULL COMMENT 'JSON array',
         next_lives     TEXT NULL DEFAULT NULL COMMENT 'JSON array of selected future live performance ids',
+        next_live_seats TEXT NULL DEFAULT NULL COMMENT 'JSON object of seat info by live id',
         sns_links      TEXT NULL DEFAULT NULL COMMENT 'JSON array of {type,url}',
         follow_stance  VARCHAR(20) NULL DEFAULT NULL COMMENT 'silent_ok / hello_please',
         post_template  TEXT NULL DEFAULT NULL COMMENT 'SNS紹介テンプレート',
@@ -201,6 +203,7 @@ function runMigrations(PDO $pdo): void {
         'post_template' => "ALTER TABLE buddies_profiles ADD COLUMN post_template TEXT NULL DEFAULT NULL",
         'birthday'      => "ALTER TABLE buddies_profiles ADD COLUMN birthday DATE NULL DEFAULT NULL",
         'next_lives'    => "ALTER TABLE buddies_profiles ADD COLUMN next_lives TEXT NULL DEFAULT NULL COMMENT 'JSON array of selected future live performance ids' AFTER favorite_songs",
+        'next_live_seats' => "ALTER TABLE buddies_profiles ADD COLUMN next_live_seats TEXT NULL DEFAULT NULL COMMENT 'JSON object of seat info by live id' AFTER next_lives",
         'show_favorite_mimis' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_mimis TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにさくみみお気に入りを表示'",
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
         'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
@@ -606,6 +609,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['tags']           = $bp['tags']           ? json_decode($bp['tags'],           true) : [];
         $data['favorite_songs'] = $bp['favorite_songs'] ? json_decode($bp['favorite_songs'], true) : [];
         $data['next_lives']     = !empty($bp['next_lives']) ? json_decode($bp['next_lives'], true) : [];
+        $data['next_live_seats'] = !empty($bp['next_live_seats']) ? (json_decode($bp['next_live_seats'], true) ?: []) : [];
         $data['sns_links']      = $bp['sns_links']      ? json_decode($bp['sns_links'],      true) : [];
         $data['follow_stance']  = $bp['follow_stance'] ?? null;
         $data['post_template']  = $bp['post_template'] ?? null;
@@ -623,6 +627,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['tags']           = [];
         $data['favorite_songs'] = [];
         $data['next_lives']     = [];
+        $data['next_live_seats'] = [];
         $data['sns_links']      = [];
         $data['follow_stance']  = null;
         $data['post_template']  = null;
@@ -675,6 +680,7 @@ function buildRowData(array $r): array {
         'tags'          => isset($r['tags'])           && $r['tags']           ? json_decode($r['tags'],           true) : [],
         'favorite_songs'=> isset($r['favorite_songs']) && $r['favorite_songs'] ? json_decode($r['favorite_songs'], true) : [],
         'next_lives'    => isset($r['next_lives'])     && $r['next_lives']     ? json_decode($r['next_lives'],     true) : [],
+        'next_live_seats' => isset($r['next_live_seats']) && $r['next_live_seats'] ? (json_decode($r['next_live_seats'], true) ?: []) : [],
         'sns_links'     => isset($r['sns_links'])      && $r['sns_links']      ? json_decode($r['sns_links'],      true) : [],
         'follow_stance' => $r['follow_stance'] ?? null,
         'post_template' => $r['post_template'] ?? null,
@@ -690,6 +696,29 @@ function decodeJsonArray(?string $json): array {
     if (!$json) return [];
     $arr = json_decode($json, true);
     return is_array($arr) ? array_values(array_filter($arr, fn($v) => is_string($v) && trim($v) !== '')) : [];
+}
+
+function normalizeNextLiveSeats($value, array $allowedLives = []): array {
+    if (!is_array($value)) return [];
+    $allowed = array_flip(array_map('strval', $allowedLives));
+    $out = [];
+    foreach ($value as $liveId => $seat) {
+        $liveId = trim((string)$liveId);
+        if ($liveId === '' || mb_strlen($liveId) > 260) continue;
+        if ($allowedLives && !isset($allowed[$liveId])) continue;
+        if (!is_array($seat)) continue;
+        $floor = preg_replace('/[^0-9]/', '', (string)($seat['floor'] ?? ''));
+        $area = trim((string)($seat['area'] ?? ''));
+        $block = strtoupper(preg_replace('/[^A-Z0-9]/i', '', (string)($seat['block'] ?? '')));
+        if ($area !== '' && !in_array($area, ['arena', 'stand'], true)) $area = '';
+        if ($floor === '' && $area === '' && $block === '') continue;
+        $out[$liveId] = [
+            'floor' => mb_substr($floor, 0, 2),
+            'area' => $area,
+            'block' => mb_substr($block, 0, 12),
+        ];
+    }
+    return $out;
 }
 
 function truthyFlag($value): int {
@@ -1687,6 +1716,7 @@ function actionProfileUpdate(): void {
     $tags         = isset($b['tags'])           && is_array($b['tags'])           ? array_slice($b['tags'],           0, 5) : null;
     $favSongs     = isset($b['favorite_songs']) && is_array($b['favorite_songs']) ? array_slice($b['favorite_songs'], 0, 3) : null;
     $nextLives    = isset($b['next_lives'])     && is_array($b['next_lives'])     ? array_slice($b['next_lives'],     0, 60) : null;
+    $nextLiveSeats = isset($b['next_live_seats']) && is_array($b['next_live_seats']) ? $b['next_live_seats'] : null;
     $snsLinks     = isset($b['sns_links'])      && is_array($b['sns_links'])      ? array_slice($b['sns_links'],      0, 4) : null;
 
     $followStance = opt('follow_stance', null);
@@ -1710,6 +1740,7 @@ function actionProfileUpdate(): void {
             return $v !== '' && mb_strlen($v) <= 260 ? $v : '';
         }, $nextLives))));
     }
+    $nextLiveSeats = normalizeNextLiveSeats($nextLiveSeats, $nextLives ?? []);
 
     // SNSリンクの url を簡易バリデーション（空文字は除去）
     if ($snsLinks !== null) {
@@ -1721,14 +1752,15 @@ function actionProfileUpdate(): void {
 
         db()->prepare('INSERT INTO buddies_profiles
         (user_id, birthday, age, gender, location, buddies_since, bio,
-         tags, favorite_songs, next_lives, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps, show_sakumv_quiz)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         tags, favorite_songs, next_lives, next_live_seats, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps, show_sakumv_quiz)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           birthday=VALUES(birthday), age=VALUES(age),
           gender=VALUES(gender), location=VALUES(location),
           buddies_since=VALUES(buddies_since), bio=VALUES(bio),
           tags=VALUES(tags), favorite_songs=VALUES(favorite_songs),
           next_lives=VALUES(next_lives),
+          next_live_seats=VALUES(next_live_seats),
           sns_links=VALUES(sns_links), follow_stance=VALUES(follow_stance),
           post_template=VALUES(post_template),
           show_favorite_mimis=VALUES(show_favorite_mimis),
@@ -1746,6 +1778,7 @@ function actionProfileUpdate(): void {
         $tags         !== null ? json_encode($tags,         JSON_UNESCAPED_UNICODE) : null,
         $favSongs     !== null ? json_encode($favSongs,     JSON_UNESCAPED_UNICODE) : null,
         $nextLives    !== null ? json_encode($nextLives,    JSON_UNESCAPED_UNICODE) : null,
+        $nextLiveSeats ? json_encode($nextLiveSeats, JSON_UNESCAPED_UNICODE) : null,
         $snsLinks     !== null ? json_encode(array_values($snsLinks), JSON_UNESCAPED_UNICODE) : null,
         $followStance,
         $postTemplate ?: null,
@@ -1945,7 +1978,7 @@ function actionExchangeList(): void {
         'SELECT u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-                bp.tags, bp.favorite_songs, bp.next_lives, bp.sns_links, bp.follow_stance, bp.post_template,
+                bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
                 bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
                 e.created_at AS exchanged_at
          FROM buddies_exchanges e
@@ -2011,7 +2044,7 @@ function actionFavoriteList(): void {
         'SELECT u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-                bp.tags, bp.favorite_songs, bp.next_lives, bp.sns_links, bp.follow_stance, bp.post_template,
+                bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
                 bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
                 f.created_at AS favorited_at
          FROM buddies_favorites f
@@ -2074,7 +2107,7 @@ function actionSearch(): void {
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-        bp.tags, bp.favorite_songs, bp.next_lives, bp.sns_links, bp.follow_stance, bp.post_template,
+        bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
         bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
 
     $where  = ['u.id != ?'];
@@ -2290,6 +2323,7 @@ function actionSimilar(): void {
     $myOshis   = array_values(array_filter([$myOshi1, $myOshi2, $myOshi3]));
     $myTags    = ($myBp && $myBp['tags'])   ? (json_decode($myBp['tags'],   true) ?? []) : [];
     $myNextLives = ($myBp && !empty($myBp['next_lives'])) ? (json_decode($myBp['next_lives'], true) ?? []) : [];
+    $myNextLiveSeats = ($myBp && !empty($myBp['next_live_seats'])) ? (json_decode($myBp['next_live_seats'], true) ?? []) : [];
     $myLocation = $myBp['location']         ?? null;
     $myStance  = $myBp['follow_stance']     ?? null;
     $myAge     = null;
@@ -2340,7 +2374,7 @@ function actionSimilar(): void {
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-        bp.tags, bp.favorite_songs, bp.next_lives, bp.sns_links, bp.follow_stance, bp.post_template,
+        bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
         bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
 
     // 候補を最大150件をランダム取得し PHP 側でスコアリング
@@ -2397,6 +2431,20 @@ function actionSimilar(): void {
         if ($liveOverlap) {
             $score += count($liveOverlap) * 12;
             $reasons[] = '同じ公演に参加予定';
+        }
+        $cNextLiveSeats = ($c['next_live_seats']) ? (json_decode($c['next_live_seats'], true) ?? []) : [];
+        foreach ($liveOverlap as $liveId) {
+            $mySeat = is_array($myNextLiveSeats[$liveId] ?? null) ? $myNextLiveSeats[$liveId] : [];
+            $cSeat = is_array($cNextLiveSeats[$liveId] ?? null) ? $cNextLiveSeats[$liveId] : [];
+            if (!$mySeat || !$cSeat) continue;
+            if (!empty($mySeat['area']) && !empty($cSeat['area']) && $mySeat['area'] === $cSeat['area']) {
+                $score += 4;
+                $reasons[] = '席エリアが一緒';
+            }
+            if (!empty($mySeat['block']) && !empty($cSeat['block']) && $mySeat['block'] === $cSeat['block']) {
+                $score += 8;
+                $reasons[] = 'ブロックが一緒';
+            }
         }
 
         // ④ 年齢一致（同い年4点、±1歳2点）
