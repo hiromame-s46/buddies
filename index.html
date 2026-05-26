@@ -42,6 +42,11 @@ h2.section-title { font-size:17px; font-weight:700; margin:28px 0 12px; }
 .card { background:#fff; border:1px solid var(--eee); border-radius:24px; padding:20px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
 .today-card { background:#fff; border:1px solid var(--eee); border-radius:24px; padding:18px; margin:18px 0 14px; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
 .today-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
+.today-head.is-compact { margin-bottom:0; }
+.home-head-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
+.home-collapse-btn { display:inline-flex; align-items:center; justify-content:center; min-width:34px; min-height:34px; border:1px solid #ececec; border-radius:9999px; background:#fff; color:#111; font-size:12px; font-weight:900; cursor:pointer; }
+.home-collapse-btn:active { transform:scale(.98); }
+.home-collapsed-summary { margin-top:10px; padding:9px 12px; border-radius:9999px; background:#fafafa; border:1px solid #f0f0f0; color:#777; font-size:12px; font-weight:800; line-height:1.35; }
 .today-kicker { font-size:11px; font-weight:800; color:#999; letter-spacing:.04em; text-transform:uppercase; }
 .today-title { font-size:20px; font-weight:800; letter-spacing:-.02em; }
 .today-date { font-size:12px; color:#666; margin-top:2px; }
@@ -842,6 +847,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="home-page" hidden>
     <div id="my-home-card"></div>
     <div id="verified-home-section"></div>
+    <div id="next-live-with-section"></div>
     <div id="todays-sakura-section"></div>
     <h2 id="similar-title" class="section-title">おすすめのBuddies</h2>
     <div id="similar-list" class="profile-list"></div>
@@ -2074,6 +2080,23 @@ const TODAY_DATA_PATHS = {
 const TODAY_WEEKDAYS = ['日','月','火','水','木','金','土'];
 let todaysSakuraLoaded = false;
 let todaysSakuraExpanded = {};
+let todaysSakuraPayload = null;
+let lastNextLiveWithProfiles = [];
+
+function getHomeCollapseState(key) {
+  try { return localStorage.getItem(`buddies_home_collapsed_${key}`) === '1'; }
+  catch (_) { return false; }
+}
+function setHomeCollapseState(key, value) {
+  try { localStorage.setItem(`buddies_home_collapsed_${key}`, value ? '1' : '0'); }
+  catch (_) {}
+}
+function toggleHomeCollapse(key) {
+  const next = !getHomeCollapseState(key);
+  setHomeCollapseState(key, next);
+  if (key === 'today' && todaysSakuraPayload) renderTodaysSakuraCard(todaysSakuraPayload);
+  if (key === 'next-live-with') renderNextLiveWithBuddies(lastNextLiveWithProfiles);
+}
 
 function todayLocalDateString(d = new Date()) {
   const y = d.getFullYear();
@@ -2142,7 +2165,9 @@ function renderTodayItems(items, type, limit = 4) {
 function renderTodaysSakuraCard(payload) {
   const wrap = document.getElementById('todays-sakura-section');
   if (!wrap) return;
+  todaysSakuraPayload = payload;
   const dateKey = payload.dateKey;
+  const collapsed = getHomeCollapseState('today');
   const blocks = [
     ['schedule', 'スケジュール', payload.schedule],
     ['blogs', 'ブログ', payload.blogs],
@@ -2152,17 +2177,21 @@ function renderTodaysSakuraCard(payload) {
           <div class="today-block-head"><div class="today-block-title">${title}</div><div class="today-count">${items.length}件</div></div>
           ${renderTodayItems(items, type)}
         </div>`).join('');
+  const total = ['schedule','blogs','mimis'].reduce((sum, key) => sum + ((payload[key] || []).length), 0);
   wrap.innerHTML = `
     <section class="today-card">
-      <div class="today-head">
+      <div class="today-head ${collapsed ? 'is-compact' : ''}">
         <div>
           <div class="today-kicker">Today's Sakurazaka</div>
           <div class="today-title">Today’s 櫻坂</div>
           <div class="today-date">${esc(compactDateLabel(dateKey))}</div>
         </div>
-        <a class="today-more" href="./days.html?date=${encodeURIComponent(dateKey)}">日別で見る</a>
+        <div class="home-head-actions">
+          <a class="today-more" href="./days.html?date=${encodeURIComponent(dateKey)}">日別で見る</a>
+          <button class="home-collapse-btn" type="button" onclick="toggleHomeCollapse('today')" aria-label="${collapsed ? 'Today’s 櫻坂を開く' : 'Today’s 櫻坂を折りたたむ'}">${collapsed ? '＋' : '−'}</button>
+        </div>
       </div>
-      ${blocks ? `<div class="today-grid">${blocks}</div>` : '<div class="today-empty">今日の情報はまだありません</div>'}
+      ${collapsed ? `<div class="home-collapsed-summary">${total ? `${total}件の情報があります` : '今日の情報はまだありません'}</div>` : (blocks ? `<div class="today-grid">${blocks}</div>` : '<div class="today-empty">今日の情報はまだありません</div>')}
     </section>`;
 }
 function toggleTodaysSakura(type) {
@@ -2192,6 +2221,7 @@ async function loadTodaysSakura(forceRender = false) {
   renderTodaysSakuraCard(payload);
 }
 window.toggleTodaysSakura = toggleTodaysSakura;
+window.toggleHomeCollapse = toggleHomeCollapse;
 
 // ── ホーム ───────────────────────────────────────────────
 async function renderHome() {
@@ -2204,6 +2234,8 @@ async function renderHome() {
       <button class="pill-button black" onclick="showAuthModal()">ログイン / 新規登録</button>
     </div>`;
     renderVerifiedHome();
+    const nextWith = document.getElementById('next-live-with-section');
+    if (nextWith) nextWith.innerHTML = '';
     document.getElementById('similar-list').innerHTML = '';
     return;
   }
@@ -2253,16 +2285,18 @@ async function renderHome() {
 }
 
 function renderNextLiveWithBuddies(profiles) {
+  lastNextLiveWithProfiles = Array.isArray(profiles) ? profiles : [];
   let wrap = document.getElementById('next-live-with-section');
   if (!wrap) {
     wrap = document.createElement('div');
     wrap.id = 'next-live-with-section';
-    document.getElementById('similar-title')?.before(wrap);
+    document.getElementById('todays-sakura-section')?.before(wrap);
   }
   wrap.innerHTML = '';
   const mySeats = me?.next_live_seats && typeof me.next_live_seats === 'object' ? me.next_live_seats : {};
   const liveIds = nextLiveIds(me).filter(id => seatHasValue(mySeats[id]));
   if (!liveIds.length) return;
+  const collapsed = getHomeCollapseState('next-live-with');
   const clickProfiles = [];
   const blocks = liveIds.slice(0, 3).map(id => {
     const live = liveDisplay(id);
@@ -2290,7 +2324,17 @@ function renderNextLiveWithBuddies(profiles) {
     </div>`;
   }).join('');
   window.__nextWithProfiles = clickProfiles;
-  wrap.innerHTML = `<h2 class="section-title">NEXT LIVE with Buddies</h2><div class="next-with-list">${blocks}</div>`;
+  wrap.innerHTML = `<section class="today-card">
+    <div class="today-head ${collapsed ? 'is-compact' : ''}">
+      <div>
+        <div class="today-kicker">Seat Match</div>
+        <div class="today-title">NEXT LIVE with Buddies</div>
+        <div class="today-date">${liveIds.length}公演に座席情報を登録中</div>
+      </div>
+      <button class="home-collapse-btn" type="button" onclick="toggleHomeCollapse('next-live-with')" aria-label="${collapsed ? 'NEXT LIVE with Buddiesを開く' : 'NEXT LIVE with Buddiesを折りたたむ'}">${collapsed ? '＋' : '−'}</button>
+    </div>
+    ${collapsed ? `<div class="home-collapsed-summary">${liveIds.length}公演の近いBuddiesを確認できます</div>` : `<div class="next-with-list">${blocks}</div>`}
+  </section>`;
 }
 
 function setHomeSimilarVisible(show) {
