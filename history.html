@@ -124,7 +124,7 @@ function mergedHistoryItems(p){
 function historyLiveHtml(item){
   if(!item?.live_id)return'';
   const live=liveDisplay(item.live_id);
-  return `<div class="history-live"><div class="history-live-label">参加ライブ</div><div class="history-live-title">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="history-live-venue">${esc(live.venue)}</div>`:''}</div>`;
+  return `<div class="history-live"><div class="history-live-label">参加したLIVE</div><div class="history-live-title">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="history-live-venue">${esc(live.venue)}</div>`:''}</div>`;
 }
 function historySearchText(item){
   const live=item.live_id?liveDisplay(item.live_id):null;

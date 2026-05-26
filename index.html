@@ -446,6 +446,8 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .sakulabo-fav-face { width:34px; height:34px; border-radius:50%; border:2px solid #fff; overflow:hidden; background:#fdf2f8; display:grid; place-items:center; color:#f9a8d4; font-size:12px; font-weight:800; box-shadow:0 1px 3px rgba(0,0,0,.06); }
 .sakulabo-fav-face + .sakulabo-fav-face { margin-left:-10px; }
 .sakulabo-fav-face img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+.sakulabo-fav-thumb { width:50px; height:50px; border-radius:13px; overflow:hidden; background:#eee; flex-shrink:0; border:1px solid #e9e9e9; }
+.sakulabo-fav-thumb img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
 .sakulabo-fav-main { min-width:0; flex:1; }
 .sakulabo-fav-date { font-size:10px; color:#999; font-weight:700; line-height:1.2; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sakulabo-fav-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -3254,7 +3256,8 @@ function renderSakulaboFavorites(profile) {
   if (profile.show_favorite_blogs && blogs.length) {
     sections.push(`<div class="profile-section"><div class="profile-section-title">お気に入りのブログ</div><div class="sakulabo-favorites-card">${blogs.slice(0,10).map(item => {
       const meta = sakulaboFavMeta([favoriteMemberName(item.member), item.date]);
-      const body = `<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
+      const thumb = item.image_url ? `<div class="sakulabo-fav-thumb"><img src="${esc(item.image_url)}" alt="" loading="lazy"></div>` : '';
+      const body = `${thumb}<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
       return sakulaboFavLink(item.url, body);
     }).join('')}</div></div>`);
   }

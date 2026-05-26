@@ -891,6 +891,8 @@ function compactSakulaboBlogItem(array $row): ?array {
     $title = cleanDisplayText($blog['title'] ?? $blog['name'] ?? '');
     $member = cleanDisplayText($blog['member'] ?? $blog['author'] ?? '');
     $date = cleanDisplayText($blog['date'] ?? $blog['published_at'] ?? '');
+    $images = isset($blog['images']) && is_array($blog['images']) ? $blog['images'] : [];
+    $image = cleanDisplayText($blog['thumb'] ?? $blog['thumbnail'] ?? $blog['image'] ?? ($images[0] ?? ''));
     if ($title === '') {
         $title = $member !== '' ? $member . 'のブログ' : 'ブログ';
     }
@@ -900,6 +902,7 @@ function compactSakulaboBlogItem(array $row): ?array {
         'member' => $member,
         'date' => $date,
         'url' => filter_var($url, FILTER_VALIDATE_URL) ? $url : null,
+        'image_url' => filter_var($image, FILTER_VALIDATE_URL) ? $image : null,
         'created_at' => $row['created_at'] ?? null,
     ];
 }
