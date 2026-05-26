@@ -1,0 +1,1508 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>コミュニティアカウント管理 - Buddies profile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--gold:#e6b422}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.5;padding-bottom:120px}
+.app{max-width:760px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:sticky;top:0;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:8px}
+header h1{font-size:17px;margin:0;font-weight:800;flex:1}
+.crumb{font-size:12px;color:#777;text-decoration:none;display:inline-flex;align-items:center;gap:4px}
+.crumb:hover{color:#111}
+.small{font-size:12px;color:var(--muted);line-height:1.6}
+main{padding:16px;display:grid;gap:14px}
+.card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff}
+.account-summary{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;display:grid;gap:14px}
+.settings-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.settings-tab{min-height:44px;border:1px solid var(--line);border-radius:14px;background:#fafafa;color:#555;font:800 13px inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
+.settings-tab.active{background:#111;border-color:#111;color:#fff}
+.settings-panel{display:none}
+.settings-panel.active{display:grid;gap:14px}
+@media(max-width:560px){.settings-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tab{font-size:12px}}
+.login{max-width:380px;margin:60px auto}
+.field{display:grid;gap:6px;margin-bottom:10px}
+.field label{font-size:12px;font-weight:700;color:#555}
+.field-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+@media(max-width:560px){.field-row{grid-template-columns:minmax(0,1fr)}}
+.field{min-width:0}
+input,textarea,select{width:100%;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font:inherit;font-size:14px;outline:none;background:#fff;color:#111;min-width:0;display:block;box-sizing:border-box}
+input[type=datetime-local]{font-size:13px;padding:10px 12px;width:100%;min-width:0;-webkit-min-logical-width:0;appearance:none;-webkit-appearance:none}
+.modal-body .field-row{grid-template-columns:minmax(0,1fr) !important}
+.modal-body{overflow-x:hidden}
+input:focus,textarea:focus,select:focus{border-color:#111}
+textarea{min-height:96px;resize:vertical;line-height:1.7}
+.btn{height:44px;border-radius:9999px;border:1px solid var(--line);background:#fff;color:#111;font:700 14px inherit;padding:0 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.primary{background:#111;color:#fff;border-color:#111}
+.btn.danger{color:#d33;border-color:#f3c2c2;background:#fff}
+.btn.ghost{background:transparent;border-color:transparent;color:#555}
+.btn.sm{height:36px;font-size:13px;padding:0 14px}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.section-title{font-size:14px;font-weight:800;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.account-head{display:flex;gap:14px;align-items:center}
+.account-icon-btn{width:72px;height:72px;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;color:#888;font-weight:800;font-size:28px;overflow:hidden;flex-shrink:0;border:none;cursor:pointer;padding:0;position:relative}
+.account-icon-btn img{width:100%;height:100%;object-fit:cover}
+.account-icon-btn .edit-hint{position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.55);color:#fff;font-size:10px;font-weight:700;padding:2px 0}
+.account-head h2{margin:2px 0 2px;font-size:18px}
+.verified-label{display:inline-flex;align-items:center;gap:5px;border-radius:9999px;background:#fff;border:1px solid var(--gold);color:#7c5600;font-size:11px;font-weight:800;padding:3px 9px}
+.kind{display:inline-block;padding:3px 9px;border-radius:9999px;background:#f3f3f3;color:#555;font-size:11px;font-weight:700;margin-left:6px}
+.msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin-top:10px}
+.msg.show{display:block}
+.msg.ok{background:#f0fff4;color:#276749}
+.msg.err{background:#fff5f5;color:#d33}
+
+/* リンクカード */
+.link-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fafafa;margin-bottom:10px}
+.link-card .link-card-title{font-size:11px;font-weight:800;color:#7c5600;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase}
+.link-card .field{margin-bottom:8px}
+.link-card .field:last-child{margin-bottom:0}
+.sns-editor{display:grid;gap:8px;margin-top:8px}
+.sns-row{display:grid;grid-template-columns:128px minmax(0,1fr) 44px;gap:8px;align-items:center}
+.sns-row .btn{width:44px;padding:0}
+@media(max-width:560px){.sns-row{grid-template-columns:minmax(0,1fr) 44px}.sns-row input{grid-column:1 / -1;grid-row:2}.sns-row .btn{grid-column:2;grid-row:1}}
+
+/* 固定保存バー */
+.save-bar{position:fixed;left:0;right:0;bottom:0;z-index:50;background:rgba(255,255,255,.95);backdrop-filter:blur(12px);border-top:1px solid var(--line);padding:12px 16px;display:flex;gap:10px;align-items:center;justify-content:flex-end}
+.save-bar .status{flex:1;font-size:12px;color:#666}
+.save-bar .status.dirty{color:#b45309;font-weight:700}
+.save-bar.saving{background:rgba(255,251,235,.98)}
+.save-bar.saved{background:rgba(240,255,244,.98)}
+.save-bar.error{background:rgba(255,245,245,.98)}
+.save-bar.saving .status{color:#92400e;font-weight:800}
+.save-bar.saved .status{color:#276749;font-weight:800}
+.save-bar.error .status{color:#d33;font-weight:800}
+.save-bar .btn.primary:disabled{opacity:.85}
+
+/* ハーフモーダル */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:90dvh;display:flex;flex-direction:column;animation:slideUp .25s ease}
+@keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+.modal-head{padding:14px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.modal-head h3{margin:0;font-size:16px;font-weight:800;flex:1}
+.modal-close{background:none;border:none;cursor:pointer;font-size:22px;color:#666;width:36px;height:36px;border-radius:50%;display:grid;place-items:center}
+.modal-close:hover{background:#f3f3f3}
+.modal-body{padding:18px;overflow:auto;flex:1}
+.modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+
+/* アイコンクロップ */
+.crop-area{display:grid;gap:14px;justify-items:center}
+.crop-stage{width:240px;height:240px;border-radius:50%;background:#fafafa;position:relative;overflow:hidden;touch-action:none;border:2px solid #111;cursor:grab;user-select:none}
+.crop-stage.grabbing{cursor:grabbing}
+.crop-stage canvas{width:100%;height:100%;display:block;pointer-events:none}
+.crop-stage-empty{position:absolute;inset:0;display:grid;place-items:center;color:#999;font-size:12px;text-align:center;padding:24px;pointer-events:none}
+.crop-controls{display:grid;gap:12px;width:100%;max-width:340px}
+.range-row{display:grid;gap:4px}
+.range-row label{font-size:12px;color:#555;font-weight:700}
+
+/* イベント */
+.event-list{display:grid;gap:10px}
+.event-row{border:1px solid var(--line);border-radius:14px;padding:12px 14px;display:grid;gap:6px;background:#fff}
+.event-row .title{font-weight:800;font-size:15px;display:flex;align-items:center;gap:8px}
+.event-row .vis{font-size:10px;font-weight:800;padding:2px 8px;border-radius:9999px;background:#f3f3f3;color:#666}
+.event-row .vis.unlisted{background:#fff4d6;color:#7c5600}
+.event-row .meta{font-size:12px;color:var(--muted)}
+.event-row .row-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.event-empty{padding:18px;text-align:center;color:#999;font-size:13px;border:1px dashed var(--line);border-radius:14px}
+.event-options{display:grid;gap:10px;margin:4px 0 10px}
+.event-option-card{display:flex;align-items:flex-start;gap:12px;border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:14px;cursor:pointer;transition:border-color .18s,background .18s,box-shadow .18s}
+.event-option-card:hover{background:#fff}
+.event-option-card:has(input:checked){border-color:#111;background:#fff;box-shadow:0 6px 18px rgba(0,0,0,.06)}
+.event-option-card input{width:22px;height:22px;min-width:22px;margin:1px 0 0;accent-color:#111}
+.event-option-body{min-width:0;display:grid;gap:4px}
+.event-option-title{font-size:14px;font-weight:900;color:#111;line-height:1.35}
+.event-option-desc{font-size:12px;color:#666;line-height:1.65}
+.event-option-badge{display:inline-flex;width:max-content;max-width:100%;align-items:center;border-radius:9999px;background:#fff4d6;color:#7c5600;border:1px solid #f3e3a8;font-size:11px;font-weight:900;padding:3px 8px;margin-top:2px}
+@media(max-width:560px){.event-option-card{padding:13px 12px}.event-option-title{font-size:13px}.event-option-desc{font-size:12px}}
+.admin-table{display:grid;gap:8px}
+.admin-row{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;display:grid;gap:6px}
+.admin-row-title{font-size:14px;font-weight:800}
+.admin-detail{font-size:12px;color:#666;line-height:1.6}
+#form-modal .modal-sheet{max-width:680px}
+#responses-modal .modal-sheet{max-width:760px}
+.form-builder{display:grid;gap:14px}
+.form-builder-section{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px;display:grid;gap:12px}
+.form-builder-section h4{margin:0;font-size:14px;font-weight:800}
+.form-builder-section .hint{font-size:12px;color:var(--muted);margin-top:-6px}
+.form-setup-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+@media(max-width:680px){.form-setup-grid{grid-template-columns:minmax(0,1fr)}}
+.form-setting-card{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:12px;display:grid;gap:8px}
+.form-setting-card label{font-size:12px;font-weight:800;color:#555}
+.form-setting-card .small{font-size:11px}
+.form-question-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.form-question-row{border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:12px;display:grid;gap:10px}
+.form-question-head{display:flex;align-items:center;gap:8px}
+.form-question-no{width:28px;height:28px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
+.form-question-title{font-size:13px;font-weight:800;flex:1}
+.form-question-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.form-question-row .field-row{grid-template-columns:minmax(0,1fr) 150px}
+.form-option-tools{display:flex;gap:6px;flex-wrap:wrap}
+.response-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.response-stat{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:10px 12px}
+.response-stat strong{display:block;font-size:18px;line-height:1.2}
+.response-stat span{font-size:11px;color:var(--muted);font-weight:700}
+.response-tools{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+.response-tools input{flex:1;min-width:180px}
+.response-card{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px;display:grid;gap:10px}
+.response-head{display:flex;gap:10px;align-items:flex-start;justify-content:space-between}
+.response-name{font-size:14px;font-weight:800}
+.response-meta{font-size:12px;color:var(--muted)}
+.response-answer-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.response-answer{border:1px solid #eee;border-radius:12px;background:#fafafa;padding:10px;display:grid;gap:4px}
+.response-answer-label{font-size:11px;color:#666;font-weight:800}
+.response-answer-value{font-size:13px;color:#111;white-space:pre-wrap;word-break:break-word}
+.response-empty-value{color:#999}
+@media(max-width:560px){.response-summary{grid-template-columns:minmax(0,1fr)}.response-head{display:grid}.form-question-row .field-row{grid-template-columns:minmax(0,1fr)}}
+.subevent-box{margin-top:10px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid var(--line);display:grid;gap:8px}
+.subevent-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.subevent-title{font-size:12px;font-weight:800;color:#555}
+.subevent-list{display:grid;gap:6px}
+.subevent-row{display:grid;gap:4px;padding:8px 10px;border-radius:12px;background:#fff;border:1px solid #eee}
+.subevent-row-title{font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.subevent-row-meta{font-size:11px;color:var(--muted)}
+.subevent-row-actions{display:flex;gap:6px;flex-wrap:wrap}
+.subevent-cover-preview{width:100%;max-width:240px;aspect-ratio:16/9;border-radius:12px;object-fit:cover;border:1px solid var(--line);display:block;margin-bottom:8px;background:#f2f2f2}
+.attachment-list{display:grid;gap:8px;margin-bottom:10px}
+.attachment-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:12px;background:#fff;padding:9px 10px}
+.attachment-row .file-icon{width:32px;height:32px;border-radius:10px;background:#f3f3f3;display:grid;place-items:center;font-weight:800;font-size:11px;color:#555;flex-shrink:0}
+.attachment-row .file-body{min-width:0;flex:1}
+.attachment-row .file-name{font-size:13px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attachment-row .file-meta{font-size:11px;color:var(--muted)}
+
+.developer-banner{background:#fff8e1;border:1px solid #f3e3a8;border-radius:14px;padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:10px}
+.developer-banner svg{flex-shrink:0;color:#b45309}
+.developer-banner strong{font-size:13px;color:#7c5600}
+.developer-banner span{font-size:12px;color:#7c5600}
+
+/* 確認モーダル */
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay.open{display:flex}
+.confirm-box{background:#fff;border-radius:18px;max-width:380px;width:100%;padding:20px;display:grid;gap:12px}
+.confirm-box h3{margin:0;font-size:16px;font-weight:800}
+.confirm-box p{margin:0;font-size:13px;color:#555;line-height:1.6}
+.confirm-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:4px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="crumb" href="../" onclick="return closeOrBack(event)">← Buddies</a>
+    <h1>コミュニティアカウント管理</h1>
+    <button class="btn sm danger" id="logout-btn" type="button" data-act="logout" hidden>ログアウト</button>
+  </header>
+  <main id="app"></main>
+</div>
+
+<!-- 固定保存バー -->
+<div class="save-bar" id="save-bar" hidden>
+  <div class="status" id="save-status">変更はありません</div>
+  <button class="btn primary" id="save-btn" type="button" data-act="save-all">すべて保存</button>
+</div>
+
+<!-- アイコン編集モーダル -->
+<div class="modal-overlay" id="icon-modal" onclick="if(event.target===this)closeIconModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>アイコンを編集</h3>
+      <button class="modal-close" type="button" data-act="close-icon">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="crop-area">
+        <div class="crop-stage" id="crop-stage">
+          <canvas id="crop-canvas" width="400" height="400"></canvas>
+          <div class="crop-stage-empty" id="crop-empty">画像が選択されていません</div>
+        </div>
+        <div class="crop-controls">
+          <button class="btn" type="button" onclick="document.getElementById('icon-file').click()">画像を選択</button>
+          <input type="file" id="icon-file" accept="image/png,image/jpeg,image/webp" style="display:none;" onchange="loadImageFile(this.files[0])">
+          <div class="range-row">
+            <label>拡大 <span id="zoom-val" class="small">1.0×</span></label>
+            <input type="range" min="1" max="3" step="0.05" value="1" id="zoom-range" oninput="crop.scale=Number(this.value);document.getElementById('zoom-val').textContent=crop.scale.toFixed(2)+'×';drawCrop()">
+          </div>
+          <p class="small" style="margin:0;">PNG / JPEG / WebP（最大3MB）</p>
+        </div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn" type="button" data-act="close-icon">キャンセル</button>
+      <button class="btn primary" type="button" data-act="upload-icon">アイコンを保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- イベント編集モーダル -->
+<div class="modal-overlay" id="event-modal" onclick="if(event.target===this)closeEventForm()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="event-modal-title">イベントを編集</h3>
+      <button class="modal-close" type="button" data-act="close-event">×</button>
+    </div>
+    <div class="modal-body" id="event-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" type="button" data-act="close-event">キャンセル</button>
+      <button class="btn primary" id="event-save-btn" type="button" data-act="save-event">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- サブイベント編集モーダル -->
+<div class="modal-overlay" id="subevent-modal" onclick="if(event.target===this)closeSubeventForm()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="subevent-modal-title">サブイベントを編集</h3>
+      <button class="modal-close" type="button" data-act="close-subevent">×</button>
+    </div>
+    <div class="modal-body" id="subevent-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" type="button" data-act="close-subevent">キャンセル</button>
+      <button class="btn primary" id="subevent-save-btn" type="button" data-act="save-subevent">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="participants-modal" onclick="if(event.target===this)closeParticipantsModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>参加メンバー管理</h3>
+      <button class="modal-close" type="button" onclick="closeParticipantsModal()">×</button>
+    </div>
+    <div class="modal-body" id="participants-modal-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="form-modal" onclick="if(event.target===this)closeFormModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="form-modal-title">フォームを編集</h3>
+      <button class="modal-close" type="button" onclick="closeFormModal()">×</button>
+    </div>
+    <div class="modal-body" id="form-modal-body"></div>
+    <div class="modal-foot">
+      <button class="btn" type="button" onclick="closeFormModal()">キャンセル</button>
+      <button class="btn primary" type="button" onclick="saveForm()">保存</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="responses-modal" onclick="if(event.target===this)closeResponsesModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>回答一覧</h3>
+      <button class="modal-close" type="button" onclick="closeResponsesModal()">×</button>
+    </div>
+    <div class="modal-body" id="responses-modal-body"></div>
+  </div>
+</div>
+
+<!-- 確認モーダル -->
+<div class="confirm-overlay" id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
+  <div class="confirm-box">
+    <h3 id="confirm-title">確認</h3>
+    <p id="confirm-text"></p>
+    <div class="confirm-actions">
+      <button class="btn" type="button" data-act="close-confirm">キャンセル</button>
+      <button class="btn primary" id="confirm-ok" type="button">OK</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '../api.php';
+let account = null;
+let isDeveloper = false;
+let activeSettingsTab = sessionStorage.getItem('buddies_verified_settings_tab') || 'profile';
+const crop = { img:null, scale:1, x:0, y:0, dragStart:null, startX:0, startY:0 };
+let pendingIcon = null; // 未保存のアイコンデータURL
+let dirty = false;
+let verifiedSns = [];
+let myEvents = [];
+let subeventsByEvent = {};
+let editingEventId = null;
+let pendingEventCover = null;
+let pendingEventAttachments = [];
+let pendingExistingAttachment = null;
+let myForms = [];
+let editingFormId = null;
+let formQuestions = [];
+let responseView = { form:null, questions:[], rows:[] };
+let editingSubeventId = null;
+let editingSubeventEventId = null;
+
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function tagsText(a){return (a.hashtags||[]).join(', ')}
+function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'その他リンク'})[type] || 'その他リンク';}
+function accountSnsLinks(a){
+  const links = Array.isArray(a.sns_links) ? a.sns_links.filter(s => s && s.url) : [];
+  if (a.x_url && !links.some(s => s.url === a.x_url)) links.unshift({ type:'x', url:a.x_url, label:'X' });
+  return links.slice(0, 10).map(s => ({ type:s.type || 'link', url:s.url || '', label:s.label || '' }));
+}
+function snsEditorHtml(){
+  const options = ['x','threads','instagram','tiktok','youtube','github','link'];
+  return `<div class="sns-editor" id="sns-editor">
+    ${verifiedSns.map((s,i)=>`
+      <div class="sns-row">
+        <select onchange="updateVerifiedSns(${i},'type',this.value)">
+          ${options.map(type => `<option value="${type}" ${s.type===type?'selected':''}>${snsLabel(type)}</option>`).join('')}
+        </select>
+        <input value="${esc(s.url||'')}" placeholder="https://..." oninput="updateVerifiedSns(${i},'url',this.value)">
+        <button class="btn" type="button" onclick="removeVerifiedSns(${i})" aria-label="削除">×</button>
+      </div>
+    `).join('')}
+  </div>
+  <button class="btn sm" type="button" onclick="addVerifiedSns()" ${verifiedSns.length >= 10 ? 'disabled' : ''}>+ SNSリンクを追加</button>`;
+}
+function renderVerifiedSns(){
+  const wrap = document.getElementById('sns-editor-wrap');
+  if (wrap) wrap.innerHTML = snsEditorHtml();
+}
+function addVerifiedSns(){ if (verifiedSns.length >= 10) return; verifiedSns.push({type:'x',url:'',label:''}); renderVerifiedSns(); setDirty(true); }
+function updateVerifiedSns(i,k,v){ if (!verifiedSns[i]) return; verifiedSns[i][k] = v; setDirty(true); }
+function removeVerifiedSns(i){ verifiedSns.splice(i,1); renderVerifiedSns(); setDirty(true); }
+function closeOrBack(e){
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+function msg(id, text, ok=true){
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => { if (el.textContent === text) el.classList.remove('show'); }, 4000);
+}
+function setDirty(v){
+  dirty = v;
+  const bar = document.getElementById('save-bar');
+  const status = document.getElementById('save-status');
+  if (!bar || !status) return;
+  bar.hidden = !account;
+  bar.classList.remove('saving','saved','error');
+  if (v) { status.textContent = '未保存の変更があります'; status.classList.add('dirty'); }
+  else   { status.textContent = '変更はありません'; status.classList.remove('dirty'); }
+}
+function setSaveState(state, text){
+  const bar = document.getElementById('save-bar');
+  const status = document.getElementById('save-status');
+  if (!bar || !status) return;
+  bar.hidden = !account;
+  bar.classList.remove('saving','saved','error');
+  if (state) bar.classList.add(state);
+  status.textContent = text;
+  status.classList.toggle('dirty', state === 'error');
+}
+function switchSettingsTab(tab){
+  activeSettingsTab = tab;
+  sessionStorage.setItem('buddies_verified_settings_tab', tab);
+  document.querySelectorAll('.settings-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.settingsTab === tab));
+  document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.settingsPanel === tab));
+}
+function confirmDialog(title, text){
+  return new Promise(resolve => {
+    document.getElementById('confirm-title').textContent = title;
+    document.getElementById('confirm-text').textContent = text;
+    const ov = document.getElementById('confirm-overlay');
+    ov.classList.add('open');
+    const okBtn = document.getElementById('confirm-ok');
+    const handler = () => { okBtn.removeEventListener('click', handler); ov.classList.remove('open'); resolve(true); };
+    okBtn.addEventListener('click', handler);
+    window._confirmReject = () => { okBtn.removeEventListener('click', handler); resolve(false); };
+  });
+}
+function closeConfirm(){ document.getElementById('confirm-overlay').classList.remove('open'); if(window._confirmReject) window._confirmReject(); }
+
+async function api(action, payload=null){
+  const opt = { credentials:'include' };
+  if (payload) { opt.method='POST'; opt.headers={'Content-Type':'application/json'}; opt.body=JSON.stringify(payload); }
+  const res = await fetch(`${API}?action=${action}`, opt);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e) {
+    console.error(`[api:${action}] non-JSON response (HTTP ${res.status})`, text.slice(0, 1000));
+    return { ok:false, error:`サーバーエラー (HTTP ${res.status})。詳細はコンソールを確認してください。` };
+  }
+}
+
+async function init(){
+  const json = await api('verified_me').catch(() => ({ ok:false }));
+  account = json.ok ? json.data : null;
+  isDeveloper = !!(account && account.account_type === 'developer');
+  document.getElementById('logout-btn').hidden = !account;
+  render();
+  setTimeout(handleAdminOpenParams, 600);
+}
+
+function render(){
+  const root = document.getElementById('app');
+  if (!account) {
+    root.innerHTML = `<div class="card login">
+      <h2 style="margin:0 0 8px;font-size:22px;">コミュニティアカウントログイン</h2>
+      <p class="small" style="margin:0 0 16px;">コミュニティアカウント専用ページです。開発者は通常ログイン状態のままアクセスできます。</p>
+      <div class="field"><label>ログインID</label><input id="login-id" autocomplete="username"></div>
+      <div class="field"><label>パスワード</label><input id="login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
+      <button class="btn primary" style="width:100%;margin-top:6px;" onclick="login()">ログイン</button>
+      <div id="login-msg" class="msg"></div>
+    </div>`;
+    document.getElementById('save-bar').hidden = true;
+    return;
+  }
+
+  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント';
+  verifiedSns = accountSnsLinks(account);
+  root.innerHTML = `
+    ${isDeveloper ? `
+      <div class="developer-banner">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <div><strong>開発者セッション</strong><br><span>管理者向け機能とコミュニティアカウントの管理が利用できます。<a href="../admin.html" style="color:#7c5600;font-weight:800;">コミュニティアカウント一覧へ →</a></span></div>
+      </div>
+    ` : ''}
+
+    <section class="account-summary">
+      <div class="account-head">
+        <button class="account-icon-btn" type="button" data-act="open-icon" title="タップしてアイコンを編集">
+          ${account.icon_url ? `<img src="../${esc(account.icon_url)}?_=${Date.now()}" alt="">` : esc((account.display_name||'？')[0])}
+          <span class="edit-hint">編集</span>
+        </button>
+        <div style="min-width:0;flex:1;">
+          <span class="verified-label">✓ ${esc(account.label || kindLabel)}</span><span class="kind">${esc(kindLabel)}</span>
+          <h2>${esc(account.display_name)}</h2>
+          <div class="small">${esc(account.account_definition || '')}</div>
+        </div>
+      </div>
+      <div class="settings-tabs" role="tablist" aria-label="設定カテゴリ">
+        <button class="settings-tab active" type="button" data-settings-tab="profile" onclick="switchSettingsTab('profile')">プロフィール</button>
+        <button class="settings-tab" type="button" data-settings-tab="links" onclick="switchSettingsTab('links')">リンク</button>
+        <button class="settings-tab" type="button" data-settings-tab="events" onclick="switchSettingsTab('events')">イベント</button>
+        <button class="settings-tab" type="button" data-settings-tab="forms" onclick="switchSettingsTab('forms')">フォーム</button>
+        <button class="settings-tab" type="button" data-settings-tab="security" onclick="switchSettingsTab('security')">セキュリティ</button>
+      </div>
+    </section>
+
+    <div class="settings-panel active" data-settings-panel="profile">
+      <section class="card">
+        <h2 class="section-title">公開情報</h2>
+        <div class="field"><label>表示名</label><input id="display_name" maxlength="100" value="${esc(account.display_name)}" oninput="setDirty(true)"></div>
+        <div class="field"><label>ラベル（バッジ表示文言）</label><input id="label" maxlength="80" value="${esc(account.label||'')}" placeholder="${esc(kindLabel)}" oninput="setDirty(true)"></div>
+        <div class="field"><label>説明文</label><textarea id="description" maxlength="2000" placeholder="アカウントの説明（プロフィール詳細に表示されます）" oninput="setDirty(true)">${esc(account.description||'')}</textarea></div>
+        <div class="field"><label>ハッシュタグ（カンマ区切り・最大6つ）</label><input id="hashtags" value="${esc(tagsText(account))}" placeholder="例: 推し活, イベント" oninput="setDirty(true)"></div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="links">
+      <section class="card">
+        <h2 class="section-title">リンク</h2>
+        <div class="link-card">
+          <div class="link-card-title">メインリンク</div>
+          <div class="field"><label>ボタン文言</label><input id="primary_link_label" maxlength="80" value="${esc(account.primary_link_label||'')}" placeholder="例: 公式サイトを見る" oninput="setDirty(true)"></div>
+          <div class="field"><label>URL</label><input id="primary_link_url" value="${esc(account.primary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+        </div>
+        <div class="link-card">
+          <div class="link-card-title">サブリンク1</div>
+          <div class="field"><label>ボタン文言</label><input id="secondary_link_label" maxlength="80" value="${esc(account.secondary_link_label||'')}" placeholder="例: お知らせを見る" oninput="setDirty(true)"></div>
+          <div class="field"><label>URL</label><input id="secondary_link_url" value="${esc(account.secondary_link_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+        </div>
+        <div class="link-card">
+          <div class="link-card-title">サブリンク2</div>
+          <div class="field"><label>ボタン文言</label><input id="cta_label" maxlength="80" value="${esc(account.cta_label||'')}" placeholder="例: 申し込みページ" oninput="setDirty(true)"></div>
+          <div class="field"><label>URL</label><input id="cta_url" value="${esc(account.cta_url||'')}" placeholder="https://..." oninput="setDirty(true)"></div>
+        </div>
+        <div class="link-card">
+          <div class="link-card-title">SNSリンク</div>
+          <div id="sns-editor-wrap">${snsEditorHtml()}</div>
+        </div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="events">
+      <section class="card">
+        <h2 class="section-title">イベント管理</h2>
+        <p class="small" style="margin:0 0 10px;">主催イベントを作成・編集できます。「非公開」は URL を知っている人のみアクセスできます。</p>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" id="new-event-btn" type="button" data-act="new-event">+ 新しいイベント</button>
+          <button class="btn" type="button" onclick="openParticipantsModal()">全参加者管理</button>
+        </div>
+        <div id="event-list" class="event-list"></div>
+        <div id="event-msg" class="msg"></div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="forms">
+      <section class="card">
+        <h2 class="section-title">アンケート&フォーム</h2>
+        <p class="small" style="margin:0 0 10px;">公開/非公開、匿名回答、Buddies profile情報の収集、1回まで回答を設定できます。</p>
+        <div class="actions" style="margin-bottom:10px;">
+          <button class="btn primary" type="button" onclick="openFormModal()">+ 新しいフォーム</button>
+        </div>
+        <div id="form-list" class="event-list"></div>
+        <div id="form-msg" class="msg"></div>
+      </section>
+    </div>
+
+    <div class="settings-panel" data-settings-panel="security">
+      <section class="card">
+        <h2 class="section-title">パスワード変更</h2>
+        <div class="field-row">
+          <div class="field"><label>現在のパスワード</label><input id="current_password" type="password" autocomplete="current-password"></div>
+          <div class="field"><label>新しいパスワード（8文字以上）</label><input id="new_password" type="password" autocomplete="new-password"></div>
+        </div>
+        <div class="actions" style="margin-top:8px;"><button class="btn" type="button" data-act="change-password">変更</button></div>
+        <div id="pw-msg" class="msg"></div>
+      </section>
+    </div>`;
+
+  setDirty(false);
+  switchSettingsTab(activeSettingsTab);
+  loadEvents();
+  loadForms();
+}
+
+async function login(){
+  const json = await api('verified_login', { login_id:val('login-id'), password:val('login-pass') });
+  if (!json.ok) { msg('login-msg', json.error||'ログインできませんでした', false); return; }
+  account = json.data.account;
+  isDeveloper = account.account_type === 'developer';
+  document.getElementById('logout-btn').hidden = false;
+  render();
+}
+async function logout(){
+  await api('verified_logout', {});
+  account=null; isDeveloper=false;
+  document.getElementById('logout-btn').hidden=true;
+  render();
+}
+
+async function saveAll(){
+  const payload = {
+    display_name: val('display_name'), label: val('label'), account_type: account.account_type || 'verified',
+    description: val('description'),
+    primary_link_label: val('primary_link_label'), primary_link_url: val('primary_link_url'),
+    secondary_link_label: val('secondary_link_label'), secondary_link_url: val('secondary_link_url'),
+    cta_label: val('cta_label'), cta_url: val('cta_url'),
+    x_url: (verifiedSns.find(s => s.type === 'x' && s.url && s.url.trim()) || {}).url || '',
+    sns_links: verifiedSns.filter(s => s.url && s.url.trim()).slice(0, 10),
+    hashtags: val('hashtags').split(',').map(s=>s.trim()).filter(Boolean),
+  };
+  const btn = document.getElementById('save-btn');
+  btn.disabled = true; btn.textContent = '保存中…';
+  setSaveState('saving', '保存しています…');
+  try {
+    const json = await api('verified_update', payload);
+    if (!json.ok) {
+      setSaveState('error', json.error || '保存できませんでした');
+      return;
+    }
+    account = json.data;
+    dirty = false;
+    setSaveState('saved', '保存しました ✓');
+    setTimeout(() => { if (!dirty) setDirty(false); }, 1800);
+  } catch(e) {
+    setSaveState('error', '通信エラーで保存できませんでした');
+  } finally {
+    btn.disabled = false; btn.textContent = 'すべて保存';
+  }
+}
+
+// ── アイコン編集モーダル ─────────────────────────────────
+function openIconModal(){
+  document.getElementById('icon-modal').classList.add('open');
+  setupCropDrag();
+  drawCrop();
+}
+function closeIconModal(){
+  document.getElementById('icon-modal').classList.remove('open');
+}
+function loadImageFile(file){
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => {
+    crop.img = img; crop.x = 0; crop.y = 0; crop.scale = 1;
+    const zr = document.getElementById('zoom-range');
+    if (zr) { zr.value = 1; document.getElementById('zoom-val').textContent = '1.00×'; }
+    const empty = document.getElementById('crop-empty');
+    if (empty) empty.style.display = 'none';
+    drawCrop();
+  };
+  img.src = URL.createObjectURL(file);
+}
+function drawCrop(){
+  const canvas = document.getElementById('crop-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  ctx.fillStyle = '#fafafa';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if (!crop.img) return;
+  const base = Math.max(canvas.width / crop.img.width, canvas.height / crop.img.height) * crop.scale;
+  const w = crop.img.width * base;
+  const h = crop.img.height * base;
+  ctx.drawImage(crop.img, (canvas.width-w)/2 + crop.x, (canvas.height-h)/2 + crop.y, w, h);
+}
+function setupCropDrag(){
+  const stage = document.getElementById('crop-stage');
+  if (!stage || stage.dataset.bound) return;
+  stage.dataset.bound = '1';
+  const getPoint = (e) => e.touches && e.touches[0] ? { x: e.touches[0].clientX, y: e.touches[0].clientY } : { x: e.clientX, y: e.clientY };
+  const onDown = (e) => {
+    if (!crop.img) return;
+    const p = getPoint(e);
+    crop.dragStart = p;
+    crop.startX = crop.x; crop.startY = crop.y;
+    stage.classList.add('grabbing');
+    e.preventDefault();
+  };
+  const onMove = (e) => {
+    if (!crop.dragStart) return;
+    const p = getPoint(e);
+    const rect = stage.getBoundingClientRect();
+    if (!rect.width) return;
+    const k = 400 / rect.width;
+    crop.x = crop.startX + (p.x - crop.dragStart.x) * k;
+    crop.y = crop.startY + (p.y - crop.dragStart.y) * k;
+    drawCrop();
+    e.preventDefault();
+  };
+  const onUp = () => { crop.dragStart = null; stage.classList.remove('grabbing'); };
+  stage.addEventListener('mousedown', onDown);
+  document.addEventListener('mousemove', onMove);
+  document.addEventListener('mouseup', onUp);
+  stage.addEventListener('touchstart', onDown, {passive:false});
+  document.addEventListener('touchmove', onMove, {passive:false});
+  document.addEventListener('touchend', onUp);
+}
+async function uploadImage(){
+  const canvas = document.getElementById('crop-canvas');
+  if (!crop.img) { return; }
+  const out = document.createElement('canvas');
+  out.width = 400; out.height = 400;
+  const octx = out.getContext('2d');
+  octx.save(); octx.beginPath(); octx.arc(200,200,200,0,Math.PI*2); octx.clip();
+  octx.drawImage(canvas, 0, 0); octx.restore();
+  const data = out.toDataURL('image/png');
+  const json = await api('verified_upload_icon', { image:data });
+  if (!json.ok) { alert(json.error||'画像を保存できませんでした'); return; }
+  const me = await api('verified_me');
+  account = me.data;
+  closeIconModal();
+  render();
+}
+
+// ── イベント ────────────────────────────────────────────
+function fmtDateLocalInput(s){
+  if (!s) return '';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+function fmtDateDisplay(s){
+  if (!s) return '';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function fmtFileSize(bytes){
+  bytes = Number(bytes || 0);
+  if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+  if (bytes >= 1024) return Math.ceil(bytes / 1024) + 'KB';
+  return bytes + 'B';
+}
+function defaultAttachmentName(file){
+  const name = String(file?.name || '添付ファイル').replace(/\.[^.]+$/, '').trim();
+  return name || '添付ファイル';
+}
+function readFileAsDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('file read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+function validateEventCoverFile(file){
+  if (!file) return false;
+  if (!['image/png','image/jpeg','image/webp'].includes(file.type)) {
+    msg('event-msg', 'カバー画像はPNG/JPEG/WebPのみアップロードできます', false);
+    return false;
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    msg('event-msg', 'カバー画像は5MB以内にしてください', false);
+    return false;
+  }
+  return true;
+}
+function validateEventAttachmentFile(file){
+  if (!file) return false;
+  const okTypes = ['image/png','image/jpeg','image/webp','application/pdf'];
+  if (!okTypes.includes(file.type)) { msg('event-msg', '画像（PNG/JPEG/WebP）またはPDFのみ添付できます', false); return false; }
+  if (file.size > 5 * 1024 * 1024) { msg('event-msg', '添付ファイルは5MB以内にしてください', false); return false; }
+  return true;
+}
+function eventAttachmentHtml(e){
+  const files = Array.isArray(e?.attachments) ? e.attachments : [];
+  const rows = files.map(f => {
+    const isPdf = String(f.mime || '').includes('pdf') || String(f.url || '').toLowerCase().endsWith('.pdf');
+    return `<div class="attachment-row">
+      <div class="file-icon">${isPdf ? 'PDF' : 'IMG'}</div>
+      <div class="file-body">
+        <div class="file-name">${esc(f.name || '添付ファイル')}</div>
+        <div class="file-meta">${esc(fmtFileSize(f.size))}</div>
+      </div>
+      <a class="btn sm" href="../${esc(f.url)}" target="_blank" rel="noopener">開く</a>
+      <button class="btn sm danger" type="button" onclick="deleteEventAttachment(${e.id}, '${esc(f.id)}')">削除</button>
+    </div>`;
+  }).join('');
+  return `<div class="field">
+    <label>添付ファイル（画像/PDF・各5MBまで・最大3件）</label>
+    <div class="attachment-list">${rows || '<div class="small">まだ添付ファイルはありません</div>'}</div>
+    ${files.length < 3 ? `<div id="existing-attachment-picker">${existingAttachmentPickerHtml(e.id)}</div>` : '<p class="small" style="margin:0;">添付ファイルは3件までです。</p>'}
+  </div>`;
+}
+function existingAttachmentPickerHtml(eventId){
+  return `${pendingExistingAttachment ? `
+    <div class="attachment-row">
+      <div class="file-icon">${pendingExistingAttachment.file.type === 'application/pdf' ? 'PDF' : 'IMG'}</div>
+      <div class="file-body">
+        <div class="file-name">${esc(pendingExistingAttachment.file.name)}</div>
+        <div class="file-meta">${esc(fmtFileSize(pendingExistingAttachment.file.size))}</div>
+        <input style="margin-top:6px;" maxlength="120" value="${esc(pendingExistingAttachment.name)}" placeholder="表示名" oninput="updateExistingAttachmentName(this.value)">
+      </div>
+      <button class="btn sm danger" type="button" onclick="clearExistingAttachment()">削除</button>
+    </div>
+    <button class="btn sm" type="button" onclick="uploadPendingExistingAttachment(${eventId})">この名前で追加</button>
+  ` : ''}
+  <input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onchange="setExistingAttachment(this.files[0]);this.value=''">`;
+}
+function renderExistingAttachmentPicker(eventId){
+  const wrap = document.getElementById('existing-attachment-picker');
+  if (wrap) wrap.innerHTML = existingAttachmentPickerHtml(eventId);
+}
+function setExistingAttachment(file){
+  if (!validateEventAttachmentFile(file)) return;
+  pendingExistingAttachment = { file, name: defaultAttachmentName(file) };
+  renderExistingAttachmentPicker(editingEventId);
+}
+function updateExistingAttachmentName(name){
+  if (pendingExistingAttachment) pendingExistingAttachment.name = name;
+}
+function clearExistingAttachment(){
+  pendingExistingAttachment = null;
+  renderExistingAttachmentPicker(editingEventId);
+}
+function pendingEventFilesHtml(){
+  const cover = pendingEventCover
+    ? `<div class="attachment-row"><div class="file-icon">IMG</div><div class="file-body"><div class="file-name">${esc(pendingEventCover.name)}</div><div class="file-meta">${esc(fmtFileSize(pendingEventCover.size))}</div></div><button class="btn sm danger" type="button" onclick="clearPendingEventCover()">削除</button></div>`
+    : '<div class="small">未選択</div>';
+  const files = pendingEventAttachments.map((item, i) => {
+    const isPdf = item.file.type === 'application/pdf';
+    return `<div class="attachment-row"><div class="file-icon">${isPdf ? 'PDF' : 'IMG'}</div><div class="file-body"><div class="file-name">${esc(item.file.name)}</div><div class="file-meta">${esc(fmtFileSize(item.file.size))}</div><input style="margin-top:6px;" maxlength="120" value="${esc(item.name)}" placeholder="表示名" oninput="updatePendingEventAttachmentName(${i}, this.value)"></div><button class="btn sm danger" type="button" onclick="removePendingEventAttachment(${i})">削除</button></div>`;
+  }).join('');
+  return `<div class="field">
+    <label>カバー画像（保存時にアップロード）</label>
+    <div class="attachment-list">${cover}</div>
+    <input type="file" accept="image/png,image/jpeg,image/webp" onchange="setPendingEventCover(this.files[0]);this.value=''">
+  </div>
+  <div class="field">
+    <label>添付ファイル（画像/PDF・各5MBまで・最大3件）</label>
+    <div class="attachment-list">${files || '<div class="small">まだ添付ファイルはありません</div>'}</div>
+    ${pendingEventAttachments.length < 3 ? `<input type="file" accept="image/png,image/jpeg,image/webp,application/pdf" onchange="addPendingEventAttachment(this.files[0]);this.value=''">` : '<p class="small" style="margin:0;">添付ファイルは3件までです。</p>'}
+  </div>`;
+}
+function renderPendingEventFiles(){
+  const wrap = document.getElementById('pending-event-files');
+  if (wrap) wrap.innerHTML = pendingEventFilesHtml();
+}
+function setPendingEventCover(file){
+  if (!validateEventCoverFile(file)) return;
+  pendingEventCover = file;
+  renderPendingEventFiles();
+}
+function clearPendingEventCover(){
+  pendingEventCover = null;
+  renderPendingEventFiles();
+}
+function addPendingEventAttachment(file){
+  if (!validateEventAttachmentFile(file)) return;
+  if (pendingEventAttachments.length >= 3) { msg('event-msg', '添付ファイルは3件までです', false); return; }
+  pendingEventAttachments.push({ file, name: defaultAttachmentName(file) });
+  renderPendingEventFiles();
+}
+function updatePendingEventAttachmentName(i, name){
+  if (pendingEventAttachments[i]) pendingEventAttachments[i].name = name;
+}
+function removePendingEventAttachment(i){
+  pendingEventAttachments.splice(i, 1);
+  renderPendingEventFiles();
+}
+async function loadEvents(){
+  const json = await api('event_mine_list');
+  myEvents = json.ok ? (json.data || []) : [];
+  await loadAllSubevents();
+  renderEventList();
+}
+async function loadAllSubevents(){
+  subeventsByEvent = {};
+  await Promise.all((myEvents || []).map(async e => {
+    try {
+      const json = await api('subevent_mine_list&event_id=' + encodeURIComponent(e.id));
+      subeventsByEvent[e.id] = json.ok ? (json.data || []) : [];
+    } catch(err) {
+      subeventsByEvent[e.id] = [];
+    }
+  }));
+}
+function renderEventList(){
+  const wrap = document.getElementById('event-list');
+  if (!wrap) return;
+  if (!myEvents.length) { wrap.innerHTML = `<div class="event-empty">まだイベントはありません</div>`; return; }
+  wrap.innerHTML = myEvents.map(e => {
+    const subs = subeventsByEvent[e.id] || [];
+    const subHtml = `
+      <div class="subevent-box">
+        <div class="subevent-head">
+          <div class="subevent-title">サブイベント</div>
+          <button class="btn sm" type="button" data-act="new-subevent" data-event-id="${e.id}">+ 追加</button>
+        </div>
+        <div class="subevent-list">
+          ${subs.length ? subs.map(s => `
+            <div class="subevent-row">
+              ${s.cover_url ? `<img class="subevent-cover-preview" src="../${esc(s.cover_url)}" alt="">` : ''}
+              <div class="subevent-row-title">
+                <span>${esc(s.title)}</span>
+                <span class="small">${s.participant_enabled === false ? '参加集計なし' : `参加 ${s.join_count || 0} 人${s.capacity ? ' / ' + s.capacity : ''}`}</span>
+              </div>
+              <div class="subevent-row-meta">${esc(fmtDateDisplay(s.starts_at) || '日時未定')}${s.venue ? ' ・ ' + esc(s.venue) : ''}</div>
+              <div class="subevent-row-actions">
+                <button class="btn sm" type="button" data-act="edit-subevent" data-event-id="${e.id}" data-id="${s.id}">編集</button>
+                <button class="btn sm danger" type="button" data-act="delete-subevent" data-id="${s.id}">削除</button>
+              </div>
+            </div>
+          `).join('') : `<div class="small">まだサブイベントはありません</div>`}
+        </div>
+      </div>`;
+    return `
+    <div class="event-row">
+      <div class="title">${esc(e.title)}<span class="vis ${e.visibility === 'unlisted' ? 'unlisted' : ''}">${e.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
+      <div class="meta">${esc(fmtDateDisplay(e.starts_at) || '日時未定')}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
+      <div class="meta">${e.participant_enabled === false ? '参加集計なし' : `参加 ${e.join_count} 人${e.capacity ? ' ・ 定員 ' + e.capacity : ''}`}${e.visibility === 'public' ? ' / お気に入り ' + (e.like_count || 0) + ' 件' : ''}</div>
+      <div class="row-actions">
+        <a class="btn sm" href="./event.html?id=${e.id}" target="_blank" rel="noopener">ページを開く</a>
+        ${e.participant_enabled === false ? '' : `<button class="btn sm" type="button" onclick="openParticipantsModal(${e.id})">参加者管理</button>`}
+        <button class="btn sm" type="button" data-act="edit-event" data-id="${e.id}">編集</button>
+        <button class="btn sm danger" type="button" data-act="delete-event" data-id="${e.id}">削除</button>
+      </div>
+      ${subHtml}
+    </div>`;
+  }).join('');
+}
+
+async function openParticipantsModal(eventId = 0){
+  const body = document.getElementById('participants-modal-body');
+  body.innerHTML = '<div class="small">読み込み中…</div>';
+  document.getElementById('participants-modal').classList.add('open');
+  const json = await api('event_participants_admin' + (eventId ? '&event_id=' + encodeURIComponent(eventId) : ''), null, 'GET');
+  if (!json.ok) { body.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
+  const rows = json.data || [];
+  body.innerHTML = rows.length ? `<div class="admin-table">${rows.map(r => {
+    const u = r.user || {};
+    return `<div class="admin-row">
+      <div class="admin-row-title">${esc(u.display_name || u.username || '')}</div>
+      <div class="admin-detail">イベント: ${esc(r.event_title || '')}<br>参加日時: ${esc(fmtDateDisplay(r.joined_at) || '')}${u.location ? '<br>都道府県: ' + esc(u.location) : ''}${(u.oshi_members||[]).length ? '<br>推し: ' + esc((u.oshi_members||[]).join(' / ')) : ''}</div>
+      ${(r.subevents||[]).length ? `<div class="admin-detail">サブイベント: ${r.subevents.map(s=>esc(s.title)).join(' / ')}</div>` : ''}
+      <a class="btn sm" href="../view.html?id=${u.id}" target="_blank" rel="noopener">プロフィール詳細</a>
+    </div>`;
+  }).join('')}</div>` : '<div class="event-empty">参加者はいません</div>';
+}
+function closeParticipantsModal(){ document.getElementById('participants-modal').classList.remove('open'); }
+function openEventForm(id = null){
+  editingEventId = id;
+  pendingEventCover = null;
+  pendingEventAttachments = [];
+  pendingExistingAttachment = null;
+  const e = id ? myEvents.find(x => x.id === id) : null;
+  document.getElementById('event-modal-title').textContent = id ? 'イベントを編集' : '新しいイベント';
+  document.getElementById('event-save-btn').textContent = id ? '更新' : '作成';
+  const body = document.getElementById('event-modal-body');
+  body.innerHTML = `
+    <div class="field"><label>タイトル *</label><input id="ev-title" maxlength="160" value="${esc(e?.title || '')}"></div>
+    <div class="field"><label>説明</label><textarea id="ev-desc" maxlength="4000">${esc(e?.description || '')}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>開催日時</label><input id="ev-starts" type="datetime-local" value="${esc(fmtDateLocalInput(e?.starts_at))}"></div>
+      <div class="field"><label>終了日時</label><input id="ev-ends" type="datetime-local" value="${esc(fmtDateLocalInput(e?.ends_at))}"></div>
+    </div>
+    <div class="field"><label>会場</label><input id="ev-venue" maxlength="200" value="${esc(e?.venue || '')}" placeholder="例: 大阪城ホール"></div>
+    <div class="field-row">
+      <div class="field"><label>満員数（任意）</label><input id="ev-capacity" type="number" min="1" max="100000" value="${e?.capacity || ''}"></div>
+      <div class="field"><label>公開設定</label>
+        <select id="ev-visibility">
+          <option value="public" ${(!e || e.visibility === 'public') ? 'selected' : ''}>公開（一覧に表示）</option>
+          <option value="unlisted" ${e?.visibility === 'unlisted' ? 'selected' : ''}>非公開（URLを知る人のみ）</option>
+        </select>
+      </div>
+    </div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="ev-participant-enabled" type="checkbox" ${!e || e.participant_enabled !== false ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">参加者を集計する</span>
+          <span class="event-option-desc">オンにするとイベントページに「参加する」ボタンと参加者数を表示します。オフの場合、参加ボタンと参加者一覧は表示されません。</span>
+        </span>
+      </label>
+    </div>
+    <div class="field"><label>外部リンク文言</label><input id="ev-extlabel" maxlength="80" value="${esc(e?.external_label || '')}" placeholder="例: チケット購入"></div>
+    <div class="field"><label>外部リンクURL</label><input id="ev-exturl" value="${esc(e?.external_url || '')}" placeholder="https://..."></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="ev-ext-highlight" type="checkbox" ${e?.external_button_highlight ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">外部リンクボタンを目立たせる</span>
+          <span class="event-option-desc">チケット購入、応募フォームなど特に見てほしいリンクを黄色の強調ボタンで表示します。</span>
+          <span class="event-option-badge">黄色ボタン</span>
+        </span>
+      </label>
+    </div>
+    ${id ? `<div class="field">
+      <label>カバー画像</label>
+      ${e?.cover_url ? `<img src="../${esc(e.cover_url)}" alt="" style="max-width:240px;border-radius:12px;display:block;margin-bottom:8px;">` : ''}
+      <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadEventCover(${id}, this.files[0])">
+    </div>${eventAttachmentHtml(e)}` : `<div id="pending-event-files">${pendingEventFilesHtml()}</div>`}
+  `;
+  document.getElementById('event-modal').classList.add('open');
+}
+function closeEventForm(){
+  editingEventId = null;
+  pendingEventCover = null;
+  pendingEventAttachments = [];
+  pendingExistingAttachment = null;
+  document.getElementById('event-modal').classList.remove('open');
+}
+async function saveEvent(){
+  const saveBtn = document.getElementById('event-save-btn');
+  const isNew = !editingEventId;
+  const payload = {
+    title: val('ev-title'),
+    description: val('ev-desc'),
+    venue: val('ev-venue'),
+    starts_at: val('ev-starts'),
+    ends_at: val('ev-ends'),
+    capacity: val('ev-capacity'),
+    external_label: val('ev-extlabel'),
+    external_url: val('ev-exturl'),
+    external_button_highlight: document.getElementById('ev-ext-highlight')?.checked || false,
+    participant_enabled: document.getElementById('ev-participant-enabled')?.checked !== false,
+    visibility: val('ev-visibility') || 'public',
+  };
+  const action = editingEventId ? 'event_update' : 'event_create';
+  if (editingEventId) payload.id = editingEventId;
+  if (saveBtn) { saveBtn.disabled = true; saveBtn.textContent = isNew ? '作成中…' : '更新中…'; }
+  const json = await api(action, payload);
+  if (!json.ok) {
+    if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingEventId ? '更新' : '作成'; }
+    msg('event-msg', json.error || '保存できませんでした', false);
+    return;
+  }
+  const savedId = editingEventId || json.data?.id;
+  const uploadErrors = [];
+  if (isNew && savedId) {
+    if (saveBtn) saveBtn.textContent = 'ファイルをアップロード中…';
+    if (pendingEventCover) {
+      try {
+        const data = await readFileAsDataUrl(pendingEventCover);
+        const coverJson = await api('event_upload_cover', { id:savedId, image:data });
+        if (!coverJson.ok) uploadErrors.push(coverJson.error || 'カバー画像を保存できませんでした');
+      } catch(e) {
+        uploadErrors.push('カバー画像を読み込めませんでした');
+      }
+    }
+    for (const item of pendingEventAttachments) {
+      try {
+        const data = await readFileAsDataUrl(item.file);
+        const fileJson = await api('event_upload_attachment', { id:savedId, name:item.name || defaultAttachmentName(item.file), file:data });
+        if (!fileJson.ok) uploadErrors.push(`${item.name || item.file.name}: ${fileJson.error || '保存できませんでした'}`);
+      } catch(e) {
+        uploadErrors.push(`${item.name || item.file.name}: 読み込めませんでした`);
+      }
+    }
+  }
+  if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingEventId ? '更新' : '作成'; }
+  msg('event-msg', uploadErrors.length ? `イベントは保存しました。一部ファイルのアップロードに失敗しました: ${uploadErrors.join(' / ')}` : (isNew ? 'イベントを作成しました' : 'イベントを更新しました'), uploadErrors.length === 0);
+  closeEventForm();
+  loadEvents();
+}
+async function deleteEvent(id){
+  const ok = await confirmDialog('イベントを削除', 'このイベントを削除しますか？この操作は取り消せません。');
+  if (!ok) return;
+  const json = await api('event_delete', { id });
+  if (!json.ok) { msg('event-msg', json.error || '削除できませんでした', false); return; }
+  msg('event-msg', 'イベントを削除しました', true);
+  loadEvents();
+}
+
+async function loadForms(){
+  const json = await api('form_mine_list');
+  myForms = json.ok ? (json.data || []) : [];
+  renderFormList();
+}
+function renderFormList(){
+  const wrap = document.getElementById('form-list');
+  if (!wrap) return;
+  if (!myForms.length) { wrap.innerHTML = '<div class="event-empty">まだフォームはありません</div>'; return; }
+  wrap.innerHTML = myForms.map(f => `
+    <div class="event-row">
+      <div class="title">${esc(f.title)}<span class="vis ${f.visibility === 'unlisted' ? 'unlisted' : ''}">${f.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
+      <div class="meta">回答 ${f.response_count || 0} 件 / ${f.collect_profile ? 'Buddies情報を収集' : '匿名'} / ${f.one_response ? '1回まで' : '複数回答可'}</div>
+      <div class="row-actions">
+        <a class="btn sm" href="./form.html?id=${f.id}" target="_blank" rel="noopener">ページを開く</a>
+        <button class="btn sm" type="button" onclick="openFormModal(${f.id})">編集</button>
+        <button class="btn sm" type="button" onclick="openResponsesModal(${f.id})">回答一覧</button>
+        <button class="btn sm danger" type="button" onclick="deleteForm(${f.id})">削除</button>
+      </div>
+    </div>`).join('');
+}
+function openFormModal(id = null){
+  editingFormId = id;
+  const f = id ? myForms.find(x => x.id === id) : null;
+  formQuestions = f ? JSON.parse(JSON.stringify(f.questions || [])) : [{id:'q1',label:'',type:'text',required:1,options:[]}];
+  document.getElementById('form-modal-title').textContent = id ? 'フォームを編集' : '新しいフォーム';
+  document.getElementById('form-modal-body').innerHTML = `
+    <div class="form-builder">
+      <section class="form-builder-section">
+        <h4>基本情報</h4>
+        <div class="field"><label>フォーム名 *</label><input id="form-title" maxlength="160" value="${esc(f?.title || '')}" placeholder="例：イベント参加後アンケート"></div>
+        <div class="field"><label>説明</label><textarea id="form-desc" maxlength="4000" placeholder="回答者に伝えたい補足があれば入力">${esc(f?.description || '')}</textarea></div>
+      </section>
+      <section class="form-builder-section">
+        <h4>回答設定</h4>
+        <div class="form-setup-grid">
+          <div class="form-setting-card">
+            <label for="form-visibility">公開範囲</label>
+            <select id="form-visibility">
+              <option value="public" ${(!f || f.visibility==='public')?'selected':''}>公開</option>
+              <option value="unlisted" ${f?.visibility==='unlisted'?'selected':''}>非公開URL</option>
+            </select>
+            <div class="small">非公開URLは一覧に出さず、URLを知っている人だけ回答できます。</div>
+          </div>
+          <div class="form-setting-card">
+            <label for="form-collect">回答者情報</label>
+            <select id="form-collect">
+              <option value="0" ${!f?.collect_profile?'selected':''}>匿名で表示</option>
+              <option value="1" ${f?.collect_profile?'selected':''}>Buddies profileを表示</option>
+            </select>
+            <div class="small">匿名でもDBにはユーザーIDを保存し、管理画面には表示しません。</div>
+          </div>
+          <div class="form-setting-card">
+            <label>回答回数</label>
+            <label class="small"><input id="form-one-response" type="checkbox" ${!f || f.one_response ? 'checked' : ''}> 1アカウント1回まで</label>
+            <div class="small">チェックを外すと同じユーザーが複数回回答できます。</div>
+          </div>
+        </div>
+      </section>
+      <section class="form-builder-section">
+        <h4>質問</h4>
+        <div class="hint">よく使う形式を選んで追加し、必要な質問文だけ編集できます。</div>
+        <div id="form-question-list" class="admin-table"></div>
+        <div class="form-question-toolbar">
+          <button class="btn sm" type="button" onclick="addFormQuestion('text')">+ 短文</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('textarea')">+ 長文</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('radio')">+ 単一選択</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('checkbox')">+ 複数選択</button>
+          <button class="btn sm" type="button" onclick="addFormQuestion('select')">+ プルダウン</button>
+        </div>
+      </section>
+    </div>
+  `;
+  renderFormQuestions();
+  document.getElementById('form-modal').classList.add('open');
+}
+function closeFormModal(){ document.getElementById('form-modal').classList.remove('open'); editingFormId=null; formQuestions=[]; }
+function formTypeLabel(type){
+  return ({text:'短文', textarea:'長文', radio:'単一選択', checkbox:'複数選択', select:'プルダウン'})[type] || '短文';
+}
+function ensureQuestionOptions(q){
+  if (!['radio','checkbox','select'].includes(q.type)) return;
+  if (!Array.isArray(q.options) || !q.options.length) q.options = ['選択肢1', '選択肢2'];
+}
+function renderFormQuestions(){
+  const wrap = document.getElementById('form-question-list');
+  if (!wrap) return;
+  if (!formQuestions.length) {
+    wrap.innerHTML = '<div class="event-empty">質問がありません。上のボタンから追加してください。</div>';
+    return;
+  }
+  wrap.innerHTML = formQuestions.map((q,i)=>`
+    <div class="form-question-row">
+      <div class="form-question-head">
+        <div class="form-question-no">${i + 1}</div>
+        <div class="form-question-title">${esc(formTypeLabel(q.type))}</div>
+        <div class="form-question-actions">
+          <button class="btn sm" type="button" ${i===0?'disabled':''} onclick="moveFormQuestion(${i},-1)">上へ</button>
+          <button class="btn sm" type="button" ${i===formQuestions.length-1?'disabled':''} onclick="moveFormQuestion(${i},1)">下へ</button>
+          <button class="btn sm danger" type="button" onclick="removeFormQuestion(${i})">削除</button>
+        </div>
+      </div>
+      <div class="field-row">
+        <input value="${esc(q.label||'')}" placeholder="質問文" oninput="formQuestions[${i}].label=this.value">
+        <select onchange="formQuestions[${i}].type=this.value;ensureQuestionOptions(formQuestions[${i}]);renderFormQuestions()">
+          ${['text','textarea','radio','checkbox','select'].map(t=>`<option value="${t}" ${q.type===t?'selected':''}>${formTypeLabel(t)}</option>`).join('')}
+        </select>
+      </div>
+      ${['radio','checkbox','select'].includes(q.type) ? `
+        <div class="field">
+          <label>選択肢</label>
+          <input value="${esc((q.options||[]).join(', '))}" placeholder="例：参加, 不参加, 未定" oninput="formQuestions[${i}].options=this.value.split(',').map(s=>s.trim()).filter(Boolean)">
+          <div class="form-option-tools">
+            <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['はい','いいえ'])">はい/いいえ</button>
+            <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['参加','不参加','未定'])">参加確認</button>
+            <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['とても良い','良い','普通','改善してほしい'])">満足度</button>
+          </div>
+        </div>` : ''}
+      <label class="small"><input type="checkbox" ${q.required?'checked':''} onchange="formQuestions[${i}].required=this.checked?1:0"> 必須項目にする</label>
+    </div>`).join('');
+}
+function addFormQuestion(type = 'text'){
+  const q = {id:'q'+Date.now()+Math.random().toString(16).slice(2),label:'',type,required:0,options:[]};
+  ensureQuestionOptions(q);
+  formQuestions.push(q);
+  renderFormQuestions();
+}
+function removeFormQuestion(i){
+  formQuestions.splice(i,1);
+  renderFormQuestions();
+}
+function moveFormQuestion(i, dir){
+  const next = i + dir;
+  if (next < 0 || next >= formQuestions.length) return;
+  const tmp = formQuestions[i];
+  formQuestions[i] = formQuestions[next];
+  formQuestions[next] = tmp;
+  renderFormQuestions();
+}
+function setFormQuestionOptions(i, options){
+  if (!formQuestions[i]) return;
+  formQuestions[i].options = options;
+  renderFormQuestions();
+}
+async function saveForm(){
+  const payload = {
+    title: val('form-title'), description: val('form-desc'), visibility: val('form-visibility'),
+    collect_profile: val('form-collect') === '1', one_response: document.getElementById('form-one-response').checked,
+    questions: formQuestions.map((q,i)=>({...q,id:q.id||('q'+i)})),
+  };
+  if (editingFormId) payload.id = editingFormId;
+  const json = await api(editingFormId ? 'form_update' : 'form_create', payload);
+  if (!json.ok) { msg('form-msg', json.error || '保存できませんでした', false); return; }
+  closeFormModal(); msg('form-msg', '保存しました', true); loadForms();
+}
+async function deleteForm(id){
+  const ok = await confirmDialog('フォームを削除', 'このフォームを削除しますか？');
+  if (!ok) return;
+  const json = await api('form_delete', { id });
+  if (!json.ok) { msg('form-msg', json.error || '削除できませんでした', false); return; }
+  loadForms();
+}
+async function openResponsesModal(id){
+  const body = document.getElementById('responses-modal-body');
+  body.innerHTML = '<div class="small">読み込み中…</div>';
+  document.getElementById('responses-modal').classList.add('open');
+  const json = await api('form_responses&id=' + encodeURIComponent(id));
+  if (!json.ok) { body.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
+  const form = json.data.form;
+  const qs = form.questions || [];
+  const rows = json.data.responses || [];
+  responseView = { form, questions:qs, rows };
+  body.innerHTML = `
+    <div class="response-summary">
+      <div class="response-stat"><strong>${rows.length}</strong><span>回答数</span></div>
+      <div class="response-stat"><strong>${qs.length}</strong><span>質問数</span></div>
+      <div class="response-stat"><strong>${form.collect_profile ? '表示' : '匿名'}</strong><span>回答者情報</span></div>
+    </div>
+    <div class="response-tools">
+      <input id="response-search" placeholder="回答者名・回答内容で検索" oninput="renderResponsesTable()">
+      <button class="btn sm" type="button" onclick="downloadResponsesCsv()">CSV出力</button>
+    </div>
+    <div id="response-table"></div>
+  `;
+  renderResponsesTable();
+}
+function responseValueText(value){
+  if (Array.isArray(value)) return value.join('、');
+  return value == null ? '' : String(value);
+}
+function renderResponsesTable(){
+  const wrap = document.getElementById('response-table');
+  if (!wrap) return;
+  const keyword = val('response-search').toLowerCase();
+  const qs = responseView.questions || [];
+  const rows = (responseView.rows || []).filter(r => {
+    if (!keyword) return true;
+    const haystack = [r.respondent_name || '匿名', r.created_at || '']
+      .concat(qs.map(q => responseValueText((r.answers || {})[q.id])))
+      .join(' ')
+      .toLowerCase();
+    return haystack.includes(keyword);
+  });
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="event-empty">表示できる回答がありません</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="admin-table">${rows.map(r=>`
+    <div class="response-card">
+      <div class="response-head">
+        <div>
+          <div class="response-name">${esc(r.respondent_name || '匿名')}</div>
+          <div class="response-meta">${esc(fmtDateDisplay(r.created_at) || '')}</div>
+        </div>
+        ${r.user_id ? `<a class="btn sm" href="../view.html?id=${r.user_id}" target="_blank" rel="noopener">プロフィール</a>` : ''}
+      </div>
+      <div class="response-answer-grid">
+        ${qs.map(q=>{
+          const text = responseValueText((r.answers || {})[q.id]);
+          return `<div class="response-answer">
+            <div class="response-answer-label">${esc(q.label || '質問')}</div>
+            <div class="response-answer-value ${text ? '' : 'response-empty-value'}">${esc(text || '未回答')}</div>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`).join('')}</div>`;
+}
+function csvEscape(value){
+  return `"${String(value == null ? '' : value).replace(/"/g, '""')}"`;
+}
+function downloadResponsesCsv(){
+  const form = responseView.form || {};
+  const qs = responseView.questions || [];
+  const rows = responseView.rows || [];
+  const header = ['回答日時','回答者'].concat(qs.map(q => q.label || '質問'));
+  const lines = [header.map(csvEscape).join(',')];
+  rows.forEach(r => {
+    const values = [r.created_at || '', r.respondent_name || '匿名'].concat(qs.map(q => responseValueText((r.answers || {})[q.id])));
+    lines.push(values.map(csvEscape).join(','));
+  });
+  const blob = new Blob(['\uFEFF' + lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${(form.title || 'form-responses').replace(/[\\/:*?"<>|]/g, '_')}_responses.csv`;
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+function closeResponsesModal(){ document.getElementById('responses-modal').classList.remove('open'); responseView = { form:null, questions:[], rows:[] }; }
+async function uploadEventCover(id, file){
+  if (!file) return;
+  if (!validateEventCoverFile(file)) return;
+  const data = await readFileAsDataUrl(file);
+  const json = await api('event_upload_cover', { id, image:data });
+  if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
+  msg('event-msg', 'カバー画像を更新しました', true);
+  loadEvents();
+}
+async function uploadEventAttachment(id, file){
+  if (!file) return;
+  if (!validateEventAttachmentFile(file)) return;
+  pendingExistingAttachment = { file, name: defaultAttachmentName(file) };
+  renderExistingAttachmentPicker(id);
+}
+async function uploadPendingExistingAttachment(id){
+  if (!pendingExistingAttachment) return;
+  const item = pendingExistingAttachment;
+  const data = await readFileAsDataUrl(item.file);
+  const json = await api('event_upload_attachment', { id, name:item.name || defaultAttachmentName(item.file), file:data });
+  if (!json.ok) { msg('event-msg', json.error || '添付ファイルを保存できませんでした', false); return; }
+  pendingExistingAttachment = null;
+  msg('event-msg', '添付ファイルを追加しました', true);
+  const fresh = await api('event_mine_list');
+  if (fresh.ok) myEvents = fresh.data || [];
+  openEventForm(id);
+  renderEventList();
+}
+async function deleteEventAttachment(id, fileId){
+  const ok = await confirmDialog('添付ファイルを削除', 'この添付ファイルを削除しますか？');
+  if (!ok) return;
+  const json = await api('event_delete_attachment', { id, file_id:fileId });
+  if (!json.ok) { msg('event-msg', json.error || '添付ファイルを削除できませんでした', false); return; }
+  msg('event-msg', '添付ファイルを削除しました', true);
+  const fresh = await api('event_mine_list');
+  if (fresh.ok) myEvents = fresh.data || [];
+  openEventForm(id);
+  renderEventList();
+}
+async function uploadSubeventCover(id, file){
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async () => {
+    const json = await api('subevent_upload_cover', { id, image: reader.result });
+    if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
+    msg('event-msg', 'サブイベントのカバー画像を更新しました', true);
+    closeSubeventForm();
+    loadEvents();
+  };
+  reader.readAsDataURL(file);
+}
+
+
+function openSubeventForm(eventId, id = null){
+  editingSubeventEventId = eventId;
+  editingSubeventId = id;
+  const list = subeventsByEvent[eventId] || [];
+  const s = id ? list.find(x => Number(x.id) === Number(id)) : null;
+  document.getElementById('subevent-modal-title').textContent = id ? 'サブイベントを編集' : '新しいサブイベント';
+  document.getElementById('subevent-save-btn').textContent = id ? '更新' : '作成';
+  const body = document.getElementById('subevent-modal-body');
+  body.innerHTML = `
+    <div class="field"><label>サブイベント名 *</label><input id="sub-title" maxlength="160" value="${esc(s?.title || '')}"></div>
+    <div class="field"><label>説明</label><textarea id="sub-desc" maxlength="4000">${esc(s?.description || '')}</textarea></div>
+    <div class="field-row">
+      <div class="field"><label>開始日時</label><input id="sub-starts" type="datetime-local" value="${esc(fmtDateLocalInput(s?.starts_at))}"></div>
+      <div class="field"><label>終了日時</label><input id="sub-ends" type="datetime-local" value="${esc(fmtDateLocalInput(s?.ends_at))}"></div>
+    </div>
+    <div class="field"><label>場所</label><input id="sub-venue" maxlength="200" value="${esc(s?.venue || '')}" placeholder="例: グッズ列集合 / 配信待機"></div>
+    <div class="field"><label>定員（任意）</label><input id="sub-capacity" type="number" min="1" max="100000" value="${s?.capacity || ''}"></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="sub-participant-enabled" type="checkbox" ${!s || s.participant_enabled !== false ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">参加者を集計する</span>
+          <span class="event-option-desc">オンにするとサブイベントページに「参加する」ボタンと参加者数を表示します。メインイベントと別に設定できます。</span>
+        </span>
+      </label>
+    </div>
+    <div class="field"><label>外部リンク文言</label><input id="sub-extlabel" maxlength="80" value="${esc(s?.external_label || '')}" placeholder="例: 詳細を見る"></div>
+    <div class="field"><label>外部リンクURL</label><input id="sub-exturl" value="${esc(s?.external_url || '')}" placeholder="https://..."></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="sub-ext-highlight" type="checkbox" ${s?.external_button_highlight ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">外部リンクボタンを目立たせる</span>
+          <span class="event-option-desc">集合場所や詳細ページなど、優先して開いてほしいリンクを黄色の強調ボタンで表示します。</span>
+          <span class="event-option-badge">黄色ボタン</span>
+        </span>
+      </label>
+    </div>
+    ${id ? `<div class="field">
+      <label>カバー画像</label>
+      ${s?.cover_url ? `<img class="subevent-cover-preview" src="../${esc(s.cover_url)}" alt="">` : ''}
+      <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadSubeventCover(${id}, this.files[0])">
+    </div>` : '<p class="small">※カバー画像は保存後にアップロードできます</p>'}
+    <p class="small" style="margin:0;">サブイベントでは参加のみ利用できます。表示順は開始日時が早い順で自動調整されます。お気に入り機能はありません。</p>
+  `;
+  document.getElementById('subevent-modal').classList.add('open');
+}
+function closeSubeventForm(){
+  editingSubeventId = null;
+  editingSubeventEventId = null;
+  document.getElementById('subevent-modal').classList.remove('open');
+}
+async function saveSubevent(){
+  const payload = {
+    event_id: editingSubeventEventId,
+    title: val('sub-title'),
+    description: val('sub-desc'),
+    venue: val('sub-venue'),
+    starts_at: val('sub-starts'),
+    ends_at: val('sub-ends'),
+    capacity: val('sub-capacity'),
+    external_label: val('sub-extlabel'),
+    external_url: val('sub-exturl'),
+    external_button_highlight: document.getElementById('sub-ext-highlight')?.checked || false,
+    participant_enabled: document.getElementById('sub-participant-enabled')?.checked !== false,
+  };
+  const action = editingSubeventId ? 'subevent_update' : 'subevent_create';
+  if (editingSubeventId) payload.id = editingSubeventId;
+  const json = await api(action, payload);
+  if (!json.ok) { msg('event-msg', json.error || '保存できませんでした', false); return; }
+  msg('event-msg', editingSubeventId ? 'サブイベントを更新しました' : 'サブイベントを作成しました', true);
+  closeSubeventForm();
+  loadEvents();
+}
+async function deleteSubevent(id){
+  const ok = await confirmDialog('サブイベントを削除', 'このサブイベントを削除しますか？この操作は取り消せません。');
+  if (!ok) return;
+  const json = await api('subevent_delete', { id });
+  if (!json.ok) { msg('event-msg', json.error || '削除できませんでした', false); return; }
+  msg('event-msg', 'サブイベントを削除しました', true);
+  loadEvents();
+}
+
+
+function handleAdminOpenParams(){
+  if (!account) return;
+  const qs = new URLSearchParams(location.search);
+  const editEventId = parseInt(qs.get('edit_event') || '0', 10);
+  if (editEventId && myEvents.some(e => Number(e.id) === Number(editEventId))) {
+    switchSettingsTab('events');
+    openEventForm(editEventId);
+    qs.delete('edit_event');
+    const rest = qs.toString();
+    history.replaceState(null, '', location.pathname + (rest ? '?' + rest : ''));
+  }
+}
+
+// ── パスワード変更 ───────────────────────────────────────
+async function changePassword(){
+  const cur = val('current_password'), nw = val('new_password');
+  if (!cur || !nw) { msg('pw-msg', '両方入力してください', false); return; }
+  const ok = await confirmDialog('パスワード変更', 'パスワードを変更しますか？変更後は再ログインが必要になります。');
+  if (!ok) return;
+  const json = await api('verified_change_password', { current_password:cur, new_password:nw });
+  msg('pw-msg', json.ok ? 'パスワードを変更しました' : (json.error||'変更できませんでした'), !!json.ok);
+  if (json.ok) {
+    document.getElementById('current_password').value = '';
+    document.getElementById('new_password').value = '';
+  }
+}
+// グローバルに明示的に公開（onclick 属性から確実に呼べるように）
+window.openEventForm = openEventForm;
+window.closeEventForm = closeEventForm;
+window.saveEvent = saveEvent;
+window.deleteEvent = deleteEvent;
+window.uploadEventCover = uploadEventCover;
+window.uploadEventAttachment = uploadEventAttachment;
+window.deleteEventAttachment = deleteEventAttachment;
+window.uploadSubeventCover = uploadSubeventCover;
+window.openSubeventForm = openSubeventForm;
+window.closeSubeventForm = closeSubeventForm;
+window.saveSubevent = saveSubevent;
+window.deleteSubevent = deleteSubevent;
+window.openIconModal = openIconModal;
+window.closeIconModal = closeIconModal;
+window.uploadImage = uploadImage;
+window.saveAll = saveAll;
+window.changePassword = changePassword;
+window.logout = logout;
+window.login = login;
+window.loadImageFile = loadImageFile;
+window.closeOrBack = closeOrBack;
+window.closeConfirm = closeConfirm;
+window.setDirty = setDirty;
+init();
+
+// 全てのクリックを委譲して処理（onclick 属性が何らかの理由で動かない場合のフェールセーフ）
+document.addEventListener('click', (e) => {
+  const t = e.target.closest('[data-act]');
+  if (!t) return;
+  const act = t.dataset.act;
+  const id = t.dataset.id ? parseInt(t.dataset.id, 10) : null;
+  switch (act) {
+    case 'new-event':    openEventForm(); break;
+    case 'edit-event':   openEventForm(id); break;
+    case 'delete-event': deleteEvent(id); break;
+    case 'new-subevent': openSubeventForm(parseInt(t.dataset.eventId, 10)); break;
+    case 'edit-subevent': openSubeventForm(parseInt(t.dataset.eventId, 10), id); break;
+    case 'delete-subevent': deleteSubevent(id); break;
+    case 'close-subevent': closeSubeventForm(); break;
+    case 'save-subevent': saveSubevent(); break;
+    case 'open-icon':    openIconModal(); break;
+    case 'close-icon':   closeIconModal(); break;
+    case 'upload-icon':  uploadImage(); break;
+    case 'close-event':  closeEventForm(); break;
+    case 'save-event':   saveEvent(); break;
+    case 'save-all':     saveAll(); break;
+    case 'logout':       logout(); break;
+    case 'change-password': changePassword(); break;
+    case 'close-confirm': closeConfirm(); break;
+  }
+});
+</script>
+</body>
+</html>

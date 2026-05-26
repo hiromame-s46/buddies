@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Buddies profile</title>
+<meta name="description" content="Buddies profile の公開プロフィールページです。">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="Buddies profile">
+<meta property="og:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。推しメン・好きな曲・SNSをまとめてシェアできます。">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/view.html">
+<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Buddies">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Buddies profile">
+<meta name="twitter:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。">
+<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/view.html">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--blue:#3b82f6;--gold:#e6b422}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:relative;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:57px}
+header h1{font-size:15px;margin:0;font-weight:700;color:#555;position:absolute;left:50%;transform:translateX(-50%);max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;pointer-events:none}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
+.back:hover{background:#f3f3f3}
+.header-favorite-area{margin-left:auto;min-width:40px;min-height:40px;display:flex;align-items:center;justify-content:flex-end}
+.header-favorite-area:empty{min-width:40px}
+main{padding:24px 22px 34px}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:22px 16px 14px;position:relative}
+.hero-fav-btn{width:44px;height:44px;border-radius:50%;border:0;background:rgba(255,255,255,.9);color:#111;display:grid;place-items:center;cursor:pointer;box-shadow:none;backdrop-filter:blur(12px);transition:background .18s,color .18s,transform .18s}
+.hero-fav-btn:hover{background:#fff;transform:translateY(-1px)}
+.hero-fav-btn svg{width:18px;height:18px;display:block}
+.hero-fav-btn.active{background:#fff;color:#ef4444}
+.hero-fav-btn.login{width:auto;padding:0 14px;border-radius:9999px;font-size:12px;font-weight:900}
+.icon-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.icon{width:100%;height:100%;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;font-size:48px;font-weight:800;color:#888;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.icon img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.badge{position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;border:3px solid #fff;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:2}
+.badge.sns{background:var(--blue)}
+.badge.verified{background:var(--gold)}
+.badge svg{width:14px;height:14px}
+.kind{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:#fff;border:1px solid var(--line);color:#333;font-size:12px;font-weight:800;padding:4px 12px;margin-top:14px}
+.kind.sns{border-color:#bfdbfe;color:#1d4ed8;background:#eff6ff}
+.kind-note{font-size:12px;color:var(--muted);line-height:1.6;margin-top:6px}
+.name{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em;color:#111}
+.hero-sns-icons{display:flex;align-items:center;justify-content:center;gap:9px;margin-top:10px;min-height:36px}
+.hero-sns-icon{width:40px;height:40px;border-radius:50%;border:0;background:#fff;color:#111;text-decoration:none;display:grid;place-items:center;transition:transform .18s}
+.hero-sns-icon:hover{background:#fff;transform:translateY(-1px)}
+.hero-sns-icon:active,.hero-sns-icon:focus,.hero-sns-icon:visited{background:#fff;color:#111}
+.hero-sns-icon svg{width:20px;height:20px;display:block}
+.hero-meta{display:flex;flex-wrap:wrap;justify-content:center;gap:6px;margin-top:10px;max-width:100%}
+.hero-meta-chip{display:inline-flex;align-items:center;gap:5px;min-height:28px;padding:5px 10px;border-radius:9999px;background:#f7f7f7;border:1px solid #ececec;color:#333;font-size:12px;font-weight:700;line-height:1.2}
+.hero-meta-label{color:#777;font-size:10px;font-weight:800}
+.section{margin-top:34px}
+.section+.section{margin-top:42px}
+.section-title{font-size:12px;font-weight:900;color:#333;text-transform:uppercase;letter-spacing:.5px;margin:0 0 14px;display:flex;align-items:center;gap:12px}
+.section-title:after{content:"";height:1px;background:linear-gradient(90deg,#111 0%,#8f8f8f 42%,#e7e7e7 100%);flex:1}
+.card{background:#fcfcfc;border:1px solid #f1f1f1;border-radius:26px;padding:20px}
+.meta-grid{display:grid;gap:10px}
+.meta-item{display:grid;grid-template-columns:108px 1fr;gap:10px;align-items:start}
+.meta-label{font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.3px}
+.meta-value{font-size:14px;color:#222;line-height:1.7}
+.box{font-size:14px;line-height:2;color:#333;white-space:pre-wrap;margin:0}
+.oshi-group+.oshi-group{margin-top:18px;padding-top:18px;border-top:1px solid #e9e9e9}
+.oshi-label{font-size:12px;font-weight:700;color:#666;text-transform:uppercase;letter-spacing:.3px;margin-bottom:10px}
+.oshi-members{display:flex;flex-wrap:wrap;gap:10px}
+.member-chip{display:flex;align-items:center;gap:10px;min-width:0;padding:8px 12px 8px 8px;background:#fff;border:1px solid #ececec;border-radius:9999px}
+.member-chip-avatar{width:40px;height:40px;border-radius:50%;overflow:hidden;flex-shrink:0;background:#ececec;display:grid;place-items:center;color:#666;font-weight:700}
+.member-chip-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.member-chip-name{font-size:13px;font-weight:700;color:#222;line-height:1.35}
+.tag-list{display:flex;flex-wrap:wrap;gap:8px}
+.tag{display:inline-flex;align-items:center;min-height:34px;padding:7px 12px;border-radius:9999px;background:#fff;border:1px solid #ececec;font-size:13px;font-weight:700;color:#333;line-height:1.35}
+.next-live-list{display:grid;gap:10px}
+.next-live-item{display:grid;gap:4px;background:#fff;border:1px solid #ececec;border-radius:18px;padding:14px 16px}
+.next-live-date{font-size:12px;font-weight:900;color:#111;line-height:1.35}
+.next-live-title{font-size:14px;font-weight:900;color:#222;line-height:1.45}
+.next-live-venue{font-size:12px;color:#666;line-height:1.5}
+.next-live-card{background:#fff;padding:14px;border-radius:24px}
+.next-live-card .next-live-list{gap:12px}
+.next-live-card .next-live-item{position:relative;grid-template-columns:minmax(76px,92px) 1fr;grid-template-rows:auto auto;column-gap:18px;align-items:center;min-height:82px;padding:16px 18px;border-color:#e6e6e6;border-radius:18px;background:linear-gradient(90deg,#fff 0%,#fff 34%,#fcfcfc 34%,#fcfcfc 100%);overflow:hidden}
+.next-live-card .next-live-item:before{content:"";position:absolute;top:14px;bottom:14px;left:110px;border-left:1px dashed #d9d9d9}
+.next-live-card .next-live-item:after{content:"";position:absolute;top:50%;left:110px;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid #e6e6e6;transform:translate(-50%,-50%);box-shadow:0 -43px 0 0 #fff,0 43px 0 0 #fff}
+.next-live-card .next-live-date{grid-row:1 / span 2;grid-column:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;line-height:1.45;letter-spacing:.03em;padding-right:4px;z-index:1}
+.next-live-card .next-live-title{grid-column:2;grid-row:1;font-size:14px;line-height:1.5;z-index:1}
+.next-live-card .next-live-venue{grid-column:2;grid-row:2;font-size:12px;z-index:1}
+.next-live-more{width:100%;min-height:42px;border-radius:9999px;border:1px solid #ececec;background:#fff;color:#111;font:inherit;font-size:13px;font-weight:900;cursor:pointer;margin-top:12px}
+.next-live-more:hover{background:#fafafa}
+.history-list{display:grid;gap:16px;position:relative}
+.history-list:before{content:"";position:absolute;left:9px;top:10px;bottom:10px;width:2px;border-radius:9999px;background:#e7e7e7}
+.history-item{position:relative;display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+.history-marker{position:relative;z-index:1;width:18px;height:18px;border-radius:50%;background:#111;border:5px solid #f7f7f7;box-shadow:0 0 0 1px #e7e7e7;margin-top:10px}
+.history-body{background:#fff;border:1px solid #ececec;border-radius:18px;padding:16px;display:grid;gap:9px}
+.history-date{width:fit-content;max-width:100%;border-radius:9999px;background:#f2f2f2;color:#555;font-size:11px;font-weight:900;line-height:1.2;padding:5px 9px}
+.history-live{display:grid;gap:2px;border-radius:14px;background:#fafafa;border:1px solid #eee;padding:10px 12px}
+.history-live-label{font-size:10px;font-weight:900;color:#888;letter-spacing:.04em}
+.history-live-title{font-size:13px;font-weight:900;color:#222;line-height:1.45}
+.history-live-venue{font-size:12px;color:#777;line-height:1.45}
+.history-title{font-size:14px;font-weight:900;color:#111;line-height:1.5}
+.history-note{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap}
+.history-image{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#f2f2f2;border:1px solid #eee}
+.history-image img{width:100%;height:100%;object-fit:cover;display:block}
+.history-more-btn{width:100%;min-height:44px;border-radius:9999px;border:1px solid #ececec;background:#fff;color:#111;font:inherit;font-size:13px;font-weight:900;cursor:pointer;margin-top:16px}
+.history-more-btn:hover{background:#fafafa}
+.links{display:grid;gap:10px}
+.link{display:flex;align-items:center;justify-content:flex-start;gap:10px;width:100%;min-height:52px;border-radius:18px;text-decoration:none;font-weight:800;font-size:14px;padding:0 16px;border:1px solid #ececec;background:#fff;color:#222;cursor:pointer;font-family:inherit;transition:background .18s,border-color .18s}
+.link:hover{background:#fafafa;border-color:#dedede}
+.link svg{width:16px;height:16px;display:block;flex-shrink:0;color:#333}
+.link span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:52px;border-radius:9999px;text-decoration:none;font-weight:700;font-size:14px;padding:0 22px;border:1.5px solid #111;background:#fff;color:#111;cursor:pointer;font-family:inherit}
+.btn:hover{background:#fafafa}
+.btn.favorite-add{background:#111;color:#fff;border-color:#111}
+.btn.favorite-add:hover{background:#222}
+.btn.favorite-done{background:#fff;color:#111;border-color:#111}
+.btn.favorite-done:hover{background:#fafafa}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.notice{font-size:12px;color:#777;text-align:center;margin-top:12px;line-height:1.8}
+.spacer{height:24px}
+.footer{margin-top:44px;padding:24px 16px 26px;text-align:center;font-size:12px;color:#aaa}
+.error{padding:40px 20px;text-align:center}
+.error h2{font-size:18px;margin:0 0 10px}
+.error a{color:#111}
+.skeleton{padding:60px 20px;text-align:center;color:#aaa}
+.empty-text{font-size:13px;color:#888;line-height:1.7}
+
+.sakulabo-favorites{display:grid;gap:10px}
+.sakulabo-fav-item{display:flex;align-items:center;justify-content:flex-start;gap:12px;padding:14px 16px;border-radius:18px;background:#fff;border:1px solid #ececec;color:#111;text-decoration:none}
+.sakulabo-fav-item:hover{background:#fafafa}
+.sakulabo-fav-faces{display:flex;flex-shrink:0;margin-right:2px}
+.sakulabo-fav-face{width:34px;height:34px;border-radius:50%;border:2px solid #fff;overflow:hidden;background:#fdf2f8;display:grid;place-items:center;color:#f9a8d4;font-size:12px;font-weight:800;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.sakulabo-fav-face+.sakulabo-fav-face{margin-left:-10px}
+.sakulabo-fav-face img{width:100%;height:100%;object-fit:cover;object-position:top center;display:block}
+.sakulabo-fav-main{min-width:0;flex:1}
+.sakulabo-fav-date{font-size:10px;color:#999;font-weight:800;line-height:1.2;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakulabo-fav-title{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakulabo-fav-meta{font-size:12px;color:#666;margin-top:2px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakumap-stamps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.sakumap-stamp{border:1px solid #ececec;border-radius:18px;background:#fff;padding:12px 10px;display:grid;gap:8px;justify-items:center;text-align:center;min-width:0;text-decoration:none;color:inherit}
+.sakumap-stamp-img{width:58px;height:58px;border-radius:14px;background:#fafafa;display:grid;place-items:center;overflow:hidden;color:#b86a7e;font-size:26px;border:1px solid #f0f0f0}
+.sakumap-stamp-img img{width:100%;height:100%;object-fit:contain;display:block}
+.sakumap-stamp-img svg{width:26px;height:26px;stroke:#e89aab;stroke-width:2;fill:none}
+.sakumap-stamp-name{width:100%;font-size:11px;font-weight:800;color:#222;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sakumap-stamp-date{font-size:10px;color:#777;font-weight:700;line-height:1.3}
+.sakumv-records{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.sakumv-record{border:1px solid #ececec;border-radius:18px;background:#fff;padding:15px;display:grid;gap:7px;min-width:0}
+.sakumv-section{font-size:12px;font-weight:900;color:#222;line-height:1.35}
+.sakumv-score{font-size:20px;font-weight:900;color:#111;line-height:1}
+.sakumv-meta{display:flex;gap:8px;flex-wrap:wrap;color:#777;font-size:11px;font-weight:800;line-height:1.3}
+.confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:flex-end;justify-content:center}
+.confirm-overlay.open{display:flex}
+.confirm-sheet{background:#fff;width:100%;max-width:520px;border-radius:20px 20px 0 0;padding:18px;box-shadow:0 -8px 24px rgba(0,0,0,.12)}
+.confirm-title{font-size:16px;font-weight:800;margin:0 0 8px;color:#111}
+.confirm-body{font-size:13px;color:#666;line-height:1.7;margin:0 0 16px}
+.confirm-actions{display:grid;gap:8px}
+.confirm-btn{min-height:46px;border-radius:9999px;border:1px solid #ddd;background:#fff;color:#111;font:800 14px inherit;cursor:pointer}
+.confirm-btn.danger{background:#e00;border-color:#e00;color:#fff}
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;border-radius:9999px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:560px){main{padding:18px 16px 32px}.hero{padding:20px 10px 12px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.section{margin-top:30px}.section+.section{margin-top:38px}.card{border-radius:24px;padding:18px}.next-live-card{padding:12px}.next-live-card .next-live-item{grid-template-columns:72px 1fr;column-gap:16px;padding:14px 14px;min-height:78px}.next-live-card .next-live-item:before,.next-live-card .next-live-item:after{left:88px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}.sakumap-stamps{gap:10px}.sakumap-stamp{padding:11px 8px}.sakumv-record{padding:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back" href="./" onclick="return closeOrBack(event)" aria-label="戻る">← 戻る</a>
+    <h1>プロフィール</h1>
+    <div id="header-favorite-area" class="header-favorite-area"></div>
+  </header>
+  <main id="app"><div class="skeleton">読み込み中…</div></main>
+</div>
+<div id="toast" class="toast"></div>
+<div id="confirm-modal" class="confirm-overlay" onclick="if(event.target===this)closeConfirmModal()">
+  <div class="confirm-sheet">
+    <h2 id="confirm-title" class="confirm-title">確認</h2>
+    <p id="confirm-body" class="confirm-body"></p>
+    <div class="confirm-actions">
+      <button id="confirm-ok" class="confirm-btn danger" type="button">解除する</button>
+      <button class="confirm-btn" type="button" onclick="closeConfirmModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+<script>
+const API = './api.php';
+const MEMBER_DATA = '../data/member.json';
+const LIVE_DATA = '../data/live.json';
+let profile = null;
+let me = null;
+let memberMap = {};
+let memberDataLoaded = false;
+let liveOptions = [];
+
+function closeOrBack(e){
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : './' + url; }
+function absoluteUrl(url){ return new URL(url || location.href, location.href).href; }
+function localDateKey(d = new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function liveDateObj(date){const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?new Date(Number(m[1]),Number(m[2])-1,Number(m[3])):null;}
+function liveDateLabel(date, weekday){const d=liveDateObj(date);if(!d)return date||'';const w=weekday||['日','月','火','水','木','金','土'][d.getDay()];return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w})`;}
+function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+function venueForPerformance(live,perf,index){
+  const lines=String(live.detail_text||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  let current=(live.venues&&live.venues.length===1)?live.venues[0]:'';
+  let found='';
+  for(const line of lines){
+    const looksDate=/\d{4}[./]\d{1,2}[./]\d{1,2}/.test(line);
+    if(!looksDate) current=line.replace(/^＠/,'').trim();
+    if(looksDate){
+      const parts=String(perf.date||'').split('-').map(n=>String(Number(n)));
+      const compact=`${parts[0]}.${parts[1]}.${parts[2]}`;
+      const normalized=line.replace(/[年月]/g,'.').replace(/日/g,'').replace(/-/g,'.');
+      if(normalized.includes(compact)){found=current;break;}
+    }
+  }
+  return found || (Array.isArray(live.venues)&&live.venues[index]?live.venues[index]:(live.venues||[]).join(' / '));
+}
+function buildLiveOptions(raw){
+  const items=Array.isArray(raw?.items)?raw.items:(Array.isArray(raw)?raw:[]);
+  const out=[];
+  items.forEach(live=>{
+    (Array.isArray(live.performances)?live.performances:[]).forEach((perf,index)=>{
+      const venue=venueForPerformance(live,perf,index);
+      out.push({id:liveId(live.title,perf.date,venue),title:live.title||'ライブ',date:perf.date,weekday:perf.weekday||'',venue,url:live.url||''});
+    });
+  });
+  return out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.title).localeCompare(String(b.title)));
+}
+function liveDisplay(id){const live=liveOptions.find(l=>l.id===id);if(live)return live;const [date,title,venue]=String(id||'').split('|');return {id,date,title:title||'ライブ',venue:venue||'',weekday:''};}
+function nextLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !live.date||live.date>=today;});}
+function pastLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !!live.date&&live.date<today;}).sort((a,b)=>String(liveDisplay(b).date||'').localeCompare(String(liveDisplay(a).date||'')));}
+function setMeta(selector, attr, value){
+  if (!value) return;
+  let el = document.head.querySelector(selector);
+  if (!el) {
+    el = document.createElement('meta');
+    if (selector.startsWith('meta[name="')) el.setAttribute('name', selector.match(/meta\[name="([^"]+)"/)?.[1] || '');
+    if (selector.startsWith('meta[property="')) el.setAttribute('property', selector.match(/meta\[property="([^"]+)"/)?.[1] || '');
+    document.head.appendChild(el);
+  }
+  el.setAttribute(attr, value);
+}
+function setCanonical(url){
+  let el = document.head.querySelector('link[rel="canonical"]');
+  if (!el) {
+    el = document.createElement('link');
+    el.setAttribute('rel', 'canonical');
+    document.head.appendChild(el);
+  }
+  el.setAttribute('href', url);
+}
+function profileDescription(p){
+  const parts = [];
+  const oshis = getOshiList(p);
+  if (oshis.length) parts.push(`推しメン: ${oshis.join('、')}`);
+  const songs = Array.isArray(p.favorite_songs) ? p.favorite_songs : (Array.isArray(p.favoriteSongs) ? p.favoriteSongs : []);
+  if (songs.length) parts.push(`好きな曲: ${songs.slice(0, 3).join('、')}`);
+  if (p.location) parts.push(`地域: ${p.location}`);
+  const bio = String(p.bio || p.comment || '').trim().replace(/\s+/g, ' ');
+  if (bio) parts.push(bio.slice(0, 80));
+  return (parts.join(' | ') || '櫻坂46ファン同士でプロフィール交換できるBuddies profile。').slice(0, 160);
+}
+function updateSeo(p){
+  const title = `${getDisplayName(p)}のBuddiesプロフィール`;
+  const description = profileDescription(p);
+  const url = absoluteUrl(`view.html?id=${encodeURIComponent(p.id)}`);
+  const image = absoluteUrl(`og-image.php?uid=${encodeURIComponent(p.id)}&v=2`);
+  document.title = title;
+  setMeta('meta[name="description"]', 'content', description);
+  setMeta('meta[property="og:title"]', 'content', title);
+  setMeta('meta[property="og:description"]', 'content', description);
+  setMeta('meta[property="og:url"]', 'content', url);
+  setMeta('meta[property="og:image"]', 'content', image);
+  setMeta('meta[name="twitter:title"]', 'content', title);
+  setMeta('meta[name="twitter:description"]', 'content', description);
+  setMeta('meta[name="twitter:image"]', 'content', image);
+  setCanonical(url);
+}
+function toast(text){ const t=document.getElementById('toast'); t.textContent=text; t.classList.add('show'); clearTimeout(t._timer); t._timer=setTimeout(()=>t.classList.remove('show'),1800); }
+function openConfirmModal(title, body, onOk){
+  document.getElementById('confirm-title').textContent = title;
+  document.getElementById('confirm-body').textContent = body;
+  document.getElementById('confirm-ok').onclick = () => { closeConfirmModal(); onOk(); };
+  document.getElementById('confirm-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeConfirmModal(){
+  document.getElementById('confirm-modal').classList.remove('open');
+  document.body.style.overflow = '';
+}
+function getDisplayName(p){ return p.display_name || p.username || '名無し'; }
+function hasSns(p){ return Array.isArray(p.sns_links) && p.sns_links.some(s => s && s.url && String(s.url).trim()); }
+function memberExists(name){ return !!name && (!memberDataLoaded || !!memberMap[name]); }
+function getOshiList(p){
+  const names = [p.oshi_member,p.oshi_member_2,p.oshi_member_3].filter(Boolean);
+  return names.filter(memberExists);
+}
+function stanceLabel(v){ return v === 'silent_ok' ? '無言フォローOK' : v === 'hello_please' ? '一言欲しい' : ''; }
+function snsLabel(type){ return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'Link'})[type] || 'Link'; }
+function isHeroSns(type){ return ['x','threads','instagram','youtube','tiktok','github'].includes(type); }
+function snsIcon(type){
+  const icons = {
+    x:'<svg viewBox="0 0 1200 1227" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M714.163 519.284 1160.89 0h-105.86L667.137 450.887 357.328 0H0l468.492 681.821L0 1226.37h105.866l409.625-476.152 327.181 476.152H1200L714.137 519.284h.026ZM569.165 687.828l-47.468-67.894L144.011 79.694h162.604l304.797 435.991 47.468 67.894 396.2 566.721H892.476L569.165 687.854v-.026Z"/></svg>',
+    instagram:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    youtube:'<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.388.52A2.997 2.997 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a2.997 2.997 0 0 0 2.11 2.12c1.883.52 9.388.52 9.388.52s7.505 0 9.388-.52a2.997 2.997 0 0 0 2.11-2.12C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.546 15.568V8.432L15.818 12l-6.272 3.568Z"/></svg>',
+    tiktok:'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3v11.2a4.2 4.2 0 1 1-4.2-4.2"/><path d="M14 5.5c1.1 2.4 2.8 3.8 5 4.1"/></svg>',
+    github:'<svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.24 3.34.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18A10.9 10.9 0 0 1 12 6.03c.98 0 1.96.13 2.88.39 2.19-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>',
+    threads:'<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221z"/></svg>',
+    link:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+  };
+  return icons[type] || icons.link;
+}
+function heroSnsIcons(links){
+  const items = links.filter(s => isHeroSns(s.type)).slice(0, 10);
+  if (!items.length) return '';
+  return `<div class="hero-sns-icons">${items.map(s => {
+    const label = s.label && String(s.label).trim() ? s.label : snsLabel(s.type);
+    return `<a class="hero-sns-icon" href="${esc(s.url)}" target="_blank" rel="noopener" aria-label="${esc(label)}" title="${esc(label)}">${snsIcon(s.type)}</a>`;
+  }).join('')}</div>`;
+}
+function getMember(name){ return name ? (memberMap[name] || null) : null; }
+function getAvatarUrl(p){
+  if (p && p.user_icon) return assetUrl(p.user_icon);
+  const firstOshi = p?.oshi_member || getOshiList(p)[0];
+  const m = getMember(firstOshi);
+  if (m && m.image) return assetUrl(m.image);
+  return '';
+}
+function getAvatarColor(p){
+  const firstOshi = p?.oshi_member || getOshiList(p)[0];
+  const m = getMember(firstOshi);
+  return (m && m.color) ? m.color : '#f2f2f2';
+}
+function avatarInner(p){
+  const url = getAvatarUrl(p);
+  if (url) return `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`;
+  return esc((getDisplayName(p)[0] || '？'));
+}
+function memberChip(name){
+  const m = getMember(name) || {};
+  const img = m.image ? `<img src="${esc(assetUrl(m.image))}" alt="" onerror="this.style.display='none'">` : esc((name[0]||'？'));
+  return `<div class="member-chip"><div class="member-chip-avatar">${img}</div><div class="member-chip-name">${esc(name)}</div></div>`;
+}
+
+function favMeta(parts){return parts.filter(Boolean).join(' ・ ');}
+function favoriteMemberName(name){return typeof name === 'string' ? name.trim() : '';}
+function isValidSakulaboBlog(item){return !!(item && item.id && item.title && item.member && item.url);}
+function externalMark(){return '<span style="color:#aaa;font-size:13px;flex-shrink:0;margin-left:auto;">↗</span>';}
+function favWrap(url, body){return url ? `<a class="sakulabo-fav-item" href="${esc(url)}" target="_blank" rel="noopener">${body}${externalMark()}</a>` : `<div class="sakulabo-fav-item">${body}</div>`;}
+function sakulaboFavUrl(item){ if (!item) return ''; return (window.innerWidth >= 1024 && item.url_pc) ? item.url_pc : (item.url_mobile || item.url || ''); }
+function sakulaboMimiFaces(item){
+  const members = Array.isArray(item?.members) ? item.members.filter(Boolean) : [];
+  if (!members.length) return '<div class="sakulabo-fav-faces"><div class="sakulabo-fav-face">♪</div></div>';
+  return `<div class="sakulabo-fav-faces">${members.slice(0,4).map(name=>{
+    const img = memberMap[name]?.image || '';
+    return `<div class="sakulabo-fav-face">${img ? `<img src="${esc(assetUrl(img))}" alt="" onerror="this.style.display='none'">` : esc(name[0] || '?')}</div>`;
+  }).join('')}</div>`;
+}
+function renderSakulaboFavorites(p){
+  const fav = p.sakulabo_favorites || {};
+  const mimis = Array.isArray(fav.mimis) ? fav.mimis.filter(Boolean) : [];
+  const blogs = Array.isArray(fav.blogs) ? fav.blogs.filter(isValidSakulaboBlog) : [];
+  const blocks = [];
+  if (p.show_favorite_mimis && mimis.length) {
+    blocks.push(`<div class="section"><div class="section-title">お気に入りのさくみみ</div><div class="card"><div class="sakulabo-favorites">${mimis.slice(0,10).map(item=>{
+      const members = Array.isArray(item.members) ? item.members.map(favoriteMemberName).filter(Boolean).join('・') : '';
+      const body = `${sakulaboMimiFaces(item)}<div class="sakulabo-fav-main">${item.date ? `<div class="sakulabo-fav-date">${esc(item.date)}</div>` : ''}<div class="sakulabo-fav-title">${esc(item.title || item.id || 'さくみみ')}</div>${members ? `<div class="sakulabo-fav-meta">${esc(members)}</div>` : ''}</div>`;
+      return favWrap(sakulaboFavUrl(item), body);
+    }).join('')}</div></div></div>`);
+  }
+  if (p.show_favorite_blogs && blogs.length) {
+    blocks.push(`<div class="section"><div class="section-title">お気に入りのブログ</div><div class="card"><div class="sakulabo-favorites">${blogs.slice(0,10).map(item=>{
+      const meta = favMeta([favoriteMemberName(item.member), item.date]);
+      const body = `<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
+      return favWrap(item.url, body);
+    }).join('')}</div></div></div>`);
+  }
+  return blocks.join('');
+}
+function liveItemHtml(id, label = ''){
+  const live = liveDisplay(id);
+  const prefix = label ? `${esc(label)} ` : '';
+  return `<div class="next-live-item">
+    <div class="next-live-date">${prefix}${esc(liveDateLabel(live.date, live.weekday))}</div>
+    <div class="next-live-title">${esc(live.title)}</div>
+    ${live.venue ? `<div class="next-live-venue">${esc(live.venue)}</div>` : ''}
+  </div>`;
+}
+function renderNextLives(p){
+  const ids = nextLiveIds(p);
+  if (!ids.length) return '';
+  const limit = 4;
+  const collapsed = ids.length > limit;
+  const shown = collapsed ? ids.slice(0, limit) : ids;
+  const restHtml = collapsed ? ids.slice(limit).map(id=>liveItemHtml(id)).join('') : '';
+  return `<div class="section"><div class="section-title">NEXT LIVE</div><div class="card next-live-card"><div class="next-live-list">${shown.map(id=>liveItemHtml(id)).join('')}</div>${collapsed ? `<button class="next-live-more" type="button" data-more="${esc(restHtml)}" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend', this.dataset.more); this.remove();">すべて見る（${ids.length}件）</button>` : ''}</div></div>`;
+}
+function renderPastLives(p){
+  const ids = pastLiveIds(p);
+  if (!ids.length) return '';
+  const limit = 5;
+  const collapsed = ids.length > limit;
+  const shown = collapsed ? ids.slice(0, limit) : ids;
+  const restHtml = collapsed ? ids.slice(limit).map(id=>liveItemHtml(id, 'PAST')).join('') : '';
+  return `<div class="section"><div class="section-title">参加したライブ</div><div class="card"><div class="next-live-list">${shown.map(id=>liveItemHtml(id, 'PAST')).join('')}</div>${collapsed ? `<button class="next-live-more" type="button" data-more="${esc(restHtml)}" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend', this.dataset.more); this.remove();">すべて見る（${ids.length}件）</button>` : ''}</div></div>`;
+}
+function fmtSakumapDate(s){
+  if (!s) return '';
+  const d = new Date(String(s).replace(' ', 'T'));
+  if (isNaN(d)) return String(s);
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+function renderSakumapStamps(p){
+  const stamps = Array.isArray(p.sakumap_stamps) ? p.sakumap_stamps : [];
+  if (!p.show_sakumap_stamps || !stamps.length) return '';
+  const pinIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 10c0 5-8 11-8 11S4 15 4 10a8 8 0 1 1 16 0Z"></path><circle cx="12" cy="10" r="3"></circle></svg>';
+  return `<div class="section"><div class="section-title">SakuMapスタンプ</div><div class="card"><div class="sakumap-stamps">${stamps.slice(0,12).map(s=>`
+    <a class="sakumap-stamp" href="${esc(s.spot_url || '../sakumap/')}" ${s.spot_url ? 'target="_blank" rel="noopener"' : ''}>
+      <div class="sakumap-stamp-img">${s.image_url ? `<img src="${esc(s.image_url)}" alt="">` : pinIcon}</div>
+      <div class="sakumap-stamp-name">${esc(s.name || 'スタンプ')}</div>
+      <div class="sakumap-stamp-date">${esc(fmtSakumapDate(s.claimed_at))}</div>
+    </a>
+  `).join('')}</div></div></div>`;
+}
+
+function renderSakumvQuizRecords(p){
+  const records = Array.isArray(p.sakumv_quiz_records) ? p.sakumv_quiz_records : [];
+  if (!p.show_sakumv_quiz || !records.length) return '';
+  return `<div class="section"><div class="section-title">SakuMV Quiz</div><div class="card"><div class="sakumv-records">${records.map(r=>`
+    <div class="sakumv-record">
+      <div class="sakumv-section">${esc(r.section || '')}</div>
+      <div class="sakumv-score">${esc(r.correct_count)} / ${esc(r.question_count)}</div>
+      <div class="sakumv-meta"><span>${esc(Number(r.time_seconds || 0).toFixed(1))}秒</span><span>${esc(r.rank)}位</span></div>
+    </div>
+  `).join('')}</div></div></div>`;
+}
+
+function historyDateLabel(item){
+  const y = item?.year ? `${item.year}` : '';
+  if (!y) return '';
+  const m = item.month ? `${String(item.month).padStart(2,'0')}` : '';
+  const d = item.day ? `${String(item.day).padStart(2,'0')}` : '';
+  return [y, m, d].filter(Boolean).join('.');
+}
+function historyLiveHtml(item){
+  if (!item?.live_id) return '';
+  const live = liveDisplay(item.live_id);
+  return `<div class="history-live">
+    <div class="history-live-label">参加ライブ</div>
+    <div class="history-live-title">${esc(live.title || 'ライブ')}</div>
+    ${live.venue ? `<div class="history-live-venue">${esc(live.venue)}</div>` : ''}
+  </div>`;
+}
+function historyEntryDateKey(item){
+  const y = Number(item?.year || 0);
+  const m = Number(item?.month || 0);
+  const d = Number(item?.day || 0);
+  if (!y) return '';
+  return `${String(y).padStart(4,'0')}-${String(m || 0).padStart(2,'0')}-${String(d || 0).padStart(2,'0')}`;
+}
+function historyLiveDateItem(id){
+  const live = liveDisplay(id);
+  const d = live.dateObj || liveDateObj(live.date);
+  return {
+    id: `live:${id}`,
+    year: d ? d.getFullYear() : '',
+    month: d ? d.getMonth() + 1 : '',
+    day: d ? d.getDate() : '',
+    title: live.title || 'ライブ',
+    note: live.venue ? live.venue : '',
+    live_id: id,
+    image_url: '',
+    is_live_only: true,
+  };
+}
+function mergedHistoryItems(p){
+  const base = Array.isArray(p.buddies_history) ? p.buddies_history.filter(Boolean) : [];
+  const linked = new Set(base.map(item => item.live_id).filter(Boolean));
+  const liveOnly = pastLiveIds(p).filter(id => !linked.has(id)).map(historyLiveDateItem);
+  return [...base, ...liveOnly].sort((a,b) => {
+    const ka = historyEntryDateKey(a);
+    const kb = historyEntryDateKey(b);
+    if (ka !== kb) return kb.localeCompare(ka);
+    return Number(b.id || 0) - Number(a.id || 0);
+  });
+}
+function renderBuddiesHistory(p){
+  const items = mergedHistoryItems(p);
+  if (!items.length) return '';
+  window.__buddiesHistoryItems = items;
+  const collapsed = items.length > 3;
+  const visible = collapsed ? items.slice(0, 3) : items;
+  const moreUrl = `./history.html?id=${encodeURIComponent(p.id)}`;
+  return `<div class="section"><div class="section-title">My Buddies history</div><div class="card"><div class="history-list" id="history-list" data-expanded="false">${visible.map(item=>`
+    <div class="history-item">
+      <div class="history-marker" aria-hidden="true"></div>
+      <div class="history-body">
+        <div class="history-date">${esc(historyDateLabel(item))}</div>
+        ${historyLiveHtml(item)}
+        ${item.image_url ? `<div class="history-image"><img src="${esc(assetUrl(item.image_url))}" alt=""></div>` : ''}
+        ${item.is_live_only ? '' : `<div class="history-title">${esc(item.title || '')}</div>${item.note ? `<div class="history-note">${esc(item.note)}</div>` : ''}`}
+      </div>
+    </div>`).join('')}</div>${collapsed ? `<button class="history-more-btn" type="button" onclick="location.href='${esc(moreUrl)}'">もっと見る（${items.length}件）</button>` : ''}</div></div>`;
+}
+
+function historyItemHtml(item){
+  return `<div class="history-item">
+    <div class="history-marker" aria-hidden="true"></div>
+    <div class="history-body">
+      <div class="history-date">${esc(historyDateLabel(item))}</div>
+      ${historyLiveHtml(item)}
+      ${item.image_url ? `<div class="history-image"><img src="${esc(assetUrl(item.image_url))}" alt=""></div>` : ''}
+      ${item.is_live_only ? '' : `<div class="history-title">${esc(item.title || '')}</div>${item.note ? `<div class="history-note">${esc(item.note)}</div>` : ''}`}
+    </div>
+  </div>`;
+}
+
+function toggleHistoryList(btn){
+  const items = window.__buddiesHistoryItems || [];
+  const list = document.getElementById('history-list');
+  if (!list || !Array.isArray(items)) return;
+  const expanded = list.dataset.expanded === 'true';
+  const nextItems = expanded ? items.slice(0, 3) : items;
+  list.innerHTML = nextItems.map(historyItemHtml).join('');
+  list.dataset.expanded = expanded ? 'false' : 'true';
+  btn.textContent = expanded ? `すべて見る（${items.length}件）` : '閉じる';
+}
+
+function metaRows(p){
+  const rows = [];
+  if (p.location) rows.push(['都道府県', p.location]);
+  if (p.age) rows.push(['年齢', `${p.age}歳`]);
+  if (p.gender) rows.push(['性別', p.gender]);
+  if (p.buddies_since) rows.push(['Buddies歴', p.buddies_since]);
+  return rows;
+}
+function heroMeta(rows){
+  if (!rows.length) return '';
+  return `<div class="hero-meta">${rows.map(([label,val])=>`<span class="hero-meta-chip"><span class="hero-meta-label">${esc(label)}</span>${esc(val)}</span>`).join('')}</div>`;
+}
+
+async function load(){
+  const params = new URLSearchParams(location.search);
+  const id = parseInt(params.get('id') || params.get('uid') || '0', 10);
+  if (!id) return renderError('プロフィールが指定されていません。');
+  try {
+    const [meRes, pRes, memberRes, liveRes] = await Promise.all([
+      fetch(`${API}?action=auth_me`, { credentials:'include' }).catch(()=>null),
+      fetch(`${API}?action=buddies_public_profile_get&user_id=${id}`, { credentials:'include' }),
+      fetch(`${MEMBER_DATA}?_=${Date.now()}`).catch(()=>null),
+      fetch(`${LIVE_DATA}?_=${Date.now()}`).catch(()=>null)
+    ]);
+    if (meRes) { try { const j = await meRes.json(); me = j.ok ? j.data : null; } catch(e){} }
+    if (memberRes) {
+      try {
+        const raw = await memberRes.json();
+        const arr = Array.isArray(raw) ? raw : Object.values(raw || {});
+        memberDataLoaded = true;
+        arr.forEach(m => { if (m && m.name) memberMap[m.name] = m; });
+      } catch(e){}
+    }
+    if (liveRes) {
+      try { liveOptions = buildLiveOptions(await liveRes.json()); } catch(e){ liveOptions = []; }
+    }
+    const json = await pRes.json();
+    if (!json.ok) return renderError(json.error || 'プロフィールを取得できませんでした。');
+    profile = json.data;
+    if (profile.verified_account && profile.verified_account.id) {
+      location.replace('./verified/view.html?id=' + encodeURIComponent(profile.verified_account.id));
+      return;
+    }
+    render(profile);
+  } catch (e) { renderError('通信エラーが発生しました。'); }
+}
+
+function renderError(text){
+  document.title = 'Buddies profile';
+  document.getElementById('app').innerHTML = `<div class="error"><h2>${esc(text)}</h2><p><a href="./">← Buddies トップへ戻る</a></p></div>`;
+}
+
+function render(p){
+  const name = getDisplayName(p);
+  updateSeo(p);
+  const sns = hasSns(p);
+  const stance = stanceLabel(p.follow_stance);
+  const badge = sns ? `<div class="badge sns" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>` : '';
+  const heroIcon = avatarInner(p);
+  const heroBg = getAvatarColor(p);
+  const links = (p.sns_links || []).filter(s => s && s.url && String(s.url).trim()).slice(0,10);
+  const otherLinks = links.filter(s => !isHeroSns(s.type));
+  const heroSnsHtml = heroSnsIcons(links);
+  const linkHtml = otherLinks.map(s => {
+    const label = s.label && String(s.label).trim() ? s.label : snsLabel(s.type);
+    return `<a class="link" href="${esc(s.url)}" target="_blank" rel="noopener">${snsIcon(s.type)}<span>${esc(label)}</span></a>`;
+  }).join('');
+  const rows = metaRows(p);
+  const oshis = getOshiList(p);
+  const interests = Array.isArray(p.tags) ? p.tags : [];
+  const songs = Array.isArray(p.favorite_songs) ? p.favorite_songs : [];
+  const oshiGroups = [
+    oshis.length ? `<div class="oshi-group"><div class="oshi-label">推しメン</div><div class="oshi-members">${oshis.map(memberChip).join('')}</div></div>` : '',
+    interests.length ? `<div class="oshi-group"><div class="oshi-label">興味</div><div class="tag-list">${interests.map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</div></div>` : '',
+    songs.length ? `<div class="oshi-group"><div class="oshi-label">好きな曲</div><div class="tag-list">${songs.map(s=>`<span class="tag">${esc(s)}</span>`).join('')}</div></div>` : ''
+  ].filter(Boolean).join('');
+  const snsSection = otherLinks.length ? `
+    <div class="section">
+      <div class="section-title">リンク</div>
+      <div class="links">${linkHtml}</div>
+    </div>` : '';
+  const myOshiSection = oshiGroups ? `
+    <div class="section">
+      <div class="section-title">My推し</div>
+      <div class="card">${oshiGroups}</div>
+    </div>` : '';
+  const nextLiveSection = renderNextLives(p);
+  const bioText = p.bio && String(p.bio).trim();
+  const bioSection = bioText ? `
+    <div class="section">
+      <div class="section-title">Bio</div>
+      <div class="card"><div class="box">${esc(bioText)}</div></div>
+    </div>` : '';
+  const historySection = renderBuddiesHistory(p);
+  const linkedSections = [
+    renderSakulaboFavorites(p),
+    renderSakumapStamps(p),
+    renderSakumvQuizRecords(p),
+  ].filter(Boolean).join('');
+
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <div class="icon-wrap"><div class="icon" style="background:${esc(heroBg)}">${heroIcon}</div>${badge}</div>
+      ${sns ? `<div class="kind sns">SNS登録済み</div>${stance ? `<div class="kind-note">${esc(stance)}</div>` : ''}` : `<div class="kind">一般ユーザー</div>`}
+      <div class="name">${esc(name)}</div>
+      ${heroSnsHtml}
+      ${heroMeta(rows)}
+    </div>
+
+    ${nextLiveSection}
+    ${myOshiSection}
+    ${bioSection}
+    ${historySection}
+    ${linkedSections}
+    ${snsSection}
+    <div id="favorite-area" class="section"></div>
+
+    <div class="footer">Buddies profile</div>
+  `;
+  renderFavoriteArea();
+}
+
+function openLoginForFavorite(){
+  if (!profile) return;
+  const page = location.pathname.split('/').pop() || 'view.html';
+  const redirect = `${page}?id=${encodeURIComponent(profile.id)}`;
+  location.href = `./?favorite_redirect=${encodeURIComponent(redirect)}`;
+}
+
+function favoriteHeartIcon(filled){
+  return filled
+    ? '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.08C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>'
+    : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+}
+function renderHeroFavoriteArea(){
+  const area = document.getElementById('header-favorite-area');
+  if (!area || !profile) return;
+  const canFavoriteTarget = profile.account_role === 'user';
+  area.innerHTML = '';
+  if (profile.is_self || (me && Number(me.id) === Number(profile.id)) || !canFavoriteTarget) return;
+  if (!me) {
+    area.innerHTML = `<button class="hero-fav-btn login" type="button" onclick="openLoginForFavorite()">ログイン</button>`;
+    return;
+  }
+  if (me.account_role !== 'user') return;
+  const active = !!profile.favorited;
+  area.innerHTML = `<button class="hero-fav-btn ${active ? 'active' : ''}" type="button" onclick="toggleFavorite()" aria-label="${active ? 'お気に入りを解除' : 'お気に入りに追加'}" title="${active ? 'お気に入り済み' : 'お気に入りに追加'}">${favoriteHeartIcon(active)}</button>`;
+}
+
+function renderFavoriteArea(){
+  const area = document.getElementById('favorite-area');
+  renderHeroFavoriteArea();
+  if (!area || !profile) return;
+  const canFavoriteTarget = profile.account_role === 'user';
+  if (!me) {
+    area.innerHTML = `<button class="btn favorite-add" onclick="openLoginForFavorite()">ログインしてお気に入り</button><div class="notice">お気に入りはログイン中の一般ユーザー同士で利用できます。</div>`;
+    return;
+  }
+  const meIsGeneral = me.account_role === 'user';
+  if (profile.is_self || Number(me.id) === Number(profile.id)) {
+    area.innerHTML = `<button class="btn" onclick="location.href='./?edit=1'">プロフィールを編集</button>`;
+    return;
+  }
+  if (!meIsGeneral || !canFavoriteTarget) {
+    area.innerHTML = `<div class="notice">お気に入りは一般ユーザー同士で利用できます。</div>`;
+    return;
+  }
+  const active = !!profile.favorited;
+  area.innerHTML = `<button class="btn ${active ? 'favorite-done' : 'favorite-add'}" onclick="toggleFavorite()">${active ? 'お気に入り済み' : 'お気に入りに追加'}</button>`;
+}
+
+async function toggleFavorite(){
+  if (!profile || !me) return;
+  if (profile.favorited) {
+    openConfirmModal('お気に入りの解除', `${getDisplayName(profile)} さんをお気に入りから解除しますか？`, doToggleFavorite);
+    return;
+  }
+  await doToggleFavorite();
+}
+
+async function doToggleFavorite(){
+  if (!profile || !me) return;
+  try {
+    const res = await fetch(`${API}?action=buddies_favorite_toggle`, {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ target_id: profile.id })
+    });
+    const json = await res.json();
+    if (!json.ok) {
+      if (res.status === 401) {
+        toast('ログイン後にもう一度お試しください');
+        setTimeout(openLoginForFavorite, 300);
+        return;
+      }
+      toast(json.error || '更新できませんでした');
+      return;
+    }
+    profile.favorited = !!json.data.favorited;
+    renderFavoriteArea();
+    toast(profile.favorited ? 'お気に入りに追加しました' : 'お気に入りから削除しました');
+  } catch(e) { toast('通信エラーが発生しました'); }
+}
+
+load();
+</script>
+</body>
+</html>

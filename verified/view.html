@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>コミュニティ - Buddies profile</title>
+<meta name="description" content="Buddies profile のコミュニティアカウントページです。コミュニティパートナー・開発者アカウントの情報、イベント、掲示板を確認できます。">
+<meta name="robots" content="index,follow">
+<meta property="og:title" content="コミュニティ - Buddies profile">
+<meta property="og:description" content="Buddies profile のコミュニティアカウントページです。コミュニティパートナー・開発者アカウントの情報、イベント、掲示板を確認できます。">
+<meta property="og:type" content="profile">
+<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/verified/view.html">
+<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:site_name" content="Buddies">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="コミュニティ - Buddies profile">
+<meta name="twitter:description" content="Buddies profile のコミュニティアカウントページです。">
+<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/verified/view.html">
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--gold:#e6b422;--soft:#f7f7f7}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:relative;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:57px}
+header h1{font-size:15px;margin:0;font-weight:700;color:#555;position:absolute;left:50%;transform:translateX(-50%);max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;pointer-events:none}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
+.back:hover{background:#f3f3f3}
+main{padding:20px}
+.hero{display:flex;flex-direction:column;align-items:center;text-align:center;padding:18px 16px 8px}
+.icon-wrap{position:relative;width:120px;height:120px;flex-shrink:0}
+.icon{width:100%;height:100%;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;font-size:48px;font-weight:800;color:#888;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.06)}
+.icon img{width:100%;height:100%;object-fit:cover}
+.gold-badge{position:absolute;bottom:0;right:0;width:30px;height:30px;border-radius:50%;background:var(--gold);border:3px solid #fff;display:grid;place-items:center;box-shadow:0 2px 6px rgba(0,0,0,.12);z-index:2}
+.gold-badge svg{width:14px;height:14px}
+.kind{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:#fff;border:1px solid var(--gold);color:#7c5600;font-size:12px;font-weight:800;padding:4px 12px;margin-top:14px}
+.name{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em;color:#111}
+.subnote{font-size:12px;color:var(--muted)}
+.desc{font-size:14px;line-height:1.8;color:#333;white-space:pre-wrap;background:#f5f5f5;border-radius:20px;padding:14px 18px;margin:18px 0}
+.tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 16px}
+.tags span{font-size:12px;font-weight:700;border-radius:9999px;background:#f2f2f2;color:#555;padding:5px 10px}
+.section-title{font-size:12px;font-weight:700;color:#333;text-transform:uppercase;letter-spacing:.5px;margin:24px 0 10px}
+.links{display:grid;gap:8px}
+.link{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;min-height:48px;border-radius:9999px;text-decoration:none;font-weight:700;font-size:14px;padding:0 20px;border:1px solid var(--line);cursor:pointer}
+.link svg{display:block;flex-shrink:0}
+.link.primary{background:#111;color:#fff;border-color:#111}
+.link.gold{background:#111;color:#fff;border-color:#111}
+.link.secondary{background:#fff;color:#111}
+.empty{padding:40px 16px;text-align:center;color:#888}
+.footer{margin-top:32px;padding:16px;text-align:center;font-size:12px;color:#aaa}
+.error{padding:40px 20px;text-align:center}
+.error h2{font-size:18px;margin:0 0 10px}
+.error a{color:#111}
+.skeleton{padding:60px 20px;text-align:center;color:#aaa}
+.events{display:grid;gap:10px;margin-top:8px}
+.event-card{display:flex;gap:12px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:18px;padding:12px 14px;text-decoration:none;color:#111}
+.event-card:hover{background:#fafafa}
+.event-card .cover{width:64px;height:64px;border-radius:12px;background:#f2f2f2;flex-shrink:0;overflow:hidden;display:grid;place-items:center;color:#999;font-size:22px}
+.event-card .cover img{width:100%;height:100%;object-fit:cover}
+.event-card .body{flex:1;min-width:0}
+.event-card .t{font-weight:700;font-size:15px;margin-bottom:4px;color:#111}
+.event-card .m{font-size:12px;color:#666}
+.forms{display:grid;gap:10px;margin-top:8px}
+.form-card{display:grid;gap:6px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;text-decoration:none;color:#111}
+.form-card:hover{background:#fafafa}
+.form-card .t{font-weight:800;font-size:15px;color:#111}
+.form-card .m{font-size:12px;color:#666;line-height:1.5}
+.form-card .badge{display:inline-flex;width:max-content;border-radius:9999px;background:#f3f3f3;color:#555;font-size:11px;font-weight:800;padding:3px 8px}
+.posts{display:grid;gap:12px;margin-top:8px}
+.post{border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px;display:grid;gap:10px}
+.post-date{font-size:11px;color:#888;font-weight:700}
+.post-body{font-size:14px;color:#222;line-height:1.75;overflow-wrap:anywhere}
+.post-body p{margin:0 0 8px}.post-body p:last-child{margin-bottom:0}
+.post-body strong{font-weight:800}.post-body a{color:#111;font-weight:800}
+.post-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.post-image{aspect-ratio:1/1;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#fafafa}
+.post-image img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;background:#f7f7f7}
+.file-link{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;background:#fafafa;color:#111;text-decoration:none;padding:10px 12px;font-weight:800;font-size:13px}
+.file-icon{width:34px;height:34px;border-radius:10px;background:#eee;display:grid;place-items:center;font-size:11px;color:#555;flex-shrink:0}
+.post-link{display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:9999px;background:#111;color:#fff;text-decoration:none;font-weight:800;font-size:13px;padding:0 16px}
+.post-actions{display:flex;justify-content:flex-end}.post-delete{border:none;background:#fff5f5;color:#d33;border-radius:9999px;font-weight:800;padding:8px 12px;cursor:pointer}
+.edit-fab{position:fixed;right:18px;bottom:18px;z-index:30;width:56px;height:56px;border-radius:50%;background:#111;color:#fff;display:none;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.22);border:1px solid #111}
+.edit-fab:hover{background:#222}
+.edit-fab svg{width:22px;height:22px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.48);z-index:80;display:none;align-items:flex-end;justify-content:center}
+.modal-overlay.open{display:flex}
+.modal-sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:88dvh;overflow:auto;padding:18px;display:grid;gap:12px}
+.modal-sheet h3{margin:0;font-size:16px}.modal-actions{display:grid;gap:8px}
+.modal-btn{min-height:46px;border-radius:9999px;border:1px solid var(--line);background:#fff;color:#111;font:800 14px inherit;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.modal-btn.primary{background:#111;color:#fff;border-color:#111}
+.modal-btn.danger{color:#d33;background:#fff5f5;border-color:#f3c2c2}
+.post-form{display:grid;gap:12px}.post-form textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:14px;padding:12px;font:inherit;line-height:1.7;resize:vertical}
+.post-form input{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 12px;font:inherit}
+.form-block{border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:8px;background:#fafafa}
+.form-block-title{font-size:12px;font-weight:800;color:#555}
+.picked-files{display:grid;gap:6px}
+.picked-file{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:12px;padding:8px 10px;font-size:12px;font-weight:800}
+.picked-file span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.picked-file button{border:none;background:#fff5f5;color:#d33;border-radius:9999px;font-weight:800;padding:5px 8px;cursor:pointer}
+.small{font-size:12px;color:#777;line-height:1.6}
+.image-lightbox{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:120;display:none;align-items:center;justify-content:center;padding:18px}
+.image-lightbox.open{display:flex}.image-lightbox img{max-width:100%;max-height:100%;object-fit:contain}
+@media(max-width:560px){.name{font-size:22px}.icon-wrap{width:104px;height:104px}.edit-fab{right:16px;bottom:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back" href="../" onclick="return closeOrBack(event)" aria-label="戻る">← 戻る</a>
+    <h1>コミュニティ</h1>
+  </header>
+  <main id="app"><div class="skeleton">読み込み中…</div></main>
+</div>
+<a id="edit-fab" class="edit-fab" href="./index.html" target="_blank" rel="noopener" aria-label="編集画面を開く" title="編集">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+</a>
+<div class="modal-overlay" id="action-modal" onclick="if(event.target===this)closeActionModal()">
+  <div class="modal-sheet">
+    <h3>操作を選択</h3>
+    <div class="modal-actions">
+      <button class="modal-btn primary" type="button" onclick="openPostModal()">掲示板に投稿</button>
+      <a class="modal-btn" href="./index.html" target="_blank" rel="noopener">プロフィールを編集</a>
+      <button class="modal-btn" type="button" onclick="closeActionModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+<div class="modal-overlay" id="post-modal" onclick="if(event.target===this)closePostModal()">
+  <div class="modal-sheet">
+    <h3>掲示板に投稿</h3>
+    <div class="post-form">
+      <div class="form-block">
+        <div class="form-block-title">本文</div>
+        <textarea id="post-body" maxlength="8000" placeholder="Markdownで本文を書けます。例: **太字**、[リンク](https://...)"></textarea>
+      </div>
+      <div class="form-block">
+        <div class="form-block-title">リンク（任意）</div>
+        <input id="post-link-label" maxlength="120" placeholder="リンク文言">
+        <input id="post-link-url" placeholder="https://...">
+      </div>
+      <div class="form-block">
+        <div class="form-block-title">画像（最大2枚）</div>
+        <div id="picked-images" class="picked-files"><div class="small">未選択</div></div>
+        <input id="post-images" type="file" accept="image/png,image/jpeg,image/webp" multiple onchange="pickPostImages(this.files);this.value=''">
+      </div>
+      <div class="form-block">
+        <div class="form-block-title">PDF（最大1件）</div>
+        <div id="picked-pdf" class="picked-files"><div class="small">未選択</div></div>
+        <input id="post-pdf-name" maxlength="120" placeholder="PDF表示名（任意）">
+        <input id="post-pdf" type="file" accept="application/pdf" onchange="pickPostPdf(this.files[0]);this.value=''">
+      </div>
+      <div class="small">画像は正方形で表示され、タップで拡大できます。PDFはファイルリンクとして表示されます。</div>
+      <button class="modal-btn primary" id="post-submit" type="button" onclick="submitPost()">投稿する</button>
+      <button class="modal-btn" type="button" onclick="closePostModal()">キャンセル</button>
+    </div>
+  </div>
+</div>
+<div class="image-lightbox" id="image-lightbox" onclick="closeImageLightbox()"><img id="image-lightbox-img" alt=""></div>
+<script>
+const API = '../api.php';
+let currentAccount = null;
+let viewedAccount = null;
+let boardPosts = [];
+let pickedPostImages = [];
+let pickedPostPdf = null;
+function showEditFabIfOwner(a){
+  const fab = document.getElementById('edit-fab');
+  if (!fab || !a || !currentAccount) return;
+  if (Number(currentAccount.id) === Number(a.id)) {
+    const canPost = ['developer','official'].includes(a.account_type);
+    fab.onclick = (e) => {
+      if (!canPost) return true;
+      e.preventDefault();
+      openActionModal();
+      return false;
+    };
+    fab.style.display = 'flex';
+  }
+}
+function closeOrBack(e){
+  // 別タブで開かれた場合(opener あり) → タブを閉じる
+  if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
+  return true;
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : '../' + url; }
+function absoluteUrl(url){ return new URL(url || location.href, location.href).href; }
+function setMeta(selector, attr, value){
+  if (!value) return;
+  let el = document.head.querySelector(selector);
+  if (!el) {
+    el = document.createElement('meta');
+    if (selector.startsWith('meta[name="')) el.setAttribute('name', selector.match(/meta\[name="([^"]+)"/)?.[1] || '');
+    if (selector.startsWith('meta[property="')) el.setAttribute('property', selector.match(/meta\[property="([^"]+)"/)?.[1] || '');
+    document.head.appendChild(el);
+  }
+  el.setAttribute(attr, value);
+}
+function setCanonical(url){
+  let el = document.head.querySelector('link[rel="canonical"]');
+  if (!el) {
+    el = document.createElement('link');
+    el.setAttribute('rel', 'canonical');
+    document.head.appendChild(el);
+  }
+  el.setAttribute('href', url);
+}
+function verifiedDescription(a){
+  const parts = [];
+  if (a.label || a.account_type) parts.push(a.label || kindLabel(a.account_type));
+  if (a.account_definition) parts.push(a.account_definition);
+  const desc = String(a.description || '').trim().replace(/\s+/g, ' ');
+  if (desc) parts.push(desc.slice(0, 100));
+  const tags = (a.hashtags || []).slice(0, 3).map(t => `#${String(t).replace(/^#/, '')}`);
+  if (tags.length) parts.push(tags.join(' '));
+  return (parts.join(' | ') || 'Buddies profile のコミュニティアカウントページです。').slice(0, 160);
+}
+function updateSeo(a){
+  const title = `${a.display_name || 'コミュニティアカウント'} - Buddiesコミュニティアカウント`;
+  const description = verifiedDescription(a);
+  const url = absoluteUrl(`view.html?id=${encodeURIComponent(a.id)}`);
+  const image = a.icon_url
+    ? absoluteUrl(assetUrl(a.icon_url))
+    : 'https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png';
+  document.title = title;
+  setMeta('meta[name="description"]', 'content', description);
+  setMeta('meta[property="og:title"]', 'content', title);
+  setMeta('meta[property="og:description"]', 'content', description);
+  setMeta('meta[property="og:url"]', 'content', url);
+  setMeta('meta[property="og:image"]', 'content', image);
+  setMeta('meta[name="twitter:title"]', 'content', title);
+  setMeta('meta[name="twitter:description"]', 'content', description);
+  setMeta('meta[name="twitter:image"]', 'content', image);
+  setCanonical(url);
+}
+function kindLabel(type){ return type === 'developer' ? '開発者アカウント' : type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント'; }
+function kindDef(type){
+  return type === 'developer' ? 'Buddies profile の開発・運営を行うアカウントです。'
+       : type === 'official'  ? '極めて信頼性の高いことを証明するアカウントです。'
+                              : '開発者が認証したアカウントです。';
+}
+function snsLabel(type){ return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'リンク'})[type] || 'リンク'; }
+function snsIcon(type){
+  const icons = {
+    x:'<svg viewBox="0 0 1200 1227" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M714.163 519.284L1160.89 0H1055.03L667.137 450.887L357.328 0H0L468.492 681.821L0 1226.37H105.866L515.491 750.218L842.672 1226.37H1200L714.137 519.284H714.163ZM569.165 687.828L521.697 619.934L144.011 79.6944H306.615L611.412 515.685L658.88 583.579L1055.08 1150.3H892.476L569.165 687.854V687.828Z"/></svg>',
+    threads:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12.186 24h-.007c-3.581-.024-6.334-1.205-8.184-3.509C2.35 18.44 1.5 15.586 1.472 12.01v-.017c.03-3.579.879-6.43 2.525-8.482C5.845 1.205 8.6.024 12.18 0h.014c2.746.02 5.043.725 6.826 2.098 1.677 1.29 2.858 3.13 3.509 5.467l-2.04.569c-1.104-3.96-3.898-5.984-8.304-6.015-2.91.022-5.11.936-6.54 2.717C4.307 6.504 3.616 8.914 3.589 12c.027 3.086.718 5.496 2.057 7.164 1.43 1.783 3.631 2.698 6.54 2.717 2.623-.02 4.358-.631 5.8-2.045 1.647-1.613 1.618-3.593 1.09-4.798-.31-.71-.873-1.3-1.634-1.75-.192 1.352-.622 2.446-1.284 3.272-.886 1.102-2.14 1.704-3.73 1.79-1.202.065-2.361-.218-3.259-.801-1.063-.689-1.685-1.74-1.752-2.964-.065-1.19.408-2.285 1.33-3.082.88-.76 2.119-1.207 3.583-1.291a13.853 13.853 0 0 1 3.02.142c-.126-.742-.375-1.332-.75-1.757-.513-.586-1.308-.883-2.359-.89h-.029c-.844 0-1.992.232-2.721 1.32L7.734 7.847c.98-1.454 2.568-2.256 4.478-2.256h.044c3.194.02 5.097 1.975 5.287 5.388.108.046.216.094.321.142 1.49.7 2.58 1.761 3.154 3.07.797 1.82.871 4.79-1.548 7.158-1.85 1.81-4.094 2.628-7.277 2.65Zm1.003-11.69c-.242 0-.487.007-.739.021-1.836.103-2.98.946-2.916 2.143.067 1.256 1.452 1.839 2.784 1.767 1.224-.065 2.818-.543 3.086-3.71a10.5 10.5 0 0 0-2.215-.221z"/></svg>',
+    instagram:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37Z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>',
+    tiktok:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19.321 7.532a5.88 5.88 0 0 1-3.442-1.103 5.91 5.91 0 0 1-2.146-3.043 5.86 5.86 0 0 1-.165-1.386h-3.14v12.63a3.02 3.02 0 1 1-2.137-2.895v-3.2a6.23 6.23 0 0 0-1.24-.124 6.22 6.22 0 1 0 6.22 6.22V9.59a8.91 8.91 0 0 0 4.93 1.49v-3.14a5.9 5.9 0 0 1-.88-.408Z"/></svg>',
+    youtube:'<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.388.52A2.997 2.997 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a2.997 2.997 0 0 0 2.11 2.12c1.883.52 9.388.52 9.388.52s7.505 0 9.388-.52a2.997 2.997 0 0 0 2.11-2.12C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.546 15.568V8.432L15.818 12l-6.272 3.568Z"/></svg>',
+    github:'<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.24 3.34.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18A10.9 10.9 0 0 1 12 6.03c.98 0 1.96.13 2.88.39 2.19-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>',
+    link:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
+  };
+  return icons[type] || icons.link;
+}
+
+async function load(){
+  const id = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
+  if (!id) return renderError('アカウントが指定されていません。');
+  try {
+    try {
+      const meRes = await fetch(`${API}?action=verified_me`, { credentials:'include' });
+      const meJson = await meRes.json();
+      currentAccount = meJson.ok ? meJson.data : null;
+    } catch(e) {}
+    const res = await fetch(`${API}?action=verified_public_get&id=${id}`, { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok) return renderError(json.error || 'アカウントを取得できませんでした。');
+    render(json.data);
+  } catch (e) { renderError('通信エラーが発生しました。'); }
+}
+
+function renderError(text){
+  document.title = 'コミュニティ - Buddies profile';
+  document.getElementById('app').innerHTML = `<div class="error"><h2>${esc(text)}</h2><p><a href="../">← Buddies トップへ戻る</a></p></div>`;
+}
+
+function render(a){
+  viewedAccount = a;
+  updateSeo(a);
+  const icon = a.icon_url
+    ? `<img src="${esc(assetUrl(a.icon_url))}" alt="" onerror="this.style.display='none'">`
+    : esc((a.display_name||'？')[0]);
+  const tags = (a.hashtags || []).slice(0, 8).map(t => `<span>#${esc(String(t).replace(/^#/, ''))}</span>`).join('');
+  const links = [];
+  if (a.primary_link_url)   links.push({ url:a.primary_link_url,   label:a.primary_link_label   || 'リンクを開く', cls:'gold' });
+  if (a.secondary_link_url) links.push({ url:a.secondary_link_url, label:a.secondary_link_label || 'リンクを開く', cls:'primary' });
+  if (a.cta_url && a.cta_url !== a.primary_link_url) links.push({ url:a.cta_url, label:a.cta_label || 'リンクを開く', cls:'secondary' });
+  const seen = new Set(links.map(l => l.url));
+  (a.sns_links || []).filter(s => s && s.url && String(s.url).trim()).slice(0, 10).forEach(s => {
+    if (seen.has(s.url)) return;
+    seen.add(s.url);
+    links.push({ url:s.url, label:s.label || snsLabel(s.type), type:s.type || 'link', cls:'secondary' });
+  });
+  if (a.x_url && !seen.has(a.x_url)) links.push({ url:a.x_url, label:'X', type:'x', cls:'secondary' });
+
+  const label = a.label || kindLabel(a.account_type);
+  const def   = a.account_definition || kindDef(a.account_type);
+
+  document.getElementById('app').innerHTML = `
+    <div class="hero">
+      <div class="icon-wrap">
+        <div class="icon">${icon}</div>
+        <div class="gold-badge"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      </div>
+      <div class="kind">✓ ${esc(label)}</div>
+      <div class="name">${esc(a.display_name)}</div>
+      <div class="subnote">${esc(def)}</div>
+    </div>
+    ${a.description ? `<div class="desc">${esc(a.description)}</div>` : ''}
+    ${tags ? `<div class="tags">${tags}</div>` : ''}
+    ${links.length ? `
+      <div class="section-title">リンク</div>
+      <div class="links">
+        ${links.map(l => `<a class="link ${l.cls}" href="${esc(l.url)}" target="_blank" rel="noopener">${l.type ? snsIcon(l.type) : ''}<span>${esc(l.label)}</span></a>`).join('')}
+      </div>
+    ` : ''}
+    <div id="events-title" class="section-title" style="display:none;">主催イベント</div>
+    <div id="events" class="events"></div>
+    <div id="forms-title" class="section-title" style="display:none;">フォーム</div>
+    <div id="forms" class="forms"></div>
+    <div id="posts-title" class="section-title" style="display:none;">掲示板</div>
+    <div id="posts" class="posts"></div>
+    <div class="footer">このアカウントは Buddies profile のコミュニティアカウントです。</div>
+  `;
+  showEditFabIfOwner(a);
+  loadEvents(a.id);
+  loadForms(a.id);
+  loadPosts(a.id);
+}
+function fmtDate(s){
+  if (!s) return '日時未定';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+async function loadEvents(accountId){
+  const wrap = document.getElementById('events');
+  const title = document.getElementById('events-title');
+  // まず空状態。エラー時もイベント無しと同じ見た目にする（読み込み失敗を派手に出さない）
+  wrap.innerHTML = '';
+  if (title) title.style.display = 'none';
+  let events = [];
+  try {
+    const res = await fetch(`${API}?action=event_list_by_account&account_id=${accountId}`, { credentials:'include' });
+    const text = await res.text();
+    let json;
+    try { json = JSON.parse(text); }
+    catch (e) { console.warn('event_list_by_account: non-JSON response', res.status, text.slice(0, 200)); return; }
+    if (!json.ok) { console.warn('event_list_by_account error:', json.error); return; }
+    events = json.data || [];
+  } catch (e) {
+    console.warn('event_list_by_account fetch failed:', e);
+    return;
+  }
+  if (!events.length) return;
+  if (title) title.style.display = '';
+  wrap.innerHTML = events.map(e => `
+    <a class="event-card" href="./event.html?id=${e.id}">
+      <div class="cover">${e.cover_url ? `<img src="${esc(assetUrl(e.cover_url))}" alt="">` : '🎫'}</div>
+      <div class="body">
+        <div class="t">${esc(e.title)}</div>
+        <div class="m">${esc(fmtDate(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
+        ${e.participant_enabled === false ? '' : `<div class="m">参加 ${e.join_count} 人${e.capacity ? ' / 定員 ' + e.capacity : ''}</div>`}
+      </div>
+    </a>
+  `).join('');
+}
+async function loadForms(accountId){
+  const wrap = document.getElementById('forms');
+  const title = document.getElementById('forms-title');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+  if (title) title.style.display = 'none';
+  let forms = [];
+  try {
+    const res = await fetch(`${API}?action=form_list_by_account&account_id=${encodeURIComponent(accountId)}`, { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok) return;
+    forms = json.data || [];
+  } catch(e) { return; }
+  if (!forms.length) return;
+  if (title) title.style.display = '';
+  wrap.innerHTML = forms.map(f => `
+    <a class="form-card" href="./form.html?id=${encodeURIComponent(f.id)}">
+      <div class="t">${esc(f.title)}</div>
+      ${f.description ? `<div class="m">${esc(f.description).slice(0, 100)}</div>` : ''}
+      <div class="m">${f.collect_profile ? 'Buddies profile情報を収集' : '匿名表示'} / ${f.one_response ? '1回まで' : '複数回答可'}${typeof f.response_count === 'number' ? ` / 回答 ${f.response_count} 件` : ''}</div>
+      ${f.visibility === 'unlisted' ? '<span class="badge">非公開URL</span>' : ''}
+    </a>
+  `).join('');
+}
+function canManageBoard(){
+  return viewedAccount && currentAccount
+    && Number(currentAccount.id) === Number(viewedAccount.id)
+    && ['developer','official'].includes(viewedAccount.account_type);
+}
+function openActionModal(){ document.getElementById('action-modal').classList.add('open'); }
+function closeActionModal(){ document.getElementById('action-modal').classList.remove('open'); }
+function openPostModal(){
+  closeActionModal();
+  document.getElementById('post-body').value = '';
+  document.getElementById('post-link-label').value = '';
+  document.getElementById('post-link-url').value = '';
+  document.getElementById('post-pdf-name').value = '';
+  pickedPostImages = [];
+  pickedPostPdf = null;
+  renderPickedFiles();
+  document.getElementById('post-modal').classList.add('open');
+}
+function closePostModal(){ document.getElementById('post-modal').classList.remove('open'); }
+function fmtFileSize(bytes){
+  bytes = Number(bytes || 0);
+  if (bytes >= 1024 * 1024) return (bytes / 1024 / 1024).toFixed(1) + 'MB';
+  if (bytes >= 1024) return Math.ceil(bytes / 1024) + 'KB';
+  return bytes + 'B';
+}
+function fmtPostDate(s){
+  if (!s) return '';
+  const d = new Date(String(s).replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function markdown(text){
+  let html = esc(text || '');
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  html = html.split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
+  return html;
+}
+function readFileAsDataUrl(file){
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = () => reject(reader.error || new Error('file read failed'));
+    reader.readAsDataURL(file);
+  });
+}
+function renderPickedFiles(){
+  const imgWrap = document.getElementById('picked-images');
+  const pdfWrap = document.getElementById('picked-pdf');
+  if (imgWrap) {
+    imgWrap.innerHTML = pickedPostImages.length
+      ? pickedPostImages.map((f,i)=>`<div class="picked-file"><span>${esc(f.name)}</span><button type="button" onclick="removePostImage(${i})">削除</button></div>`).join('')
+      : '<div class="small">未選択</div>';
+  }
+  if (pdfWrap) {
+    pdfWrap.innerHTML = pickedPostPdf
+      ? `<div class="picked-file"><span>${esc(pickedPostPdf.name)}</span><button type="button" onclick="removePostPdf()">削除</button></div>`
+      : '<div class="small">未選択</div>';
+  }
+}
+function pickPostImages(files){
+  const list = Array.from(files || []);
+  for (const file of list) {
+    if (!['image/png','image/jpeg','image/webp'].includes(file.type)) { alert('画像はPNG/JPEG/WebPのみ選択できます'); continue; }
+    if (file.size > 8 * 1024 * 1024) { alert(`${file.name} は8MB以内にしてください`); continue; }
+    if (pickedPostImages.length >= 2) { alert('画像は2枚まで追加できます'); break; }
+    pickedPostImages.push(file);
+  }
+  renderPickedFiles();
+}
+function removePostImage(i){ pickedPostImages.splice(i, 1); renderPickedFiles(); }
+function pickPostPdf(file){
+  if (!file) return;
+  if (file.type !== 'application/pdf') { alert('PDFファイルのみ選択できます'); return; }
+  if (file.size > 8 * 1024 * 1024) { alert('PDFは8MB以内にしてください'); return; }
+  pickedPostPdf = file;
+  if (!document.getElementById('post-pdf-name').value.trim()) {
+    document.getElementById('post-pdf-name').value = file.name.replace(/\.[^.]+$/, '') || file.name;
+  }
+  renderPickedFiles();
+}
+function removePostPdf(){ pickedPostPdf = null; renderPickedFiles(); }
+async function loadPosts(accountId){
+  const wrap = document.getElementById('posts');
+  const title = document.getElementById('posts-title');
+  if (!wrap || !title) return;
+  wrap.innerHTML = '';
+  title.style.display = 'none';
+  try {
+    const res = await fetch(`${API}?action=verified_post_list&account_id=${encodeURIComponent(accountId)}`, { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok) return;
+    boardPosts = json.data || [];
+  } catch(e) { return; }
+  if (!boardPosts.length) return;
+  title.style.display = '';
+  renderPosts();
+}
+function renderPosts(){
+  const wrap = document.getElementById('posts');
+  if (!wrap) return;
+  const owner = canManageBoard();
+  wrap.innerHTML = boardPosts.map(p => {
+    const files = Array.isArray(p.files) ? p.files : [];
+    const images = files.filter(f => String(f.mime || '').startsWith('image/')).slice(0, 2);
+    const pdf = files.find(f => String(f.mime || '') === 'application/pdf');
+    const imageHtml = images.length ? `<div class="post-images">${images.map(f => `<div class="post-image"><img src="${esc(assetUrl(f.url))}" alt="${esc(f.name || '')}" onclick="openImageLightbox('${esc(assetUrl(f.url))}')"></div>`).join('')}</div>` : '';
+    const pdfHtml = pdf ? `<a class="file-link" href="${esc(assetUrl(pdf.url))}" target="_blank" rel="noopener"><span class="file-icon">PDF</span><span style="min-width:0;flex:1;">${esc(pdf.name || 'PDFファイル')}<br><span style="font-size:11px;color:#777;">${esc(fmtFileSize(pdf.size))}</span></span></a>` : '';
+    const link = p.link_url ? `<a class="post-link" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label || 'リンクを開く')}</a>` : '';
+    return `<article class="post">
+      <div class="post-date">${esc(fmtPostDate(p.created_at))}</div>
+      ${p.body ? `<div class="post-body">${markdown(p.body)}</div>` : ''}
+      ${imageHtml}
+      ${pdfHtml}
+      ${link}
+      ${owner ? `<div class="post-actions"><button class="post-delete" type="button" onclick="deletePost(${p.id})">削除</button></div>` : ''}
+    </article>`;
+  }).join('');
+}
+async function submitPost(){
+  if (!canManageBoard()) return;
+  const btn = document.getElementById('post-submit');
+  const payload = {
+    body: document.getElementById('post-body').value.trim(),
+    link_label: document.getElementById('post-link-label').value.trim(),
+    link_url: document.getElementById('post-link-url').value.trim(),
+    files: [],
+  };
+  for (const file of pickedPostImages) {
+    payload.files.push({ data: await readFileAsDataUrl(file), name: file.name.replace(/\.[^.]+$/, '') || file.name });
+  }
+  if (pickedPostPdf) {
+    payload.files.push({
+      data: await readFileAsDataUrl(pickedPostPdf),
+      name: document.getElementById('post-pdf-name').value.trim() || pickedPostPdf.name.replace(/\.[^.]+$/, '') || pickedPostPdf.name,
+    });
+  }
+  btn.disabled = true; btn.textContent = '投稿中…';
+  try {
+    const res = await fetch(`${API}?action=verified_post_create`, {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(payload),
+    });
+    const json = await res.json();
+    if (!json.ok) { alert(json.error || '投稿できませんでした'); return; }
+    closePostModal();
+    await loadPosts(viewedAccount.id);
+  } finally {
+    btn.disabled = false; btn.textContent = '投稿する';
+  }
+}
+async function deletePost(id){
+  if (!canManageBoard()) return;
+  if (!confirm('この投稿を削除しますか？添付ファイルも削除されます。')) return;
+  const res = await fetch(`${API}?action=verified_post_delete`, {
+    method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ id }),
+  });
+  const json = await res.json();
+  if (!json.ok) { alert(json.error || '削除できませんでした'); return; }
+  await loadPosts(viewedAccount.id);
+}
+function openImageLightbox(url){
+  document.getElementById('image-lightbox-img').src = url;
+  document.getElementById('image-lightbox').classList.add('open');
+}
+function closeImageLightbox(){
+  document.getElementById('image-lightbox').classList.remove('open');
+  document.getElementById('image-lightbox-img').src = '';
+}
+load();
+</script>
+</body>
+</html>

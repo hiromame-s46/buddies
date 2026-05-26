@@ -1,0 +1,14 @@
+.DS_Store
+
+# Local schema/runtime markers
+.buddies_schema_*.lock
+
+# User generated uploads
+uploads/
+
+# Local backup copies
+*.backup
+*のコピー.html
+*のコピー.html
+old.html
+

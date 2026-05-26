@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>My Buddies history</title>
+<meta name="description" content="Buddies profile の My Buddies history を一覧で表示します。">
+<link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ink:#111;--muted:#666;--soft:#fafafa;--line:#eee;--card:#fff}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:#fff;color:var(--ink);line-height:1.5}
+.app{max-width:760px;margin:0 auto;min-height:100vh;background:#fff;padding:0 18px 44px}
+.header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:14px 0 8px}
+.back{width:40px;height:40px;border:0;background:#fff;border-radius:50%;font-size:22px;color:#111;cursor:pointer}
+.head-title{text-align:center;font-size:15px;font-weight:900}
+.hero{display:flex;align-items:center;gap:14px;padding:18px 0 16px;border-bottom:1px solid #f1f1f1}
+.avatar{width:58px;height:58px;border-radius:50%;background:#f2f2f2;overflow:hidden;display:grid;place-items:center;flex-shrink:0;font-size:20px;font-weight:900;color:#777}
+.avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.name{font-size:22px;font-weight:950;letter-spacing:-.03em;line-height:1.15}
+.sub{font-size:12px;color:#777;font-weight:700;margin-top:4px}
+.filters{display:grid;gap:10px;margin:16px 0 18px}
+.search{width:100%;height:42px;border:1px solid var(--line);border-radius:999px;background:#fafafa;padding:0 16px;font:inherit;font-size:14px;font-weight:800;color:#111;outline:none}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{min-height:36px;border:1px solid var(--line);border-radius:999px;background:#fff;color:#555;padding:0 13px;font:inherit;font-size:12px;font-weight:900;cursor:pointer}
+.chip.active{background:#111;border-color:#111;color:#fff}
+.summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 2px 10px}
+.summary-title{font-size:13px;font-weight:950}
+.summary-count{font-size:12px;color:#999;font-weight:900}
+.history-list{display:grid;gap:16px;position:relative;padding-bottom:12px}
+.history-list:before{content:"";position:absolute;left:9px;top:10px;bottom:18px;width:2px;border-radius:9999px;background:#e7e7e7}
+.history-item{position:relative;display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
+.history-marker{position:relative;z-index:1;width:18px;height:18px;border-radius:50%;background:#111;border:5px solid #f7f7f7;box-shadow:0 0 0 1px #e7e7e7;margin-top:10px}
+.history-body{background:#fff;border:1px solid #ececec;border-radius:18px;padding:16px;display:grid;gap:9px}
+.history-date{width:fit-content;max-width:100%;border-radius:9999px;background:#f2f2f2;color:#555;font-size:11px;font-weight:900;line-height:1.2;padding:5px 9px}
+.history-live{display:grid;gap:2px;border-radius:14px;background:#fafafa;border:1px solid #eee;padding:10px 12px}
+.history-live-label{font-size:10px;font-weight:900;color:#888;letter-spacing:.04em}
+.history-live-title{font-size:13px;font-weight:900;color:#222;line-height:1.45}
+.history-live-venue{font-size:12px;color:#777;line-height:1.45}
+.history-title{font-size:15px;font-weight:950;color:#111;line-height:1.5}
+.history-note{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap}
+.history-image{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#f2f2f2;border:1px solid #eee}
+.history-image img{width:100%;height:100%;object-fit:cover;display:block}
+.empty{padding:28px 16px;border:1px dashed #ddd;border-radius:18px;color:#999;text-align:center;font-size:13px;font-weight:800;line-height:1.7}
+.error{padding:32px 4px;text-align:center;color:#666}.error h2{font-size:18px;color:#111;margin-bottom:8px}.error a{color:#111;font-weight:900}
+@media(min-width:700px){.app{padding-left:28px;padding-right:28px}.hero{padding-top:24px}.name{font-size:26px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <button class="back" type="button" onclick="history.length>1?history.back():location.href='./index.html'" aria-label="戻る">←</button>
+    <div class="head-title">History</div>
+    <span></span>
+  </header>
+  <main id="app"><div class="empty">読み込み中…</div></main>
+</div>
+
+<script>
+const API = './api.php';
+const LIVE_DATA = '../data/live.json';
+let profile = null;
+let liveOptions = [];
+let allHistoryItems = [];
+let filters = { live:false, image:false, q:'' };
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){if(!url)return'';if(/^https?:\/\//.test(url)||url.startsWith('data:'))return url;return url.startsWith('/')?url:'./'+url;}
+function getDisplayName(p){return p?.display_name||p?.username||'名無し';}
+function avatarInner(p){const url=p?.user_icon||'';const name=getDisplayName(p);return url?`<img src="${esc(assetUrl(url))}" alt="">`:esc(name[0]||'?');}
+function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function liveDateObj(date){const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?new Date(Number(m[1]),Number(m[2])-1,Number(m[3])):null;}
+function liveDateLabel(date, weekday){const d=liveDateObj(date);if(!d)return date||'';const w=weekday||['日','月','火','水','木','金','土'][d.getDay()];return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w})`;}
+function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+function venueForPerformance(live,perf,index){
+  const lines=String(live.detail_text||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  let current=(live.venues&&live.venues.length===1)?live.venues[0]:'';
+  let found='';
+  const targetDate=String(perf.date||'').replace(/-/g,'.').replace(/\.0/g,'.');
+  for(const line of lines){
+    const looksDate=/\d{4}[./]\d{1,2}[./]\d{1,2}/.test(line);
+    if(!looksDate) current=line.replace(/^＠/,'').trim();
+    if(looksDate){
+      const parts=String(perf.date||'').split('-').map(n=>String(Number(n)));
+      const compact=`${parts[0]}.${parts[1]}.${parts[2]}`;
+      const normalized=line.replace(/[年月]/g,'.').replace(/日/g,'').replace(/-/g,'.');
+      if(normalized.includes(compact)||normalized.includes(targetDate)){found=current;break;}
+    }
+  }
+  return found || (Array.isArray(live.venues)&&live.venues[index]?live.venues[index]:(live.venues||[]).join(' / '));
+}
+function buildLiveOptions(raw){
+  const items=Array.isArray(raw?.items)?raw.items:(Array.isArray(raw)?raw:[]);
+  const out=[];
+  items.forEach(live=>{
+    (Array.isArray(live.performances)?live.performances:[]).forEach((perf,index)=>{
+      const venue=venueForPerformance(live,perf,index);
+      out.push({id:liveId(live.title,perf.date,venue),title:live.title||'ライブ',date:perf.date,weekday:perf.weekday||'',venue,url:live.url||''});
+    });
+  });
+  return out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.title).localeCompare(String(b.title)));
+}
+function liveDisplay(id){const live=liveOptions.find(l=>l.id===id);if(live)return live;const [date,title,venue]=String(id||'').split('|');return {id,date,title:title||'ライブ',venue:venue||'',weekday:''};}
+function pastLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !!live.date&&live.date<today;}).sort((a,b)=>String(liveDisplay(b).date||'').localeCompare(String(liveDisplay(a).date||'')));}
+function historyDateLabel(item){const y=item?.year?`${item.year}`:'';if(!y)return'';const m=item.month?`${String(item.month).padStart(2,'0')}`:'';const d=item.day?`${String(item.day).padStart(2,'0')}`:'';return [y,m,d].filter(Boolean).join('.');}
+function historyEntryDateKey(item){const y=Number(item?.year||0),m=Number(item?.month||0),d=Number(item?.day||0);if(!y)return'';return `${String(y).padStart(4,'0')}-${String(m||0).padStart(2,'0')}-${String(d||0).padStart(2,'0')}`;}
+function historyLiveDateItem(id){
+  const live=liveDisplay(id);
+  const d=liveDateObj(live.date);
+  return {id:`live:${id}`,year:d?d.getFullYear():'',month:d?d.getMonth()+1:'',day:d?d.getDate():'',title:live.title||'ライブ',note:live.venue||'',live_id:id,image_url:'',is_live_only:true};
+}
+function mergedHistoryItems(p){
+  const base=Array.isArray(p?.buddies_history)?p.buddies_history.filter(Boolean):[];
+  const linked=new Set(base.map(item=>item.live_id).filter(Boolean));
+  const liveOnly=pastLiveIds(p).filter(id=>!linked.has(id)).map(historyLiveDateItem);
+  return [...base,...liveOnly].sort((a,b)=>{
+    const ka=historyEntryDateKey(a),kb=historyEntryDateKey(b);
+    if(ka!==kb)return kb.localeCompare(ka);
+    return Number(b.id||0)-Number(a.id||0);
+  });
+}
+function historyLiveHtml(item){
+  if(!item?.live_id)return'';
+  const live=liveDisplay(item.live_id);
+  return `<div class="history-live"><div class="history-live-label">参加ライブ</div><div class="history-live-title">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="history-live-venue">${esc(live.venue)}</div>`:''}</div>`;
+}
+function historySearchText(item){
+  const live=item.live_id?liveDisplay(item.live_id):null;
+  return [historyDateLabel(item),item.title,item.note,live?.title,live?.venue].filter(Boolean).join(' ').toLowerCase();
+}
+function filteredItems(){
+  const q=filters.q.trim().toLowerCase();
+  return allHistoryItems.filter(item=>{
+    if(filters.live&&!item.live_id)return false;
+    if(filters.image&&!item.image_url)return false;
+    if(q&&!historySearchText(item).includes(q))return false;
+    return true;
+  });
+}
+function historyItemHtml(item){
+  return `<div class="history-item"><div class="history-marker" aria-hidden="true"></div><div class="history-body">
+    <div class="history-date">${esc(historyDateLabel(item))}</div>
+    ${historyLiveHtml(item)}
+    ${item.image_url?`<div class="history-image"><img src="${esc(assetUrl(item.image_url))}" alt=""></div>`:''}
+    ${item.is_live_only?'':`<div class="history-title">${esc(item.title||'')}</div>${item.note?`<div class="history-note">${esc(item.note)}</div>`:''}`}
+  </div></div>`;
+}
+function renderList(){
+  const items=filteredItems();
+  const list=document.getElementById('history-list');
+  const count=document.getElementById('history-count');
+  if(count)count.textContent=`${items.length} / ${allHistoryItems.length}件`;
+  if(!list)return;
+  list.innerHTML=items.length?items.map(historyItemHtml).join(''):'<div class="empty">条件に合うHistoryはありません</div>';
+}
+function toggleFilter(key){
+  filters[key]=!filters[key];
+  document.querySelector(`[data-filter="${key}"]`)?.classList.toggle('active',filters[key]);
+  renderList();
+}
+function render(){
+  const name=getDisplayName(profile);
+  document.title=`${name} - My Buddies history`;
+  allHistoryItems=mergedHistoryItems(profile);
+  document.getElementById('app').innerHTML=`
+    <section class="hero">
+      <div class="avatar">${avatarInner(profile)}</div>
+      <div><div class="name">${esc(name)}</div><div class="sub">My Buddies history</div></div>
+    </section>
+    <section class="filters">
+      <input class="search" type="search" placeholder="キーワードで検索" oninput="filters.q=this.value;renderList()">
+      <div class="chips">
+        <button class="chip" type="button" data-filter="live" onclick="toggleFilter('live')">ライブのみ表示</button>
+        <button class="chip" type="button" data-filter="image" onclick="toggleFilter('image')">画像付きのみ</button>
+      </div>
+    </section>
+    <div class="summary"><div class="summary-title">History</div><div class="summary-count" id="history-count"></div></div>
+    <div class="history-list" id="history-list"></div>`;
+  renderList();
+}
+function renderError(text){
+  document.title='My Buddies history';
+  document.getElementById('app').innerHTML=`<div class="error"><h2>${esc(text)}</h2><p><a href="./">Buddies トップへ戻る</a></p></div>`;
+}
+async function load(){
+  const params=new URLSearchParams(location.search);
+  const id=parseInt(params.get('id')||params.get('uid')||'0',10);
+  if(!id)return renderError('プロフィールが指定されていません。');
+  try{
+    const [pRes,liveRes]=await Promise.all([
+      fetch(`${API}?action=buddies_public_profile_get&user_id=${id}`,{credentials:'include'}),
+      fetch(`${LIVE_DATA}?_=${Date.now()}`).catch(()=>null)
+    ]);
+    if(liveRes){try{liveOptions=buildLiveOptions(await liveRes.json());}catch(e){liveOptions=[];}}
+    const json=await pRes.json();
+    if(!json.ok)return renderError(json.error||'プロフィールを取得できませんでした。');
+    profile=json.data;
+    if(profile.verified_account&&profile.verified_account.id){
+      location.replace('./verified/view.html?id='+encodeURIComponent(profile.verified_account.id));
+      return;
+    }
+    render();
+  }catch(e){renderError('通信エラーが発生しました。');}
+}
+load();
+</script>
+</body>
+</html>

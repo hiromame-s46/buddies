@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>サブイベント - Buddies profile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--gold:#e6b422}
+body{margin:0;min-height:100dvh;background:#fafafa;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:680px;margin:0 auto;min-height:100dvh;background:#fff}
+header{position:relative;z-index:10;background:rgba(255,255,255,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:57px}
+.back{display:inline-flex;align-items:center;gap:4px;font-size:14px;color:#111;text-decoration:none;font-weight:600;padding:6px 10px;border-radius:9999px}
+.back:hover{background:#f3f3f3}
+header h1{font-size:15px;margin:0;font-weight:700;color:#555;position:absolute;left:50%;transform:translateX(-50%);max-width:48%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:center;pointer-events:none}
+main{padding:0 0 24px}
+.cover{width:100%;aspect-ratio:16/9;background:#f3f3f3;display:grid;place-items:center;color:#aaa;font-size:40px;font-weight:800;overflow:hidden}
+.cover img{width:100%;height:100%;object-fit:cover}
+.head{padding:18px 20px 8px}
+.parent{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:#7c5600;background:#fff4d6;padding:4px 10px;border-radius:9999px;text-decoration:none;margin-bottom:10px}
+.title{font-size:22px;font-weight:800;margin:0 0 8px}
+.meta{font-size:13px;color:#555;display:grid;gap:4px;margin-bottom:12px}
+.meta b{color:#111}
+.desc{padding:0 20px;white-space:pre-wrap;font-size:14px;color:#333;margin:8px 0 18px}
+.cta{padding:12px 20px;display:grid;gap:8px}
+.cta .custom-link{margin-top:8px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;border-radius:9999px;border:none;font-weight:800;font-size:14px;padding:0 18px;cursor:pointer;text-decoration:none}
+.btn.primary{background:#111;color:#fff}
+.btn.gold{background:linear-gradient(135deg,var(--gold),#d29a14);color:#fff;box-shadow:0 6px 16px rgba(230,180,34,.32)}
+.btn.secondary{background:#f3f3f3;color:#111}
+.btn.active-join{background:#16a34a;color:#fff}
+.btn.full{background:#e5e5e5;color:#888;box-shadow:none;cursor:not-allowed}
+.btn.full:hover{background:#e5e5e5}
+.btn:disabled{opacity:1}
+.section-title{padding:0 20px;font-size:12px;font-weight:800;color:#555;text-transform:uppercase;letter-spacing:.06em;margin:20px 0 8px}
+.participants{padding:0 12px;display:grid;gap:6px}
+.participant{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:14px;background:#fafafa;text-decoration:none;color:#111;border:1px solid transparent}
+.participant:hover{background:#f3f3f3;border-color:var(--line)}
+.avatar{width:40px;height:40px;border-radius:50%;background:#f2b5cf;color:#fff;font-weight:800;display:grid;place-items:center;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.p-name{font-weight:700;font-size:14px}
+.p-meta{font-size:12px;color:#888}
+.empty{padding:30px 16px;text-align:center;color:#888;font-size:13px}
+.msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin:8px 20px 0}
+.msg.show{display:block}.msg.err{background:#fff5f5;color:#d33}.msg.ok{background:#f0fff4;color:#276749}
+.admin-panel{margin:18px 12px 0;border:1px solid var(--line);border-radius:18px;background:#fff;padding:14px;display:grid;gap:12px}
+.admin-panel h2{font-size:14px;margin:0;font-weight:800}
+.admin-panel .admin-tools{display:flex;gap:8px;flex-wrap:wrap}
+.admin-list{display:grid;gap:8px}
+.admin-row{border:1px solid #eee;border-radius:14px;background:#fafafa;padding:12px;display:grid;gap:6px}
+.admin-row-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
+.admin-name{font-size:14px;font-weight:800}
+.admin-meta{font-size:12px;color:#666;line-height:1.6}
+.admin-empty{padding:16px;text-align:center;color:#888;font-size:13px;border:1px dashed var(--line);border-radius:14px}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a id="back-link" class="back" href="../" aria-label="戻る">← 戻る</a>
+    <h1>サブイベント</h1>
+  </header>
+  <main id="app"><div class="empty">読み込み中…</div></main>
+</div>
+<script>
+const API = '../api.php';
+const MEMBER_DATA = '../../data/member.json';
+let memberMap = {};
+let subevent = null;
+let me = null;
+let currentAccount = null;
+
+async function loadMemberMap(){
+  try {
+    const res = await fetch(MEMBER_DATA + '?_=' + Date.now());
+    const raw = await res.json();
+    const arr = Array.isArray(raw) ? raw : Object.values(raw);
+    arr.forEach(m => { if (m && m.name) memberMap[m.name] = m; });
+  } catch(e){}
+}
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : '../' + url; }
+function fmtDate(s){
+  if (!s) return '日時未定';
+  const d = new Date(s.replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function msg(text, ok=true){
+  const el = document.getElementById('msg');
+  if (!el) return;
+  el.textContent = text;
+  el.className = 'msg show ' + (ok ? 'ok' : 'err');
+  setTimeout(() => el.classList.remove('show'), 3500);
+}
+async function safeJson(url, opt = {}){
+  try {
+    const res = await fetch(url, { credentials:'include', ...opt });
+    const text = await res.text();
+    try { return { ok:true, data: JSON.parse(text), status: res.status }; }
+    catch(e) { return { ok:false, status: res.status, raw:text }; }
+  } catch(e) { return { ok:false, network:true }; }
+}
+
+async function fetchSubeventDetail(id){
+  const r = await safeJson(`${API}?action=subevent_get&id=${id}`);
+  if (!r.ok || !r.data || !r.data.ok) return null;
+  return r.data.data;
+}
+
+async function load(){
+  const id = parseInt(new URLSearchParams(location.search).get('id') || '0', 10);
+  if (!id) { document.getElementById('app').innerHTML = '<div class="empty">サブイベントが指定されていません。</div>'; return; }
+  loadMemberMap();
+
+  const meR = await safeJson(`${API}?action=auth_me`);
+  me = (meR.ok && meR.data && meR.data.ok) ? meR.data.data : null;
+  const vaR = await safeJson(`${API}?action=verified_me`);
+  currentAccount = (vaR.ok && vaR.data && vaR.data.ok) ? vaR.data.data : null;
+
+  const detail = await fetchSubeventDetail(id);
+  if (!detail) {
+    document.getElementById('app').innerHTML = `<div class="empty">サブイベントを読み込めませんでした。<br><a href="javascript:location.reload()">再読み込み</a></div>`;
+    return;
+  }
+  subevent = detail;
+  render();
+  loadParticipants(id);
+}
+function isOwner(){
+  return !!(subevent && currentAccount && Number(currentAccount.id) === Number(subevent.account_id));
+}
+function syncBackLink(){
+  const link = document.getElementById('back-link');
+  if (!link || !subevent || !subevent.account_id) return;
+  link.href = `./view.html?id=${encodeURIComponent(subevent.account_id)}`;
+}
+
+function render(){
+  syncBackLink();
+  document.title = `${subevent.title} - Buddies サブイベント`;
+  const dateText = subevent.starts_at && subevent.ends_at ? `${fmtDate(subevent.starts_at)} 〜 ${fmtDate(subevent.ends_at)}` : fmtDate(subevent.starts_at);
+  const participantEnabled = subevent.participant_enabled !== false;
+  const isJoined = !!subevent.is_joined;
+  const canJoin = !!subevent.can_join;
+  const isFull = subevent.capacity !== null && subevent.join_count >= subevent.capacity && !isJoined;
+  let joinBtn;
+  if (!participantEnabled) {
+    joinBtn = '';
+  } else if (!me) {
+    joinBtn = `<a class="btn primary" href="../">ログインして参加する</a>`;
+  } else if (!canJoin && !isJoined) {
+    joinBtn = `<button class="btn full" disabled>${subevent.parent_participant_enabled === false ? '参加できません' : 'メインイベント参加後に参加可能'}</button>`;
+  } else {
+    joinBtn = `<button class="btn ${isJoined ? 'active-join' : isFull ? 'full' : 'gold'}" onclick="toggleJoin()" ${isFull ? 'disabled' : ''}>${isJoined ? '✓ 参加中（タップでキャンセル）' : isFull ? '満員（受付終了）' : '参加する'}</button>`;
+  }
+  const ext = subevent.external_url ? `<a class="btn ${subevent.external_button_highlight ? 'gold' : 'secondary'} custom-link" href="${esc(subevent.external_url)}" target="_blank" rel="noopener">${esc(subevent.external_label || '詳細を開く')}</a>` : '';
+
+  document.getElementById('app').innerHTML = `
+    <div class="cover">${subevent.cover_url ? `<img src="${esc(assetUrl(subevent.cover_url))}" alt="">` : '予定'}</div>
+    <div class="head">
+      <a class="parent" href="./event.html?id=${encodeURIComponent(subevent.event_id)}">← ${esc(subevent.event_title || 'メインイベント')}</a>
+      <h1 class="title">${esc(subevent.title)}</h1>
+      <div class="meta">
+        <div><b>日時:</b> ${esc(dateText)}</div>
+        ${subevent.venue ? `<div><b>場所:</b> ${esc(subevent.venue)}</div>` : ''}
+        ${participantEnabled ? (subevent.capacity ? `<div><b>参加:</b> ${subevent.join_count} / ${subevent.capacity}</div>` : `<div><b>参加:</b> ${subevent.join_count} 人</div>`) : ''}
+      </div>
+    </div>
+    ${subevent.description ? `<div class="desc">${esc(subevent.description)}</div>` : ''}
+    <div class="cta">${joinBtn}${ext}</div>
+    <div id="msg" class="msg"></div>
+    ${participantEnabled ? `<div class="section-title">参加者（${subevent.join_count}人）</div>
+    <div id="participants" class="participants"><div class="empty">読み込み中…</div></div>` : ''}
+    ${isOwner() && participantEnabled ? `<section class="admin-panel">
+      <h2>管理用参加者情報</h2>
+      <div class="admin-meta">この情報は主催アカウントでログイン中のときだけ表示されます。</div>
+      <div class="admin-tools">
+        <button class="btn secondary" onclick="loadAdminParticipants()">詳細を表示</button>
+        <a class="btn secondary" href="./index.html?edit_event=${encodeURIComponent(subevent.event_id)}" target="_blank" rel="noopener">管理画面で編集</a>
+      </div>
+      <div id="admin-participants"></div>
+    </section>` : ''}
+  `;
+}
+
+async function toggleJoin(){
+  if (!me) { location.href = '../'; return; }
+  if (!subevent.can_join && !subevent.is_joined) {
+    msg('メインイベントに参加してからサブイベントに参加できます。', false);
+    return;
+  }
+  const state = subevent.is_joined ? 'off' : 'on';
+  const r = await safeJson(`${API}?action=subevent_join`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ subevent_id: subevent.id, state }),
+  });
+  if (!r.ok || !r.data || !r.data.ok) {
+    msg((r.data && r.data.error) || '操作できませんでした', false);
+    return;
+  }
+  const detail = await fetchSubeventDetail(subevent.id);
+  if (detail) {
+    subevent = detail;
+  } else if (r.data.data) {
+    subevent = { ...subevent, ...r.data.data };
+  }
+  render();
+  loadParticipants(subevent.id);
+  msg(subevent.is_joined ? 'サブイベントに参加しました' : 'サブイベントの参加をキャンセルしました', true);
+}
+
+async function loadParticipants(id){
+  const wrap = document.getElementById('participants');
+  if (subevent && subevent.participant_enabled === false) return;
+  if (!wrap) return;
+  const r = await safeJson(`${API}?action=subevent_participants&id=${id}`);
+  if (!r.ok || !r.data || !r.data.ok) {
+    wrap.innerHTML = `<div class="empty">参加者一覧を読み込めませんでした。</div>`;
+    return;
+  }
+  const list = r.data.data || [];
+  if (!list.length) { wrap.innerHTML = '<div class="empty">まだ参加者はいません</div>'; return; }
+  wrap.innerHTML = list.map(p => {
+    let iconUrl = p.user_icon || null;
+    if (!iconUrl && p.oshi_member && memberMap[p.oshi_member]?.image) iconUrl = memberMap[p.oshi_member].image;
+    const color = (p.oshi_member && memberMap[p.oshi_member]?.color) || '#f2b5cf';
+    const icon = iconUrl
+      ? `<img src="${esc(assetUrl(iconUrl))}" alt="" onerror="this.parentElement.innerHTML=${JSON.stringify(esc((p.display_name||'？')[0]))}">`
+      : esc((p.display_name||'？')[0]);
+    const sub = [p.oshi_member, p.location].filter(Boolean).join(' ・ ');
+    return `<a class="participant" href="../view.html?id=${p.id}" target="_blank" rel="noopener">
+      <div class="avatar" style="background:${esc(color)}">${icon}</div>
+      <div style="min-width:0;flex:1;">
+        <div class="p-name">${esc(p.display_name || '名無し')}</div>
+        ${sub ? `<div class="p-meta">${esc(sub)}</div>` : ''}
+      </div>
+    </a>`;
+  }).join('');
+}
+async function loadAdminParticipants(){
+  const wrap = document.getElementById('admin-participants');
+  if (!wrap || !subevent) return;
+  wrap.innerHTML = '<div class="admin-empty">読み込み中…</div>';
+  const r = await safeJson(`${API}?action=subevent_participants_admin&id=${encodeURIComponent(subevent.id)}`);
+  if (!r.ok || !r.data || !r.data.ok) {
+    wrap.innerHTML = `<div class="admin-empty">${esc((r.data && r.data.error) || '管理情報を読み込めませんでした')}</div>`;
+    return;
+  }
+  const rows = r.data.data?.participants || r.data.participants || [];
+  if (!rows.length) {
+    wrap.innerHTML = '<div class="admin-empty">参加者はまだいません</div>';
+    return;
+  }
+  wrap.innerHTML = `<div class="admin-list">${rows.map(row => {
+    const u = row.user || {};
+    const profile = `<a class="btn secondary" href="../view.html?id=${encodeURIComponent(u.id)}" target="_blank" rel="noopener">プロフィール</a>`;
+    const details = [
+      row.joined_at ? `参加: ${esc(fmtDate(row.joined_at))}` : '',
+      (u.oshi_members || []).length ? `推し: ${esc((u.oshi_members || []).join('、'))}` : '',
+      u.location ? `都道府県: ${esc(u.location)}` : '',
+      (u.tags || []).length ? `タグ: ${esc((u.tags || []).join('、'))}` : '',
+    ].filter(Boolean).join('<br>');
+    return `<div class="admin-row">
+      <div class="admin-row-head">
+        <div class="admin-name">${esc(u.display_name || u.username || '名無し')}</div>
+        ${profile}
+      </div>
+      ${details ? `<div class="admin-meta">${details}</div>` : ''}
+      ${u.bio ? `<div class="admin-meta">${esc(u.bio)}</div>` : ''}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+window.loadAdminParticipants = loadAdminParticipants;
+load();
+</script>
+</body>
+</html>

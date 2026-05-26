@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Today’s 櫻坂 - Buddies</title>
+<meta name="description" content="櫻坂46の今日のスケジュール、ブログ、さくみみをBuddiesでまとめて確認。">
+<link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--ink:#111;--muted:#666;--soft:#fafafa;--line:#eee;--card:#fff}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;background:#fff;color:var(--ink);line-height:1.5}
+.app{max-width:760px;margin:0 auto;min-height:100vh;background:#fff;padding:0 18px 44px}
+.header{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;padding:14px 0 8px}
+.back{width:40px;height:40px;border:0;background:#fff;border-radius:50%;font-size:22px;color:#111;cursor:pointer}
+.head-title{text-align:center;font-size:15px;font-weight:800}
+.hero{padding:10px 0 10px}
+.kicker{font-size:11px;font-weight:800;letter-spacing:.05em;text-transform:uppercase;color:#999}
+h1{font-size:28px;letter-spacing:-.04em;line-height:1.08;margin-top:4px}
+.lead{font-size:12px;color:#777;margin-top:7px}
+.datebar{display:grid;grid-template-columns:38px minmax(0,1fr) 38px auto;align-items:center;gap:8px;margin:14px 0 4px}
+.date-btn{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:#fff;color:#111;font-size:17px;font-weight:800;cursor:pointer;appearance:none;-webkit-appearance:none}
+.date-input{width:100%;height:40px;border:1px solid var(--line);border-radius:9999px;background:#fafafa;text-align:center;font-size:14px;font-weight:800;color:#111;font-family:inherit;accent-color:#111}
+.today-btn{height:38px;padding:0 13px;border:0;border-radius:9999px;background:#111;color:#fff;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap;appearance:none;-webkit-appearance:none}
+.section{margin-top:22px}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:10px}
+.section-title{display:flex;align-items:center;gap:8px;font-size:15px;font-weight:900}
+.section-title:after{content:'';height:1px;background:#e7e7e7;flex:1;min-width:44px}
+.count{font-size:12px;color:#999;font-weight:800}
+.section-card{border:1px solid var(--line);border-radius:20px;background:#fff;overflow:hidden;box-shadow:none}
+.list{display:grid;gap:0}
+.item{display:flex;gap:12px;align-items:flex-start;padding:14px;border:0;border-bottom:1px solid #f1f1f1;border-radius:0;background:#fff;color:#111;text-decoration:none;box-shadow:none}
+.item:last-child{border-bottom:0}
+.item:active{background:#fafafa}
+.dot{width:7px;height:7px;border-radius:50%;background:#111;margin-top:8px;flex-shrink:0;opacity:.55}
+.thumb{width:58px;height:58px;border-radius:14px;object-fit:cover;object-position:top center;background:#f2f2f2;flex-shrink:0}
+.main{flex:1;min-width:0}
+.title{font-size:14px;font-weight:900;line-height:1.45;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.meta{font-size:12px;color:#777;margin-top:4px;line-height:1.5}
+.members{display:flex;flex-wrap:wrap;gap:6px 9px;margin-top:8px}
+.member{display:inline-flex;align-items:center;gap:5px;padding:0;border-radius:0;background:transparent;font-size:11px;font-weight:700;color:#666}
+.member img{width:18px;height:18px;border-radius:50%;object-fit:cover;object-position:top center}
+.actions{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.open-link,.fav-btn,.more-btn{display:inline-flex;align-items:center;justify-content:center;min-height:32px;padding:7px 11px;border-radius:9999px;font-size:12px;font-weight:800;text-decoration:none;cursor:pointer}
+.open-link{background:#f3f3f3;color:#111;border:0}
+.fav-btn{border:1px solid #e5e5e5;background:#fff;color:#555}
+.fav-btn.saved{background:#fff7ed;border-color:#fed7aa;color:#c2410c}
+.more-btn{width:100%;border:0;background:#f3f3f3;color:#333;margin-top:10px}
+.empty{padding:24px 14px;border-radius:20px;background:#fafafa;color:#999;text-align:center;font-size:13px;font-weight:700}
+.skeleton{padding:24px;text-align:center;color:#999;font-size:13px}
+.history-user{display:flex;align-items:center;gap:10px;color:#111;text-decoration:none;margin-bottom:8px}
+.history-avatar{width:38px;height:38px;border-radius:50%;background:#f2f2f2;overflow:hidden;display:grid;place-items:center;flex-shrink:0;font-size:15px;font-weight:900;color:#777}
+.history-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.history-name{font-size:13px;font-weight:900;line-height:1.2}
+.history-year{font-size:11px;color:#888;margin-top:2px}
+.history-note{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap;margin-top:5px}
+.history-image{width:100%;aspect-ratio:16/9;border-radius:16px;object-fit:cover;margin-top:10px;background:#f3f3f3}
+.song-grid{display:grid;gap:12px}
+.song-card{display:block;padding:14px;border:1px solid var(--line);border-radius:20px}
+.yt-grid{display:grid;gap:8px;margin-bottom:12px}
+.yt-wrap{position:relative;width:100%;aspect-ratio:16/9;border-radius:18px;overflow:hidden;background:#111}
+.yt-wrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.song-meta-grid{display:grid;gap:4px;margin-top:5px}
+.song-chip{display:inline-flex;width:fit-content;max-width:100%;padding:4px 8px;border-radius:9999px;background:#f5f5f5;color:#555;font-size:11px;font-weight:800}
+.range-note{padding:12px 13px;border:1px solid var(--line);border-radius:16px;background:#fff;color:#777;font-size:12px;line-height:1.65;margin:16px 0 0;box-shadow:none}
+.range-note strong{display:block;color:#333;font-size:13px;margin-bottom:3px}
+@media(min-width:700px){.app{padding-left:28px;padding-right:28px}.song-grid{grid-template-columns:1fr 1fr}.hero{padding-top:20px}h1{font-size:38px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="header">
+    <button class="back" type="button" onclick="history.length>1?history.back():location.href='./index.html'" aria-label="戻る">←</button>
+    <div class="head-title">Today’s 櫻坂</div>
+    <span></span>
+  </header>
+
+  <section class="hero">
+    <div class="kicker">Today's Sakurazaka</div>
+    <h1>Today’s 櫻坂</h1>
+    <p class="lead">スケジュール、ブログ、さくみみを日付ごとにまとめて確認できます。</p>
+    <div class="datebar">
+      <button class="date-btn" type="button" onclick="moveDate(-1)" aria-label="前日">‹</button>
+      <input id="date-input" class="date-input" type="date" onchange="setDate(this.value)">
+      <button class="date-btn" type="button" onclick="moveDate(1)" aria-label="翌日">›</button>
+      <button class="today-btn" type="button" onclick="setDate(todayKey())">今日</button>
+    </div>
+  </section>
+
+  <main id="content"><div class="skeleton">読み込み中…</div></main>
+</div>
+
+<script>
+const DATA_PATHS = {
+  schedule: '../data/schedule.json',
+  blogs: '../data/blogs.json',
+  mimis: '../data/sakumimi_data.json',
+  members: '../data/member.json',
+  songs: '../data/sakurazaka46_songs.json',
+  mv: '../data/MV.json',
+  live: '../data/live.json'
+};
+const AUTH_API = '../sakulabo/auth/api.php';
+const BUDDIES_API = './api.php';
+const WD = ['日','月','火','水','木','金','土'];
+let scheduleData = [], blogData = [], mimiData = [], songData = [], liveOptions = [], mvData = {}, memberMap = {};
+let currentUser = null;
+let favBlogIds = new Set();
+let favMimiIds = new Set();
+let historyItems = [];
+let currentDate = '';
+let expanded = { schedule:false, blogs:false, mimis:false, history:false, songs:false, lives:false };
+
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function todayKey(d = new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function parseDate(str){const m=String(str||'').match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);return m?new Date(+m[1],+m[2]-1,+m[3]):null;}
+function dateKey(str){const d=parseDate(str);return d?todayKey(d):'';}
+function addDays(key,n){const d=parseDate(key)||new Date();d.setDate(d.getDate()+n);return todayKey(d);}
+function dateLabel(key){const d=parseDate(key);return d?`${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${WD[d.getDay()]})`:key;}
+function slashDate(key){const d=parseDate(key);return d?`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`:key;}
+function publishTitle(noun){
+  const today = todayKey();
+  const yesterday = addDays(today, -1);
+  if (currentDate === today) return `今日公開された${noun}`;
+  if (currentDate === yesterday) return `昨日公開された${noun}`;
+  return `${slashDate(currentDate)}に公開された${noun}`;
+}
+async function loadJson(path, fallback){try{const r=await fetch(path,{cache:'no-store'});if(!r.ok)throw new Error();return await r.json();}catch(e){return fallback;}}
+async function loadAuth(){
+  try {
+    const me = await fetch(AUTH_API + '?action=auth_me', {credentials:'include'}).then(r=>r.json());
+    currentUser = me.ok ? me.data : null;
+    if (currentUser) {
+      const [blogs, mimis] = await Promise.all([
+        fetch(AUTH_API + '?action=my_blog_likes', {credentials:'include'}).then(r=>r.json()).catch(()=>({ok:false})),
+        fetch(AUTH_API + '?action=my_mimi_favs', {credentials:'include'}).then(r=>r.json()).catch(()=>({ok:false}))
+      ]);
+      if (blogs.ok) favBlogIds = new Set((blogs.data||[]).map(x=>x.blog_id));
+      if (mimis.ok) favMimiIds = new Set((mimis.data||[]).map(x=>x.episode_id));
+    }
+  } catch(e) {}
+  renderLoginRow();
+}
+async function loadHistoryForDate(key){
+  try {
+    const json = await fetch(BUDDIES_API + '?action=buddies_history_on_day&date=' + encodeURIComponent(key), {credentials:'include'}).then(r=>r.json());
+    historyItems = json.ok && Array.isArray(json.data) ? json.data : [];
+  } catch(e) {
+    historyItems = [];
+  }
+}
+function renderLoginRow(){
+  const row=document.getElementById('login-row');
+  if (!row) return;
+  row.innerHTML = currentUser
+    ? `<div class="login-main"><div class="login-name">${esc(currentUser.nickname || currentUser.username || 'ログイン中')}</div><div class="login-sub">ブログとさくみみをお気に入り登録できます</div></div><a class="login-link" href="../sakulabo/mypage/">SakuLabo</a>`
+    : `<div class="login-main"><div class="login-name">ゲスト表示中</div><div class="login-sub">お気に入り登録にはSakuLabo/Buddies連携ログインが必要です</div></div><a class="login-link" href="../sakulabo/mypage/">ログイン</a>`;
+}
+function sakumimiUrl(item){
+  const latest = mimiData.reduce((max, ep)=>Math.max(max, Number(ep.episode)||0), 0);
+  const perPage = window.innerWidth >= 1024 ? 12 : 10;
+  const page = Math.max(0, Math.floor((latest - (Number(item.episode)||0)) / perPage));
+  return `https://sakurazaka46.com/s/s46/diary/radio/list?ima=0000&page=${page}&cd=radio`;
+}
+function memberChips(names){
+  return (names||[]).map(name=>{
+    const img = memberMap[name]?.image || '';
+    return `<span class="member">${img?`<img src="${esc(img)}" alt="">`:''}${esc(name)}</span>`;
+  }).join('');
+}
+function ytId(url){
+  const m = String(url || '').match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m ? m[1] : '';
+}
+function youtubeUrls(value){
+  if (Array.isArray(value)) return value.filter(Boolean).map(String);
+  return String(value || '')
+    .split(/[\n\r,、\s]+/)
+    .map(s=>s.trim())
+    .filter(s=>ytId(s));
+}
+function assetUrl(url){
+  if(!url) return '';
+  if(/^https?:\/\//.test(url) || url.startsWith('data:')) return url;
+  return url.startsWith('/') ? url : './' + url;
+}
+function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+function venueForPerformance(live, perf, index){
+  const lines = String(live.detail_text || '').split(/\n+/).map(s=>s.trim()).filter(Boolean);
+  const targetDate = String(perf.date || '').replace(/-/g,'.').replace(/\.0/g,'.');
+  let current = (live.venues && live.venues.length === 1) ? live.venues[0] : '';
+  let found = '';
+  for (const line of lines) {
+    const looksDate = /\d{4}[./]\d{1,2}[./]\d{1,2}/.test(line);
+    if (!looksDate) current = line.replace(/^＠/,'').trim();
+    if (looksDate) {
+      const parts = String(perf.date || '').split('-').map(n=>String(Number(n)));
+      const compact = `${parts[0]}.${parts[1]}.${parts[2]}`;
+      const normalized = line.replace(/[年月]/g,'.').replace(/日/g,'').replace(/-/g,'.');
+      if (normalized.includes(compact) || normalized.includes(targetDate)) { found = current; break; }
+    }
+  }
+  return found || (Array.isArray(live.venues) && live.venues[index] ? live.venues[index] : (live.venues || []).join(' / '));
+}
+function buildLiveOptions(raw){
+  const items = Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw) ? raw : []);
+  const out = [];
+  items.forEach(live=>{
+    (Array.isArray(live.performances) ? live.performances : []).forEach((perf,index)=>{
+      const venue = venueForPerformance(live, perf, index);
+      out.push({id:liveId(live.title, perf.date, venue), title:live.title || 'ライブ', date:perf.date || '', weekday:perf.weekday || '', venue, url:live.url || ''});
+    });
+  });
+  return out.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || String(a.title).localeCompare(String(b.title)));
+}
+function liveDisplay(id){
+  const live = liveOptions.find(l=>l.id===id);
+  if (live) return live;
+  const [date,title,venue] = String(id || '').split('|');
+  return {id,date,title:title||'ライブ',venue:venue||'',weekday:''};
+}
+function liveItem(item){
+  const actions = item.url ? `<div class="actions"><a class="open-link" href="${esc(item.url)}" target="_blank" rel="noopener">公式情報を開く</a></div>` : '';
+  return `<div class="item"><span class="dot"></span><div class="main">
+    <div class="title">${esc(item.title || 'ライブ')}</div>
+    <div class="meta">${esc([dateLabel(item.date), item.venue].filter(Boolean).join(' / '))}</div>
+    ${actions}
+  </div></div>`;
+}
+function historyItem(item){
+  const name = item.display_name || item.username || '名無し';
+  const icon = item.user_icon ? `<img src="${esc(assetUrl(item.user_icon))}" alt="">` : esc(name.charAt(0) || '?');
+  const profileUrl = `./view.html?id=${encodeURIComponent(item.user_id)}`;
+  const live = item.live_id ? liveDisplay(item.live_id) : null;
+  return `<div class="item">
+    <div class="main">
+      <a class="history-user" href="${profileUrl}">
+        <span class="history-avatar">${icon}</span>
+        <span><span class="history-name">${esc(name)}</span><span class="history-year">${esc(item.year)}年のこの日</span></span>
+      </a>
+      <div class="title">${esc(item.title || '')}</div>
+      ${live ? `<div class="meta">${esc([live.title, live.venue].filter(Boolean).join(' / '))}</div>` : ''}
+      ${item.note ? `<div class="history-note">${esc(item.note)}</div>` : ''}
+      ${item.image_url ? `<img class="history-image" src="${esc(assetUrl(item.image_url))}" alt="">` : ''}
+    </div>
+  </div>`;
+}
+function scheduleItem(item){
+  const links = Array.isArray(item.links) ? item.links : [];
+  const actions = links.length ? `<div class="actions"><a class="open-link" href="${esc(links[0])}" target="_blank" rel="noopener">詳細を開く</a></div>` : '';
+  return `<div class="item"><span class="dot"></span><div class="main"><div class="title">${esc(item.title || item.name || 'スケジュール')}</div><div class="meta">${esc([item.time,item.category].filter(Boolean).join(' / '))}</div><div class="members">${memberChips(item.members)}</div>${actions}</div></div>`;
+}
+function blogItem(item){
+  const title = (item.title || '').trim() || `${item.member || 'メンバー'}のブログ`;
+  const saved = favBlogIds.has(item.link);
+  return `<div class="item">
+    ${item.thumb ? `<img class="thumb" src="${esc(item.thumb)}" alt="">` : '<div class="thumb"></div>'}
+    <div class="main"><div class="title">${esc(title)}</div><div class="meta">${esc([item.member, item.date].filter(Boolean).join(' / '))}</div>
+      <div class="actions">
+        <a class="open-link" href="${esc(item.link || '../sakulabo/blog/')}" target="_blank" rel="noopener">ブログを開く</a>
+        <button class="fav-btn ${saved?'saved':''}" type="button" onclick="toggleBlogFav(event,'${escAttr(item.link || '')}')">${saved?'お気に入り済み':'お気に入り'}</button>
+      </div>
+    </div>
+  </div>`;
+}
+function mimiItem(item){
+  const saved = favMimiIds.has(item.id);
+  return `<div class="item"><span class="dot"></span><div class="main">
+    <div class="title">EP.${esc(item.episode || '')}</div>
+    <div class="meta">${esc(item.content || '').slice(0, 96)}${(item.content||'').length>96?'…':''}</div>
+    <div class="members">${memberChips(item.members)}</div>
+    <div class="actions">
+      <a class="open-link" href="${esc(sakumimiUrl(item))}" target="_blank" rel="noopener">公式で開く</a>
+      <button class="fav-btn ${saved?'saved':''}" type="button" onclick="toggleMimiFav(event,'${escAttr(item.id || '')}')">${saved?'お気に入り済み':'お気に入り'}</button>
+    </div>
+  </div></div>`;
+}
+function songMembers(song){
+  const title = song['タイトル'] || '';
+  if (Array.isArray(mvData?.[title]) && mvData[title].length) return mvData[title];
+  return Array.isArray(song['歌唱メンバー']) ? song['歌唱メンバー'] : [];
+}
+function songItem(song){
+  const urls = youtubeUrls(song['YouTube_URL']);
+  const videos = urls.map((url, i) => {
+    const vid = ytId(url);
+    return `<div class="yt-wrap"><iframe src="https://www.youtube.com/embed/${esc(vid)}?rel=0" title="${esc(song['タイトル'] || 'MV')}${urls.length > 1 ? ` ${i + 1}` : ''}" loading="lazy" allowfullscreen allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"></iframe></div>`;
+  }).join('');
+  const members = songMembers(song);
+  const meta = [
+    song['リリース名'] || song['収録'] || '',
+    song['センター'] ? `Center ${song['センター']}` : '',
+    song['MV監督'] ? `MV監督 ${song['MV監督']}` : ''
+  ].filter(Boolean);
+  return `<div class="item song-card"><div class="main">
+    ${videos ? `<div class="yt-grid">${videos}</div>` : ''}
+    <div class="title">${esc(song['タイトル'] || '楽曲')}</div>
+    ${meta.length ? `<div class="song-meta-grid">${meta.map(m=>`<span class="song-chip">${esc(m)}</span>`).join('')}</div>` : ''}
+    ${members.length ? `<div class="members">${memberChips(members)}</div>` : ''}
+    <div class="actions">
+      ${song['収録先URL'] ? `<a class="open-link" href="../sakulabo/song/" rel="noopener">SakuLaboで探す</a>` : ''}
+      ${urls[0] ? `<a class="fav-btn" href="${esc(urls[0])}" target="_blank" rel="noopener">YouTubeで開く</a>` : ''}
+    </div>
+  </div></div>`;
+}
+function songsSectionHtml(songs){
+  if (!songs.length) return '';
+  const isOpen = !!expanded.songs;
+  const limit = 2;
+  const shown = isOpen ? songs : songs.slice(0, limit);
+  const totalVideos = songs.reduce((sum, song) => sum + youtubeUrls(song['YouTube_URL']).length, 0);
+  const note = songs.length > 1 || totalVideos > 1
+    ? `<div class="range-note"><strong>MVが複数あります</strong>初期表示を絞っています。すべて見るから同じ日の楽曲/MVをまとめて確認できます。</div>`
+    : '';
+  const body = `${note}<div class="song-grid">${shown.map(songItem).join('')}</div>${songs.length>limit?`<button class="more-btn" type="button" onclick="toggleSection('songs')">${isOpen?'閉じる':`すべて表示 (${songs.length}件 / MV ${totalVideos}件)`}</button>`:''}`;
+  return `<section class="section"><div class="section-head"><div class="section-title">${esc(publishTitle('楽曲 / MV'))}</div><div class="count">${songs.length}曲 / ${totalVideos}MV</div></div>${body}</section>`;
+}
+function escAttr(s){return String(s??'').replace(/\\/g,'\\\\').replace(/'/g,"\\'").replace(/\n/g,' ');}
+function sectionHtml(key, title, items, renderer, limit=5){
+  if (!items.length) return '';
+  const isOpen = !!expanded[key];
+  const shown = isOpen ? items : items.slice(0, limit);
+  const body = `<div class="section-card"><div class="list">${shown.map(renderer).join('')}</div></div>${items.length>limit?`<button class="more-btn" type="button" onclick="toggleSection('${key}')">${isOpen?'閉じる':`すべて表示 (${items.length})`}</button>`:''}`;
+  return `<section class="section"><div class="section-head"><div class="section-title">${esc(title)}</div><div class="count">${items.length}件</div></div>${body}</section>`;
+}
+function scheduleRangeNote(dateKeyValue){
+  if (!scheduleData.length) return '<div class="range-note"><strong>スケジュールを読み込めませんでした</strong>SakuLaboのスケジュールデータを取得できないため、この日の予定は表示できません。</div>';
+  const keys = scheduleData.map(x=>dateKey(x.date)).filter(Boolean).sort();
+  const min = keys[0], max = keys[keys.length - 1];
+  if (!min || !max || (dateKeyValue >= min && dateKeyValue <= max)) return '';
+  return `<div class="range-note"><strong>この日のスケジュールは保存範囲外です</strong>SakuLaboのスケジュールは現在、${esc(dateLabel(min))}〜${esc(dateLabel(max))} 付近を中心に保持しています。過去日の記録は、ブログ・さくみみ・楽曲/MV・My Buddies history を長期アーカイブとして表示します。</div>`;
+}
+function render(){
+  document.getElementById('date-input').value = currentDate;
+  const d = parseDate(currentDate);
+  const showMimi = d && [2,5].includes(d.getDay());
+  const schedules = scheduleData.filter(x=>dateKey(x.date)===currentDate).sort((a,b)=>String(a.time||'').localeCompare(String(b.time||'')));
+  const lives = liveOptions.filter(x=>dateKey(x.date)===currentDate);
+  const blogs = blogData.filter(x=>dateKey(x.date)===currentDate);
+  const mimis = showMimi ? mimiData.filter(x=>dateKey(x.date)===currentDate).sort((a,b)=>(Number(b.episode)||0)-(Number(a.episode)||0)) : [];
+  const songs = songData.filter(x=>dateKey(x['リリース日'])===currentDate).sort((a,b)=>(Number(a.no)||0)-(Number(b.no)||0));
+  const sections = [
+    sectionHtml('history','過去のこの日の My Buddies history',historyItems,historyItem,5),
+    schedules.length ? `<section class="section"><div class="section-head"><div class="section-title">スケジュール</div><div class="count">${schedules.length}件</div></div><div class="section-card"><div class="list">${schedules.slice(0, expanded.schedule ? schedules.length : 6).map(scheduleItem).join('')}</div></div>${schedules.length>6?`<button class="more-btn" type="button" onclick="toggleSection('schedule')">${expanded.schedule?'閉じる':`すべて表示 (${schedules.length})`}</button>`:''}</section>` : '',
+    sectionHtml('lives','ライブ',lives,liveItem,5),
+    songsSectionHtml(songs),
+    sectionHtml('blogs', publishTitle('ブログ'), blogs, blogItem, 6),
+    sectionHtml('mimis', publishTitle('さくみみ'), mimis, mimiItem, 4)
+  ].filter(Boolean);
+  const note = !schedules.length ? scheduleRangeNote(currentDate) : '';
+  document.querySelector('h1').textContent = dateLabel(currentDate);
+  document.getElementById('content').innerHTML = note + (sections.length ? sections.join('') : '<div class="empty">この日の記録はまだありません</div>');
+}
+function toggleSection(key){expanded[key]=!expanded[key];render();}
+async function setDate(key){if(!key)return;currentDate=key;expanded={schedule:false,blogs:false,mimis:false,history:false,songs:false,lives:false};history.replaceState(null,'','?date='+encodeURIComponent(key));await loadHistoryForDate(currentDate);render();}
+function moveDate(n){setDate(addDays(currentDate,n));}
+async function toggleBlogFav(ev, id){
+  ev.preventDefault(); ev.stopPropagation();
+  if(!currentUser) return alert('お気に入り登録にはログインが必要です。');
+  const res = await fetch(AUTH_API+'?action=blog_like_toggle',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({blog_id:id})}).then(r=>r.json()).catch(()=>({ok:false}));
+  if(!res.ok) return alert(res.error || 'お気に入り登録に失敗しました。');
+  if(res.data.liked) favBlogIds.add(id); else favBlogIds.delete(id);
+  render();
+}
+async function toggleMimiFav(ev, id){
+  ev.preventDefault(); ev.stopPropagation();
+  if(!currentUser) return alert('お気に入り登録にはログインが必要です。');
+  const res = await fetch(AUTH_API+'?action=mimi_fav_toggle',{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({episode_id:id})}).then(r=>r.json()).catch(()=>({ok:false}));
+  if(!res.ok) return alert(res.error || 'お気に入り登録に失敗しました。');
+  if(res.data.saved) favMimiIds.add(id); else favMimiIds.delete(id);
+  render();
+}
+async function init(){
+  const params = new URLSearchParams(location.search);
+  currentDate = params.get('date') || todayKey();
+  document.getElementById('date-input').value = currentDate;
+  await Promise.all([
+    loadJson(DATA_PATHS.schedule, []).then(v=>scheduleData=Array.isArray(v)?v:[]),
+    loadJson(DATA_PATHS.blogs, []).then(v=>blogData=Array.isArray(v)?v:[]),
+    loadJson(DATA_PATHS.mimis, []).then(v=>mimiData=Array.isArray(v)?v:[]),
+    loadJson(DATA_PATHS.songs, []).then(v=>songData=Array.isArray(v)?v:[]),
+    loadJson(DATA_PATHS.live, []).then(v=>liveOptions=buildLiveOptions(v)),
+    loadJson(DATA_PATHS.mv, {}).then(v=>mvData=v&&typeof v==='object'?v:{}),
+    loadJson(DATA_PATHS.members, {}).then(v=>memberMap=v&&typeof v==='object'?v:{}),
+    loadAuth(),
+    loadHistoryForDate(currentDate)
+  ]);
+  render();
+}
+init();
+</script>
+</body>
+</html>
