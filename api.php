@@ -4112,7 +4112,7 @@ function actionFormListByAccount(): void { ensureFormTables();
         : "account_id=? AND status='active' AND visibility='public'";
     $st = db()->prepare("SELECT * FROM buddies_forms WHERE {$where} ORDER BY created_at DESC");
     $st->execute([$accountId]);
-    ok(array_map(fn($f) => buildFormData($f, true), $st->fetchAll()));
+    ok(array_map(fn($f) => buildFormData($f, $isOwner), $st->fetchAll()));
 }
 function actionFormCreate(): void { ensureFormTables();
     $a = requireVerifiedAccount(); $f = formEditableFields(body());

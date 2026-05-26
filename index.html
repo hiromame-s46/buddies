@@ -476,9 +476,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .history-image-actions input[type="file"] { padding:8px; font-size:12px; }
 .history-remove-btn { width:38px; height:38px; border-radius:12px; border:none; background:#fff5f5; color:#d33; cursor:pointer; display:grid; place-items:center; }
 .history-empty-note { border:1px dashed #ddd; border-radius:16px; padding:18px; color:#888; font-size:13px; text-align:center; line-height:1.7; }
-.history-page { position:fixed; inset:0; background:rgba(0,0,0,.28); z-index:1002; display:none; align-items:flex-end; overflow:hidden; }
-.history-page.active { display:flex; }
-.history-sheet { width:100%; max-height:86dvh; background:#fff; border-radius:24px 24px 0 0; overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; box-shadow:0 -10px 30px rgba(0,0,0,.12); }
+.history-page { position:fixed; inset:0; background:#fff; z-index:1002; display:none; overflow:hidden; }
+.history-page.active { display:block; }
+.history-sheet { width:100%; height:100dvh; background:#fff; overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
 .history-page .icon-button { background:transparent; border:none; box-shadow:none; }
 .history-page .history-edit-list { max-height:none; overflow:visible; padding-right:0; }
 .history-page-header { position:sticky; top:0; z-index:3; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:rgba(255,255,255,.94); border-bottom:1px solid #eee; backdrop-filter:blur(14px); }
@@ -488,6 +488,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .history-tab-btn { border:none; border-radius:999px; background:transparent; padding:10px 8px; font-size:13px; font-weight:800; color:#666; cursor:pointer; }
 .history-tab-btn.active { background:#fff; color:#111; box-shadow:0 1px 4px rgba(0,0,0,.06); }
 .history-panel-note { font-size:12px; color:#777; line-height:1.65; background:#fafafa; border:1px solid #f0f0f0; border-radius:14px; padding:10px 12px; }
+.history-panel-note + .next-live-edit-list { margin-top:14px; }
 .history-page-actions { position:fixed; left:0; right:0; bottom:0; z-index:4; display:flex; gap:10px; padding:12px 16px max(12px, env(safe-area-inset-bottom)); background:rgba(255,255,255,.94); border-top:1px solid #eee; backdrop-filter:blur(14px); }
 .history-live-select-label { font-size:11px; color:#777; font-weight:800; margin:2px 2px -2px; }
 
@@ -3611,11 +3612,11 @@ function normalizeHistoryClient(items) {
 }
 
 function historyLiveOptionsHtml(selectedId) {
-  const options = pastLiveOptions();
-  const selectedLive = selectedId ? liveDisplay(selectedId) : null;
-  const hasSelected = selectedId && !options.some(l => l.id === selectedId);
+  const options = editNextLives
+    .filter(id => isPastLive(liveDisplay(id)))
+    .map(id => liveDisplay(id))
+    .sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')) || String(a.title || '').localeCompare(String(b.title || '')));
   return `<option value="">ライブと紐づけない</option>
-    ${hasSelected ? `<option value="${esc(selectedId)}" selected>${esc(liveDateLabel(selectedLive.date, selectedLive.weekday))} ${esc(selectedLive.title)}</option>` : ''}
     ${options.map(live => `<option value="${esc(live.id)}" ${live.id === selectedId ? 'selected' : ''}>${esc(liveDateLabel(live.date, live.weekday))} ${esc(live.title)}${live.venue ? ` / ${esc(live.venue)}` : ''}</option>`).join('')}`;
 }
 
@@ -4228,6 +4229,10 @@ function toggleEditNextLive(id, checked) {
   } else {
     editNextLives = editNextLives.filter(v => v !== id);
   }
+  editHistory.forEach(item => {
+    if (item.live_id === id && !checked) item.live_id = '';
+  });
+  renderHistoryEditor();
 }
 
 function renderEditSns() {
