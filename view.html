@@ -85,7 +85,7 @@ main{padding:24px 22px 34px}
 .next-live-card .next-live-item{position:relative;grid-template-columns:minmax(88px,104px) 1fr;grid-template-rows:auto auto;column-gap:20px;align-items:center;min-height:96px;padding:16px 18px;border-color:#e6e6e6;border-radius:18px;background:linear-gradient(90deg,#fff 0%,#fff 35%,#fcfcfc 35%,#fcfcfc 100%);overflow:hidden}
 .next-live-card .next-live-item:before{content:"";position:absolute;top:14px;bottom:14px;left:124px;border-left:1px dashed #d9d9d9}
 .next-live-card .next-live-item:after{content:"";position:absolute;top:50%;left:124px;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid #e6e6e6;transform:translate(-50%,-50%);box-shadow:0 -50px 0 0 #fff,0 50px 0 0 #fff}
-.next-live-card .next-live-date{grid-row:1 / span 2;grid-column:1;display:grid;gap:2px;place-items:center;text-align:center;line-height:1.1;padding-right:6px;z-index:1}
+.next-live-card .next-live-date{grid-row:1 / span 3;grid-column:1;display:grid;gap:2px;place-items:center;align-self:center;text-align:center;line-height:1.1;padding-right:6px;z-index:1}
 .next-live-card .next-live-year{font-size:11px;font-weight:900;color:#777;letter-spacing:.08em}
 .next-live-card .next-live-month-day{display:flex;align-items:center;justify-content:center;gap:3px;color:#111;font-weight:950;line-height:1}
 .next-live-card .next-live-month,.next-live-card .next-live-day{font-size:23px;letter-spacing:.01em}
@@ -253,7 +253,7 @@ function seatAreaLabel(v){return v==='arena'?'アリーナ':v==='stand'?'スタ�
 function cleanSeatInfo(seat={}){const floor=String(seat.floor||'').replace(/[^0-9]/g,'').slice(0,2);const area=['arena','stand'].includes(seat.area)?seat.area:'';const block=String(seat.block||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,12);return{floor,area,block};}
 function seatHasValue(seat){const s=cleanSeatInfo(seat);return!!(s.floor||s.area||s.block);}
 function seatLabel(seat){const s=cleanSeatInfo(seat);return[s.floor?`${s.floor}階`:'',seatAreaLabel(s.area),s.block?`${s.block}ブロック`:''].filter(Boolean).join(' / ');}
-function nextLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !live.date||live.date>=today;});}
+function nextLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !live.date||live.date>=today;}).sort((a,b)=>String(liveDisplay(a).date||'9999-99-99').localeCompare(String(liveDisplay(b).date||'9999-99-99')));}
 function pastLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !!live.date&&live.date<today;}).sort((a,b)=>String(liveDisplay(b).date||'').localeCompare(String(liveDisplay(a).date||'')));}
 function setMeta(selector, attr, value){
   if (!value) return;

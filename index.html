@@ -383,7 +383,11 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .next-live-edit-count{margin-left:auto;align-self:center;flex-shrink:0;border-radius:999px;background:#fff;border:1px solid #e8e8e8;padding:4px 8px;font-size:11px;font-weight:800;color:#555}
 .next-live-seat-editor{flex:0 0 calc(100% - 26px);margin:10px 0 0 26px;padding:10px;border-radius:14px;background:#fff;border:1px solid #eee;display:grid;gap:8px}
 .next-live-seat-grid{display:grid;grid-template-columns:80px 1fr 1fr;gap:8px}
-.next-live-seat-grid input,.next-live-seat-grid select{min-width:0;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;padding:9px 10px;font:inherit;font-size:12px}
+.next-live-seat-field{display:grid;gap:4px}
+.next-live-seat-field span{font-size:10px;font-weight:900;color:#777;line-height:1}
+.next-live-seat-control{display:flex;align-items:center;gap:6px;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;padding:0 9px}
+.next-live-seat-control input,.next-live-seat-control select{width:100%;min-width:0;border:0;background:transparent;padding:9px 0;font:inherit;font-size:12px;outline:none}
+.next-live-seat-suffix{font-size:11px;font-weight:900;color:#777;white-space:nowrap;font-style:normal}
 .next-live-seat-note{font-size:10px;color:#999;line-height:1.5}
 @media(max-width:480px){.next-live-seat-grid{grid-template-columns:1fr}.next-live-seat-editor{flex-basis:100%;margin-left:0}}
 .next-live-more-btn{border:1px solid #e5e5e5;background:#fff;border-radius:999px;min-height:38px;font-size:13px;font-weight:800;color:#111;cursor:pointer}
@@ -1619,7 +1623,9 @@ function seatProximityLabel(a, b) {
 }
 function nextLiveIds(profile) {
   const ids = Array.isArray(profile?.next_lives) ? profile.next_lives : [];
-  return ids.filter(id => isFutureLive(liveDisplay(id)));
+  return ids
+    .filter(id => isFutureLive(liveDisplay(id)))
+    .sort((a, b) => String(liveDisplay(a).date || '9999-99-99').localeCompare(String(liveDisplay(b).date || '9999-99-99')));
 }
 function pastLiveIds(profile) {
   const ids = Array.isArray(profile?.next_lives) ? profile.next_lives : [];
@@ -4310,7 +4316,7 @@ function renderEditNextLives() {
   wrap.innerHTML = options.map(live => {
     const checked = editNextLives.includes(live.id);
     const seat = cleanSeatInfo(editNextLiveSeats[live.id] || {});
-    return `<label class="next-live-edit-item">
+    return `<div class="next-live-edit-item">
       <input type="checkbox" value="${esc(live.id)}" ${checked ? 'checked' : ''} onchange="toggleEditNextLive(this.value, this.checked)">
       <span class="next-live-edit-main">
         <span class="next-live-edit-date">${esc(liveDateLabel(live.date, live.weekday))}</span>
@@ -4319,17 +4325,34 @@ function renderEditNextLives() {
       </span>
       ${checked ? `<div class="next-live-seat-editor">
         <div class="next-live-seat-grid">
-          <input data-live-id="${esc(live.id)}" inputmode="numeric" placeholder="階" value="${esc(seat.floor)}" oninput="updateNextLiveSeat(this.dataset.liveId,'floor',this.value)">
-          <select data-live-id="${esc(live.id)}" onchange="updateNextLiveSeat(this.dataset.liveId,'area',this.value)">
-            <option value="">エリア</option>
-            <option value="arena" ${seat.area === 'arena' ? 'selected' : ''}>アリーナ</option>
-            <option value="stand" ${seat.area === 'stand' ? 'selected' : ''}>スタンド</option>
-          </select>
-          <input data-live-id="${esc(live.id)}" placeholder="ブロック" value="${esc(seat.block)}" oninput="updateNextLiveSeat(this.dataset.liveId,'block',this.value)">
+          <label class="next-live-seat-field">
+            <span>階</span>
+            <div class="next-live-seat-control">
+              <input data-live-id="${esc(live.id)}" inputmode="numeric" placeholder="1" value="${esc(seat.floor)}" oninput="updateNextLiveSeat(this.dataset.liveId,'floor',this.value)">
+              <em class="next-live-seat-suffix">階</em>
+            </div>
+          </label>
+          <label class="next-live-seat-field">
+            <span>エリア</span>
+            <div class="next-live-seat-control">
+              <select data-live-id="${esc(live.id)}" onchange="updateNextLiveSeat(this.dataset.liveId,'area',this.value)">
+                <option value="">未入力</option>
+                <option value="arena" ${seat.area === 'arena' ? 'selected' : ''}>アリーナ</option>
+                <option value="stand" ${seat.area === 'stand' ? 'selected' : ''}>スタンド</option>
+              </select>
+            </div>
+          </label>
+          <label class="next-live-seat-field">
+            <span>ブロック</span>
+            <div class="next-live-seat-control">
+              <input data-live-id="${esc(live.id)}" placeholder="A6" value="${esc(seat.block)}" oninput="updateNextLiveSeat(this.dataset.liveId,'block',this.value)">
+              <em class="next-live-seat-suffix">ブロック</em>
+            </div>
+          </label>
         </div>
         <div class="next-live-seat-note">階とブロックは半角英数字のみ保存されます。未入力でもOKです。</div>
       </div>` : ''}
-    </label>`;
+    </div>`;
   }).join('');
 }
 function updateNextLiveSeat(id, key, value) {
