@@ -39,7 +39,7 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 .intro-card{text-align:center;padding:20px 16px;border:0;box-shadow:none;background:#fafafa}
 .intro-card .sub{max-width:420px;margin:5px auto 0}
 .live-hero{text-align:center;padding:24px 18px}
-.live-hero .date-box{margin:0 auto 12px;border-right:0;border-bottom:1px dashed #ddd;padding:0 0 12px;max-width:120px}
+.live-hero .date-box{margin:0;border-right:0;border-bottom:1px dashed #ddd;padding:0 0 12px;min-width:112px}
 .live-hero .live-meta,.live-hero .actions{justify-content:center}
 .live-hero .date-year{font-size:11px}
 .live-hero .date-md{font-size:25px}
@@ -50,6 +50,10 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 .hero-detail{font-size:13px;color:#666;font-weight:700;line-height:1.55;margin-top:5px}
 .hero-seat{color:#333}
 .hero-count{display:flex;justify-content:center;margin-top:12px}
+.date-nav{display:flex;align-items:center;justify-content:center;gap:12px;margin:0 auto 12px}
+.date-nav-btn{width:42px;height:42px;border:1px solid #eee;border-radius:50%;display:grid;place-items:center;background:#fff;color:#111;text-decoration:none;font-size:23px;font-weight:500;line-height:1;touch-action:manipulation}
+.date-nav-btn:active{background:#f5f5f5;transform:scale(.97)}
+.date-nav-btn.disabled{visibility:hidden;pointer-events:none}
 .section{margin-top:18px}
 .section-title{font-size:15px;font-weight:900;margin:0 0 10px}
 .live-list{display:grid;gap:10px}
@@ -85,23 +89,29 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 .person-name{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .person-meta{font-size:11px;color:#777;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .empty{padding:18px;border-radius:18px;background:#fafafa;color:#888;font-size:13px;font-weight:700;text-align:center}
-.modal{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:flex-end;z-index:300}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:flex-end;z-index:300;overscroll-behavior:contain}
 .modal.active{display:flex}
-.sheet{width:100%;max-width:720px;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+.sheet{width:100%;max-width:720px;max-height:calc(100dvh - 32px);overflow-y:auto;-webkit-overflow-scrolling:touch;touch-action:pan-y;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;padding:20px 18px calc(20px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)}
 .sheet-title{font-size:18px;font-weight:900;margin-bottom:4px}
-.sheet-sub{font-size:12px;color:#777;font-weight:700;margin-bottom:14px}
-.seat-grid{display:grid;grid-template-columns:86px 1fr 1fr;gap:8px;margin-bottom:12px}
-.field{display:grid;gap:5px}
-.field span{font-size:10px;font-weight:900;color:#777}
-.control{display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:14px;background:#fafafa;padding:0 10px}
-.control input,.control select{width:100%;border:0;background:transparent;min-height:44px;font:inherit;font-size:16px;outline:none}
-.suffix{font-size:11px;font-weight:900;color:#777;white-space:nowrap}
+.sheet-sub{font-size:12px;color:#777;font-weight:700;margin-bottom:18px}
+.seat-grid{display:grid;grid-template-columns:104px minmax(142px,1fr) minmax(160px,1.15fr);gap:10px;margin-bottom:10px}
+.field{display:grid;gap:7px;min-width:0}
+.field span{font-size:12px;font-weight:900;color:#555}
+.control{display:flex;align-items:center;gap:7px;min-width:0;border:1px solid #e1e1e1;border-radius:14px;background:#fff;padding:0 12px;transition:border-color .15s,box-shadow .15s}
+.control:focus-within{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+.control input,.control select{width:100%;min-width:0;border:0;background:transparent;min-height:48px;padding:0;font:inherit;font-size:16px;color:#111;outline:none;-webkit-appearance:none;appearance:none}
+.control input::placeholder{color:#b1b1b1}
+.suffix{font-size:12px;font-weight:800;color:#777;white-space:nowrap;font-style:normal}
+.seat-help{font-size:11px;line-height:1.55;color:#888;margin:0 0 16px}
+.sheet .actions{gap:10px}
+.sheet .btn{touch-action:manipulation;min-height:46px}
+.sheet .btn:disabled{opacity:.55;cursor:wait}
 .toast{position:fixed;left:50%;bottom:94px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:.2s;z-index:400}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 .floating-tabbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:90%;max-width:380px;background:#fff;border:1px solid var(--line);border-radius:9999px;box-shadow:0 4px 12px rgba(0,0,0,.08);padding:8px;display:flex;justify-content:space-around;z-index:100}
 .tab-btn{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 4px;border-radius:9999px;color:#bbb;background:transparent;border:0;text-decoration:none}
 .tab-btn.active{color:#000}.tab-btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-@media(max-width:520px){.app{padding-left:14px;padding-right:14px}.live-card{grid-template-columns:68px 1fr auto;padding:12px}.filters{grid-template-columns:1fr}.seat-grid{grid-template-columns:1fr}}
+@media(max-width:520px){.app{padding-left:14px;padding-right:14px}.live-card{grid-template-columns:68px 1fr auto;padding:12px}.filters{grid-template-columns:1fr}.seat-grid{grid-template-columns:92px minmax(0,1fr)}.seat-block{grid-column:1 / -1}.sheet .actions{display:grid}.sheet .actions .btn{width:100%}}
 </style>
 </head>
 <body>
@@ -124,14 +134,15 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
     <div class="sheet-title">参加予定と座席</div>
     <div id="seat-modal-sub" class="sheet-sub"></div>
     <div class="seat-grid">
-      <label class="field"><span>階</span><div class="control"><input id="seat-floor" inputmode="numeric" placeholder="1"><em class="suffix">階</em></div></label>
+      <label class="field"><span>階</span><div class="control"><input id="seat-floor" inputmode="numeric" placeholder="例: 2"><em class="suffix">階</em></div></label>
       <label class="field"><span>エリア</span><div class="control"><select id="seat-area"><option value="">未入力</option><option value="arena">アリーナ</option><option value="stand">スタンド</option></select></div></label>
-      <label class="field"><span>ブロック</span><div class="control"><input id="seat-block" placeholder="A6"><em class="suffix">ブロック</em></div></label>
+      <label class="field seat-block"><span>ブロック</span><div class="control"><input id="seat-block" autocapitalize="characters" placeholder="例: A6"><em class="suffix">ブロック</em></div></label>
     </div>
+    <p class="seat-help">チケットに記載されている範囲で入力してください。座席は未入力でも参加予定に登録できます。</p>
     <div class="actions">
       <button class="btn" type="button" onclick="closeSeatModal()">キャンセル</button>
       <button id="leave-btn" class="btn danger" type="button" onclick="saveSeatModal(false)">参加予定を外す</button>
-      <button class="btn black" type="button" onclick="saveSeatModal(true)">参加予定に登録</button>
+      <button id="seat-save-btn" class="btn black" type="button" onclick="saveSeatModal(true)">参加予定を保存</button>
     </div>
   </div>
 </div>
@@ -139,7 +150,7 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 <script>
 const API='./api.php';
 const LIVE_DATA='../data/live.json';
-let me=null, liveOptions=[], participants=[], currentLiveId='', seatModalLiveId='';
+let me=null, liveOptions=[], participants=[], currentLiveId='', seatModalLiveId='', seatSaving=false;
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
@@ -166,7 +177,9 @@ function isMineLive(id){return myLiveIds().includes(id);}
 function participantsFor(id){return participants.filter(p=>Array.isArray(p.next_lives)&&p.next_lives.includes(id));}
 function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove('show'),1800);}
 function renderDateBox(live){const p=dateParts(live);return `<div class="date-box"><div class="date-year">${esc(p.year)}</div><div class="date-md">${esc(p.md)}</div><div class="date-week">${esc(p.week)}</div></div>`;}
-function liveCard(live){const count=participantsFor(live.id).length;const mine=isMineLive(live.id);const seat=mySeats()[live.id];return `<a class="live-card ${mine?'mine':''}" href="./live.html?live=${encodeURIComponent(live.id)}">${renderDateBox(live)}<div class="live-main"><div class="live-title">${esc(live.title)}</div>${live.venue?`<div class="live-venue">${esc(live.venue)}</div>`:''}<div class="live-meta"><span class="chip">${count}人参加予定</span>${mine?'<span class="chip dark">参加予定</span>':''}${seatHasValue(seat)?`<span class="chip">${esc(seatLabel(seat))}</span>`:''}</div></div><div class="chev">›</div></a>`;}
+function neighboringLives(id){const i=liveOptions.findIndex(l=>l.id===id);return{prev:i>0?liveOptions[i-1]:null,next:i>=0&&i<liveOptions.length-1?liveOptions[i+1]:null};}
+function renderDateNavigator(live){const nearby=neighboringLives(live.id);const link=(target,side,arrow)=>target?`<a class="date-nav-btn" href="./live.html?live=${encodeURIComponent(target.id)}" aria-label="${side}の日程へ：${esc(liveDateLabel(target))}">${arrow}</a>`:'<span class="date-nav-btn disabled" aria-hidden="true">›</span>';return `<div class="date-nav">${link(nearby.prev,'前','‹')}${renderDateBox(live)}${link(nearby.next,'次','›')}</div>`;}
+function liveCard(live){const count=participantsFor(live.id).length;const mine=isMineLive(live.id);const seat=mySeats()[live.id];return `<a class="live-card ${mine?'mine':''}" href="./live.html?live=${encodeURIComponent(live.id)}">${renderDateBox(live)}<div class="live-main"><div class="live-title">${esc(live.title)}</div>${live.venue?`<div class="live-venue">${esc(live.venue)}</div>`:''}${seatHasValue(seat)?`<div class="live-venue">${esc(seatLabel(seat))}</div>`:''}<div class="live-meta"><span class="chip">${count}人参加予定</span>${mine?'<span class="chip dark">参加予定</span>':''}</div></div><div class="chev">›</div></a>`;}
 function renderList(){currentLiveId='';const mineSet=new Set(myLiveIds());const lives=futureLives();const my=lives.filter(l=>mineSet.has(l.id));const others=lives.filter(l=>!mineSet.has(l.id));document.getElementById('app').innerHTML=`<section class="section"><div class="card intro-card"><div class="title">ライブ一覧</div><div class="sub">参加予定の登録と、同じ公演に行くBuddiesを確認できます。</div></div></section>${my.length?`<section class="section"><h2 class="section-title">自分が参加するライブ</h2><div class="live-list">${my.map(liveCard).join('')}</div></section>`:''}<section class="section"><h2 class="section-title">その他のライブ</h2><div class="live-list">${others.map(liveCard).join('')||'<div class="empty">その他のライブ情報がありません。</div>'}</div></section>`;}
 function renderDetail(){
   const live=liveDisplay(currentLiveId);
@@ -181,12 +194,13 @@ function renderDetail(){
   if(area) rows=rows.filter(r=>r.seat.area===area);
   rows.sort((a,b)=>(near ? Number(!!b.near)-Number(!!a.near) : 0)||getDisplayName(a.p).localeCompare(getDisplayName(b.p),'ja'));
   const editIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
-  document.getElementById('app').innerHTML=`<section class="section"><div class="card live-hero">${renderDateBox(live)}<div>${mine?'<div class="hero-attending">参加予定</div>':''}<div class="title">${esc(live.title)}</div>${live.venue?`<div class="hero-detail">${esc(live.venue)}</div>`:''}${seatHasValue(mySeat)?`<div class="hero-detail hero-seat">${esc(seatLabel(mySeat))}</div>`:''}<div class="hero-count"><span class="chip">${all.length}人参加予定</span></div><div class="actions" style="margin-top:16px"><button class="btn seat-action-btn ${mine?'edit':'black'}" onclick="openSeatModal(currentLiveId)">${mine?`${editIcon}参加予定・座席を編集`:'参加予定に登録'}</button></div></div></div></section><section class="section"><h2 class="section-title">参加するBuddies</h2><div class="filters"><input id="q" class="input" placeholder="名前・ブロック・都道府県で検索" value="${esc(q)}" oninput="renderDetail()"><select id="area" class="select" onchange="renderDetail()"><option value="">全エリア</option><option value="arena" ${area==='arena'?'selected':''}>アリーナ</option><option value="stand" ${area==='stand'?'selected':''}>スタンド</option></select></div>${seatHasValue(mySeat)?`<label class="toggle-row"><input id="near" type="checkbox" ${near?'checked':''} onchange="renderDetail()">自分の席と近いBuddiesを優先して表示</label>`:''}<div class="people">${rows.map(({p,seat,near})=>`<a class="person" href="./view.html?id=${encodeURIComponent(p.id)}&from=live&live=${encodeURIComponent(currentLiveId)}">${avatarHtml(p)}<div class="person-main"><div class="person-name">${esc(getDisplayName(p))}</div><div class="person-meta">${esc([seatHasValue(seat)?seatLabel(seat):'座席未登録',p.location,near].filter(Boolean).join(' / '))}</div></div></a>`).join('')||'<div class="empty">条件に合うBuddiesがいません。</div>'}</div></section>`;
+  document.getElementById('app').innerHTML=`<section class="section"><div class="card live-hero">${renderDateNavigator(live)}<div>${mine?'<div class="hero-attending">参加予定</div>':''}<div class="title">${esc(live.title)}</div>${live.venue?`<div class="hero-detail">${esc(live.venue)}</div>`:''}${seatHasValue(mySeat)?`<div class="hero-detail hero-seat">${esc(seatLabel(mySeat))}</div>`:''}<div class="hero-count"><span class="chip">${all.length}人参加予定</span></div><div class="actions" style="margin-top:16px"><button class="btn seat-action-btn ${mine?'edit':'black'}" onclick="openSeatModal(currentLiveId)">${mine?`${editIcon}参加予定・座席を編集`:'参加予定に登録'}</button></div></div></div></section><section class="section"><h2 class="section-title">参加するBuddies</h2><div class="filters"><input id="q" class="input" placeholder="名前・ブロック・都道府県で検索" value="${esc(q)}" oninput="renderDetail()"><select id="area" class="select" onchange="renderDetail()"><option value="">全エリア</option><option value="arena" ${area==='arena'?'selected':''}>アリーナ</option><option value="stand" ${area==='stand'?'selected':''}>スタンド</option></select></div>${seatHasValue(mySeat)?`<label class="toggle-row"><input id="near" type="checkbox" ${near?'checked':''} onchange="renderDetail()">自分の席と近いBuddiesを優先して表示</label>`:''}<div class="people">${rows.map(({p,seat,near})=>`<a class="person" href="./view.html?id=${encodeURIComponent(p.id)}&from=live&live=${encodeURIComponent(currentLiveId)}">${avatarHtml(p)}<div class="person-main"><div class="person-name">${esc(getDisplayName(p))}</div><div class="person-meta">${esc([seatHasValue(seat)?seatLabel(seat):'座席未登録',p.location,near].filter(Boolean).join(' / '))}</div></div></a>`).join('')||'<div class="empty">条件に合うBuddiesがいません。</div>'}</div></section>`;
 }
 function render(){const param=new URLSearchParams(location.search).get('live')||'';currentLiveId=param;document.getElementById('header-back').href=currentLiveId?'./live.html':'./';document.getElementById('account-area').innerHTML=accountAvatarHtml();if(currentLiveId)renderDetail();else renderList();}
-function openSeatModal(id){if(!me){location.href='./?live_redirect='+encodeURIComponent(`live.html?live=${encodeURIComponent(id)}`);return;}seatModalLiveId=id;const live=liveDisplay(id);const seat=cleanSeatInfo(mySeats()[id]||{});document.getElementById('seat-modal-sub').textContent=`${liveDateLabel(live)} ${live.title}`;document.getElementById('seat-floor').value=seat.floor;document.getElementById('seat-area').value=seat.area;document.getElementById('seat-block').value=seat.block;document.getElementById('leave-btn').style.display=isMineLive(id)?'inline-flex':'none';document.getElementById('seat-modal').classList.add('active');document.body.style.overflow='hidden';}
-function closeSeatModal(){document.getElementById('seat-modal').classList.remove('active');document.body.style.overflow='';}
-async function saveSeatModal(join){if(!me||!seatModalLiveId)return;let lives=myLiveIds().slice();let seats={...mySeats()};if(join&&!lives.includes(seatModalLiveId))lives.push(seatModalLiveId);if(!join){lives=lives.filter(id=>id!==seatModalLiveId);delete seats[seatModalLiveId];}else{const seat=cleanSeatInfo({floor:document.getElementById('seat-floor').value,area:document.getElementById('seat-area').value,block:document.getElementById('seat-block').value});if(seatHasValue(seat))seats[seatModalLiveId]=seat;else delete seats[seatModalLiveId];}try{const res=await fetch(`${API}?action=buddies_next_live_update`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({next_lives:lives,next_live_seats:seats})});const json=await res.json();if(!json.ok){toast(json.error||'保存できませんでした');return;}me=json.data;await loadParticipants();closeSeatModal();render();toast(join?'参加予定を保存しました':'参加予定を外しました');}catch(e){toast('通信エラーが発生しました');}}
+function setSeatSaving(saving){seatSaving=saving;const save=document.getElementById('seat-save-btn');const leave=document.getElementById('leave-btn');if(save){save.disabled=saving;save.textContent=saving?'保存中…':'参加予定を保存';}if(leave)leave.disabled=saving;}
+function openSeatModal(id){if(!me){location.href='./?live_redirect='+encodeURIComponent(`live.html?live=${encodeURIComponent(id)}`);return;}seatModalLiveId=id;const live=liveDisplay(id);const seat=cleanSeatInfo(mySeats()[id]||{});setSeatSaving(false);document.getElementById('seat-modal-sub').textContent=`${liveDateLabel(live)} ${live.title}`;document.getElementById('seat-floor').value=seat.floor;document.getElementById('seat-area').value=seat.area;document.getElementById('seat-block').value=seat.block;document.getElementById('leave-btn').style.display=isMineLive(id)?'inline-flex':'none';document.getElementById('seat-modal').classList.add('active');}
+function closeSeatModal(){const active=document.activeElement;if(active&&document.getElementById('seat-modal').contains(active))active.blur();document.getElementById('seat-modal').classList.remove('active');}
+async function saveSeatModal(join){if(!me||!seatModalLiveId||seatSaving)return;let lives=myLiveIds().slice();let seats={...mySeats()};if(join&&!lives.includes(seatModalLiveId))lives.push(seatModalLiveId);if(!join){lives=lives.filter(id=>id!==seatModalLiveId);delete seats[seatModalLiveId];}else{const seat=cleanSeatInfo({floor:document.getElementById('seat-floor').value,area:document.getElementById('seat-area').value,block:document.getElementById('seat-block').value});if(seatHasValue(seat))seats[seatModalLiveId]=seat;else delete seats[seatModalLiveId];}setSeatSaving(true);try{const res=await fetch(`${API}?action=buddies_next_live_update`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({next_lives:lives,next_live_seats:seats})});const json=await res.json();if(!json.ok){toast(json.error||'保存できませんでした');return;}me=json.data;closeSeatModal();render();toast(join?'参加予定を保存しました':'参加予定を外しました');try{await loadParticipants();render();}catch(e){}}catch(e){toast('通信エラーが発生しました');}finally{setSeatSaving(false);}}
 async function loadParticipants(){const res=await fetch(`${API}?action=buddies_live_participants&limit=1000`,{credentials:'include'});const json=await res.json();participants=json.ok&&Array.isArray(json.data)?json.data:[];}
 async function init(){try{const [meRes,liveRes]=await Promise.all([fetch(`${API}?action=auth_me`,{credentials:'include'}).catch(()=>null),fetch(`${LIVE_DATA}?_=${Date.now()}`)]);if(meRes){try{const j=await meRes.json();me=j.ok?j.data:null;}catch(e){}}liveOptions=buildLiveOptions(await liveRes.json());await loadParticipants();render();}catch(e){document.getElementById('app').innerHTML='<div class="empty">読み込みに失敗しました。</div>';}}
 init();
