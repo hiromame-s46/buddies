@@ -10,11 +10,15 @@ if (!$profile) {
     $title = 'Buddies profile';
     $desc = 'プロフィールが見つかりませんでした。';
     $image = BUDDIES_BASE_URL . 'icon/android-chrome-512x512.png';
+    $imageWidth = 512;
+    $imageHeight = 512;
     $appUrl = BUDDIES_BASE_URL;
 } else {
     $title = $profile['display_name'] . 'のBuddiesプロフィール';
     $desc = buddies_meta_description($profile);
     $image = buddies_image_url((int)$profile['id']);
+    $imageWidth = 1200;
+    $imageHeight = 630;
     $appUrl = buddies_app_url((int)$profile['id']);
 }
 ?>
@@ -30,14 +34,18 @@ if (!$profile) {
 <meta property="og:type" content="profile">
 <meta property="og:url" content="<?= buddies_esc(buddies_profile_url($uid)) ?>">
 <meta property="og:image" content="<?= buddies_esc($image) ?>">
-<meta property="og:image:width" content="1200">
-<meta property="og:image:height" content="630">
+<meta property="og:image:width" content="<?= $imageWidth ?>">
+<meta property="og:image:height" content="<?= $imageHeight ?>">
 <meta property="og:site_name" content="Buddies">
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="<?= buddies_esc($title) ?>">
 <meta name="twitter:description" content="<?= buddies_esc($desc) ?>">
 <meta name="twitter:image" content="<?= buddies_esc($image) ?>">
 <link rel="canonical" href="<?= buddies_esc(buddies_profile_url($uid)) ?>">
+<link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+<link rel="manifest" href="icon/site.webmanifest">
 <style>
 *{box-sizing:border-box}
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f7f7f7;color:#111;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;padding:24px}

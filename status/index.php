@@ -8,7 +8,25 @@ $releases = $data['releases'] ?? [];
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>システムステータス</title>
+  <title>システムステータス - Buddies profile</title>
+  <meta name="description" content="Buddies profile のサービス稼働状況と更新情報を確認できます。">
+  <meta property="og:title" content="システムステータス - Buddies profile">
+  <meta property="og:description" content="Buddies profile のサービス稼働状況と更新情報を確認できます。">
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/status/">
+  <meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+  <meta property="og:image:width" content="512">
+  <meta property="og:image:height" content="512">
+  <meta property="og:site_name" content="Buddies">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="システムステータス - Buddies profile">
+  <meta name="twitter:description" content="Buddies profile のサービス稼働状況と更新情報を確認できます。">
+  <meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+  <link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/status/">
+  <link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="../icon/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="../icon/favicon-16x16.png">
+  <link rel="manifest" href="../icon/site.webmanifest">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }

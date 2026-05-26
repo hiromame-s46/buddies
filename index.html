@@ -14,10 +14,12 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/">
 <meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
 <meta property="og:site_name" content="Buddies">
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="Buddies profile">
 <meta name="twitter:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。推しメン・好きな曲・SNSをまとめてシェア。">
 <meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
@@ -387,14 +389,14 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .next-live-edit-venue{display:block;font-size:11px;color:#777;line-height:1.45;margin-top:2px}
 .next-live-edit-count{margin-left:auto;align-self:center;flex-shrink:0;border-radius:999px;background:#fff;border:1px solid #e8e8e8;padding:4px 8px;font-size:11px;font-weight:800;color:#555}
 .next-live-seat-editor{flex:0 0 calc(100% - 26px);margin:10px 0 0 26px;padding:10px;border-radius:14px;background:#fff;border:1px solid #eee;display:grid;gap:8px}
-.next-live-seat-grid{display:grid;grid-template-columns:80px 1fr 1fr;gap:8px}
-.next-live-seat-field{display:grid;gap:4px}
+.next-live-seat-grid{display:grid;grid-template-columns:minmax(70px,.7fr) minmax(108px,1fr) minmax(138px,1.25fr);gap:8px}
+.next-live-seat-field{display:grid;gap:4px;min-width:0}
 .next-live-seat-field span{font-size:10px;font-weight:900;color:#777;line-height:1}
-.next-live-seat-control{display:flex;align-items:center;gap:6px;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;padding:0 9px}
+.next-live-seat-control{display:flex;align-items:center;gap:5px;min-width:0;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;padding:0 8px}
 .next-live-seat-control input,.next-live-seat-control select{width:100%;min-width:0;border:0;background:transparent;padding:9px 0;font:inherit;font-size:12px;outline:none}
 .next-live-seat-suffix{font-size:11px;font-weight:900;color:#777;white-space:nowrap;font-style:normal}
 .next-live-seat-note{font-size:10px;color:#999;line-height:1.5}
-@media(max-width:480px){.next-live-seat-grid{grid-template-columns:1fr}.next-live-seat-editor{flex-basis:100%;margin-left:0}}
+@media(max-width:640px){.next-live-seat-grid{grid-template-columns:1fr}.next-live-seat-editor{flex-basis:100%;margin-left:0}}
 .next-live-more-btn{border:1px solid #e5e5e5;background:#fff;border-radius:999px;min-height:38px;font-size:13px;font-weight:800;color:#111;cursor:pointer}
 .next-with-list{display:grid;gap:10px;margin:8px 0 18px}
 .next-with-card{border:1px solid #eee;border-radius:18px;background:#fff;padding:13px 14px;display:grid;gap:8px}
@@ -5253,7 +5255,7 @@ function shareToX() {
   if (!me) return;
   const tpl = expandPostTemplate(me.post_template || '').trim();
   const profileUrl = buildProfileURL(me.id);
-  const profileText = `${getDisplayName(me)}のBuddiesプロフィール`;
+  const profileText = `${getDisplayName(me)}のBuddies profile\n#BuddiesProfile #櫻坂46 @hiromame_sakura\n${profileUrl}`;
 
   if (tpl) {
     // タグあり → 選択シートを表示
@@ -5261,7 +5263,7 @@ function shareToX() {
       {
         label: 'プロフィールを共有',
         sub: profileUrl,
-        action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}&url=${encodeURIComponent(profileUrl)}`, '_blank'),
+        action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}`, '_blank'),
       },
       {
         label: '紹介タグを共有',
@@ -5270,7 +5272,7 @@ function shareToX() {
       },
     ]);
   } else {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}&url=${encodeURIComponent(profileUrl)}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}`, '_blank');
   }
 }
 

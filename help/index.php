@@ -8,6 +8,24 @@ $data = file_exists('data.json') ? file_get_contents('data.json') : '{"categorie
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Buddies profile ヘルプ</title>
+<meta name="description" content="Buddies profile の使い方やよくある質問を確認できます。">
+<meta property="og:title" content="Buddies profile ヘルプ">
+<meta property="og:description" content="Buddies profile の使い方やよくある質問を確認できます。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/help/">
+<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:site_name" content="Buddies">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="Buddies profile ヘルプ">
+<meta name="twitter:description" content="Buddies profile の使い方やよくある質問を確認できます。">
+<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/help/">
+<link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="../icon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="../icon/favicon-16x16.png">
+<link rel="manifest" href="../icon/site.webmanifest">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
 :root{--fg:#111;--muted:#666;--line:#e5e5e5}

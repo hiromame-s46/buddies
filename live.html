@@ -4,6 +4,24 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>NEXT LIVE | Buddies profile</title>
+<meta name="description" content="Buddies profile で次のライブ予定と参加予定のBuddiesを確認できます。">
+<meta property="og:title" content="NEXT LIVE | Buddies profile">
+<meta property="og:description" content="次のライブ予定と参加予定のBuddiesを確認できます。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/live.html">
+<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<meta property="og:image:width" content="512">
+<meta property="og:image:height" content="512">
+<meta property="og:site_name" content="Buddies">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="NEXT LIVE | Buddies profile">
+<meta name="twitter:description" content="次のライブ予定と参加予定のBuddiesを確認できます。">
+<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
+<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/live.html">
+<link rel="apple-touch-icon" sizes="180x180" href="icon/apple-touch-icon.png">
+<link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
+<link rel="manifest" href="icon/site.webmanifest">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 :root{--ink:#111;--muted:#666;--line:#e8e8e8;--soft:#f7f7f7}
@@ -28,6 +46,10 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 .live-hero .date-week{font-size:11px}
 .live-hero .title{font-size:19px;line-height:1.45}
 .live-hero .sub{font-size:14px;color:#555;font-weight:800;margin-top:5px}
+.hero-attending{display:inline-flex;align-items:center;min-height:27px;margin-bottom:10px;border-radius:999px;background:#111;color:#fff;padding:4px 12px;font-size:11px;font-weight:900}
+.hero-detail{font-size:13px;color:#666;font-weight:700;line-height:1.55;margin-top:5px}
+.hero-seat{color:#333}
+.hero-count{display:flex;justify-content:center;margin-top:12px}
 .section{margin-top:18px}
 .section-title{font-size:15px;font-weight:900;margin:0 0 10px}
 .live-list{display:grid;gap:10px}
@@ -48,6 +70,9 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 .btn{border:1px solid #ddd;background:#fff;color:#111;border-radius:999px;min-height:40px;padding:9px 14px;font:inherit;font-size:13px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
 .btn.black{background:#111;color:#fff;border-color:#111}
 .btn.danger{background:#fff;color:#dc2626;border-color:#fecaca}
+.seat-action-btn{min-height:44px;padding:10px 20px}
+.seat-action-btn.edit{background:#fff;color:#333;border-color:#e5e5e5;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.seat-action-btn.edit svg{width:15px;height:15px}
 .filters{display:grid;grid-template-columns:1fr 120px;gap:8px}
 .input,.select{width:100%;border:1px solid #ddd;background:#fff;border-radius:14px;min-height:44px;padding:10px 12px;font:inherit;font-size:16px;outline:none}
 .toggle-row{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:800;color:#555}
@@ -143,7 +168,21 @@ function toast(t){const el=document.getElementById('toast');el.textContent=t;el.
 function renderDateBox(live){const p=dateParts(live);return `<div class="date-box"><div class="date-year">${esc(p.year)}</div><div class="date-md">${esc(p.md)}</div><div class="date-week">${esc(p.week)}</div></div>`;}
 function liveCard(live){const count=participantsFor(live.id).length;const mine=isMineLive(live.id);const seat=mySeats()[live.id];return `<a class="live-card ${mine?'mine':''}" href="./live.html?live=${encodeURIComponent(live.id)}">${renderDateBox(live)}<div class="live-main"><div class="live-title">${esc(live.title)}</div>${live.venue?`<div class="live-venue">${esc(live.venue)}</div>`:''}<div class="live-meta"><span class="chip">${count}人参加予定</span>${mine?'<span class="chip dark">参加予定</span>':''}${seatHasValue(seat)?`<span class="chip">${esc(seatLabel(seat))}</span>`:''}</div></div><div class="chev">›</div></a>`;}
 function renderList(){currentLiveId='';const mineSet=new Set(myLiveIds());const lives=futureLives();const my=lives.filter(l=>mineSet.has(l.id));const others=lives.filter(l=>!mineSet.has(l.id));document.getElementById('app').innerHTML=`<section class="section"><div class="card intro-card"><div class="title">ライブ一覧</div><div class="sub">参加予定の登録と、同じ公演に行くBuddiesを確認できます。</div></div></section>${my.length?`<section class="section"><h2 class="section-title">自分が参加するライブ</h2><div class="live-list">${my.map(liveCard).join('')}</div></section>`:''}<section class="section"><h2 class="section-title">その他のライブ</h2><div class="live-list">${others.map(liveCard).join('')||'<div class="empty">その他のライブ情報がありません。</div>'}</div></section>`;}
-function renderDetail(){const live=liveDisplay(currentLiveId);const mine=isMineLive(currentLiveId);const mySeat=mySeats()[currentLiveId];const all=participantsFor(currentLiveId);const q=(document.getElementById('q')?.value||'').trim().toLowerCase();const area=document.getElementById('area')?.value||'';const near=!!document.getElementById('near')?.checked;let rows=all.map(p=>({p,seat:cleanSeatInfo(p.next_live_seats?.[currentLiveId]),near:seatProximityLabel(mySeat,p.next_live_seats?.[currentLiveId])}));if(q)rows=rows.filter(r=>getDisplayName(r.p).toLowerCase().includes(q)||r.seat.block.toLowerCase().includes(q)||String(r.p.location||'').toLowerCase().includes(q));if(area)rows=rows.filter(r=>r.seat.area===area);if(near&&seatHasValue(mySeat))rows=rows.filter(r=>r.near);rows.sort((a,b)=>Number(!!b.near)-Number(!!a.near)||getDisplayName(a.p).localeCompare(getDisplayName(b.p),'ja'));document.getElementById('app').innerHTML=`<section class="section"><div class="card live-hero">${renderDateBox(live)}<div><div class="title">${esc(live.title)}</div>${live.venue?`<div class="sub">${esc(live.venue)}</div>`:''}<div class="live-meta"><span class="chip">${all.length}人参加予定</span>${mine?'<span class="chip dark">参加予定</span>':''}${seatHasValue(mySeat)?`<span class="chip">${esc(seatLabel(mySeat))}</span>`:''}</div><div class="actions" style="margin-top:14px"><button class="btn black" onclick="openSeatModal(currentLiveId)">${mine?'参加予定・座席を編集':'参加予定に登録'}</button></div></div></div></section><section class="section"><h2 class="section-title">参加するBuddies</h2><div class="filters"><input id="q" class="input" placeholder="名前・ブロック・都道府県で検索" value="${esc(q)}" oninput="renderDetail()"><select id="area" class="select" onchange="renderDetail()"><option value="">全エリア</option><option value="arena" ${area==='arena'?'selected':''}>アリーナ</option><option value="stand" ${area==='stand'?'selected':''}>スタンド</option></select></div>${seatHasValue(mySeat)?`<label class="toggle-row"><input id="near" type="checkbox" ${near?'checked':''} onchange="renderDetail()">自分の席と近いBuddiesだけ表示</label>`:''}<div class="people">${rows.map(({p,seat,near})=>`<a class="person" href="./view.html?id=${encodeURIComponent(p.id)}&from=live&live=${encodeURIComponent(currentLiveId)}">${avatarHtml(p)}<div class="person-main"><div class="person-name">${esc(getDisplayName(p))}</div><div class="person-meta">${esc([seatHasValue(seat)?seatLabel(seat):'座席未登録',p.location,near].filter(Boolean).join(' / '))}</div></div></a>`).join('')||'<div class="empty">条件に合うBuddiesがいません。</div>'}</div></section>`;}
+function renderDetail(){
+  const live=liveDisplay(currentLiveId);
+  const mine=isMineLive(currentLiveId);
+  const mySeat=mySeats()[currentLiveId];
+  const all=participantsFor(currentLiveId);
+  const q=(document.getElementById('q')?.value||'').trim().toLowerCase();
+  const area=document.getElementById('area')?.value||'';
+  const near=!!document.getElementById('near')?.checked;
+  let rows=all.map(p=>({p,seat:cleanSeatInfo(p.next_live_seats?.[currentLiveId]),near:seatProximityLabel(mySeat,p.next_live_seats?.[currentLiveId])}));
+  if(q) rows=rows.filter(r=>getDisplayName(r.p).toLowerCase().includes(q)||r.seat.block.toLowerCase().includes(q)||String(r.p.location||'').toLowerCase().includes(q));
+  if(area) rows=rows.filter(r=>r.seat.area===area);
+  rows.sort((a,b)=>(near ? Number(!!b.near)-Number(!!a.near) : 0)||getDisplayName(a.p).localeCompare(getDisplayName(b.p),'ja'));
+  const editIcon='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+  document.getElementById('app').innerHTML=`<section class="section"><div class="card live-hero">${renderDateBox(live)}<div>${mine?'<div class="hero-attending">参加予定</div>':''}<div class="title">${esc(live.title)}</div>${live.venue?`<div class="hero-detail">${esc(live.venue)}</div>`:''}${seatHasValue(mySeat)?`<div class="hero-detail hero-seat">${esc(seatLabel(mySeat))}</div>`:''}<div class="hero-count"><span class="chip">${all.length}人参加予定</span></div><div class="actions" style="margin-top:16px"><button class="btn seat-action-btn ${mine?'edit':'black'}" onclick="openSeatModal(currentLiveId)">${mine?`${editIcon}参加予定・座席を編集`:'参加予定に登録'}</button></div></div></div></section><section class="section"><h2 class="section-title">参加するBuddies</h2><div class="filters"><input id="q" class="input" placeholder="名前・ブロック・都道府県で検索" value="${esc(q)}" oninput="renderDetail()"><select id="area" class="select" onchange="renderDetail()"><option value="">全エリア</option><option value="arena" ${area==='arena'?'selected':''}>アリーナ</option><option value="stand" ${area==='stand'?'selected':''}>スタンド</option></select></div>${seatHasValue(mySeat)?`<label class="toggle-row"><input id="near" type="checkbox" ${near?'checked':''} onchange="renderDetail()">自分の席と近いBuddiesを優先して表示</label>`:''}<div class="people">${rows.map(({p,seat,near})=>`<a class="person" href="./view.html?id=${encodeURIComponent(p.id)}&from=live&live=${encodeURIComponent(currentLiveId)}">${avatarHtml(p)}<div class="person-main"><div class="person-name">${esc(getDisplayName(p))}</div><div class="person-meta">${esc([seatHasValue(seat)?seatLabel(seat):'座席未登録',p.location,near].filter(Boolean).join(' / '))}</div></div></a>`).join('')||'<div class="empty">条件に合うBuddiesがいません。</div>'}</div></section>`;
+}
 function render(){const param=new URLSearchParams(location.search).get('live')||'';currentLiveId=param;document.getElementById('header-back').href=currentLiveId?'./live.html':'./';document.getElementById('account-area').innerHTML=accountAvatarHtml();if(currentLiveId)renderDetail();else renderList();}
 function openSeatModal(id){if(!me){location.href='./?live_redirect='+encodeURIComponent(`live.html?live=${encodeURIComponent(id)}`);return;}seatModalLiveId=id;const live=liveDisplay(id);const seat=cleanSeatInfo(mySeats()[id]||{});document.getElementById('seat-modal-sub').textContent=`${liveDateLabel(live)} ${live.title}`;document.getElementById('seat-floor').value=seat.floor;document.getElementById('seat-area').value=seat.area;document.getElementById('seat-block').value=seat.block;document.getElementById('leave-btn').style.display=isMineLive(id)?'inline-flex':'none';document.getElementById('seat-modal').classList.add('active');document.body.style.overflow='hidden';}
 function closeSeatModal(){document.getElementById('seat-modal').classList.remove('active');document.body.style.overflow='';}
