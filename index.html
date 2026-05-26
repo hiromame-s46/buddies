@@ -4344,6 +4344,7 @@ function toggleEditNextLive(id, checked) {
   editHistory.forEach(item => {
     if (item.live_id === id && !checked) item.live_id = '';
   });
+  renderEditNextLives();
   renderHistoryEditor();
 }
 
