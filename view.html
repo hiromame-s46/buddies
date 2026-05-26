@@ -211,6 +211,13 @@ let memberDataLoaded = false;
 let liveOptions = [];
 
 function closeOrBack(e){
+  const params = new URLSearchParams(location.search);
+  if (params.get('from') === 'live') {
+    e.preventDefault();
+    const live = params.get('live') || '';
+    location.href = './live.html' + (live ? '?live=' + encodeURIComponent(live) : '');
+    return false;
+  }
   if (window.opener && !window.opener.closed) { e.preventDefault(); window.close(); return false; }
   return true;
 }

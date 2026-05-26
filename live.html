@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>NEXT LIVE | Buddies profile</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+:root{--ink:#111;--muted:#666;--line:#e8e8e8;--soft:#f7f7f7}
+body{margin:0;min-height:100dvh;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:720px;margin:0 auto;min-height:100dvh;background:#fff;padding:0 16px 112px}
+header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:64px 1fr 64px;align-items:center;gap:12px}
+.back{color:#111;text-decoration:none;font-size:14px;font-weight:800;border-radius:999px;padding:8px 4px}
+.header-center{text-align:center;min-width:0}
+.title{font-size:22px;font-weight:900;letter-spacing:-.02em}
+.sub{font-size:12px;color:#777;font-weight:700;margin-top:2px}
+.account-area{display:flex;justify-content:flex-end}
+.account-avatar{width:42px;height:42px;border-radius:50%;background:#eee;overflow:hidden;display:grid;place-items:center;color:#777;font-size:15px;font-weight:900;border:1px solid #eee}
+.account-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.card{border:1px solid var(--line);background:#fff;border-radius:22px;padding:16px;box-shadow:0 2px 8px rgba(0,0,0,.03)}
+.intro-card{text-align:center;padding:20px 16px}
+.intro-card .sub{max-width:420px;margin:5px auto 0}
+.live-hero{text-align:center;padding:20px 16px}
+.live-hero .date-box{margin:0 auto 12px;border-right:0;border-bottom:1px dashed #ddd;padding:0 0 12px;max-width:120px}
+.live-hero .live-meta,.live-hero .actions{justify-content:center}
+.section{margin-top:18px}
+.section-title{font-size:15px;font-weight:900;margin:0 0 10px}
+.live-list{display:grid;gap:10px}
+.live-card{display:grid;grid-template-columns:74px 1fr auto;gap:13px;align-items:center;border:1px solid #ececec;border-radius:20px;background:#fff;padding:14px;text-decoration:none;color:#111}
+.live-card.mine{border-color:#111;background:#fbfbfb}
+.date-box{text-align:center;border-right:1px dashed #ddd;padding-right:12px;line-height:1.1}
+.date-year{font-size:10px;color:#777;font-weight:900}
+.date-md{font-size:20px;font-weight:950;margin-top:2px}
+.date-week{font-size:10px;color:#666;font-weight:900;margin-top:3px}
+.live-main{min-width:0}
+.live-title{font-size:14px;font-weight:900;line-height:1.45}
+.live-venue{font-size:12px;color:#666;font-weight:700;margin-top:2px;line-height:1.45}
+.live-meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.chip{display:inline-flex;align-items:center;min-height:25px;border-radius:999px;background:#f5f5f5;border:1px solid #eee;padding:4px 9px;font-size:11px;font-weight:900;color:#555}
+.chip.dark{background:#111;border-color:#111;color:#fff}
+.chev{font-size:20px;color:#aaa;font-weight:900}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid #ddd;background:#fff;color:#111;border-radius:999px;min-height:40px;padding:9px 14px;font:inherit;font-size:13px;font-weight:900;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.black{background:#111;color:#fff;border-color:#111}
+.btn.danger{background:#fff;color:#dc2626;border-color:#fecaca}
+.filters{display:grid;grid-template-columns:1fr 120px;gap:8px}
+.input,.select{width:100%;border:1px solid #ddd;background:#fff;border-radius:14px;min-height:42px;padding:10px 12px;font:inherit;font-size:13px;outline:none}
+.toggle-row{display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;font-weight:800;color:#555}
+.toggle-row input{accent-color:#111}
+.people{display:grid;gap:10px;margin-top:12px}
+.person{display:flex;align-items:center;gap:12px;border:1px solid #eee;border-radius:18px;background:#fff;padding:12px;text-decoration:none;color:#111}
+.avatar{width:46px;height:46px;border-radius:50%;background:#eee;overflow:hidden;display:grid;place-items:center;font-weight:900;color:#777;flex-shrink:0}
+.avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
+.person-main{min-width:0;flex:1}
+.person-name{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.person-meta{font-size:11px;color:#777;font-weight:800;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.empty{padding:18px;border-radius:18px;background:#fafafa;color:#888;font-size:13px;font-weight:700;text-align:center}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.28);display:none;align-items:flex-end;z-index:300}
+.modal.active{display:flex}
+.sheet{width:100%;max-width:720px;margin:0 auto;background:#fff;border-radius:24px 24px 0 0;padding:18px 18px calc(18px + env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.18)}
+.sheet-title{font-size:18px;font-weight:900;margin-bottom:4px}
+.sheet-sub{font-size:12px;color:#777;font-weight:700;margin-bottom:14px}
+.seat-grid{display:grid;grid-template-columns:86px 1fr 1fr;gap:8px;margin-bottom:12px}
+.field{display:grid;gap:5px}
+.field span{font-size:10px;font-weight:900;color:#777}
+.control{display:flex;align-items:center;gap:6px;border:1px solid #ddd;border-radius:14px;background:#fafafa;padding:0 10px}
+.control input,.control select{width:100%;border:0;background:transparent;min-height:42px;font:inherit;font-size:13px;outline:none}
+.suffix{font-size:11px;font-weight:900;color:#777;white-space:nowrap}
+.toast{position:fixed;left:50%;bottom:94px;transform:translateX(-50%) translateY(20px);background:#111;color:#fff;padding:10px 14px;border-radius:999px;font-size:13px;font-weight:800;opacity:0;pointer-events:none;transition:.2s;z-index:400}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.floating-tabbar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);width:90%;max-width:380px;background:#fff;border:1px solid var(--line);border-radius:9999px;box-shadow:0 4px 12px rgba(0,0,0,.08);padding:8px;display:flex;justify-content:space-around;z-index:100}
+.tab-btn{flex:1;display:flex;align-items:center;justify-content:center;padding:8px 4px;border-radius:9999px;color:#bbb;background:transparent;border:0;text-decoration:none}
+.tab-btn.active{color:#000}.tab-btn svg{width:23px;height:23px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:520px){.app{padding-left:14px;padding-right:14px}.live-card{grid-template-columns:68px 1fr auto;padding:12px}.filters{grid-template-columns:1fr}.seat-grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <a class="back" href="./">← 戻る</a>
+    <div class="header-center"><div class="title">NEXT LIVE</div><div id="login-label" class="sub">読み込み中…</div></div>
+    <div id="account-area" class="account-area"></div>
+  </header>
+  <main id="app"><div class="empty">読み込み中…</div></main>
+</div>
+<nav class="floating-tabbar">
+  <a class="tab-btn" href="./" aria-label="ホーム"><svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg></a>
+  <a class="tab-btn" href="./?tab=search" aria-label="検索"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg></a>
+  <a class="tab-btn active" href="./live.html" aria-label="ネクストライブ"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></a>
+  <a class="tab-btn" href="./?tab=mypage" aria-label="マイページ"><svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></a>
+</nav>
+<div id="seat-modal" class="modal" onclick="if(event.target===this)closeSeatModal()">
+  <div class="sheet">
+    <div class="sheet-title">参加予定と座席</div>
+    <div id="seat-modal-sub" class="sheet-sub"></div>
+    <div class="seat-grid">
+      <label class="field"><span>階</span><div class="control"><input id="seat-floor" inputmode="numeric" placeholder="1"><em class="suffix">階</em></div></label>
+      <label class="field"><span>エリア</span><div class="control"><select id="seat-area"><option value="">未入力</option><option value="arena">アリーナ</option><option value="stand">スタンド</option></select></div></label>
+      <label class="field"><span>ブロック</span><div class="control"><input id="seat-block" placeholder="A6"><em class="suffix">ブロック</em></div></label>
+    </div>
+    <div class="actions">
+      <button class="btn" type="button" onclick="closeSeatModal()">キャンセル</button>
+      <button id="leave-btn" class="btn danger" type="button" onclick="saveSeatModal(false)">参加予定を外す</button>
+      <button class="btn black" type="button" onclick="saveSeatModal(true)">参加予定に登録</button>
+    </div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script>
+const API='./api.php';
+const LIVE_DATA='../data/live.json';
+let me=null, liveOptions=[], participants=[], currentLiveId='', seatModalLiveId='';
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+function venueForPerformance(live,perf,index){const lines=String(live.detail_text||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);const target=String(perf.date||'').replace(/-/g,'.').replace(/\.0/g,'.');let cur=(live.venues&&live.venues.length===1)?live.venues[0]:'';let found='';for(const line of lines){const looks=/\d{4}[./]\d{1,2}[./]\d{1,2}/.test(line);if(!looks)cur=line.replace(/^＠/,'').trim();if(looks){const normalized=line.replace(/[年月]/g,'.').replace(/日/g,'').replace(/-/g,'.');const p=String(perf.date||'').split('-').map(n=>String(Number(n)));if(normalized.includes(`${p[0]}.${p[1]}.${p[2]}`)||normalized.includes(target)){found=cur;break;}}}return found||(Array.isArray(live.venues)&&live.venues[index]?live.venues[index]:(live.venues||[]).join(' / '));}
+function buildLiveOptions(raw){const items=Array.isArray(raw?.items)?raw.items:(Array.isArray(raw)?raw:[]);const out=[];items.forEach(l=>{(Array.isArray(l.performances)?l.performances:[]).forEach((p,i)=>{const venue=venueForPerformance(l,p,i);out.push({id:liveId(l.title,p.date,venue),title:l.title||'ライブ',date:p.date,weekday:p.weekday||'',venue,url:l.url||''});});});return out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.title).localeCompare(String(b.title)));}
+function liveDisplay(id){return liveOptions.find(l=>l.id===id)||(()=>{const [date,title,venue]=String(id||'').split('|');return{id,date,title:title||'ライブ',venue,weekday:''};})();}
+function futureLives(){const today=localDateKey();return liveOptions.filter(l=>!l.date||l.date>=today);}
+function liveDateObj(date){const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?new Date(Number(m[1]),Number(m[2])-1,Number(m[3])):null;}
+function dateParts(live){const d=liveDateObj(live.date);if(!d)return{year:'',md:'--/--',week:''};return{year:d.getFullYear(),md:`${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`,week:live.weekday||['日','月','火','水','木','金','土'][d.getDay()]};}
+function liveDateLabel(live){const p=dateParts(live);return p.year?`${p.year}.${p.md.replace('/','.')} (${p.week})`:'';}
+function cleanSeatInfo(seat={}){return{floor:String(seat.floor||'').replace(/[^0-9]/g,'').slice(0,2),area:['arena','stand'].includes(seat.area)?seat.area:'',block:String(seat.block||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,12)};}
+function seatAreaLabel(v){return v==='arena'?'アリーナ':v==='stand'?'スタンド':'';}
+function seatHasValue(s){const c=cleanSeatInfo(s);return!!(c.floor||c.area||c.block);}
+function seatLabel(s){const c=cleanSeatInfo(s);return[c.floor?`${c.floor}階`:'',seatAreaLabel(c.area),c.block?`${c.block}ブロック`:'' ].filter(Boolean).join(' / ');}
+function blockNumber(block){const m=String(block||'').match(/^([A-Z]+)(\d+)$/);return m?{prefix:m[1],n:Number(m[2])}:null;}
+function seatProximityLabel(a,b){const sa=cleanSeatInfo(a),sb=cleanSeatInfo(b);if(sa.block&&sb.block&&sa.block===sb.block)return'同じブロック';const ba=blockNumber(sa.block),bb=blockNumber(sb.block);if(ba&&bb&&ba.prefix===bb.prefix&&Math.abs(ba.n-bb.n)===1)return'隣のブロック';if(sa.area&&sb.area&&sa.area===sb.area)return'同じエリア';if(sa.floor&&sb.floor&&sa.floor===sb.floor)return'同じ階';return'';}
+function getDisplayName(p){return p.display_name||p.username||'名無し';}
+function avatarUrl(p){return p.user_icon||'';}
+function avatarHtml(p){const url=avatarUrl(p);return `<div class="avatar">${url?`<img src="${esc(url)}" alt="">`:esc((getDisplayName(p)[0]||'?'))}</div>`;}
+function accountAvatarHtml(){if(!me)return'<a class="account-avatar" href="./?tab=mypage" aria-label="ログイン">?</a>';const url=avatarUrl(me);return `<a class="account-avatar" href="./?tab=mypage" aria-label="マイページ">${url?`<img src="${esc(url)}" alt="">`:esc((getDisplayName(me)[0]||'?'))}</a>`;}
+function myLiveIds(){return Array.isArray(me?.next_lives)?me.next_lives:[];}
+function mySeats(){return me?.next_live_seats&&typeof me.next_live_seats==='object'?me.next_live_seats:{};}
+function isMineLive(id){return myLiveIds().includes(id);}
+function participantsFor(id){return participants.filter(p=>Array.isArray(p.next_lives)&&p.next_lives.includes(id));}
+function toast(t){const el=document.getElementById('toast');el.textContent=t;el.classList.add('show');clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove('show'),1800);}
+function renderDateBox(live){const p=dateParts(live);return `<div class="date-box"><div class="date-year">${esc(p.year)}</div><div class="date-md">${esc(p.md)}</div><div class="date-week">${esc(p.week)}</div></div>`;}
+function liveCard(live){const count=participantsFor(live.id).length;const mine=isMineLive(live.id);const seat=mySeats()[live.id];return `<a class="live-card ${mine?'mine':''}" href="./live.html?live=${encodeURIComponent(live.id)}">${renderDateBox(live)}<div class="live-main"><div class="live-title">${esc(live.title)}</div>${live.venue?`<div class="live-venue">${esc(live.venue)}</div>`:''}<div class="live-meta"><span class="chip">${count}人参加予定</span>${mine?'<span class="chip dark">参加予定</span>':''}${seatHasValue(seat)?`<span class="chip">${esc(seatLabel(seat))}</span>`:''}</div></div><div class="chev">›</div></a>`;}
+function renderList(){currentLiveId='';const mineSet=new Set(myLiveIds());const lives=futureLives();const my=lives.filter(l=>mineSet.has(l.id));const others=lives.filter(l=>!mineSet.has(l.id));document.getElementById('app').innerHTML=`<section class="section"><div class="card intro-card"><div class="title">ライブ一覧</div><div class="sub">参加予定の登録と、同じ公演に行くBuddiesを確認できます。</div></div></section>${my.length?`<section class="section"><h2 class="section-title">自分が参加するライブ</h2><div class="live-list">${my.map(liveCard).join('')}</div></section>`:''}<section class="section"><h2 class="section-title">今後のライブ</h2><div class="live-list">${others.map(liveCard).join('')||'<div class="empty">今後のライブ情報がありません。</div>'}</div></section>`;}
+function renderDetail(){const live=liveDisplay(currentLiveId);const mine=isMineLive(currentLiveId);const mySeat=mySeats()[currentLiveId];const all=participantsFor(currentLiveId);const q=(document.getElementById('q')?.value||'').trim().toLowerCase();const area=document.getElementById('area')?.value||'';const near=!!document.getElementById('near')?.checked;let rows=all.map(p=>({p,seat:cleanSeatInfo(p.next_live_seats?.[currentLiveId]),near:seatProximityLabel(mySeat,p.next_live_seats?.[currentLiveId])}));if(q)rows=rows.filter(r=>getDisplayName(r.p).toLowerCase().includes(q)||r.seat.block.toLowerCase().includes(q)||String(r.p.location||'').toLowerCase().includes(q));if(area)rows=rows.filter(r=>r.seat.area===area);if(near&&seatHasValue(mySeat))rows=rows.filter(r=>r.near);rows.sort((a,b)=>Number(!!b.near)-Number(!!a.near)||getDisplayName(a.p).localeCompare(getDisplayName(b.p),'ja'));document.getElementById('app').innerHTML=`<section class="section"><div class="card live-hero">${renderDateBox(live)}<div><div class="title">${esc(live.title)}</div>${live.venue?`<div class="sub">${esc(live.venue)}</div>`:''}<div class="live-meta"><span class="chip">${all.length}人参加予定</span>${mine?'<span class="chip dark">参加予定</span>':''}${seatHasValue(mySeat)?`<span class="chip">${esc(seatLabel(mySeat))}</span>`:''}</div><div class="actions" style="margin-top:14px"><button class="btn black" onclick="openSeatModal(currentLiveId)">${mine?'参加予定・座席を編集':'参加予定に登録'}</button><a class="btn" href="./live.html">一覧へ</a></div></div></div></section><section class="section"><h2 class="section-title">参加するBuddies</h2><div class="filters"><input id="q" class="input" placeholder="名前・ブロック・都道府県で検索" value="${esc(q)}" oninput="renderDetail()"><select id="area" class="select" onchange="renderDetail()"><option value="">全エリア</option><option value="arena" ${area==='arena'?'selected':''}>アリーナ</option><option value="stand" ${area==='stand'?'selected':''}>スタンド</option></select></div>${seatHasValue(mySeat)?`<label class="toggle-row"><input id="near" type="checkbox" ${near?'checked':''} onchange="renderDetail()">自分の席と近いBuddiesだけ表示</label>`:''}<div class="people">${rows.map(({p,seat,near})=>`<a class="person" href="./view.html?id=${encodeURIComponent(p.id)}&from=live&live=${encodeURIComponent(currentLiveId)}">${avatarHtml(p)}<div class="person-main"><div class="person-name">${esc(getDisplayName(p))}</div><div class="person-meta">${esc([seatHasValue(seat)?seatLabel(seat):'座席未登録',p.location,near].filter(Boolean).join(' / '))}</div></div></a>`).join('')||'<div class="empty">条件に合うBuddiesがいません。</div>'}</div></section>`;}
+function render(){document.getElementById('login-label').textContent=me?`${getDisplayName(me)}でログイン中`:'未ログイン';document.getElementById('account-area').innerHTML=accountAvatarHtml();const param=new URLSearchParams(location.search).get('live')||'';currentLiveId=param;if(currentLiveId)renderDetail();else renderList();}
+function openSeatModal(id){if(!me){location.href='./?live_redirect='+encodeURIComponent(`live.html?live=${encodeURIComponent(id)}`);return;}seatModalLiveId=id;const live=liveDisplay(id);const seat=cleanSeatInfo(mySeats()[id]||{});document.getElementById('seat-modal-sub').textContent=`${liveDateLabel(live)} ${live.title}`;document.getElementById('seat-floor').value=seat.floor;document.getElementById('seat-area').value=seat.area;document.getElementById('seat-block').value=seat.block;document.getElementById('leave-btn').style.display=isMineLive(id)?'inline-flex':'none';document.getElementById('seat-modal').classList.add('active');document.body.style.overflow='hidden';}
+function closeSeatModal(){document.getElementById('seat-modal').classList.remove('active');document.body.style.overflow='';}
+async function saveSeatModal(join){if(!me||!seatModalLiveId)return;let lives=myLiveIds().slice();let seats={...mySeats()};if(join&&!lives.includes(seatModalLiveId))lives.push(seatModalLiveId);if(!join){lives=lives.filter(id=>id!==seatModalLiveId);delete seats[seatModalLiveId];}else{const seat=cleanSeatInfo({floor:document.getElementById('seat-floor').value,area:document.getElementById('seat-area').value,block:document.getElementById('seat-block').value});if(seatHasValue(seat))seats[seatModalLiveId]=seat;else delete seats[seatModalLiveId];}try{const res=await fetch(`${API}?action=buddies_next_live_update`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({next_lives:lives,next_live_seats:seats})});const json=await res.json();if(!json.ok){toast(json.error||'保存できませんでした');return;}me=json.data;await loadParticipants();closeSeatModal();render();toast(join?'参加予定を保存しました':'参加予定を外しました');}catch(e){toast('通信エラーが発生しました');}}
+async function loadParticipants(){const res=await fetch(`${API}?action=buddies_live_participants&limit=1000`,{credentials:'include'});const json=await res.json();participants=json.ok&&Array.isArray(json.data)?json.data:[];}
+async function init(){try{const [meRes,liveRes]=await Promise.all([fetch(`${API}?action=auth_me`,{credentials:'include'}).catch(()=>null),fetch(`${LIVE_DATA}?_=${Date.now()}`)]);if(meRes){try{const j=await meRes.json();me=j.ok?j.data:null;}catch(e){}}liveOptions=buildLiveOptions(await liveRes.json());await loadParticipants();render();}catch(e){document.getElementById('app').innerHTML='<div class="empty">読み込みに失敗しました。</div>';}}
+init();
+</script>
+</body>
+</html>

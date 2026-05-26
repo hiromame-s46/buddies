@@ -914,6 +914,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <button class="tab-btn" data-tab="search" onclick="switchTab('search')" aria-label="検索">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
   </button>
+  <a class="tab-btn" href="./live.html" aria-label="ネクストライブ">
+    <svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+  </a>
   <button class="tab-btn" data-tab="mypage" onclick="switchTab('mypage')" aria-label="マイページ">
     <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
   </button>
@@ -1681,6 +1684,7 @@ async function init() {
     await loadUserData();
     showMainUI();
     if (prepareFavoriteRedirectLogin()) return;
+    if (prepareLiveRedirectLogin()) return;
   } else {
     showMainUI();
     // 共有URLで開いた場合はログインモーダルを出さずそのまま閲覧させる。
@@ -1689,6 +1693,7 @@ async function init() {
     const hashParams = new URLSearchParams(location.hash.slice(1));
     const hasSharedUid = qs.get('uid') || hashParams.get('uid') || sessionStorage.getItem('buddies_shared_uid');
     if (prepareFavoriteRedirectLogin()) return;
+    if (prepareLiveRedirectLogin()) return;
     if (!hasSharedUid) showAuthModal();
   }
 
@@ -1734,6 +1739,12 @@ function showMainUI() {
   renderAll();
   restoreProfileReturnState();
   if (restoringProfileReturn) return;
+  const tabParam = new URLSearchParams(location.search).get('tab');
+  if (['home','search','mypage'].includes(tabParam)) {
+    history.replaceState(null, '', location.pathname);
+    switchTab(tabParam);
+    return;
+  }
   const savedTab = sessionStorage.getItem('buddies_active_tab');
   if (['home','search','mypage'].includes(savedTab)) {
     switchTab(savedTab);
@@ -1762,6 +1773,42 @@ function getFavoriteRedirectUrl() {
   try { decoded = decodeURIComponent(raw); } catch(e) {}
   if (!/^view\.html\?id=\d+$/.test(decoded)) return '';
   return decoded;
+}
+function getLiveRedirectUrl() {
+  const qs = new URLSearchParams(location.search);
+  const raw = qs.get('live_redirect') || sessionStorage.getItem('buddies_live_redirect') || '';
+  if (!raw) return '';
+  let decoded = raw;
+  try { decoded = decodeURIComponent(raw); } catch(e) {}
+  if (!/^live\.html(\?live=.+)?$/.test(decoded)) return '';
+  return decoded;
+}
+function clearLiveRedirectParam() {
+  sessionStorage.removeItem('buddies_live_redirect');
+  const qs = new URLSearchParams(location.search);
+  if (!qs.has('live_redirect')) return;
+  qs.delete('live_redirect');
+  const rest = qs.toString();
+  history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
+}
+function redirectAfterLiveLogin() {
+  const redirect = getLiveRedirectUrl();
+  if (!redirect || !me) return false;
+  clearLiveRedirectParam();
+  location.href = redirect;
+  return true;
+}
+function prepareLiveRedirectLogin() {
+  const redirect = getLiveRedirectUrl();
+  if (!redirect) return false;
+  sessionStorage.setItem('buddies_live_redirect', redirect);
+  if (me) {
+    redirectAfterLiveLogin();
+  } else {
+    showAuthModal();
+    switchAuthTab('login');
+  }
+  return true;
 }
 function clearFavoriteRedirectParam() {
   sessionStorage.removeItem('buddies_favorite_redirect');
@@ -1816,6 +1863,7 @@ async function doLogin() {
     renderAll();
     toast('ログインしました');
     if (redirectAfterFavoriteLogin()) return;
+    if (redirectAfterLiveLogin()) return;
     reopenPendingProfile();
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
@@ -2263,8 +2311,18 @@ async function renderHome() {
   const list = document.getElementById('similar-list');
   list.innerHTML = '<div class="empty-state">読み込み中…</div>';
   try {
-    const res = await fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' });
+    const [res, liveRes] = await Promise.all([
+      fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' }),
+      fetch(API + '?action=buddies_live_participants&limit=1000', { credentials:'include' }).catch(() => null)
+    ]);
     const json = await res.json();
+    let liveParticipants = [];
+    if (liveRes) {
+      try {
+        const liveJson = await liveRes.json();
+        if (liveJson.ok && Array.isArray(liveJson.data)) liveParticipants = liveJson.data;
+      } catch(e) {}
+    }
     const similars = (json.ok && json.data) ? json.data.map(mergeVerifiedOntoProfile) : [];
     // コミュニティアカウントを混ぜる（重複ユーザーは既にマージ済み）
     const existingUids = new Set(similars.map(p => Number(p.id)));
@@ -2273,7 +2331,7 @@ async function renderHome() {
       .map(verifiedAsProfile)
       .filter(Boolean);
     const merged = intermixVerifiedProfiles(verifiedExtras, similars);
-    renderNextLiveWithBuddies(merged);
+    renderNextLiveWithBuddies(liveParticipants);
     if (merged.length) {
       list.innerHTML = merged.map(p => profileMini(p, {showReasons: true})).join('');
       list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(merged[i], false));
@@ -2293,20 +2351,14 @@ function renderNextLiveWithBuddies(profiles) {
     document.getElementById('todays-sakura-section')?.before(wrap);
   }
   wrap.innerHTML = '';
-  const mySeats = me?.next_live_seats && typeof me.next_live_seats === 'object' ? me.next_live_seats : {};
-  const liveIds = nextLiveIds(me).filter(id => seatHasValue(mySeats[id]));
+  const liveIds = nextLiveIds(me);
   if (!liveIds.length) return;
   const collapsed = getHomeCollapseState('next-live-with');
-  const clickProfiles = [];
   const blocks = liveIds.slice(0, 3).map(id => {
     const live = liveDisplay(id);
-    const mySeat = cleanSeatInfo(mySeats[id]);
-    const buddies = profiles
-      .filter(p => Array.isArray(p.next_lives) && p.next_lives.includes(id))
-      .map(p => ({ p, proximity: seatProximityLabel(mySeat, p.next_live_seats?.[id]) }))
-      .sort((a,b) => Number(!!b.proximity) - Number(!!a.proximity))
-      .slice(0, 4);
-    return `<div class="next-with-card">
+    const count = profiles.filter(p => Array.isArray(p.next_lives) && p.next_lives.includes(id)).length;
+    const mySeat = me?.next_live_seats?.[id];
+    return `<a class="next-with-card" href="./live.html?live=${encodeURIComponent(id)}" style="text-decoration:none;color:inherit;">
       <div class="next-with-head">
         <div>
           <div class="next-with-title">${esc(live.title)}</div>
@@ -2314,16 +2366,9 @@ function renderNextLiveWithBuddies(profiles) {
         </div>
         <div class="next-with-date">${esc(liveDateLabel(live.date, live.weekday))}</div>
       </div>
-      <div class="next-with-seat">${esc(seatLabel(mySeat))}</div>
-      ${buddies.length ? `<div class="next-with-buddies">${buddies.map(({p, proximity}) => `
-        <div class="next-with-buddy" onclick="openProfile(window.__nextWithProfiles[${clickProfiles.push(p) - 1}], false)">
-          <div class="next-with-avatar">${getAvatarUrl(p) ? `<img src="${esc(getAvatarUrl(p))}" alt="">` : esc(getDisplayName(p)[0] || '?')}</div>
-          <span>${esc(getDisplayName(p))}</span>
-          ${proximity ? `<span class="next-with-proximity">${esc(proximity)}</span>` : ''}
-        </div>`).join('')}</div>` : `<div class="next-live-edit-venue">同じ公演に参加予定のBuddiesが見つかるとここに表示されます。</div>`}
-    </div>`;
+      <div class="next-with-seat">${count}人参加予定${seatHasValue(mySeat) ? ` / ${esc(seatLabel(mySeat))}` : ''}</div>
+    </a>`;
   }).join('');
-  window.__nextWithProfiles = clickProfiles;
   wrap.innerHTML = `<section class="today-card">
     <div class="today-head ${collapsed ? 'is-compact' : ''}">
       <div>
@@ -2333,7 +2378,7 @@ function renderNextLiveWithBuddies(profiles) {
       </div>
       <button class="home-collapse-btn" type="button" onclick="toggleHomeCollapse('next-live-with')" aria-label="${collapsed ? 'NEXT LIVE with Buddiesを開く' : 'NEXT LIVE with Buddiesを折りたたむ'}">${collapsed ? '＋' : '−'}</button>
     </div>
-    ${collapsed ? `<div class="home-collapsed-summary">${liveIds.length}公演の近いBuddiesを確認できます</div>` : `<div class="next-with-list">${blocks}</div>`}
+    ${collapsed ? `<div class="home-collapsed-summary">${liveIds.length}公演の参加人数を確認できます</div>` : `<div class="next-with-list">${blocks}</div>`}
   </section>`;
 }
 

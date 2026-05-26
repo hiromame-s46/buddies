@@ -17,6 +17,7 @@ error_reporting(E_ALL);
  *   buddies_profile_get       GET  Buddiesプロフィール取得（自分 or 他ユーザー）
  *   buddies_public_profile_get GET  公開プロフィール取得（一般ユーザー用 view.html）
  *   buddies_profile_update    POST Buddiesプロフィール更新
+ *   buddies_next_live_update  POST NEXT LIVE参加予定・座席情報更新
  *   buddies_icon_update       POST プロフィール画像更新（ブログ画像から選択）
  *   buddies_icon_clear        POST プロフィール画像をクリア
  *
@@ -1398,6 +1399,8 @@ match ($action) {
     'buddies_profile_get'     => actionProfileGet(),
     'buddies_public_profile_get' => actionPublicProfileGet(),
     'buddies_profile_update'  => actionProfileUpdate(),
+    'buddies_next_live_update'=> actionNextLiveUpdate(),
+    'buddies_live_participants' => actionLiveParticipants(),
     'buddies_history_update'  => actionHistoryUpdate(),
     'buddies_history_on_day'  => actionHistoryOnDay(),
     'buddies_icon_update'     => actionIconUpdate(),
@@ -1793,6 +1796,70 @@ function actionProfileUpdate(): void {
     $u  = $newUser->fetch();
     $bp = getBuddiesProfile((int)$me['id']);
     ok(buildUserData($u, $bp, true));
+}
+
+function actionNextLiveUpdate(): void {
+    $me = requireAuth();
+    $b = body();
+
+    $currentBp = getBuddiesProfile((int)$me['id']);
+    $currentLives = ($currentBp && !empty($currentBp['next_lives']))
+        ? (json_decode($currentBp['next_lives'], true) ?: [])
+        : [];
+    $currentSeats = ($currentBp && !empty($currentBp['next_live_seats']))
+        ? (json_decode($currentBp['next_live_seats'], true) ?: [])
+        : [];
+
+    $nextLives = isset($b['next_lives']) && is_array($b['next_lives']) ? $b['next_lives'] : $currentLives;
+    $nextLives = array_slice($nextLives, 0, 60);
+    $nextLives = array_values(array_unique(array_filter(array_map(function($v) {
+        $v = trim((string)$v);
+        return $v !== '' && mb_strlen($v) <= 260 ? $v : '';
+    }, $nextLives))));
+
+    $nextLiveSeats = isset($b['next_live_seats']) && is_array($b['next_live_seats']) ? $b['next_live_seats'] : $currentSeats;
+    $nextLiveSeats = normalizeNextLiveSeats($nextLiveSeats, $nextLives);
+
+    db()->prepare('INSERT INTO buddies_profiles (user_id, next_lives, next_live_seats)
+        VALUES (?, ?, ?)
+        ON DUPLICATE KEY UPDATE next_lives=VALUES(next_lives), next_live_seats=VALUES(next_live_seats)')
+    ->execute([
+        (int)$me['id'],
+        $nextLives ? json_encode($nextLives, JSON_UNESCAPED_UNICODE) : null,
+        $nextLiveSeats ? json_encode($nextLiveSeats, JSON_UNESCAPED_UNICODE) : null,
+    ]);
+
+    $newUser = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
+    $newUser->execute([(int)$me['id']]);
+    ok(buildUserData($newUser->fetch(), getBuddiesProfile((int)$me['id']), true));
+}
+
+function actionLiveParticipants(): void {
+    $liveId = trim((string)($_GET['live_id'] ?? ''));
+    $limit = min(max((int)($_GET['limit'] ?? 500), 1), 1000);
+
+    $selectCols = '
+        u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
+        u.user_icon,
+        bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
+        bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
+        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
+    $params = [];
+    $where = ["bp.next_lives IS NOT NULL", "bp.next_lives <> ''", "bp.next_lives <> '[]'"];
+    if ($liveId !== '') {
+        $where[] = 'bp.next_lives LIKE ?';
+        $params[] = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $liveId) . '"%';
+    }
+    $params[] = $limit;
+    $sql = "SELECT $selectCols
+            FROM buddies_profiles bp
+            JOIN sakulabo_users u ON u.id = bp.user_id
+            WHERE " . implode(' AND ', $where) . "
+            ORDER BY u.display_name ASC, u.username ASC
+            LIMIT ?";
+    $st = db()->prepare($sql);
+    $st->execute($params);
+    ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
 }
 
 function actionHistoryUpdate(): void {
