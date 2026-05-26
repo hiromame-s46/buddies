@@ -82,12 +82,17 @@ main{padding:24px 22px 34px}
 .next-live-venue{font-size:12px;color:#666;line-height:1.5}
 .next-live-card{background:#fff;padding:14px;border-radius:24px}
 .next-live-card .next-live-list{gap:12px}
-.next-live-card .next-live-item{position:relative;grid-template-columns:minmax(76px,92px) 1fr;grid-template-rows:auto auto;column-gap:18px;align-items:center;min-height:82px;padding:16px 18px;border-color:#e6e6e6;border-radius:18px;background:linear-gradient(90deg,#fff 0%,#fff 34%,#fcfcfc 34%,#fcfcfc 100%);overflow:hidden}
-.next-live-card .next-live-item:before{content:"";position:absolute;top:14px;bottom:14px;left:110px;border-left:1px dashed #d9d9d9}
-.next-live-card .next-live-item:after{content:"";position:absolute;top:50%;left:110px;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid #e6e6e6;transform:translate(-50%,-50%);box-shadow:0 -43px 0 0 #fff,0 43px 0 0 #fff}
-.next-live-card .next-live-date{grid-row:1 / span 2;grid-column:1;display:flex;align-items:center;justify-content:center;text-align:center;font-size:11px;line-height:1.45;letter-spacing:.03em;padding-right:4px;z-index:1}
-.next-live-card .next-live-title{grid-column:2;grid-row:1;font-size:14px;line-height:1.5;z-index:1}
-.next-live-card .next-live-venue{grid-column:2;grid-row:2;font-size:12px;z-index:1}
+.next-live-card .next-live-item{position:relative;grid-template-columns:minmax(88px,104px) 1fr;grid-template-rows:auto auto;column-gap:20px;align-items:center;min-height:96px;padding:16px 18px;border-color:#e6e6e6;border-radius:18px;background:linear-gradient(90deg,#fff 0%,#fff 35%,#fcfcfc 35%,#fcfcfc 100%);overflow:hidden}
+.next-live-card .next-live-item:before{content:"";position:absolute;top:14px;bottom:14px;left:124px;border-left:1px dashed #d9d9d9}
+.next-live-card .next-live-item:after{content:"";position:absolute;top:50%;left:124px;width:18px;height:18px;border-radius:50%;background:#fff;border:1px solid #e6e6e6;transform:translate(-50%,-50%);box-shadow:0 -50px 0 0 #fff,0 50px 0 0 #fff}
+.next-live-card .next-live-date{grid-row:1 / span 2;grid-column:1;display:grid;gap:2px;place-items:center;text-align:center;line-height:1.1;padding-right:6px;z-index:1}
+.next-live-card .next-live-year{font-size:11px;font-weight:900;color:#777;letter-spacing:.08em}
+.next-live-card .next-live-month-day{display:flex;align-items:center;justify-content:center;gap:3px;color:#111;font-weight:950;line-height:1}
+.next-live-card .next-live-month,.next-live-card .next-live-day{font-size:23px;letter-spacing:.01em}
+.next-live-card .next-live-slash{font-size:24px;font-weight:500;color:#c9c9c9;transform:rotate(12deg);line-height:1}
+.next-live-card .next-live-weekday{font-size:11px;font-weight:900;color:#666;letter-spacing:.04em}
+.next-live-card .next-live-title{grid-column:2;grid-row:1;font-size:13px;line-height:1.45;z-index:1}
+.next-live-card .next-live-venue{grid-column:2;grid-row:2;font-size:13px;font-weight:800;color:#444;line-height:1.45;z-index:1}
 .next-live-more{width:100%;min-height:42px;border-radius:9999px;border:1px solid #ececec;background:#fff;color:#111;font:inherit;font-size:13px;font-weight:900;cursor:pointer;margin-top:12px}
 .next-live-more:hover{background:#fafafa}
 .history-list{display:grid;gap:16px;position:relative}
@@ -160,7 +165,7 @@ main{padding:24px 22px 34px}
 .confirm-btn.danger{background:#e00;border-color:#e00;color:#fff}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;border-radius:9999px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
-@media(max-width:560px){main{padding:18px 16px 32px}.hero{padding:20px 10px 12px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.section{margin-top:30px}.section+.section{margin-top:38px}.card{border-radius:24px;padding:18px}.next-live-card{padding:12px}.next-live-card .next-live-item{grid-template-columns:72px 1fr;column-gap:16px;padding:14px 14px;min-height:78px}.next-live-card .next-live-item:before,.next-live-card .next-live-item:after{left:88px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}.sakumap-stamps{gap:10px}.sakumap-stamp{padding:11px 8px}.sakumv-record{padding:14px}}
+@media(max-width:560px){main{padding:18px 16px 32px}.hero{padding:20px 10px 12px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.section{margin-top:30px}.section+.section{margin-top:38px}.card{border-radius:24px;padding:18px}.next-live-card{padding:12px}.next-live-card .next-live-item{grid-template-columns:82px 1fr;column-gap:16px;padding:14px 14px;min-height:92px}.next-live-card .next-live-item:before,.next-live-card .next-live-item:after{left:98px}.next-live-card .next-live-month,.next-live-card .next-live-day{font-size:21px}.next-live-card .next-live-slash{font-size:22px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}.sakumap-stamps{gap:10px}.sakumap-stamp{padding:11px 8px}.sakumv-record{padding:14px}}
 </style>
 </head>
 <body>
@@ -382,11 +387,17 @@ function renderSakulaboFavorites(p){
   }
   return blocks.join('');
 }
+function liveTicketDateHtml(live, label = ''){
+  if (label) return `${esc(label)} ${esc(liveDateLabel(live.date, live.weekday))}`;
+  const d = liveDateObj(live.date);
+  if (!d) return esc(liveDateLabel(live.date, live.weekday));
+  const weekday = live.weekday || ['日','月','火','水','木','金','土'][d.getDay()];
+  return `<span class="next-live-year">${esc(d.getFullYear())}</span><span class="next-live-month-day"><span class="next-live-month">${esc(String(d.getMonth()+1).padStart(2,'0'))}</span><span class="next-live-slash">/</span><span class="next-live-day">${esc(String(d.getDate()).padStart(2,'0'))}</span></span><span class="next-live-weekday">${esc(weekday)}</span>`;
+}
 function liveItemHtml(id, label = ''){
   const live = liveDisplay(id);
-  const prefix = label ? `${esc(label)} ` : '';
   return `<div class="next-live-item">
-    <div class="next-live-date">${prefix}${esc(liveDateLabel(live.date, live.weekday))}</div>
+    <div class="next-live-date">${liveTicketDateHtml(live, label)}</div>
     <div class="next-live-title">${esc(live.title)}</div>
     ${live.venue ? `<div class="next-live-venue">${esc(live.venue)}</div>` : ''}
   </div>`;
@@ -537,6 +548,8 @@ function metaRows(p){
   if (p.age) rows.push(['年齢', `${p.age}歳`]);
   if (p.gender) rows.push(['性別', p.gender]);
   if (p.buddies_since) rows.push(['Buddies歴', p.buddies_since]);
+  const pastCount = pastLiveIds(p).length;
+  if (pastCount > 0) rows.push(['参加ライブ', `${pastCount}公演`]);
   return rows;
 }
 function heroMeta(rows){
