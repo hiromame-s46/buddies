@@ -432,6 +432,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 }
 .filter-toggle-card:hover { border-color:#999; }
 .filter-toggle-card:has(input:checked) { border-color:#000; background:#fafafa; }
+.filter-tab-panel[data-tab="sns"] .filter-toggle-card + .filter-toggle-card { margin-top:10px; }
 .filter-switch {
   position:absolute; opacity:0; pointer-events:none;
 }
@@ -1257,15 +1258,15 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   </div>
   <div class="history-page-body">
     <div class="history-tabs">
-      <button type="button" class="history-tab-btn active" data-history-tab="history" onclick="switchHistoryTab('history')">History</button>
-      <button type="button" class="history-tab-btn" data-history-tab="past-lives" onclick="switchHistoryTab('past-lives')">参加したライブ</button>
+      <button type="button" class="history-tab-btn" data-history-tab="history" onclick="switchHistoryTab('history')">History</button>
+      <button type="button" class="history-tab-btn active" data-history-tab="past-lives" onclick="switchHistoryTab('past-lives')">参加したライブ</button>
     </div>
-    <section id="history-panel-history" class="history-tab-panel">
+    <section id="history-panel-history" class="history-tab-panel" hidden>
       <div class="history-panel-note">最新の思い出が上に表示されます。参加したライブと紐づけると、日付や公演名を記録しやすくなります。</div>
       <div id="history-edit-list" class="history-edit-list"></div>
       <button type="button" class="pill-button" style="width:100%;margin-top:12px;" onclick="addHistoryItem()">+ 思い出を追加</button>
     </section>
-    <section id="history-panel-past-lives" class="history-tab-panel" hidden>
+    <section id="history-panel-past-lives" class="history-tab-panel">
       <div class="history-panel-note">過去に参加したライブを選択できます。My next live に登録していた公演は、終了後も同じ保存データからこちらに表示されます。</div>
       <div id="past-live-edit-list" class="next-live-edit-list"></div>
     </section>
@@ -1292,7 +1293,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       <button type="button" class="filter-tab" data-tab="tags"   onclick="switchFilterTab('tags')">興味</button>
       <button type="button" class="filter-tab" data-tab="songs"  onclick="switchFilterTab('songs')">楽曲</button>
       <button type="button" class="filter-tab" data-tab="lives"  onclick="switchFilterTab('lives')">ライブ</button>
-      <button type="button" class="filter-tab" data-tab="sns"    onclick="switchFilterTab('sns')">SNS</button>
+      <button type="button" class="filter-tab" data-tab="sns"    onclick="switchFilterTab('sns')">公開設定</button>
     </div>
 
     <div class="filters-modal-body">
@@ -1366,15 +1367,39 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
         </div>
       </div>
 
-      <!-- SNSタブ -->
+      <!-- 公開設定タブ -->
       <div class="filter-tab-panel" data-tab="sns" hidden>
-        <div class="filter-section-label">SNS設定</div>
+        <div class="filter-section-label">表示中のコンテンツ</div>
         <label class="filter-toggle-card">
           <div style="flex:1;">
             <div style="font-size:14px; font-weight:700; color:#000;">SNS設定済みのみ表示</div>
             <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">SNSリンクを登録しているユーザーに絞り込みます</div>
           </div>
-          <input type="checkbox" id="sns-set-filter" class="filter-switch" onchange="applySnsFilter()">
+          <input type="checkbox" id="sns-set-filter" class="filter-switch" onchange="applyVisibilityFilters()">
+          <span class="filter-switch-track" aria-hidden="true"></span>
+        </label>
+        <label class="filter-toggle-card">
+          <div style="flex:1;">
+            <div style="font-size:14px; font-weight:700; color:#000;">過去のライブを設定済み</div>
+            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">参加したライブを登録しているユーザーに絞り込みます</div>
+          </div>
+          <input type="checkbox" id="past-live-set-filter" class="filter-switch" onchange="applyVisibilityFilters()">
+          <span class="filter-switch-track" aria-hidden="true"></span>
+        </label>
+        <label class="filter-toggle-card">
+          <div style="flex:1;">
+            <div style="font-size:14px; font-weight:700; color:#000;">さくみみを表示中</div>
+            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">お気に入りさくみみを公開しているユーザーに絞り込みます</div>
+          </div>
+          <input type="checkbox" id="mimis-display-filter" class="filter-switch" onchange="applyVisibilityFilters()">
+          <span class="filter-switch-track" aria-hidden="true"></span>
+        </label>
+        <label class="filter-toggle-card">
+          <div style="flex:1;">
+            <div style="font-size:14px; font-weight:700; color:#000;">ブログを表示中</div>
+            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">お気に入りブログを公開しているユーザーに絞り込みます</div>
+          </div>
+          <input type="checkbox" id="blogs-display-filter" class="filter-switch" onchange="applyVisibilityFilters()">
           <span class="filter-switch-track" aria-hidden="true"></span>
         </label>
       </div>
@@ -1520,7 +1545,7 @@ let iconFavOnlyActive = false;  // お気に入りのみモード
 const ICON_PAGE_SIZE = 60;
 let selectedIconUrl = null;
 let restoringProfileReturn = false;
-let historyActiveTab = 'history';
+let historyActiveTab = 'past-lives';
 let editNextLivesExpanded = false;
 let filterPastLivesExpanded = false;
 let editNextLiveSeats = {};
@@ -2451,13 +2476,11 @@ function verifiedCard(a) {
 }
 function accountTypeLabel(type) {
   if (type === 'developer') return '開発者アカウント';
-  return type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント';
+  return 'コミュニティアカウント';
 }
 function accountTypeDefinition(type) {
   if (type === 'developer') return 'Buddies profile の開発・運営を行うアカウントです。';
-  return type === 'official'
-    ? '極めて信頼性の高いことを証明するアカウントです。'
-    : '開発者が認証したアカウントです。';
+  return 'イベント、フォーム、掲示板を運営できるコミュニティアカウントです。';
 }
 
 // ── 検索 ─────────────────────────────────────────────────
@@ -2473,6 +2496,9 @@ let searchSongs = [];          // 楽曲
 let searchLiveIds = [];        // NEXTライブ
 let searchLiveMode = 'or';     // 'or' or 'and'
 let searchHasSns = false;      // SNS設定済みのみ
+let searchHasPastLive = false; // 参加したライブ設定済みのみ
+let searchShowsMimis = false;  // さくみみ公開中のみ
+let searchShowsBlogs = false;  // ブログ公開中のみ
 let searchActiveTab = 'member';
 let searchObserver = null;
 let filterOptionsCache = null; // { tags:[{name,count}], songs:[...] }
@@ -2493,6 +2519,12 @@ function buildSearchParams(offset) {
   if (searchLiveIds.length) params.set('live_ids', searchLiveIds.join(','));
   if (searchLiveIds.length && searchLiveMode === 'and') params.set('live_mode', 'and');
   if (searchHasSns) params.set('has_sns', '1');
+  if (searchHasPastLive) {
+    params.set('has_past_live', '1');
+    params.set('past_live_ids', JSON.stringify(pastLiveOptions().map(live => live.id)));
+  }
+  if (searchShowsMimis) params.set('shows_mimis', '1');
+  if (searchShowsBlogs) params.set('shows_blogs', '1');
   return params.toString();
 }
 
@@ -2561,7 +2593,7 @@ function appendSearchResults(items, isFirst) {
   const results = document.getElementById('search-results');
   // コミュニティアカウントを 1ページ目に混ぜる（クエリ・フィルター無しの時のみ）
   if (isFirst) {
-    const noFilters = !lastSearchQuery && !searchOshis.length && !searchTags.length && !searchSongs.length && !searchLiveIds.length && !searchHasSns;
+    const noFilters = !lastSearchQuery && !searchOshis.length && !searchTags.length && !searchSongs.length && !searchLiveIds.length && !searchHasSns && !searchHasPastLive && !searchShowsMimis && !searchShowsBlogs;
     if (noFilters && verifiedAccounts.length) {
       const existingUids = new Set(items.map(p => Number(p.id)));
       const verifiedExtras = verifiedAccounts
@@ -2804,11 +2836,11 @@ function renderFilterTabsCounts() {
     tags:   searchTags.length,
     songs:  searchSongs.length,
     lives:  searchLiveIds.length,
-    sns:    searchHasSns ? 1 : 0,
+    sns:    [searchHasSns, searchHasPastLive, searchShowsMimis, searchShowsBlogs].filter(Boolean).length,
   };
   document.querySelectorAll('.filter-tab').forEach(btn => {
     const c = counts[btn.dataset.tab] || 0;
-    const label = ({member:'メンバー', tags:'興味', songs:'楽曲', lives:'ライブ', sns:'SNS'})[btn.dataset.tab] || '';
+    const label = ({member:'メンバー', tags:'興味', songs:'楽曲', lives:'ライブ', sns:'公開設定'})[btn.dataset.tab] || '';
     btn.innerHTML = c > 0
       ? `${esc(label)}<span class="filter-tab-count">${c}</span>`
       : esc(label);
@@ -2854,6 +2886,9 @@ function renderFiltersSummary() {
     items.push({ key:`live-${i}`, label:`${liveDateLabel(live.date, live.weekday)} ${live.title}`, type:'live', index:i });
   });
   if (searchHasSns) items.push({ key:'sns', label:'SNS設定済み', type:'sns' });
+  if (searchHasPastLive) items.push({ key:'past-live', label:'過去ライブ設定済み', type:'past-live' });
+  if (searchShowsMimis) items.push({ key:'mimis', label:'さくみみ表示中', type:'mimis' });
+  if (searchShowsBlogs) items.push({ key:'blogs', label:'ブログ表示中', type:'blogs' });
 
   if (!items.length) {
     wrap.style.display = 'none';
@@ -2869,7 +2904,7 @@ function renderFiltersSummary() {
                   : it.type === 'tag'    ? `removeTagsFilter(${it.index})`
                   : it.type === 'song'   ? `removeSongsFilter(${it.index})`
                   : it.type === 'live'   ? `removeLiveFilter(${it.index})`
-                  : `toggleSnsFilter(false)`;
+                  : `clearVisibilityFilter('${it.type}')`;
     return `<span class="summary-pill">${esc(it.label)}<span class="remove" onclick="${handler}" aria-label="削除">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </span></span>`;
@@ -2882,12 +2917,27 @@ function removeOshiAt(i) {
   renderFilterTabsCounts();
   resetAndLoadSearch();
 }
-function toggleSnsFilter(v) {
-  searchHasSns = !!v;
-  const cb = document.getElementById('sns-set-filter');
-  if (cb) cb.checked = searchHasSns;
+function clearVisibilityFilter(type) {
+  if (type === 'sns') searchHasSns = false;
+  if (type === 'past-live') searchHasPastLive = false;
+  if (type === 'mimis') searchShowsMimis = false;
+  if (type === 'blogs') searchShowsBlogs = false;
+  syncVisibilityFilterInputs();
   renderFilterTabsCounts();
   resetAndLoadSearch();
+}
+
+function syncVisibilityFilterInputs() {
+  const states = {
+    'sns-set-filter': searchHasSns,
+    'past-live-set-filter': searchHasPastLive,
+    'mimis-display-filter': searchShowsMimis,
+    'blogs-display-filter': searchShowsBlogs,
+  };
+  Object.entries(states).forEach(([id, checked]) => {
+    const input = document.getElementById(id);
+    if (input) input.checked = checked;
+  });
 }
 
 function renderAllFilterChips() {
@@ -2898,8 +2948,7 @@ function renderAllFilterChips() {
   renderTagsOptions();
   renderSongsOptions();
   renderLivesOptions();
-  const cb = document.getElementById('sns-set-filter');
-  if (cb) cb.checked = searchHasSns;
+  syncVisibilityFilterInputs();
   const liveRadio = document.querySelector(`input[name="live-mode"][value="${searchLiveMode}"]`);
   if (liveRadio) liveRadio.checked = true;
   renderFilterTabsCounts();
@@ -2913,6 +2962,9 @@ function clearAllFilters() {
   searchLiveMode = 'or';
   filterPastLivesExpanded = false;
   searchHasSns = false;
+  searchHasPastLive = false;
+  searchShowsMimis = false;
+  searchShowsBlogs = false;
   const orRadio = document.querySelector('input[name="oshi-mode"][value="or"]');
   if (orRadio) orRadio.checked = true;
   const liveOrRadio = document.querySelector('input[name="live-mode"][value="or"]');
@@ -3071,10 +3123,12 @@ function removeLiveFilter(i) {
   resetAndLoadSearch();
 }
 
-// ── SNSフィルター ────────────────────────────────────────
-function applySnsFilter() {
-  const cb = document.getElementById('sns-set-filter');
-  searchHasSns = !!(cb && cb.checked);
+// ── 公開設定フィルター ───────────────────────────────────
+function applyVisibilityFilters() {
+  searchHasSns = !!document.getElementById('sns-set-filter')?.checked;
+  searchHasPastLive = !!document.getElementById('past-live-set-filter')?.checked;
+  searchShowsMimis = !!document.getElementById('mimis-display-filter')?.checked;
+  searchShowsBlogs = !!document.getElementById('blogs-display-filter')?.checked;
   renderFilterTabsCounts();
   resetAndLoadSearch();
 }
@@ -3133,7 +3187,7 @@ function renderMyPage() {
       <button class="pill-button black" style="flex:1;" onclick="openQR('show')"><i data-lucide="qr-code" style="width:16px;height:16px;"></i>QRで交換</button>
     </div>
     ${isDeveloperAccount(me) ? `<div style="display:flex; gap:8px; margin-top:8px;">
-      <a class="pill-button" style="flex:1; text-decoration:none; background:#fff8e1; border-color:#f3e3a8; color:#7c5600;" href="./admin.html"><i data-lucide="settings" style="width:16px;height:16px;"></i>コミュニティアカウントを管理</a>
+      <a class="pill-button" style="flex:1; text-decoration:none; background:#fff8e1; border-color:#f3e3a8; color:#7c5600;" href="./admin.html"><i data-lucide="settings" style="width:16px;height:16px;"></i>コミュニティ管理</a>
     </div>` : ''}
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button class="pill-button" style="flex:1;" onclick="copyProfileURL()"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
@@ -3219,7 +3273,7 @@ async function loadMyEvents(){
     <div class="ev-cover">${e.cover_url ? `<img src="${esc(assetUrl(e.cover_url))}" alt="">` : '🎫'}</div>
     <div class="ev-body">
       <div class="ev-t">${esc(e.title)}</div>
-      <div class="ev-m">${esc(fmt(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
+      <div class="ev-m">${esc(fmt(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}${e.is_checked_in ? ' ・ ✓ 受付済み' : ''}</div>
     </div>
   </a>`;
   if (joined.length) { wrapJ.innerHTML = joined.map(card).join(''); titleJ.hidden = false; }
@@ -3870,6 +3924,7 @@ function renderHistoryPage() {
 
 function switchHistoryTab(tab) {
   historyActiveTab = tab === 'past-lives' ? 'past-lives' : 'history';
+  if (historyActiveTab === 'history' && !editHistory.length) addHistoryItem(false);
   renderHistoryPage();
 }
 
@@ -3877,8 +3932,7 @@ function openHistoryPage() {
   editHistory = normalizeHistoryClient(me?.buddies_history || []);
   editNextLives = Array.isArray(me?.next_lives) ? [...me.next_lives] : [];
   editNextLiveSeats = JSON.parse(JSON.stringify(me?.next_live_seats || {}));
-  if (!editHistory.length) addHistoryItem(false);
-  historyActiveTab = 'history';
+  historyActiveTab = 'past-lives';
   renderHistoryPage();
   document.getElementById('history-page').classList.add('active');
   if (window.lucide) window.lucide.createIcons();
@@ -4957,29 +5011,15 @@ function switchQRTab(tab) {
   else { clearQRTimers(); startScanner(); }
 }
 
-function makeQRToken() {
-  // uid + タイムスタンプ（30秒刻み）+ 簡易ハッシュでリアルタイム認証
-  const slot = Math.floor(Date.now() / (QR_TOKEN_TTL * 1000));
-  const raw  = `${me.id}:${slot}:buddies`;
-  // 軽量なFNVハッシュ（クライアント側署名）
-  let h = 2166136261;
-  for (let i = 0; i < raw.length; i++) { h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-  const sig = h.toString(36);
-  return `${me.id}:${slot}:${sig}`;
-}
-
-function verifyQRToken(token) {
-  // スキャン側でトークンを検証
-  const parts = token.split(':');
-  if (parts.length !== 3) return null;
-  const [uid, slot, sig] = parts;
-  const now = Math.floor(Date.now() / (QR_TOKEN_TTL * 1000));
-  if (Math.abs(now - parseInt(slot, 10)) > 1) return null; // ±1スロット（最大2分）許容
-  const raw = `${uid}:${slot}:buddies`;
-  let h = 2166136261;
-  for (let i = 0; i < raw.length; i++) { h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
-  if (h.toString(36) !== sig) return null;
-  return parseInt(uid, 10);
+async function verifyQRToken(token) {
+  try {
+    const res = await fetch(API + '?action=buddies_qr_verify', {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({token}),
+    });
+    const json = await res.json();
+    return json.ok ? Number(json.data.user_id) : null;
+  } catch(e) { return null; }
 }
 
 function startQRCycle() {
@@ -5014,14 +5054,19 @@ function startTimerBar(seconds) {
   }, 1000);
 }
 
-function generateQR() {
+async function generateQR() {
   const el = document.getElementById('qrcode');
   el.innerHTML = '';
   if (!me) return;
-  const token = makeQRToken();
-  // QRにはトークンURLを埋め込む（アプリ内スキャン時はtokenパラメータも含む）
-  const qrUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=exchange&token=' + encodeURIComponent(token);
-  new QRCode(el, { text:qrUrl, width:220, height:220, correctLevel:QRCode.CorrectLevel.M, colorDark:'#000', colorLight:'#fff' });
+  try {
+    const res = await fetch(API + '?action=buddies_qr_token', { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok || !json.data?.token) throw new Error('token');
+    const qrUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=exchange&token=' + encodeURIComponent(json.data.token);
+    new QRCode(el, { text:qrUrl, width:220, height:220, correctLevel:QRCode.CorrectLevel.M, colorDark:'#000', colorLight:'#fff' });
+  } catch(e) {
+    el.innerHTML = '<div style="padding:36px 12px;color:#888;font-size:12px;text-align:center;">QRを生成できませんでした</div>';
+  }
 }
 function startScanner() {
   if (currentScanner) return;
@@ -5060,7 +5105,7 @@ function startScanner() {
           else { toast('プロフィールが見つかりません'); scanning = false; }
           return;
         }
-        const verifiedUid = verifyQRToken(token);
+        const verifiedUid = await verifyQRToken(token);
         if (!verifiedUid || verifiedUid !== uid) {
           toast('QRコードが期限切れです。相手に再表示してもらってください');
           return;
@@ -5236,6 +5281,13 @@ function closeExchangeOverlay() {
 function buildProfileURL(uid) {
   return location.origin + location.pathname.replace(/[^/]*$/, '') + 'view.html?id=' + encodeURIComponent(uid);
 }
+function buildMyProfileURL() {
+  const a = currentVerifiedAccount();
+  if (a && a.id) {
+    return location.origin + location.pathname.replace(/[^/]*$/, '') + 'verified/view.html?id=' + encodeURIComponent(a.id);
+  }
+  return buildProfileURL(me.id);
+}
 function openMyProfileView() {
   if (!me) return;
   saveProfileReturnState();
@@ -5248,13 +5300,13 @@ function openMyProfileView() {
 }
 function copyProfileURL() {
   if (!me) return;
-  const url = buildProfileURL(me.id);
+  const url = buildMyProfileURL();
   navigator.clipboard.writeText(url).then(()=>toast('URLをコピーしました')).catch(()=>toast('コピーできませんでした'));
 }
 function shareToX() {
   if (!me) return;
   const tpl = expandPostTemplate(me.post_template || '').trim();
-  const profileUrl = buildProfileURL(me.id);
+  const profileUrl = buildMyProfileURL();
   const profileText = `${getDisplayName(me)}のBuddies profile\n#BuddiesProfile #櫻坂46 @hiromame_sakura\n${profileUrl}`;
 
   if (tpl) {
@@ -5278,7 +5330,7 @@ function shareToX() {
 
 function shareProfile() {
   if (!me) return;
-  const url = buildProfileURL(me.id);
+  const url = buildMyProfileURL();
   const name = getDisplayName(me);
   if (navigator.share) {
     navigator.share({ title: `${name}のBuddiesプロフィール`, url }).catch(() => {});
@@ -5380,7 +5432,7 @@ async function checkUrl() {
     }
 
     if (mode === 'exchange' && token && me) {
-      const verifiedUid = verifyQRToken(token);
+      const verifiedUid = await verifyQRToken(token);
       if (verifiedUid && verifiedUid === parseInt(uid, 10)) {
         history.replaceState(null, '', location.pathname);
         sessionStorage.removeItem('buddies_shared_uid');

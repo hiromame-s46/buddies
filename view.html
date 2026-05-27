@@ -554,7 +554,8 @@ function renderHistoryPastLivesBlock(p){
   if (!ids.length) return '';
   const limit = 3;
   const shown = ids.slice(0, limit);
-  const more = ids.length > limit ? `<div class="history-live-summary-venue">ほか ${ids.length - limit} 公演</div>` : '';
+  const moreUrl = `./history.html?id=${encodeURIComponent(p.id)}`;
+  const more = ids.length > limit ? `<button class="history-more-btn" type="button" onclick="location.href='${esc(moreUrl)}'">すべて見る（${ids.length}公演）</button>` : '';
   return `<div class="history-live-summary">
     <div class="history-live-summary-title">参加したLIVE</div>
     <div class="history-live-summary-list">${shown.map(pastLiveSummaryItemHtml).join('')}</div>

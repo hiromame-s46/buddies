@@ -4,10 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>コミュニティ - Buddies profile</title>
-<meta name="description" content="Buddies profile のコミュニティアカウントページです。コミュニティパートナー・開発者アカウントの情報、イベント、掲示板を確認できます。">
+<meta name="description" content="Buddies profile のコミュニティアカウントページです。イベント、フォーム、掲示板を確認できます。">
 <meta name="robots" content="index,follow">
 <meta property="og:title" content="コミュニティ - Buddies profile">
-<meta property="og:description" content="Buddies profile のコミュニティアカウントページです。コミュニティパートナー・開発者アカウントの情報、イベント、掲示板を確認できます。">
+<meta property="og:description" content="Buddies profile のコミュニティアカウントページです。イベント、フォーム、掲示板を確認できます。">
 <meta property="og:type" content="profile">
 <meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/verified/view.html">
 <meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
@@ -42,6 +42,10 @@ main{padding:20px}
 .kind{display:inline-flex;align-items:center;gap:6px;border-radius:9999px;background:#fff;border:1px solid var(--gold);color:#7c5600;font-size:12px;font-weight:800;padding:4px 12px;margin-top:14px}
 .name{font-size:26px;font-weight:800;margin:8px 0 4px;letter-spacing:.02em;color:#111}
 .subnote{font-size:12px;color:var(--muted)}
+.owner-tools{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin:16px 0 4px}
+.owner-tool{display:inline-flex;align-items:center;justify-content:center;min-height:40px;border:1px solid var(--line);border-radius:9999px;background:#fff;color:#111;font:700 13px inherit;text-decoration:none;padding:0 15px;cursor:pointer}
+.owner-tool.primary{background:#111;color:#fff;border-color:#111}
+.owner-tool:hover{background:#f6f6f6}.owner-tool.primary:hover{background:#222}
 .desc{font-size:14px;line-height:1.8;color:#333;white-space:pre-wrap;background:#f5f5f5;border-radius:20px;padding:14px 18px;margin:18px 0}
 .tags{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin:6px 0 16px}
 .tags span{font-size:12px;font-weight:700;border-radius:9999px;background:#f2f2f2;color:#555;padding:5px 10px}
@@ -66,6 +70,7 @@ main{padding:20px}
 .event-card .body{flex:1;min-width:0}
 .event-card .t{font-weight:700;font-size:15px;margin-bottom:4px;color:#111}
 .event-card .m{font-size:12px;color:#666}
+.event-card .badge{display:inline-flex;vertical-align:middle;margin-left:5px;border-radius:9999px;background:#f3f3f3;color:#555;font-size:10px;font-weight:800;padding:2px 7px}
 .forms{display:grid;gap:10px;margin-top:8px}
 .form-card{display:grid;gap:6px;background:#fff;border:1px solid var(--line);border-radius:18px;padding:14px;text-decoration:none;color:#111}
 .form-card:hover{background:#fafafa}
@@ -92,7 +97,7 @@ main{padding:20px}
 .modal-overlay.open{display:flex}
 .modal-sheet{background:#fff;width:100%;max-width:560px;border-radius:20px 20px 0 0;max-height:88dvh;overflow:auto;padding:18px;display:grid;gap:12px}
 .modal-sheet h3{margin:0;font-size:16px}.modal-actions{display:grid;gap:8px}
-.modal-btn{min-height:46px;border-radius:9999px;border:1px solid var(--line);background:#fff;color:#111;font:800 14px inherit;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
+.modal-btn{min-height:46px;border-radius:9999px;border:1px solid var(--line);background:#fff;color:#111;font:800 13px inherit;cursor:pointer;text-decoration:none;display:flex;align-items:center;justify-content:center}
 .modal-btn.primary{background:#111;color:#fff;border-color:#111}
 .modal-btn.danger{color:#d33;background:#fff5f5;border-color:#f3c2c2}
 .post-form{display:grid;gap:12px}.post-form textarea{width:100%;min-height:150px;border:1px solid var(--line);border-radius:14px;padding:12px;font:inherit;line-height:1.7;resize:vertical}
@@ -172,7 +177,7 @@ function showEditFabIfOwner(a){
   const fab = document.getElementById('edit-fab');
   if (!fab || !a || !currentAccount) return;
   if (Number(currentAccount.id) === Number(a.id)) {
-    const canPost = ['developer','official'].includes(a.account_type);
+    const canPost = ['developer','verified'].includes(a.account_type);
     fab.onclick = (e) => {
       if (!canPost) return true;
       e.preventDefault();
@@ -181,6 +186,9 @@ function showEditFabIfOwner(a){
     };
     fab.style.display = 'flex';
   }
+}
+function isOwner(a = viewedAccount){
+  return !!(a && currentAccount && Number(currentAccount.id) === Number(a.id));
 }
 function closeOrBack(e){
   // 別タブで開かれた場合(opener あり) → タブを閉じる
@@ -238,11 +246,10 @@ function updateSeo(a){
   setMeta('meta[name="twitter:image"]', 'content', image);
   setCanonical(url);
 }
-function kindLabel(type){ return type === 'developer' ? '開発者アカウント' : type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント'; }
+function kindLabel(type){ return type === 'developer' ? '開発者アカウント' : 'コミュニティアカウント'; }
 function kindDef(type){
   return type === 'developer' ? 'Buddies profile の開発・運営を行うアカウントです。'
-       : type === 'official'  ? '極めて信頼性の高いことを証明するアカウントです。'
-                              : '開発者が認証したアカウントです。';
+                              : 'イベント、フォーム、掲示板を運営できるコミュニティアカウントです。';
 }
 function snsLabel(type){ return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'リンク'})[type] || 'リンク'; }
 function snsIcon(type){
@@ -300,6 +307,13 @@ function render(a){
 
   const label = a.label || kindLabel(a.account_type);
   const def   = a.account_definition || kindDef(a.account_type);
+  const ownerTools = isOwner(a) ? `
+    <div class="owner-tools">
+      <button class="owner-tool primary" type="button" onclick="shareCommunityPage()">ページを共有</button>
+      <button class="owner-tool" type="button" onclick="copyCommunityPageUrl()">リンクをコピー</button>
+      <a class="owner-tool" href="./index.html">管理画面</a>
+    </div>
+  ` : '';
 
   document.getElementById('app').innerHTML = `
     <div class="hero">
@@ -311,6 +325,7 @@ function render(a){
       <div class="name">${esc(a.display_name)}</div>
       <div class="subnote">${esc(def)}</div>
     </div>
+    ${ownerTools}
     ${a.description ? `<div class="desc">${esc(a.description)}</div>` : ''}
     ${tags ? `<div class="tags">${tags}</div>` : ''}
     ${links.length ? `
@@ -338,6 +353,26 @@ function fmtDate(s){
   if (isNaN(d)) return '';
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
 }
+function communityPageUrl(){
+  return absoluteUrl(`view.html?id=${encodeURIComponent(viewedAccount.id)}`);
+}
+async function copyCommunityPageUrl(){
+  try {
+    await navigator.clipboard.writeText(communityPageUrl());
+    alert('プロフィールリンクをコピーしました');
+  } catch (e) {
+    alert('リンクをコピーできませんでした');
+  }
+}
+async function shareCommunityPage(){
+  const url = communityPageUrl();
+  const title = `${viewedAccount.display_name || 'コミュニティ'} - Buddies profile`;
+  if (navigator.share) {
+    try { await navigator.share({ title, url }); } catch (e) {}
+    return;
+  }
+  copyCommunityPageUrl();
+}
 async function loadEvents(accountId){
   const wrap = document.getElementById('events');
   const title = document.getElementById('events-title');
@@ -363,7 +398,7 @@ async function loadEvents(accountId){
     <a class="event-card" href="./event.html?id=${e.id}">
       <div class="cover">${e.cover_url ? `<img src="${esc(assetUrl(e.cover_url))}" alt="">` : '🎫'}</div>
       <div class="body">
-        <div class="t">${esc(e.title)}</div>
+        <div class="t">${esc(e.title)}${e.visibility === 'unlisted' ? ' <span class="badge">非公開</span>' : ''}</div>
         <div class="m">${esc(fmtDate(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
         ${e.participant_enabled === false ? '' : `<div class="m">参加 ${e.join_count} 人${e.capacity ? ' / 定員 ' + e.capacity : ''}</div>`}
       </div>
@@ -397,7 +432,7 @@ async function loadForms(accountId){
 function canManageBoard(){
   return viewedAccount && currentAccount
     && Number(currentAccount.id) === Number(viewedAccount.id)
-    && ['developer','official'].includes(viewedAccount.account_type);
+    && ['developer','verified'].includes(viewedAccount.account_type);
 }
 function openActionModal(){ document.getElementById('action-modal').classList.add('open'); }
 function closeActionModal(){ document.getElementById('action-modal').classList.remove('open'); }

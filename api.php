@@ -39,7 +39,7 @@ $config = require __DIR__ . '/../../../api/config.php';
 
 define('SESSION_EXPIRE_HOURS', 720);
 define('ALLOWED_ORIGINS', ['*']);
-define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v12.lock');
+define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v13.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
 define('SAKUMIMI_DATA_PATH', __DIR__ . '/../data/sakumimi_data.json');
 define('MEMBER_DATA_PATH', __DIR__ . '/../data/member.json');
@@ -301,6 +301,15 @@ function runMigrations(PDO $pdo): void {
                    SET a.user_id = u.id
                    WHERE a.user_id IS NULL");
     } catch (\Throwable $e) {}
+    try {
+        $pdo->exec("UPDATE buddies_verified_accounts
+                   SET account_type = 'verified',
+                       label = CASE
+                           WHEN label IN ('コミュニティパートナー', 'プロアカウント', '認証アカウント', '') THEN 'コミュニティアカウント'
+                           ELSE label
+                       END
+                   WHERE account_type IN ('official', 'official_account', 'official_collab', 'event', 'partner')");
+    } catch (\Throwable $e) {}
 
     // ─ イベント ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_events (
@@ -318,6 +327,8 @@ function runMigrations(PDO $pdo): void {
         external_label VARCHAR(80) NULL DEFAULT NULL,
         external_button_highlight TINYINT(1) NOT NULL DEFAULT 0,
         participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        checkin_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        fee_items TEXT NULL DEFAULT NULL COMMENT 'JSON array of {label,amount}',
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public' COMMENT 'public | unlisted',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -338,6 +349,12 @@ function runMigrations(PDO $pdo): void {
     }
     if (!in_array('participant_enabled', $eventCols, true)) {
         $pdo->exec("ALTER TABLE buddies_events ADD COLUMN participant_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER external_button_highlight");
+    }
+    if (!in_array('checkin_enabled', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN checkin_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER participant_enabled");
+    }
+    if (!in_array('fee_items', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN fee_items TEXT NULL DEFAULT NULL COMMENT 'JSON array of {label,amount}' AFTER checkin_enabled");
     }
 
     // ─ コミュニティアカウント掲示板 ─
@@ -364,11 +381,99 @@ function runMigrations(PDO $pdo): void {
         event_id   BIGINT UNSIGNED NOT NULL,
         user_id    BIGINT UNSIGNED NOT NULL,
         kind       VARCHAR(10) NOT NULL DEFAULT 'join' COMMENT 'join | like',
+        checked_in_at DATETIME NULL DEFAULT NULL,
+        checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        registered_on_site TINYINT(1) NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_event_user_kind (event_id, user_id, kind),
         KEY idx_event_kind (event_id, kind),
         KEY idx_user (user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ─ サブイベントと参加者 ─
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_subevents (
+        id             BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        event_id       BIGINT UNSIGNED NOT NULL,
+        title          VARCHAR(160) NOT NULL,
+        description    TEXT NULL DEFAULT NULL,
+        venue          VARCHAR(200) NULL DEFAULT NULL,
+        starts_at      DATETIME NULL DEFAULT NULL,
+        ends_at        DATETIME NULL DEFAULT NULL,
+        cover_url      VARCHAR(2048) NULL DEFAULT NULL,
+        capacity       INT NULL DEFAULT NULL,
+        external_url   VARCHAR(2048) NULL DEFAULT NULL,
+        external_label VARCHAR(80) NULL DEFAULT NULL,
+        external_button_highlight TINYINT(1) NOT NULL DEFAULT 0,
+        participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        sort_order     INT NOT NULL DEFAULT 0,
+        status         VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at     TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_event (event_id, status),
+        KEY idx_starts (starts_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_subevent_participants (
+        id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        subevent_id BIGINT UNSIGNED NOT NULL,
+        user_id     BIGINT UNSIGNED NOT NULL,
+        checked_in_at DATETIME NULL DEFAULT NULL,
+        checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        registered_on_site TINYINT(1) NOT NULL DEFAULT 0,
+        created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_subevent_user (subevent_id, user_id),
+        KEY idx_subevent (subevent_id),
+        KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    // ─ コミュニティフォームと回答 ─
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_forms (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        title VARCHAR(160) NOT NULL,
+        description TEXT NULL DEFAULT NULL,
+        questions TEXT NOT NULL,
+        visibility VARCHAR(16) NOT NULL DEFAULT 'public',
+        collect_profile TINYINT(1) NOT NULL DEFAULT 0,
+        one_response TINYINT(1) NOT NULL DEFAULT 1,
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_account (account_id, status),
+        KEY idx_visibility (visibility, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_form_responses (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        form_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        answers TEXT NOT NULL,
+        respondent_name VARCHAR(120) NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_form (form_id),
+        KEY idx_form_user (form_id, user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    try {
+        $participantCols = array_column($pdo->query('DESCRIBE buddies_event_participants')->fetchAll(), 'Field');
+        if (!in_array('checked_in_at', $participantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD COLUMN checked_in_at DATETIME NULL DEFAULT NULL AFTER kind");
+        }
+        if (!in_array('checked_in_by_account_id', $participantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD COLUMN checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL AFTER checked_in_at");
+        }
+        if (!in_array('registered_on_site', $participantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD COLUMN registered_on_site TINYINT(1) NOT NULL DEFAULT 0 AFTER checked_in_by_account_id");
+        }
+        $subParticipantCols = array_column($pdo->query('DESCRIBE buddies_subevent_participants')->fetchAll(), 'Field');
+        if (!in_array('checked_in_at', $subParticipantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_subevent_participants ADD COLUMN checked_in_at DATETIME NULL DEFAULT NULL AFTER user_id");
+        }
+        if (!in_array('checked_in_by_account_id', $subParticipantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_subevent_participants ADD COLUMN checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL AFTER checked_in_at");
+        }
+        if (!in_array('registered_on_site', $subParticipantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_subevent_participants ADD COLUMN registered_on_site TINYINT(1) NOT NULL DEFAULT 0 AFTER checked_in_by_account_id");
+        }
+    } catch (\Throwable $e) {}
     // 既存テーブルの UNIQUE 制約を (event_id, user_id) → (event_id, user_id, kind) に置き換え
     try {
         $idx = $pdo->query("SHOW INDEX FROM buddies_event_participants WHERE Key_name='uq_event_user'")->fetchAll();
@@ -461,6 +566,20 @@ function requireAuth(): array {
     return $u;
 }
 function generateToken(): string { return bin2hex(random_bytes(32)); }
+function qrSigningKey(): string {
+    global $config;
+    return hash('sha256', (string)($config['password'] ?? '') . '|buddies-profile-qr');
+}
+function signedQrUserId(string $token): int {
+    $parts = explode(':', trim($token));
+    if (count($parts) !== 4 || $parts[0] !== 'v2') return 0;
+    [, $uidRaw, $expiresRaw, $signature] = $parts;
+    $uid = (int)$uidRaw;
+    $expires = (int)$expiresRaw;
+    if ($uid <= 0 || $expires < time() || $expires > time() + 180) return 0;
+    $expected = hash_hmac('sha256', $uid . ':' . $expires, qrSigningKey());
+    return hash_equals($expected, $signature) ? $uid : 0;
+}
 function setSessionCookie(string $token): void {
     setcookie('sakulabo_token', $token, [
         'expires'  => time() + SESSION_EXPIRE_HOURS * 3600,
@@ -1282,28 +1401,24 @@ function buildVerifiedData(array $a, bool $includePrivate = false): array {
 function normalizeVerifiedType(string $type): string {
     return match ($type) {
         'developer' => 'developer',
-        'official', 'official_account', 'official_collab', 'event', 'partner' => 'official',
         default => 'verified',
     };
 }
 function verifiedTypeLabel(string $type): string {
     return match ($type) {
         'developer' => '開発者アカウント',
-        'official' => 'コミュニティパートナー',
         default => 'コミュニティアカウント',
     };
 }
 function normalizeVerifiedLabel(?string $label, string $type): string {
     $label = trim((string)$label);
-    if ($label === '' || $label === '認証アカウント') return verifiedTypeLabel($type);
-    if ($label === 'プロアカウント') return 'コミュニティパートナー';
+    if ($label === '' || in_array($label, ['認証アカウント', 'プロアカウント', 'コミュニティパートナー'], true)) return verifiedTypeLabel($type);
     return $label;
 }
 function verifiedTypeDefinition(string $type): string {
     return match ($type) {
         'developer' => 'Buddies profile の開発・運営を行うアカウントです。',
-        'official' => '極めて信頼性の高いことを証明するアカウントです。',
-        default => '開発者が認証したアカウントです。',
+        default => 'イベント、フォーム、掲示板を運営できるコミュニティアカウントです。',
     };
 }
 function verifiedUploadDir(string $kind, int $accountId): string {
@@ -1316,7 +1431,7 @@ function publicUploadUrl(string $kind, int $accountId, string $file): string {
 }
 function canUseVerifiedBoard(array $a): bool {
     $type = normalizeVerifiedType((string)($a['account_type'] ?? ''));
-    return in_array($type, ['developer', 'official'], true);
+    return in_array($type, ['developer', 'verified'], true);
 }
 function ensureVerifiedPostTables(): void {
     static $done = false;
@@ -1409,6 +1524,8 @@ match ($action) {
     'buddies_exchange_add'    => actionExchangeAdd(),
     'buddies_exchange_list'   => actionExchangeList(),
     'buddies_exchange_remove' => actionExchangeRemove(),
+    'buddies_qr_token'        => actionQrToken(),
+    'buddies_qr_verify'       => actionQrVerify(),
 
     'buddies_favorite_toggle' => actionFavoriteToggle(),
     'buddies_favorite_list'   => actionFavoriteList(),
@@ -1454,6 +1571,10 @@ match ($action) {
     'event_join'              => actionEventJoin(),
     'event_my_status'         => actionEventMyStatus(),
     'event_my_participations' => actionEventMyParticipations(),
+    'event_checkin_scan'      => actionEventCheckinScan(),
+    'event_checkin_manage'    => actionEventCheckinManage(),
+    'subevent_checkin_scan'   => actionSubeventCheckinScan(),
+    'subevent_checkin_manage' => actionSubeventCheckinManage(),
 
     'subevent_list'           => actionSubeventList(),
     'subevent_get'            => actionSubeventGet(),
@@ -2167,8 +2288,15 @@ function actionSearch(): void {
     $liveIds  = array_slice(array_unique($liveIds), 0, 20);
     $liveMode = strtolower(trim($_GET['live_mode'] ?? 'or')) === 'and' ? 'and' : 'or';
 
-    // SNS設定済みのみ
+    // 公開設定による絞り込み
     $hasSns = !empty($_GET['has_sns']) && $_GET['has_sns'] !== '0' && $_GET['has_sns'] !== 'false';
+    $hasPastLive = !empty($_GET['has_past_live']) && $_GET['has_past_live'] !== '0' && $_GET['has_past_live'] !== 'false';
+    $showsMimis = !empty($_GET['shows_mimis']) && $_GET['shows_mimis'] !== '0' && $_GET['shows_mimis'] !== 'false';
+    $showsBlogs = !empty($_GET['shows_blogs']) && $_GET['shows_blogs'] !== '0' && $_GET['shows_blogs'] !== 'false';
+    $pastLiveIdsInput = json_decode((string)($_GET['past_live_ids'] ?? '[]'), true);
+    $pastLiveIds = is_array($pastLiveIdsInput)
+        ? array_slice(array_values(array_unique(array_filter(array_map('trim', $pastLiveIdsInput)))), 0, 100)
+        : [];
 
     $selectCols = '
         u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
@@ -2258,6 +2386,24 @@ function actionSearch(): void {
     if ($hasSns) {
         $where[] = "(bp.sns_links IS NOT NULL AND bp.sns_links <> '' AND bp.sns_links <> '[]' AND bp.sns_links LIKE ?)";
         $params[] = '%"url"%';
+    }
+    if ($hasPastLive) {
+        if (!$pastLiveIds) {
+            $where[] = "(bp.next_lives IS NOT NULL AND bp.next_lives <> '' AND bp.next_lives <> '[]')";
+        } else {
+            $clauses = [];
+            foreach ($pastLiveIds as $id) {
+                $clauses[] = 'bp.next_lives LIKE ?';
+                $params[] = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $id) . '"%';
+            }
+            $where[] = '(' . implode(' OR ', $clauses) . ')';
+        }
+    }
+    if ($showsMimis) {
+        $where[] = 'bp.show_favorite_mimis = 1 AND EXISTS (SELECT 1 FROM sakulabo_mimi_favorites smf WHERE smf.user_id = u.id LIMIT 1)';
+    }
+    if ($showsBlogs) {
+        $where[] = 'bp.show_favorite_blogs = 1 AND EXISTS (SELECT 1 FROM sakulabo_blog_likes sbl WHERE sbl.user_id = u.id LIMIT 1)';
     }
 
     // 並び順:
@@ -3061,7 +3207,7 @@ function actionVerifiedPostList(): void {
 function actionVerifiedPostCreate(): void {
     ensureVerifiedPostTables();
     $a = requireVerifiedAccount();
-    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・コミュニティパートナーのみ利用できます。', 403);
+    if (!canUseVerifiedBoard($a)) err('このコミュニティアカウントでは掲示板を利用できません。', 403);
     $b = body();
     $body = trim((string)($b['body'] ?? ''));
     if (mb_strlen($body) > 8000) err('本文は8000文字以内で入力してください。');
@@ -3138,7 +3284,7 @@ function actionVerifiedPostCreate(): void {
 function actionVerifiedPostDelete(): void {
     ensureVerifiedPostTables();
     $a = requireVerifiedAccount();
-    if (!canUseVerifiedBoard($a)) err('掲示板投稿は開発者アカウント・コミュニティパートナーのみ利用できます。', 403);
+    if (!canUseVerifiedBoard($a)) err('このコミュニティアカウントでは掲示板を利用できません。', 403);
     $id = (int)(body()['id'] ?? $_GET['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
     $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE id=? AND status='active' LIMIT 1");
@@ -3177,6 +3323,8 @@ function ensureEventTables(): void {
         external_label VARCHAR(80) NULL DEFAULT NULL,
         external_button_highlight TINYINT(1) NOT NULL DEFAULT 0,
         participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        checkin_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        fee_items TEXT NULL DEFAULT NULL,
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -3189,6 +3337,9 @@ function ensureEventTables(): void {
         event_id   BIGINT UNSIGNED NOT NULL,
         user_id    BIGINT UNSIGNED NOT NULL,
         kind       VARCHAR(10) NOT NULL DEFAULT 'join',
+        checked_in_at DATETIME NULL DEFAULT NULL,
+        checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        registered_on_site TINYINT(1) NOT NULL DEFAULT 0,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_event_user_kind (event_id, user_id, kind),
         KEY idx_event_kind (event_id, kind),
@@ -3219,6 +3370,9 @@ function ensureEventTables(): void {
         id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         subevent_id BIGINT UNSIGNED NOT NULL,
         user_id     BIGINT UNSIGNED NOT NULL,
+        checked_in_at DATETIME NULL DEFAULT NULL,
+        checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        registered_on_site TINYINT(1) NOT NULL DEFAULT 0,
         created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE KEY uq_subevent_user (subevent_id, user_id),
         KEY idx_subevent (subevent_id),
@@ -3237,6 +3391,32 @@ function ensureEventTables(): void {
         }
         if (!in_array('participant_enabled', $cols, true)) {
             $pdo->exec("ALTER TABLE buddies_events ADD COLUMN participant_enabled TINYINT(1) NOT NULL DEFAULT 1 AFTER external_button_highlight");
+        }
+        if (!in_array('checkin_enabled', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN checkin_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER participant_enabled");
+        }
+        if (!in_array('fee_items', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN fee_items TEXT NULL DEFAULT NULL AFTER checkin_enabled");
+        }
+        $participantCols = array_column($pdo->query('DESCRIBE buddies_event_participants')->fetchAll(), 'Field');
+        if (!in_array('checked_in_at', $participantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD COLUMN checked_in_at DATETIME NULL DEFAULT NULL AFTER kind");
+        }
+        if (!in_array('checked_in_by_account_id', $participantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD COLUMN checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL AFTER checked_in_at");
+        }
+        if (!in_array('registered_on_site', $participantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_event_participants ADD COLUMN registered_on_site TINYINT(1) NOT NULL DEFAULT 0 AFTER checked_in_by_account_id");
+        }
+        $subParticipantCols = array_column($pdo->query('DESCRIBE buddies_subevent_participants')->fetchAll(), 'Field');
+        if (!in_array('checked_in_at', $subParticipantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_subevent_participants ADD COLUMN checked_in_at DATETIME NULL DEFAULT NULL AFTER user_id");
+        }
+        if (!in_array('checked_in_by_account_id', $subParticipantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_subevent_participants ADD COLUMN checked_in_by_account_id BIGINT UNSIGNED NULL DEFAULT NULL AFTER checked_in_at");
+        }
+        if (!in_array('registered_on_site', $subParticipantCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_subevent_participants ADD COLUMN registered_on_site TINYINT(1) NOT NULL DEFAULT 0 AFTER checked_in_by_account_id");
         }
         $idx = $pdo->query("SHOW INDEX FROM buddies_event_participants WHERE Key_name='uq_event_user'")->fetchAll();
         if ($idx) {
@@ -3292,6 +3472,17 @@ function eventAttachments(array $e): array {
             'uploaded_at' => $f['uploaded_at'] ?? null,
         ];
     }, $arr)));
+}
+function eventFeeItems(array $e): array {
+    $raw = $e['fee_items'] ?? null;
+    $arr = is_string($raw) ? json_decode($raw, true) : $raw;
+    if (!is_array($arr)) return [];
+    return array_values(array_filter(array_map(function($item) {
+        if (!is_array($item)) return null;
+        $label = mb_substr(trim((string)($item['label'] ?? '')), 0, 80);
+        $amount = mb_substr(trim((string)($item['amount'] ?? '')), 0, 80);
+        return ($label !== '' && $amount !== '') ? ['label' => $label, 'amount' => $amount] : null;
+    }, array_slice($arr, 0, 20))));
 }
 function cleanUploadFileName(string $name, string $fallback): string {
     $name = trim(basename($name));
@@ -3359,6 +3550,8 @@ function eventEditableFields(array $b): array {
     $visibility = (string)($b['visibility'] ?? 'public');
     if (!in_array($visibility, ['public','unlisted'], true)) $visibility = 'public';
     $participantEnabled = truthyFlag($b['participant_enabled'] ?? 1);
+    $checkinEnabled = $participantEnabled && truthyFlag($b['checkin_enabled'] ?? 0);
+    $feeItems = eventFeeItems(['fee_items' => $b['fee_items'] ?? []]);
     return [
         'title'          => $title,
         'description'    => $description !== '' ? $description : null,
@@ -3370,6 +3563,8 @@ function eventEditableFields(array $b): array {
         'external_label' => $externalLabel,
         'external_button_highlight' => truthyFlag($b['external_button_highlight'] ?? 0),
         'participant_enabled' => $participantEnabled,
+        'checkin_enabled' => $checkinEnabled,
+        'fee_items'      => $feeItems,
         'visibility'     => $visibility,
     ];
 }
@@ -3379,15 +3574,20 @@ function buildEventData(array $e, ?int $viewerId = null, bool $includeAttachment
     $countSt->execute([$eventId]);
     $counts = ['join' => 0, 'like' => 0];
     foreach ($countSt->fetchAll() as $row) { $counts[$row['kind']] = (int)$row['c']; }
+    $checkinSt = db()->prepare("SELECT COUNT(*) FROM buddies_event_participants WHERE event_id=? AND kind='join' AND checked_in_at IS NOT NULL");
+    $checkinSt->execute([$eventId]);
+    $checkinCount = (int)$checkinSt->fetchColumn();
     $visibility = $e['visibility'] ?? 'public';
     if ($visibility !== 'public') $counts['like'] = 0;
     $myKinds = [];
+    $isCheckedIn = false;
     if ($viewerId) {
-        $mySt = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
+        $mySt = db()->prepare("SELECT kind, checked_in_at FROM buddies_event_participants WHERE event_id=? AND user_id=?");
         $mySt->execute([$eventId, $viewerId]);
         foreach ($mySt->fetchAll() as $row) {
             if ($visibility !== 'public' && $row['kind'] === 'like') continue;
             $myKinds[] = $row['kind'];
+            if ($row['kind'] === 'join' && !empty($row['checked_in_at'])) $isCheckedIn = true;
         }
     }
     if (!$includeAttachments && $viewerId && in_array('join', $myKinds, true)) $includeAttachments = true;
@@ -3406,20 +3606,27 @@ function buildEventData(array $e, ?int $viewerId = null, bool $includeAttachment
         'external_label' => $e['external_label'],
         'external_button_highlight' => !empty($e['external_button_highlight']),
         'participant_enabled' => !isset($e['participant_enabled']) || !empty($e['participant_enabled']),
+        'checkin_enabled' => !empty($e['checkin_enabled']),
+        'fee_items'      => eventFeeItems($e),
         'visibility'     => $visibility,
         'status'         => $e['status'],
         'created_at'     => $e['created_at'],
         'join_count'     => $counts['join'],
+        'checkin_count'  => $checkinCount,
         'like_count'     => $counts['like'],
         'my_kinds'       => $myKinds,
         'is_joined'      => in_array('join', $myKinds, true),
         'is_liked'       => in_array('like', $myKinds, true),
+        'is_checked_in'  => $isCheckedIn,
     ];
 }
 function actionEventListByAccount(): void { ensureEventTables();
     $accountId = (int)($_GET['account_id'] ?? 0);
     if ($accountId <= 0) err('account_id は必須です。');
-    $st = db()->prepare("SELECT * FROM buddies_events WHERE account_id=? AND status='active' AND visibility='public'
+    $verified = currentVerifiedAccount();
+    $isOwner = $verified && (int)$verified['id'] === $accountId;
+    $visibilityCondition = $isOwner ? '' : " AND visibility='public'";
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE account_id=? AND status='active'" . $visibilityCondition . "
                          AND " . eventVisibleDateCondition() . "
                          ORDER BY " . sortEventsSql());
     $st->execute([$accountId]);
@@ -3434,7 +3641,6 @@ function actionEventGet(): void { ensureEventTables();
     $st->execute([$id]);
     $e = $st->fetch();
     if (!$e || $e['status'] === 'disabled') err('イベントが見つかりません。', 404);
-    if (!empty($e['ends_at']) && strtotime($e['ends_at']) < time()) err('イベントが見つかりません。', 404);
     $viewer = currentUser();
     $viewerId = $viewer ? (int)$viewer['id'] : null;
     $verified = currentVerifiedAccount();
@@ -3471,7 +3677,7 @@ function actionEventParticipantsAdmin(): void { ensureEventTables();
     $where = 'e.account_id=? AND e.status!="disabled"';
     $params = [(int)$a['id']];
     if ($eventId > 0) { $where .= ' AND e.id=?'; $params[] = $eventId; }
-    $sql = "SELECT ep.event_id, ep.created_at AS joined_at,
+    $sql = "SELECT ep.event_id, ep.created_at AS joined_at, ep.checked_in_at, ep.registered_on_site,
                    e.title AS event_title, e.starts_at AS event_starts_at,
                    u.id, u.username, u.display_name, u.user_icon, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
                    p.location, p.bio, p.tags, p.favorite_songs, p.sns_links
@@ -3480,7 +3686,7 @@ function actionEventParticipantsAdmin(): void { ensureEventTables();
               JOIN sakulabo_users u ON u.id = ep.user_id
               LEFT JOIN buddies_profiles p ON p.user_id = u.id
              WHERE {$where} AND ep.kind='join'
-             ORDER BY e.starts_at DESC, ep.created_at DESC";
+             ORDER BY e.starts_at DESC, (ep.checked_in_at IS NOT NULL) ASC, ep.created_at DESC";
     $st = db()->prepare($sql);
     $st->execute($params);
     $subSt = db()->prepare(
@@ -3506,6 +3712,8 @@ function actionEventParticipantsAdmin(): void { ensureEventTables();
             'event_title' => (string)$r['event_title'],
             'event_starts_at' => $r['event_starts_at'],
             'joined_at' => $r['joined_at'],
+            'checked_in_at' => $r['checked_in_at'],
+            'registered_on_site' => !empty($r['registered_on_site']),
             'user' => [
                 'id' => (int)$r['id'],
                 'username' => (string)$r['username'],
@@ -3533,11 +3741,12 @@ function actionEventCreate(): void { ensureEventTables();
     $a = requireVerifiedAccount();
     $f = eventEditableFields(body());
     db()->prepare("INSERT INTO buddies_events
-        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, visibility)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?)")
+        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, checkin_enabled, fee_items, visibility)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
        ->execute([(int)$a['id'], $f['title'], $f['description'], $f['venue'],
                   $f['starts_at'], $f['ends_at'], $f['capacity'], $f['external_url'], $f['external_label'],
-                  $f['external_button_highlight'], $f['participant_enabled'], $f['visibility']]);
+                  $f['external_button_highlight'], $f['participant_enabled'], $f['checkin_enabled'],
+                  json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), $f['visibility']]);
     $id = (int)db()->lastInsertId();
     $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
     $st->execute([$id]);
@@ -3555,10 +3764,10 @@ function actionEventUpdate(): void { ensureEventTables();
     $f = eventEditableFields($b);
     db()->prepare("UPDATE buddies_events SET
         title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
-        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, visibility=? WHERE id=?")
+        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, checkin_enabled=?, fee_items=?, visibility=? WHERE id=?")
        ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
                   $f['capacity'], $f['external_url'], $f['external_label'], $f['external_button_highlight'],
-                  $f['participant_enabled'], $f['visibility'], $id]);
+                  $f['participant_enabled'], $f['checkin_enabled'], json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), $f['visibility'], $id]);
     if ($f['visibility'] !== 'public') {
         db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND kind='like'")
            ->execute([$id]);
@@ -3739,6 +3948,12 @@ function actionEventJoin(): void { ensureEventTables();
     }
 
     if ($state === 'off') {
+        if ($kind === 'join') {
+            $checkedSt = db()->prepare("SELECT checked_in_at FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+            $checkedSt->execute([$eventId, $uid]);
+            $checked = $checkedSt->fetch();
+            if ($checked && !empty($checked['checked_in_at'])) err('受付済みの参加記録は取り消せません。', 409);
+        }
         db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind=?")
            ->execute([$eventId, $uid, $kind]);
         if ($kind === 'join') {
@@ -3764,6 +3979,212 @@ function actionEventJoin(): void { ensureEventTables();
     $mySt->execute([$eventId, $uid]);
     $kinds = array_column($mySt->fetchAll(), 'kind');
     ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true)]);
+}
+
+function actionQrToken(): void {
+    $u = requireAuth();
+    $uid = (int)$u['id'];
+    $expires = time() + 45;
+    $signature = hash_hmac('sha256', $uid . ':' . $expires, qrSigningKey());
+    ok(['token' => 'v2:' . $uid . ':' . $expires . ':' . $signature, 'expires_at' => $expires]);
+}
+function actionQrVerify(): void {
+    requireAuth();
+    $uid = signedQrUserId(trim((string)(body()['token'] ?? '')));
+    if ($uid <= 0) err('QRコードが期限切れです。', 410);
+    ok(['user_id' => $uid]);
+}
+function checkinUserData(int $userId): array {
+    $st = db()->prepare(
+        "SELECT u.id, u.username, u.display_name, u.user_icon, u.oshi_member, u.oshi_member_2, u.oshi_member_3, p.location
+           FROM sakulabo_users u
+           LEFT JOIN buddies_profiles p ON p.user_id=u.id
+          WHERE u.id=? LIMIT 1"
+    );
+    $st->execute([$userId]);
+    $r = $st->fetch();
+    if (!$r) err('ユーザーが見つかりません。', 404);
+    return [
+        'id' => (int)$r['id'],
+        'username' => (string)$r['username'],
+        'display_name' => $r['display_name'] ?: $r['username'],
+        'user_icon' => $r['user_icon'] ?? null,
+        'oshi_members' => array_values(array_filter([$r['oshi_member'] ?? null, $r['oshi_member_2'] ?? null, $r['oshi_member_3'] ?? null])),
+        'location' => $r['location'] ?? null,
+    ];
+}
+function actionEventCheckinScan(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $eventId = (int)($b['event_id'] ?? 0);
+    $token = trim((string)($b['token'] ?? ''));
+    $allowRegister = truthyFlag($b['allow_register'] ?? 0);
+    if ($eventId <= 0 || $token === '') err('イベントとQRコードが必要です。');
+    $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? AND account_id=? AND status='active' LIMIT 1");
+    $st->execute([$eventId, (int)$a['id']]);
+    $event = $st->fetch();
+    if (!$event) err('イベントが見つからないか、受付権限がありません。', 404);
+    if (empty($event['participant_enabled']) || empty($event['checkin_enabled'])) err('このイベントでは受付機能が有効になっていません。', 403);
+    $userId = signedQrUserId($token);
+    if ($userId <= 0) err('QRコードが期限切れです。参加者にもう一度表示してもらってください。', 410);
+    $user = checkinUserData($userId);
+    $joinSt = db()->prepare("SELECT id, checked_in_at, registered_on_site FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+    $joinSt->execute([$eventId, $userId]);
+    $join = $joinSt->fetch();
+    if (!$join && !$allowRegister) {
+        ok([
+            'requires_registration' => true,
+            'message' => '参加登録していないユーザーです。',
+            'user' => $user,
+        ]);
+    }
+    $wasRegistered = !!$join;
+    if (!$join) {
+        db()->prepare("INSERT INTO buddies_event_participants (event_id, user_id, kind, checked_in_at, checked_in_by_account_id, registered_on_site) VALUES (?,?,'join',NOW(),?,1)")
+           ->execute([$eventId, $userId, (int)$a['id']]);
+    } else {
+        db()->prepare("UPDATE buddies_event_participants SET checked_in_at=COALESCE(checked_in_at,NOW()), checked_in_by_account_id=? WHERE id=?")
+           ->execute([(int)$a['id'], (int)$join['id']]);
+    }
+    $fresh = db()->prepare("SELECT checked_in_at, registered_on_site FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+    $fresh->execute([$eventId, $userId]);
+    $status = $fresh->fetch();
+    ok([
+        'checked_in' => true,
+        'already_checked_in' => $wasRegistered && !empty($join['checked_in_at']),
+        'registered_on_site' => !empty($status['registered_on_site']),
+        'checked_in_at' => $status['checked_in_at'],
+        'user' => $user,
+    ]);
+}
+function actionEventCheckinManage(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $eventId = (int)($b['event_id'] ?? 0);
+    $userId = (int)($b['user_id'] ?? 0);
+    $operation = trim((string)($b['operation'] ?? ''));
+    if ($eventId <= 0 || $userId <= 0) err('イベントと参加者を指定してください。');
+    if (!in_array($operation, ['checkin', 'undo_checkin', 'remove_join'], true)) err('操作が不正です。');
+    $eventSt = db()->prepare("SELECT id FROM buddies_events WHERE id=? AND account_id=? AND status='active' LIMIT 1");
+    $eventSt->execute([$eventId, (int)$a['id']]);
+    if (!$eventSt->fetch()) err('イベントが見つからないか、受付権限がありません。', 404);
+    $joinSt = db()->prepare("SELECT id, checked_in_at FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+    $joinSt->execute([$eventId, $userId]);
+    $join = $joinSt->fetch();
+    if (!$join) err('参加登録が見つかりません。', 404);
+    if ($operation === 'checkin') {
+        db()->prepare("UPDATE buddies_event_participants SET checked_in_at=COALESCE(checked_in_at,NOW()), checked_in_by_account_id=? WHERE id=?")
+           ->execute([(int)$a['id'], (int)$join['id']]);
+        ok(['operation' => $operation, 'user' => checkinUserData($userId)]);
+    }
+    if ($operation === 'undo_checkin') {
+        db()->prepare("UPDATE buddies_event_participants SET checked_in_at=NULL, checked_in_by_account_id=NULL WHERE id=?")
+           ->execute([(int)$join['id']]);
+        ok(['operation' => $operation, 'user' => checkinUserData($userId)]);
+    }
+    db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join'")
+       ->execute([$eventId, $userId]);
+    db()->prepare("DELETE sp FROM buddies_subevent_participants sp
+                   JOIN buddies_subevents s ON s.id=sp.subevent_id
+                   WHERE s.event_id=? AND sp.user_id=?")
+       ->execute([$eventId, $userId]);
+    ok(['operation' => $operation, 'user' => checkinUserData($userId)]);
+}
+function ownSubeventForCheckin(int $subeventId, array $account): array {
+    $st = db()->prepare(
+        "SELECT s.*, e.account_id, e.title AS event_title, e.participant_enabled AS event_participant_enabled, e.checkin_enabled AS event_checkin_enabled
+           FROM buddies_subevents s
+           JOIN buddies_events e ON e.id = s.event_id
+          WHERE s.id=? AND s.status='active' AND e.status='active'
+          LIMIT 1"
+    );
+    $st->execute([$subeventId]);
+    $s = $st->fetch();
+    if (!$s || (int)$s['account_id'] !== (int)$account['id']) err('サブイベントが見つからないか、受付権限がありません。', 404);
+    if (empty($s['participant_enabled'])) err('このサブイベントでは参加登録が有効になっていません。', 403);
+    if (empty($s['event_checkin_enabled'])) err('このイベントでは受付機能が有効になっていません。', 403);
+    return $s;
+}
+function subeventCheckinRow(int $subeventId, int $userId): ?array {
+    $st = db()->prepare("SELECT id, checked_in_at, registered_on_site FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=? LIMIT 1");
+    $st->execute([$subeventId, $userId]);
+    $row = $st->fetch();
+    return $row ?: null;
+}
+function subeventMainStatus(int $eventId, int $userId): array {
+    $st = db()->prepare("SELECT checked_in_at FROM buddies_event_participants WHERE event_id=? AND user_id=? AND kind='join' LIMIT 1");
+    $st->execute([$eventId, $userId]);
+    $row = $st->fetch();
+    return [
+        'main_joined' => (bool)$row,
+        'main_checked_in' => $row && !empty($row['checked_in_at']),
+    ];
+}
+function actionSubeventCheckinScan(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $subeventId = (int)($b['subevent_id'] ?? $b['target_id'] ?? 0);
+    $token = trim((string)($b['token'] ?? ''));
+    $allowRegister = truthyFlag($b['allow_register'] ?? 0);
+    if ($subeventId <= 0 || $token === '') err('サブイベントとQRコードが必要です。');
+    $subevent = ownSubeventForCheckin($subeventId, $a);
+    $userId = signedQrUserId($token);
+    if ($userId <= 0) err('QRコードが期限切れです。参加者にもう一度表示してもらってください。', 410);
+    $user = checkinUserData($userId);
+    $main = subeventMainStatus((int)$subevent['event_id'], $userId);
+    $join = subeventCheckinRow($subeventId, $userId);
+    if (!$join && !$allowRegister) {
+        ok([
+            'requires_registration' => true,
+            'message' => 'サブイベントに参加登録していないユーザーです。',
+            'user' => $user,
+            'main_joined' => $main['main_joined'],
+            'main_checked_in' => $main['main_checked_in'],
+        ]);
+    }
+    $wasRegistered = !!$join;
+    if (!$join) {
+        db()->prepare("INSERT INTO buddies_subevent_participants (subevent_id, user_id, checked_in_at, checked_in_by_account_id, registered_on_site) VALUES (?,?,NOW(),?,1)")
+           ->execute([$subeventId, $userId, (int)$a['id']]);
+    } else {
+        db()->prepare("UPDATE buddies_subevent_participants SET checked_in_at=COALESCE(checked_in_at,NOW()), checked_in_by_account_id=? WHERE id=?")
+           ->execute([(int)$a['id'], (int)$join['id']]);
+    }
+    $fresh = subeventCheckinRow($subeventId, $userId);
+    ok([
+        'checked_in' => true,
+        'already_checked_in' => $wasRegistered && !empty($join['checked_in_at']),
+        'registered_on_site' => !empty($fresh['registered_on_site']),
+        'checked_in_at' => $fresh['checked_in_at'] ?? null,
+        'user' => $user,
+        'main_joined' => $main['main_joined'],
+        'main_checked_in' => $main['main_checked_in'],
+    ]);
+}
+function actionSubeventCheckinManage(): void { ensureEventTables();
+    $a = requireVerifiedAccount();
+    $b = body();
+    $subeventId = (int)($b['subevent_id'] ?? $b['target_id'] ?? 0);
+    $userId = (int)($b['user_id'] ?? 0);
+    $operation = trim((string)($b['operation'] ?? ''));
+    if ($subeventId <= 0 || $userId <= 0) err('サブイベントと参加者を指定してください。');
+    if (!in_array($operation, ['checkin', 'undo_checkin', 'remove_join'], true)) err('操作が不正です。');
+    $subevent = ownSubeventForCheckin($subeventId, $a);
+    $join = subeventCheckinRow($subeventId, $userId);
+    if (!$join) err('サブイベント参加登録が見つかりません。', 404);
+    if ($operation === 'checkin') {
+        db()->prepare("UPDATE buddies_subevent_participants SET checked_in_at=COALESCE(checked_in_at,NOW()), checked_in_by_account_id=? WHERE id=?")
+           ->execute([(int)$a['id'], (int)$join['id']]);
+        ok(['operation' => $operation, 'user' => checkinUserData($userId), ...subeventMainStatus((int)$subevent['event_id'], $userId)]);
+    }
+    if ($operation === 'undo_checkin') {
+        db()->prepare("UPDATE buddies_subevent_participants SET checked_in_at=NULL, checked_in_by_account_id=NULL WHERE id=?")
+           ->execute([(int)$join['id']]);
+        ok(['operation' => $operation, 'user' => checkinUserData($userId), ...subeventMainStatus((int)$subevent['event_id'], $userId)]);
+    }
+    db()->prepare("DELETE FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=?")
+       ->execute([$subeventId, $userId]);
+    ok(['operation' => $operation, 'user' => checkinUserData($userId), ...subeventMainStatus((int)$subevent['event_id'], $userId)]);
 }
 
 function subeventEditableFields(array $b): array {
@@ -3815,12 +4236,23 @@ function buildSubeventData(array $s, ?int $viewerId = null): array {
     $cntSt = db()->prepare("SELECT COUNT(*) c FROM buddies_subevent_participants WHERE subevent_id=?");
     $cntSt->execute([$id]);
     $joinCount = (int)$cntSt->fetch()['c'];
+    $checkinSt = db()->prepare("SELECT COUNT(*) c FROM buddies_subevent_participants WHERE subevent_id=? AND checked_in_at IS NOT NULL");
+    $checkinSt->execute([$id]);
+    $checkinCount = (int)$checkinSt->fetch()['c'];
     $isJoined = false;
+    $isCheckedIn = false;
+    $mainJoined = false;
+    $mainCheckedIn = false;
     $canJoin = false;
     if ($viewerId) {
-        $mySt = db()->prepare("SELECT id FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=? LIMIT 1");
+        $mySt = db()->prepare("SELECT id, checked_in_at FROM buddies_subevent_participants WHERE subevent_id=? AND user_id=? LIMIT 1");
         $mySt->execute([$id, $viewerId]);
-        $isJoined = (bool)$mySt->fetch();
+        $my = $mySt->fetch();
+        $isJoined = (bool)$my;
+        $isCheckedIn = $my && !empty($my['checked_in_at']);
+        $main = subeventMainStatus($eventId, $viewerId);
+        $mainJoined = $main['main_joined'];
+        $mainCheckedIn = $main['main_checked_in'];
 
         if (!$participantEnabled) {
             $canJoin = false;
@@ -3850,7 +4282,11 @@ function buildSubeventData(array $s, ?int $viewerId = null): array {
         'sort_order'     => isset($s['sort_order']) ? (int)$s['sort_order'] : 0,
         'status'         => $s['status'],
         'join_count'     => $joinCount,
+        'checkin_count'  => $checkinCount,
         'is_joined'      => $isJoined,
+        'is_checked_in'  => $isCheckedIn,
+        'main_joined'    => $mainJoined,
+        'main_checked_in'=> $mainCheckedIn,
         'can_join'       => $canJoin,
     ];
 }
@@ -4092,20 +4528,26 @@ function actionSubeventParticipantsAdmin(): void { ensureEventTables();
     $s = $own->fetch();
     if (!$s || (int)$s['account_id'] !== (int)$a['id']) err('閲覧権限がありません。', 403);
     $st = db()->prepare(
-        "SELECT sp.created_at AS joined_at,
+        "SELECT sp.created_at AS joined_at, sp.checked_in_at, sp.registered_on_site,
+                ep.id AS main_join_id, ep.checked_in_at AS main_checked_in_at,
                 u.id, u.username, u.display_name, u.user_icon, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
                 p.location, p.bio, p.tags, p.favorite_songs, p.sns_links
            FROM buddies_subevent_participants sp
            JOIN sakulabo_users u ON u.id = sp.user_id
+           LEFT JOIN buddies_event_participants ep ON ep.event_id = ? AND ep.user_id = u.id AND ep.kind = 'join'
            LEFT JOIN buddies_profiles p ON p.user_id = u.id
           WHERE sp.subevent_id=?
-          ORDER BY sp.created_at DESC"
+          ORDER BY (sp.checked_in_at IS NOT NULL) ASC, sp.created_at DESC"
     );
-    $st->execute([$id]);
+    $st->execute([(int)$s['event_id'], $id]);
     ok([
         'subevent' => ['id'=>(int)$s['id'], 'event_id'=>(int)$s['event_id'], 'title'=>(string)$s['title']],
         'participants' => array_map(fn($r) => [
             'joined_at' => $r['joined_at'],
+            'checked_in_at' => $r['checked_in_at'],
+            'registered_on_site' => !empty($r['registered_on_site']),
+            'main_joined' => !empty($r['main_join_id']),
+            'main_checked_in' => !empty($r['main_checked_in_at']),
             'user' => [
                 'id' => (int)$r['id'],
                 'username' => (string)$r['username'],
@@ -4124,13 +4566,15 @@ function actionSubeventParticipantsAdmin(): void { ensureEventTables();
 
 function actionEventMyStatus(): void { ensureEventTables();
     $u = currentUser();
-    if (!$u) ok(['my_kinds' => [], 'is_joined' => false, 'is_liked' => false]);
+    if (!$u) ok(['my_kinds' => [], 'is_joined' => false, 'is_liked' => false, 'is_checked_in' => false]);
     $id = (int)($_GET['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
-    $st = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
+    $st = db()->prepare("SELECT kind, checked_in_at FROM buddies_event_participants WHERE event_id=? AND user_id=?");
     $st->execute([$id, (int)$u['id']]);
-    $kinds = array_column($st->fetchAll(), 'kind');
-    ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true)]);
+    $rows = $st->fetchAll();
+    $kinds = array_column($rows, 'kind');
+    $checkedIn = count(array_filter($rows, fn($r) => $r['kind'] === 'join' && !empty($r['checked_in_at']))) > 0;
+    ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true), 'is_checked_in' => $checkedIn]);
 }
 
 // ユーザー自身の参加中/いいね中のイベント一覧
@@ -4183,17 +4627,30 @@ function ensureFormTables(): void {
 function normalizeFormQuestions($questions): array {
     if (!is_array($questions)) err('質問の形式が正しくありません。');
     $out = [];
+    $answerable = 0;
     foreach (array_slice($questions, 0, 30) as $q) {
         if (!is_array($q)) continue;
         $label = trim((string)($q['label'] ?? ''));
         if ($label === '' || mb_strlen($label) > 160) continue;
         $type = (string)($q['type'] ?? 'text');
-        if (!in_array($type, ['text','textarea','select','radio','checkbox'], true)) $type = 'text';
+        if (!in_array($type, ['text','textarea','number','date','url','select','radio','checkbox','section'], true)) $type = 'text';
         $options = isset($q['options']) && is_array($q['options']) ? array_values(array_filter(array_map(fn($v) => mb_substr(trim((string)$v), 0, 80), $q['options']), fn($v) => $v !== '')) : [];
         if (in_array($type, ['select','radio','checkbox'], true) && !$options) $type = 'text';
-        $out[] = ['id' => preg_replace('/[^a-zA-Z0-9_-]/', '', (string)($q['id'] ?? '')) ?: bin2hex(random_bytes(4)), 'label' => $label, 'type' => $type, 'required' => truthyFlag($q['required'] ?? 0), 'options' => array_slice($options, 0, 20)];
+        $help = mb_substr(trim((string)($q['help'] ?? '')), 0, 240);
+        $placeholder = mb_substr(trim((string)($q['placeholder'] ?? '')), 0, 120);
+        $isSection = $type === 'section';
+        if (!$isSection) $answerable++;
+        $out[] = [
+            'id' => preg_replace('/[^a-zA-Z0-9_-]/', '', (string)($q['id'] ?? '')) ?: bin2hex(random_bytes(4)),
+            'label' => $label,
+            'type' => $type,
+            'required' => $isSection ? false : truthyFlag($q['required'] ?? 0),
+            'options' => $isSection ? [] : array_slice($options, 0, 20),
+            'help' => $help,
+            'placeholder' => $isSection ? '' : $placeholder,
+        ];
     }
-    if (!$out) err('質問を1件以上入力してください。');
+    if (!$answerable) err('回答項目を1件以上入力してください。');
     return $out;
 }
 function formEditableFields(array $b): array {
@@ -4267,9 +4724,27 @@ function actionFormSubmit(): void { ensureFormTables();
     if (!empty($f['one_response']) && $uid) { $dup = db()->prepare('SELECT id FROM buddies_form_responses WHERE form_id=? AND user_id=? LIMIT 1'); $dup->execute([$id, $uid]); if ($dup->fetch()) err('回答は1回までです。', 409); }
     $questions = json_decode((string)$f['questions'], true) ?: []; $answersIn = is_array($b['answers'] ?? null) ? $b['answers'] : []; $answers = [];
     foreach ($questions as $q) {
+        if (($q['type'] ?? '') === 'section') continue;
         $qid = (string)$q['id']; $val = $answersIn[$qid] ?? null;
         if (!empty($q['required']) && ($val === null || $val === '' || $val === [])) err('必須項目が未入力です。');
-        $answers[$qid] = is_array($val) ? array_slice(array_map(fn($v) => mb_substr(trim((string)$v), 0, 500), $val), 0, 20) : mb_substr(trim((string)($val ?? '')), 0, 2000);
+        $type = (string)($q['type'] ?? 'text');
+        $options = is_array($q['options'] ?? null) ? array_map('strval', $q['options']) : [];
+        if ($type === 'checkbox') {
+            $normalized = is_array($val) ? array_slice(array_map(fn($v) => mb_substr(trim((string)$v), 0, 500), $val), 0, 20) : [];
+            if (array_diff($normalized, $options)) err('選択肢に不正な値が含まれています。');
+            if (!empty($q['required']) && !$normalized) err('必須項目が未入力です。');
+            $answers[$qid] = $normalized;
+            continue;
+        }
+        $normalized = mb_substr(trim((string)($val ?? '')), 0, 2000);
+        if (in_array($type, ['radio', 'select'], true) && $normalized !== '' && !in_array($normalized, $options, true)) err('選択肢に不正な値が含まれています。');
+        if ($normalized !== '' && $type === 'url' && !cleanUrl($normalized)) err('URLの形式が正しくありません。');
+        if ($normalized !== '' && $type === 'number' && !is_numeric($normalized)) err('数値項目の形式が正しくありません。');
+        if ($normalized !== '' && $type === 'date') {
+            $date = DateTime::createFromFormat('Y-m-d', $normalized);
+            if (!$date || $date->format('Y-m-d') !== $normalized) err('日付の形式が正しくありません。');
+        }
+        $answers[$qid] = $normalized;
     }
     db()->prepare("INSERT INTO buddies_form_responses (form_id,user_id,answers,respondent_name) VALUES (?,?,?,?)")->execute([$id, $uid, json_encode($answers, JSON_UNESCAPED_UNICODE), !empty($f['collect_profile']) ? ($u['display_name'] ?: $u['username']) : null]);
     ok(['submitted'=>true]);
