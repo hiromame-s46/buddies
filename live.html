@@ -150,7 +150,8 @@ header{position:relative;padding:22px 0 10px;display:grid;grid-template-columns:
 <script>
 const API='./api.php';
 const LIVE_DATA='../data/live.json';
-let me=null, liveOptions=[], participants=[], currentLiveId='', seatModalLiveId='', seatSaving=false;
+const MEMBER_DATA='../data/member.json';
+let me=null, liveOptions=[], participants=[], memberMap={}, currentLiveId='', seatModalLiveId='', seatSaving=false;
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
@@ -168,7 +169,7 @@ function seatLabel(s){const c=cleanSeatInfo(s);return[c.floor?`${c.floor}階`:''
 function blockNumber(block){const m=String(block||'').match(/^([A-Z]+)(\d+)$/);return m?{prefix:m[1],n:Number(m[2])}:null;}
 function seatProximityLabel(a,b){const sa=cleanSeatInfo(a),sb=cleanSeatInfo(b);if(sa.block&&sb.block&&sa.block===sb.block)return'同じブロック';const ba=blockNumber(sa.block),bb=blockNumber(sb.block);if(ba&&bb&&ba.prefix===bb.prefix&&Math.abs(ba.n-bb.n)===1)return'隣のブロック';if(sa.area&&sb.area&&sa.area===sb.area)return'同じエリア';if(sa.floor&&sb.floor&&sa.floor===sb.floor)return'同じ階';return'';}
 function getDisplayName(p){return p.display_name||p.username||'名無し';}
-function avatarUrl(p){return p.user_icon||'';}
+function avatarUrl(p){if(p?.user_icon)return p.user_icon;const oshi=[p?.oshi_member,p?.oshi_member_2,p?.oshi_member_3].find(name=>name&&memberMap[name]?.image);return oshi?memberMap[oshi].image:'';}
 function avatarHtml(p){const url=avatarUrl(p);return `<div class="avatar">${url?`<img src="${esc(url)}" alt="">`:esc((getDisplayName(p)[0]||'?'))}</div>`;}
 function accountAvatarHtml(){if(!me)return'<a class="account-avatar" href="./?tab=mypage" aria-label="ログイン">?</a>';const url=avatarUrl(me);return `<a class="account-avatar" href="./?tab=mypage" aria-label="マイページ">${url?`<img src="${esc(url)}" alt="">`:esc((getDisplayName(me)[0]||'?'))}</a>`;}
 function myLiveIds(){return Array.isArray(me?.next_lives)?me.next_lives:[];}
@@ -202,7 +203,7 @@ function openSeatModal(id){if(!me){location.href='./?live_redirect='+encodeURICo
 function closeSeatModal(){const active=document.activeElement;if(active&&document.getElementById('seat-modal').contains(active))active.blur();document.getElementById('seat-modal').classList.remove('active');}
 async function saveSeatModal(join){if(!me||!seatModalLiveId||seatSaving)return;let lives=myLiveIds().slice();let seats={...mySeats()};if(join&&!lives.includes(seatModalLiveId))lives.push(seatModalLiveId);if(!join){lives=lives.filter(id=>id!==seatModalLiveId);delete seats[seatModalLiveId];}else{const seat=cleanSeatInfo({floor:document.getElementById('seat-floor').value,area:document.getElementById('seat-area').value,block:document.getElementById('seat-block').value});if(seatHasValue(seat))seats[seatModalLiveId]=seat;else delete seats[seatModalLiveId];}setSeatSaving(true);try{const res=await fetch(`${API}?action=buddies_next_live_update`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({next_lives:lives,next_live_seats:seats})});const json=await res.json();if(!json.ok){toast(json.error||'保存できませんでした');return;}me=json.data;closeSeatModal();render();toast(join?'参加予定を保存しました':'参加予定を外しました');try{await loadParticipants();render();}catch(e){}}catch(e){toast('通信エラーが発生しました');}finally{setSeatSaving(false);}}
 async function loadParticipants(){const res=await fetch(`${API}?action=buddies_live_participants&limit=1000`,{credentials:'include'});const json=await res.json();participants=json.ok&&Array.isArray(json.data)?json.data:[];}
-async function init(){try{const [meRes,liveRes]=await Promise.all([fetch(`${API}?action=auth_me`,{credentials:'include'}).catch(()=>null),fetch(`${LIVE_DATA}?_=${Date.now()}`)]);if(meRes){try{const j=await meRes.json();me=j.ok?j.data:null;}catch(e){}}liveOptions=buildLiveOptions(await liveRes.json());await loadParticipants();render();}catch(e){document.getElementById('app').innerHTML='<div class="empty">読み込みに失敗しました。</div>';}}
+async function init(){try{const [meRes,liveRes,memberRes]=await Promise.all([fetch(`${API}?action=auth_me`,{credentials:'include'}).catch(()=>null),fetch(`${LIVE_DATA}?_=${Date.now()}`),fetch(`${MEMBER_DATA}?_=${Date.now()}`).catch(()=>null)]);if(meRes){try{const j=await meRes.json();me=j.ok?j.data:null;}catch(e){}}if(memberRes){try{const raw=await memberRes.json();const members=Array.isArray(raw)?raw:Object.values(raw||{});members.forEach(m=>{if(m?.name)memberMap[m.name]=m;});}catch(e){}}liveOptions=buildLiveOptions(await liveRes.json());await loadParticipants();render();}catch(e){document.getElementById('app').innerHTML='<div class="empty">読み込みに失敗しました。</div>';}}
 init();
 </script>
 </body>
