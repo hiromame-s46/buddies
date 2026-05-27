@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 const BUDDIES_BASE_URL = 'https://buddies46.stars.ne.jp/satellite/buddies/';
 const BUDDIES_MEMBER_DATA_PATH = __DIR__ . '/../data/member.json';
+const BUDDIES_CARD_LOGO_PATH = __DIR__ . '/assets/buddies-logo.jpg';
 
 function buddies_db(): PDO {
     static $pdo = null;
@@ -34,7 +35,7 @@ function buddies_profile(int $uid): ?array {
         'SELECT u.id, u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3,
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-                bp.tags, bp.favorite_songs, bp.sns_links, bp.follow_stance
+                bp.tags, bp.favorite_songs, bp.next_lives, bp.sns_links, bp.follow_stance
          FROM sakulabo_users u
          LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
          WHERE u.id = ? LIMIT 1'
@@ -57,6 +58,7 @@ function buddies_profile(int $uid): ?array {
         'bio'            => $r['bio'] ?? null,
         'tags'           => !empty($r['tags']) ? (json_decode($r['tags'], true) ?: []) : [],
         'favorite_songs' => !empty($r['favorite_songs']) ? (json_decode($r['favorite_songs'], true) ?: []) : [],
+        'next_lives'     => !empty($r['next_lives']) ? (json_decode($r['next_lives'], true) ?: []) : [],
         'sns_links'      => !empty($r['sns_links']) ? (json_decode($r['sns_links'], true) ?: []) : [],
         'follow_stance'  => $r['follow_stance'] ?? null,
     ];
@@ -71,15 +73,15 @@ function buddies_members(): array {
 }
 
 function buddies_profile_url(int $uid): string {
-    return BUDDIES_BASE_URL . 'profile.php?uid=' . $uid;
+    return BUDDIES_BASE_URL . 'view.html?id=' . $uid;
 }
 
 function buddies_app_url(int $uid): string {
-    return BUDDIES_BASE_URL . '?uid=' . $uid . '&mode=view';
+    return buddies_profile_url($uid);
 }
 
 function buddies_image_url(int $uid): string {
-    return BUDDIES_BASE_URL . 'og-image.php?uid=' . $uid . '&v=2';
+    return BUDDIES_BASE_URL . 'og-image.php?uid=' . $uid . '&v=3';
 }
 
 function buddies_download_url(int $uid): string {
@@ -97,11 +99,28 @@ function buddies_esc(string $s): string {
 function buddies_meta_description(array $p): string {
     $oshis = array_values(array_filter([$p['oshi_member'] ?? null, $p['oshi_member_2'] ?? null, $p['oshi_member_3'] ?? null]));
     $bits = [];
-    if ($oshis) $bits[] = implode(' / ', $oshis) . ' 推し';
-    if (!empty($p['location'])) $bits[] = $p['location'];
-    if (!empty($p['favorite_songs'][0])) $bits[] = '好きな曲: ' . $p['favorite_songs'][0];
+    if ($oshis) $bits[] = 'My推し: ' . implode(' / ', $oshis);
+    $nextLive = buddies_next_live($p);
+    if ($nextLive) $bits[] = 'NEXT LIVE: ' . buddies_next_live_label($nextLive);
     if (!$bits) $bits[] = '櫻坂46ファンのプロフィール';
     return implode('・', $bits) . ' | Buddies profile';
+}
+
+function buddies_next_live(array $p): ?array {
+    $today = (new DateTime('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d');
+    $items = [];
+    foreach (($p['next_lives'] ?? []) as $id) {
+        $parts = explode('|', (string)$id, 3);
+        $date = $parts[0] ?? '';
+        if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date < $today) continue;
+        $items[] = ['date' => $date, 'title' => $parts[1] ?? 'ライブ', 'venue' => $parts[2] ?? ''];
+    }
+    usort($items, fn(array $a, array $b): int => strcmp($a['date'], $b['date']));
+    return $items[0] ?? null;
+}
+
+function buddies_next_live_label(array $live): string {
+    return str_replace('-', '.', (string)$live['date']) . ' ' . trim((string)$live['title']);
 }
 
 function buddies_font_regular(): string {
@@ -257,57 +276,38 @@ function buddies_render_card(array $p): GdImage {
 
     $font = buddies_font_regular();
     $bg = buddies_rgb($im, '#ffffff');
-    $white = buddies_rgb($im, '#ffffff');
     $ink = buddies_rgb($im, '#111111');
-    $muted = buddies_rgb($im, '#747474');
+    $muted = buddies_rgb($im, '#737373');
     $line = buddies_rgb($im, '#eeeeee');
-    $soft = buddies_rgb($im, '#f7f7f7');
+    $soft = buddies_rgb($im, '#fafafa');
 
     imagefilledrectangle($im, 0, 0, $w, $h, $bg);
-    imagefilledrectangle($im, 78, 92, 82, 538, $ink);
-    imageline($im, 78, 538, 1122, 538, $line);
-
-    buddies_text($im, 24, 110, 146, 'Buddies profile', $muted, $font);
-
-    $avatarSize = 170;
-    imagefilledellipse($im, 222, 308, $avatarSize + 16, $avatarSize + 16, $soft);
-    $src = buddies_load_image(buddies_avatar_url($p));
-    if ($src) {
-        buddies_draw_cover_circle($im, $src, 222, 308, $avatarSize);
-    } else {
-        imagefilledellipse($im, 222, 308, $avatarSize, $avatarSize, $soft);
-        buddies_text($im, 66, 196, 334, mb_substr((string)$p['display_name'], 0, 1), $ink, $font);
+    buddies_rounded_rect($im, 56, 48, 1144, 582, 32, $soft, true);
+    buddies_rounded_rect($im, 56, 48, 1144, 582, 32, $line, false);
+    buddies_text($im, 23, 98, 108, 'Buddies profile', $muted, $font);
+    $logo = @imagecreatefromjpeg(BUDDIES_CARD_LOGO_PATH);
+    if ($logo) {
+        imagecopyresampled($im, $logo, 964, 70, 0, 0, 132, 132, imagesx($logo), imagesy($logo));
     }
-    imageellipse($im, 222, 308, $avatarSize, $avatarSize, $line);
 
     $name = trim((string)$p['display_name']) ?: 'Buddies';
     $nameLines = buddies_wrap($name, 16, 2);
     foreach ($nameLines as $i => $lineText) {
-        buddies_text($im, $i === 0 ? 58 : 46, 360, 222 + $i * 62, $lineText, $ink, $font);
+        buddies_text($im, $i === 0 ? 58 : 45, 98, 190 + $i * 56, $lineText, $ink, $font);
     }
 
     $oshis = array_values(array_filter([$p['oshi_member'] ?? null, $p['oshi_member_2'] ?? null, $p['oshi_member_3'] ?? null]));
-    $summary = $oshis ? implode(' / ', array_slice($oshis, 0, 3)) . ' 推し' : '櫻坂46ファンのプロフィール';
-    buddies_text($im, 25, 364, 348, $summary, $muted, $font);
+    $oshi = $oshis ? implode(' / ', array_slice($oshis, 0, 3)) : '-';
+    $oshi = mb_strlen($oshi) > 34 ? mb_substr($oshi, 0, 33) . '…' : $oshi;
+    $nextLive = buddies_next_live($p);
+    $liveLabel = $nextLive ? buddies_next_live_label($nextLive) : '-';
+    $liveLabel = mb_strlen($liveLabel) > 32 ? mb_substr($liveLabel, 0, 31) . '…' : $liveLabel;
 
-    $meta = array_values(array_filter([
-        !empty($p['location']) ? $p['location'] : null,
-        !empty($p['age']) ? $p['age'] . '歳' : null,
-        !empty($p['buddies_since']) ? 'Buddies歴 ' . $p['buddies_since'] : null,
-    ]));
-    if ($meta) buddies_text($im, 22, 364, 398, implode('  /  ', $meta), $muted, $font);
-
-    $tags = array_values(array_filter(array_merge($p['tags'] ?? [], $p['favorite_songs'] ?? [])));
-    $lineText = $tags ? implode('  ・  ', array_slice($tags, 0, 3)) : 'プロフィールを開いて詳しく見る';
-    $lineText = mb_strlen($lineText) > 32 ? mb_substr($lineText, 0, 31) . '…' : $lineText;
-    buddies_rounded_rect($im, 364, 438, 972, 492, 27, $soft, true);
-    buddies_text($im, 21, 394, 474, $lineText, $muted, $font);
-
-    if (!empty($p['username'])) {
-        buddies_text($im, 20, 110, 500, '@' . (string)$p['username'], $muted, $font);
-    }
-
-    buddies_text($im, 26, 970, 592, 'Buddies', $ink, $font);
+    imageline($im, 98, 286, 1102, 286, $line);
+    buddies_text($im, 18, 98, 334, 'My推し', $muted, $font);
+    buddies_text($im, 29, 98, 382, $oshi, $ink, $font);
+    buddies_text($im, 18, 98, 454, 'NEXT LIVE', $muted, $font);
+    buddies_text($im, 29, 98, 502, $liveLabel, $ink, $font);
 
     return $im;
 }

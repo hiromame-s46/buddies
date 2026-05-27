@@ -37,7 +37,7 @@ if (!$profile) {
 <meta property="og:image:width" content="<?= $imageWidth ?>">
 <meta property="og:image:height" content="<?= $imageHeight ?>">
 <meta property="og:site_name" content="Buddies">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="<?= buddies_esc($title) ?>">
 <meta name="twitter:description" content="<?= buddies_esc($desc) ?>">
 <meta name="twitter:image" content="<?= buddies_esc($image) ?>">
