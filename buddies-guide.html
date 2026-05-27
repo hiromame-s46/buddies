@@ -1,0 +1,975 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Buddies profile 完全ガイド | はじめての使い方からライブ当日まで</title>
+  <meta name="description" content="Buddies profile の始め方、プロフィール作成、NEXT LIVE、座席登録、Buddies検索、QR交換、履歴、各種連携までを一から解説するガイドです。">
+  <style>
+    :root {
+      --ink: #24202c;
+      --muted: #6b6672;
+      --line: #e9e3ec;
+      --paper: #fffdfa;
+      --soft: #f7f2f7;
+      --pink: #da88a5;
+      --pink-deep: #b9587f;
+      --pink-light: #fff0f5;
+      --lilac: #efebf6;
+      --green: #2f7860;
+      --shadow: 0 18px 48px rgba(48, 27, 40, 0.08);
+      --radius: 24px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at 8% 0%, #fce7ef 0, transparent 34%),
+        radial-gradient(circle at 94% 6%, #ede7f6 0, transparent 30%),
+        #fbf9f7;
+      font-family: "Hiragino Sans", "Noto Sans JP", "Yu Gothic", sans-serif;
+      line-height: 1.8;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    p {
+      margin: 0 0 1em;
+    }
+
+    strong {
+      color: var(--pink-deep);
+    }
+
+    .container {
+      width: min(1140px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      padding: 72px 0 48px;
+    }
+
+    .hero-card {
+      position: relative;
+      overflow: hidden;
+      min-height: 478px;
+      padding: clamp(34px, 6vw, 70px);
+      border: 1px solid rgba(218, 136, 165, 0.16);
+      border-radius: 36px;
+      background: rgba(255, 253, 250, 0.9);
+      box-shadow: var(--shadow);
+    }
+
+    .hero-card::before {
+      content: "";
+      position: absolute;
+      top: -160px;
+      right: -110px;
+      width: 390px;
+      height: 390px;
+      border-radius: 50%;
+      background: linear-gradient(145deg, #ffdce9, #eee6fb);
+      opacity: 0.9;
+    }
+
+    .hero-card::after {
+      content: "";
+      position: absolute;
+      right: 96px;
+      bottom: 56px;
+      width: 142px;
+      height: 142px;
+      border: 1px solid rgba(185, 88, 127, 0.14);
+      border-radius: 50%;
+    }
+
+    .eyebrow {
+      position: relative;
+      z-index: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 22px;
+      padding: 8px 14px;
+      color: var(--pink-deep);
+      border-radius: 999px;
+      background: var(--pink-light);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+      text-transform: uppercase;
+    }
+
+    .eyebrow::before {
+      content: "";
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--pink);
+    }
+
+    h1 {
+      position: relative;
+      z-index: 1;
+      max-width: 690px;
+      margin: 0 0 20px;
+      font-family: "Hiragino Mincho ProN", "Noto Serif JP", serif;
+      font-size: clamp(38px, 6vw, 62px);
+      font-weight: 600;
+      letter-spacing: 0.03em;
+      line-height: 1.34;
+    }
+
+    .hero-lead {
+      position: relative;
+      z-index: 1;
+      max-width: 590px;
+      margin: 0 0 34px;
+      color: var(--muted);
+      font-size: 16px;
+    }
+
+    .hero-meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .hero-meta span {
+      padding: 8px 14px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 280px minmax(0, 1fr);
+      gap: 34px;
+      align-items: start;
+      padding-bottom: 72px;
+    }
+
+    .toc {
+      position: sticky;
+      top: 24px;
+      padding: 24px 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: rgba(255, 253, 250, 0.92);
+    }
+
+    .toc-title {
+      margin: 0 0 16px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+    }
+
+    .toc ol {
+      display: grid;
+      gap: 7px;
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: toc;
+    }
+
+    .toc li {
+      counter-increment: toc;
+    }
+
+    .toc a {
+      display: flex;
+      gap: 10px;
+      padding: 6px 7px;
+      color: var(--muted);
+      border-radius: 9px;
+      font-size: 13px;
+      line-height: 1.55;
+      transition: color 0.18s ease, background 0.18s ease;
+    }
+
+    .toc a::before {
+      content: counter(toc, decimal-leading-zero);
+      color: var(--pink);
+      font-weight: 700;
+    }
+
+    .toc a:hover {
+      color: var(--ink);
+      background: var(--pink-light);
+    }
+
+    article {
+      min-width: 0;
+      padding: clamp(28px, 5vw, 52px);
+      border: 1px solid var(--line);
+      border-radius: 30px;
+      background: var(--paper);
+      box-shadow: 0 10px 28px rgba(48, 27, 40, 0.04);
+    }
+
+    .intro {
+      margin: 0 0 42px;
+      padding: 23px 25px;
+      border-radius: 18px;
+      background: var(--soft);
+      color: #514b57;
+      font-size: 15px;
+    }
+
+    section {
+      scroll-margin-top: 28px;
+      margin: 0 0 52px;
+    }
+
+    section:last-child {
+      margin-bottom: 0;
+    }
+
+    .section-label {
+      display: inline-block;
+      margin: 0 0 9px;
+      color: var(--pink-deep);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.13em;
+    }
+
+    h2 {
+      margin: 0 0 18px;
+      font-size: clamp(25px, 3.6vw, 31px);
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      line-height: 1.45;
+    }
+
+    h3 {
+      margin: 29px 0 11px;
+      font-size: 19px;
+      line-height: 1.5;
+    }
+
+    .steps {
+      display: grid;
+      gap: 15px;
+      margin: 22px 0;
+      padding: 0;
+      list-style: none;
+      counter-reset: steps;
+    }
+
+    .steps li {
+      position: relative;
+      padding: 18px 18px 18px 62px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: #fff;
+    }
+
+    .steps li::before {
+      content: counter(steps);
+      counter-increment: steps;
+      position: absolute;
+      top: 18px;
+      left: 18px;
+      display: grid;
+      place-items: center;
+      width: 28px;
+      height: 28px;
+      color: #fff;
+      border-radius: 50%;
+      background: var(--pink);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .steps b {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 15px;
+    }
+
+    .steps p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+      margin: 22px 0;
+    }
+
+    .card {
+      padding: 18px 19px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: #fff;
+    }
+
+    .card h3 {
+      margin: 0 0 7px;
+      color: var(--ink);
+      font-size: 16px;
+    }
+
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tag-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 16px 0 22px;
+    }
+
+    .tag-list span {
+      padding: 5px 12px;
+      color: var(--pink-deep);
+      border-radius: 999px;
+      background: var(--pink-light);
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .note,
+    .tip {
+      margin: 22px 0;
+      padding: 18px 20px;
+      border-left: 3px solid var(--pink);
+      border-radius: 0 14px 14px 0;
+      background: var(--pink-light);
+      color: #514653;
+      font-size: 14px;
+    }
+
+    .tip {
+      border-left-color: var(--green);
+      background: #f0f7f3;
+    }
+
+    .note b,
+    .tip b {
+      display: block;
+      margin-bottom: 4px;
+      color: var(--ink);
+    }
+
+    .feature-list {
+      margin: 17px 0;
+      padding-left: 21px;
+    }
+
+    .feature-list li {
+      margin: 8px 0;
+      padding-left: 4px;
+    }
+
+    .route {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      margin: 20px 0;
+      padding: 15px;
+      border-radius: 14px;
+      background: var(--soft);
+      color: #554d59;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .route span {
+      padding: 7px 11px;
+      border-radius: 999px;
+      background: #fff;
+    }
+
+    .route i {
+      color: var(--pink);
+      font-style: normal;
+    }
+
+    table {
+      width: 100%;
+      margin: 20px 0;
+      border-collapse: separate;
+      border-spacing: 0;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 15px;
+      font-size: 14px;
+    }
+
+    th,
+    td {
+      padding: 13px 14px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    th {
+      width: 30%;
+      color: var(--pink-deep);
+      background: var(--pink-light);
+      font-weight: 700;
+    }
+
+    td {
+      background: #fff;
+    }
+
+    details {
+      margin: 10px 0;
+      padding: 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: #fff;
+    }
+
+    summary {
+      padding: 16px 0;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    details p {
+      margin: 0 0 17px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .closing {
+      padding: clamp(24px, 4vw, 35px);
+      border-radius: 22px;
+      background: linear-gradient(135deg, #fff1f6, #f5f1fa);
+    }
+
+    .closing h2 {
+      font-family: "Hiragino Mincho ProN", "Noto Serif JP", serif;
+    }
+
+    footer {
+      padding: 0 0 56px;
+      color: var(--muted);
+      font-size: 12px;
+      text-align: center;
+    }
+
+    @media (max-width: 880px) {
+      .hero {
+        padding-top: 30px;
+      }
+
+      .hero-card {
+        min-height: 0;
+      }
+
+      .hero-card::before {
+        width: 250px;
+        height: 250px;
+      }
+
+      .hero-card::after {
+        display: none;
+      }
+
+      .layout {
+        display: block;
+      }
+
+      .toc {
+        position: static;
+        margin-bottom: 22px;
+      }
+
+      .toc ol {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 600px) {
+      .container {
+        width: min(100% - 24px, 1140px);
+      }
+
+      .hero-card {
+        padding: 29px 23px;
+        border-radius: 25px;
+      }
+
+      .hero-meta {
+        gap: 8px;
+      }
+
+      .layout {
+        padding-bottom: 38px;
+      }
+
+      article {
+        padding: 27px 19px;
+        border-radius: 22px;
+      }
+
+      .toc {
+        padding: 19px 14px;
+      }
+
+      .toc ol,
+      .cards {
+        grid-template-columns: 1fr;
+      }
+
+      section {
+        margin-bottom: 42px;
+      }
+
+      table,
+      tbody,
+      tr,
+      th,
+      td {
+        display: block;
+      }
+
+      th {
+        width: auto;
+        border-bottom: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="container">
+      <div class="hero-card">
+        <p class="eyebrow">Buddies Guide</p>
+        <h1>Buddies profile<br>完全ガイド</h1>
+        <p class="hero-lead">
+          推しやライブ予定をプロフィールにまとめ、同じ時間を楽しむBuddiesとつながるためのサービス。
+          登録からライブ当日の使い方まで、はじめての人向けに一つずつ案内します。
+        </p>
+        <div class="hero-meta">
+          <span>はじめての方向け</span>
+          <span>読了目安 12分</span>
+          <span>2026.05 更新</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="container layout">
+    <nav class="toc" aria-label="目次">
+      <p class="toc-title">CONTENTS</p>
+      <ol>
+        <li><a href="#about">できること</a></li>
+        <li><a href="#start">登録とログイン</a></li>
+        <li><a href="#navigation">画面の歩き方</a></li>
+        <li><a href="#profile">プロフィール作成</a></li>
+        <li><a href="#live">NEXT LIVE</a></li>
+        <li><a href="#find">探す・つながる</a></li>
+        <li><a href="#public">公開と共有</a></li>
+        <li><a href="#history">履歴と連携</a></li>
+        <li><a href="#settings">設定と安心</a></li>
+        <li><a href="#faq">FAQ</a></li>
+      </ol>
+    </nav>
+
+    <article>
+      <p class="intro">
+        <strong>Buddies profile</strong> は、櫻坂46を応援する人のためのプロフィールサービスです。
+        自分の「My推し」や「NEXT LIVE」を記録し、同じ公演へ行く人や共通点のある人を見つけられます。
+        このページはガイドとして単独で読める記事です。
+      </p>
+
+      <section id="about">
+        <span class="section-label">01 / ABOUT</span>
+        <h2>まず知っておきたい、できること</h2>
+        <p>
+          Buddies profile は単なる自己紹介ページではありません。推しの情報とライブの予定を起点に、
+          現地での交流や、あとから振り返る思い出までを一つのプロフィールにまとめられます。
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>My推しを伝える</h3>
+            <p>推しメン、推し始めた時期、好きな曲、興味のあることをプロフィールに掲載。</p>
+          </div>
+          <div class="card">
+            <h3>ライブで見つける</h3>
+            <p>参加予定の公演と座席を登録し、同じライブに参加するBuddiesを確認。</p>
+          </div>
+          <div class="card">
+            <h3>プロフィールを交換</h3>
+            <p>検索・公開プロフィール・QR交換を使って、その場でもオンラインでもつながれる。</p>
+          </div>
+          <div class="card">
+            <h3>思い出を残す</h3>
+            <p>My Buddies history に参加ライブや思い出を積み重ねて振り返れる。</p>
+          </div>
+        </div>
+        <div class="tip">
+          <b>最初は全部埋めなくても大丈夫</b>
+          表示名と推し、次のライブ予定だけでもプロフィールは始められます。使いながら少しずつ育てていくのがおすすめです。
+        </div>
+      </section>
+
+      <section id="start">
+        <span class="section-label">02 / GET STARTED</span>
+        <h2>アカウントを作ってログインする</h2>
+        <p>
+          はじめにアカウントへログインします。すでに SakuLabo のアカウントを利用している場合は、
+          同じアカウントで Buddies profile にログインできます。
+        </p>
+        <ol class="steps">
+          <li>
+            <b>ログイン画面を開く</b>
+            <p>トップ画面のログイン導線から、ログインまたは新規登録を選びます。</p>
+          </li>
+          <li>
+            <b>新規の場合はアカウントを登録</b>
+            <p>案内に沿って必要事項を入力します。すでにアカウントがあればログインへ進みます。</p>
+          </li>
+          <li>
+            <b>MyPage を開く</b>
+            <p>ログイン後は下部メニューの「MyPage」から、自分のプロフィール編集を始められます。</p>
+          </li>
+        </ol>
+        <div class="note">
+          <b>アカウント情報について</b>
+          アカウント設定でユーザー名やパスワードを変更した場合、SakuLabo 側のログイン情報にも反映されます。
+        </div>
+      </section>
+
+      <section id="navigation">
+        <span class="section-label">03 / NAVIGATION</span>
+        <h2>4つのメニューを使い分ける</h2>
+        <p>ログイン後の主な操作は、画面下部のメニューを基点にすると迷いません。</p>
+        <table>
+          <tbody>
+            <tr>
+              <th>Home</th>
+              <td>おすすめのBuddiesや自分のプロフィールの概要、同じ NEXT LIVE に参加する人を確認します。</td>
+            </tr>
+            <tr>
+              <th>Search</th>
+              <td>表示名、推しメン、タグ、好きな曲、ライブなどを手がかりにBuddiesを探します。</td>
+            </tr>
+            <tr>
+              <th>Next Live</th>
+              <td>ライブ一覧と各公演のページへ移動し、参加予定・座席・参加者を管理します。</td>
+            </tr>
+            <tr>
+              <th>MyPage</th>
+              <td>プロフィールの編集、履歴、連携、QR交換、共有など自分に関わる操作を行います。</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="profile">
+        <span class="section-label">04 / PROFILE</span>
+        <h2>自分らしいプロフィールを作る</h2>
+        <p>
+          MyPage のプロフィール編集には、自己紹介を整えるための項目がまとまっています。
+          共通点がわかるほど、検索やライブ会場で会話を始めやすくなります。
+        </p>
+
+        <h3>基本情報</h3>
+        <p>
+          まずは表示名を決め、必要に応じてプロフィール画像、自己紹介、居住エリアや年代などを設定します。
+          画像を設定すると、検索結果やプロフィール上であなたを見つけてもらいやすくなります。
+        </p>
+
+        <h3>My推し</h3>
+        <p>推しにまつわる情報を入力すると、プロフィールの中心となる「My推し」欄に反映されます。</p>
+        <div class="tag-list" aria-label="My推しに入力できる内容">
+          <span>推しメン</span>
+          <span>推し始めた時期</span>
+          <span>好きな曲</span>
+          <span>興味・タグ</span>
+        </div>
+        <p>
+          推しメンは複数設定でき、中心となる推しを伝えられます。好きな曲や興味のタグは、
+          似た楽しみ方をするBuddiesと出会う手がかりになります。
+        </p>
+
+        <h3>SNSリンク</h3>
+        <p>
+          X、Instagram、Threads、TikTok、YouTube など、自分が公開したいSNSをプロフィールに載せられます。
+          交流したい範囲に合わせて、公開して問題のないアカウントだけを登録してください。
+        </p>
+
+        <div class="tip">
+          <b>プロフィール画像を未設定の場合</b>
+          ライブ参加者一覧では、推しメンを設定していると対応するメンバー画像がアイコンとして表示されます。
+          自分で選んだプロフィール画像を登録することもできます。
+        </div>
+      </section>
+
+      <section id="live">
+        <span class="section-label">05 / NEXT LIVE</span>
+        <h2>参加するライブと座席を登録する</h2>
+        <p>
+          「NEXT LIVE」は、これから参加する公演をプロフィールに表示し、同じ会場へ向かうBuddiesを探すための機能です。
+          ライブ前に設定しておくと、当日の交流にも役立ちます。
+        </p>
+        <div class="route" aria-label="ライブ登録の流れ">
+          <span>Next Live</span><i>→</i>
+          <span>公演を選択</span><i>→</i>
+          <span>参加予定を登録</span><i>→</i>
+          <span>座席を入力</span>
+        </div>
+
+        <h3>ライブ一覧で見るもの</h3>
+        <ul class="feature-list">
+          <li>ライブ名、日付、会場と、自分が登録した座席情報を確認できます。</li>
+          <li>参加予定にした公演には参加状態が表示され、参加人数も把握できます。</li>
+          <li>目的の公演を選ぶと、各ライブの詳細ページへ進みます。</li>
+        </ul>
+
+        <h3>各ライブページでできること</h3>
+        <p>
+          公演ページのヒーロー部分にはライブ名、会場、自分の座席、参加予定人数が表示されます。
+          日付の左右にある矢印を使うと、前後の日程の公演へ移動できます。
+          右上のリンクアイコンからは、そのライブの公式案内ページを開けます。
+        </p>
+
+        <h3>座席を登録・編集する</h3>
+        <ol class="steps">
+          <li>
+            <b>「参加予定・座席を編集」を選ぶ</b>
+            <p>参加予定の登録と座席入力を行う編集画面が開きます。</p>
+          </li>
+          <li>
+            <b>座席の区分を入力する</b>
+            <p>階、アリーナ／スタンドなどのエリア、ブロック、必要に応じて座席番号を入力します。</p>
+          </li>
+          <li>
+            <b>保存して表示を確認する</b>
+            <p>登録した座席は、ライブ一覧と各公演ページで会場情報の下に表示されます。</p>
+          </li>
+        </ol>
+
+        <h3>近い席のBuddiesを見つける</h3>
+        <p>
+          公演ページでは同じライブに参加するBuddiesを一覧できます。
+          「自分の席と近いBuddiesを優先して表示」を有効にすると、登録した座席情報をもとに
+          近い可能性がある人が先に並びます。該当しない人が消えるのではなく、全員を見たまま順序だけが変わります。
+        </p>
+        <div class="note">
+          <b>座席情報を公開する前に</b>
+          交流のきっかけとして便利な一方、公開範囲には注意が必要です。表示したい範囲で入力し、
+          ライブ終了後は必要に応じてプロフィール内容を見直しましょう。
+        </div>
+      </section>
+
+      <section id="find">
+        <span class="section-label">06 / CONNECT</span>
+        <h2>Buddiesを探す・交換する</h2>
+        <h3>Search から探す</h3>
+        <p>
+          Search では、表示名や推しメン、好きな曲、タグ、参加ライブなどをキーワードにしてプロフィールを探せます。
+          フィルターを組み合わせれば、「同じ推し」や「同じ公演に参加」のような共通点から絞り込めます。
+        </p>
+        <ul class="feature-list">
+          <li>気になるプロフィールを開き、My推しやNEXT LIVEを確認します。</li>
+          <li>公開されているSNSがあれば、プロフィールから交流先を確認できます。</li>
+          <li>お気に入り登録を使って、あとで見返したいBuddiesを残せます。</li>
+        </ul>
+
+        <h3>会場ではQRで交換</h3>
+        <p>
+          MyPage のQR交換機能は、ライブ会場でプロフィールを見せ合うときに便利です。
+          「見せる」で自分のQRを表示し、「読み取る」で相手のQRを読み取ります。
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>見せる</h3>
+            <p>相手に読み取ってもらうQRを表示します。安全のためQRは一定時間で更新されます。</p>
+          </div>
+          <div class="card">
+            <h3>読み取る</h3>
+            <p>アプリ内の読み取りを使うと、交換したBuddiesとして記録できます。</p>
+          </div>
+        </div>
+        <div class="tip">
+          <b>カメラアプリで読む場合</b>
+          端末標準のカメラでQRを開くと公開プロフィールの閲覧が中心になります。
+          交換として履歴に残したいときは、Buddies profile 内の読み取り機能を使います。
+        </div>
+      </section>
+
+      <section id="public">
+        <span class="section-label">07 / SHARE</span>
+        <h2>公開プロフィールを共有する</h2>
+        <p>
+          あなたの公開プロフィールには、入力した内容に応じて NEXT LIVE、My推し、Bio、My Buddies history、
+          各種連携の記録やSNSリンクなどが表示されます。公開リンクを送れば、ログインしていない相手にも
+          自分のプロフィールを紹介できます。
+        </p>
+        <h3>共有前のチェック</h3>
+        <ul class="feature-list">
+          <li>表示名、プロフィール画像、自己紹介が意図した内容になっているか確認します。</li>
+          <li>NEXT LIVE や座席情報を公開して問題ないかを確認します。</li>
+          <li>SNSリンクは交流に使いたいアカウントだけを掲載します。</li>
+        </ul>
+        <p>
+          プロフィール画面の共有機能からリンクを共有したり、X向けの投稿を作成したりできます。
+          投稿する前に、文章と公開されるプロフィール内容を一度確認すると安心です。
+        </p>
+      </section>
+
+      <section id="history">
+        <span class="section-label">08 / MEMORY & LINK</span>
+        <h2>履歴を残し、関連サービスとつなぐ</h2>
+        <h3>My Buddies history</h3>
+        <p>
+          My Buddies history には、Buddiesとの思い出や過去に参加したライブを残せます。
+          ライブが増えるほど、自分の応援の歩みを振り返れるページになっていきます。
+          履歴画面ではライブや画像の有無などを手がかりに探せます。
+        </p>
+
+        <h3>各種連携</h3>
+        <p>プロフィール編集の「各種連携」から、利用しているサービスの記録をプロフィールに表示できます。</p>
+        <table>
+          <tbody>
+            <tr>
+              <th>SakuLabo</th>
+              <td>お気に入りにしたさくみみやブログを、選択してプロフィールに表示できます。</td>
+            </tr>
+            <tr>
+              <th>SakuMap</th>
+              <td>獲得したスタンプを表示し、訪れた場所の記録をプロフィールに加えられます。</td>
+            </tr>
+            <tr>
+              <th>SakuMV Quiz</th>
+              <td>カテゴリごとの自己ベストやランキングなど、クイズの記録を表示できます。</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <h3>Today's 櫻坂</h3>
+        <p>
+          日々の予定やブログ、さくみみ、楽曲・MV・過去の出来事などを確認できるページです。
+          SakuLabo／Buddies の連携ログインを利用すると、対応するコンテンツのお気に入り操作にもつながります。
+        </p>
+      </section>
+
+      <section id="settings">
+        <span class="section-label">09 / SETTINGS</span>
+        <h2>設定と安心して使うためのポイント</h2>
+        <p>
+          アカウント設定ではログインに関わる情報の変更やログアウトができます。
+          不特定多数へ共有するプロフィールだからこそ、入力する情報は自分で管理できる範囲にとどめましょう。
+        </p>
+        <div class="cards">
+          <div class="card">
+            <h3>公開内容を見直す</h3>
+            <p>ライブ予定、座席、SNSなどは、公開リンクを共有する前後に確認。</p>
+          </div>
+          <div class="card">
+            <h3>会場での交流</h3>
+            <p>QR交換や座席を使った交流は、無理のない範囲で安全に楽しむ。</p>
+          </div>
+          <div class="card">
+            <h3>ログイン情報</h3>
+            <p>パスワードは他サービスと使い回さず、第三者には伝えない。</p>
+          </div>
+          <div class="card">
+            <h3>困ったとき</h3>
+            <p>操作に迷った場合は、サイト内の Help や案内ページを確認。</p>
+          </div>
+        </div>
+
+        <h3>最初の5分でやること</h3>
+        <ol class="steps">
+          <li>
+            <b>表示名とプロフィール画像を設定する</b>
+            <p>プロフィールの印象を整え、見つけてもらいやすくします。</p>
+          </li>
+          <li>
+            <b>My推しと好きな曲を入力する</b>
+            <p>同じ推し・同じ好みのBuddiesとの接点になります。</p>
+          </li>
+          <li>
+            <b>参加予定のNEXT LIVEを登録する</b>
+            <p>予定があれば公演を選び、必要に応じて座席も追加します。</p>
+          </li>
+          <li>
+            <b>公開プロフィールを確認する</b>
+            <p>相手から見える内容を確認してから、検索や共有を楽しみます。</p>
+          </li>
+        </ol>
+      </section>
+
+      <section id="faq">
+        <span class="section-label">10 / FAQ</span>
+        <h2>よくある疑問</h2>
+        <details>
+          <summary>プロフィールは全項目を入力しないと使えませんか？</summary>
+          <p>いいえ。まずは表示名や推しだけでも始められます。ライブ予定やSNS、履歴は必要になったタイミングで追加できます。</p>
+        </details>
+        <details>
+          <summary>座席を登録すると、近い席の人だけが表示されますか？</summary>
+          <p>近い席のBuddiesを優先表示する設定は、一覧の並び順を調整する機能です。他の参加者が一覧から消えるわけではありません。</p>
+        </details>
+        <details>
+          <summary>ライブの公式ページはどこから開けますか？</summary>
+          <p>各ライブ詳細ページのヒーロー右上にある薄いリンクアイコンから、用意されている公式案内ページを開けます。</p>
+        </details>
+        <details>
+          <summary>QRを見せるだけで交換履歴に入りますか？</summary>
+          <p>交換として記録したい場合は、Buddies profile 内のQR読み取り機能を使って読み取ります。標準カメラで開く場合はプロフィール閲覧が中心です。</p>
+        </details>
+        <details>
+          <summary>SakuLaboを使っている場合、新しいアカウントが必要ですか？</summary>
+          <p>すでに SakuLabo のアカウントを利用している場合は、そのアカウントでログインできます。</p>
+        </details>
+      </section>
+
+      <section class="closing">
+        <span class="section-label">START YOUR PROFILE</span>
+        <h2>推しとライブを、出会いのきっかけに。</h2>
+        <p>
+          推しを登録し、次のライブを選び、プロフィールをひとつ整えるところから始めてみてください。
+          Buddies profile は、同じ景色を楽しみにしている人とつながるための、自分らしい名刺になります。
+        </p>
+      </section>
+    </article>
+  </main>
+
+  <footer>
+    <div class="container">Buddies profile Guide / Standalone article HTML</div>
+  </footer>
+</body>
+</html>
