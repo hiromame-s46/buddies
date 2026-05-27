@@ -1,0 +1,6 @@
+RewriteEngine On
+
+# Social crawlers need server-rendered profile metadata for the shared view URL.
+RewriteCond %{HTTP_USER_AGENT} (Twitterbot|facebookexternalhit|Facebot|LinkedInBot|Slackbot|Discordbot) [NC]
+RewriteCond %{QUERY_STRING} (^|&)id=([0-9]+)(&|$) [NC]
+RewriteRule ^view\.html$ profile.php?uid=%2 [L]

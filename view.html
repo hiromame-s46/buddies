@@ -14,7 +14,7 @@
 <meta property="og:image:width" content="512">
 <meta property="og:image:height" content="512">
 <meta property="og:site_name" content="Buddies">
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Buddies profile">
 <meta name="twitter:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。">
 <meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
@@ -300,7 +300,7 @@ function updateSeo(p){
   const title = `${getDisplayName(p)}のBuddiesプロフィール`;
   const description = profileDescription(p);
   const url = absoluteUrl(`view.html?id=${encodeURIComponent(p.id)}`);
-  const image = absoluteUrl(`og-image.php?uid=${encodeURIComponent(p.id)}&v=2`);
+  const image = absoluteUrl(`og-image.php?uid=${encodeURIComponent(p.id)}&v=3`);
   document.title = title;
   setMeta('meta[name="description"]', 'content', description);
   setMeta('meta[property="og:title"]', 'content', title);
