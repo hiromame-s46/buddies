@@ -999,7 +999,9 @@ function renderEventList(){
                 <span class="small">${s.participant_enabled === false ? '参加集計なし' : `参加 ${s.join_count || 0} 人${s.capacity ? ' / ' + s.capacity : ''}`}</span>
               </div>
               <div class="subevent-row-meta">${esc(fmtDateDisplay(s.starts_at) || '日時未定')}${s.venue ? ' ・ ' + esc(s.venue) : ''}</div>
+              ${e.checkin_enabled && s.participant_enabled !== false ? `<div class="subevent-row-meta">受付 ${s.checkin_count || 0} / ${s.join_count || 0} 人</div>` : ''}
               <div class="subevent-row-actions">
+                ${e.checkin_enabled && s.participant_enabled !== false ? `<a class="btn sm primary" href="./checkin.html?subevent_id=${s.id}" target="_blank" rel="noopener">受付を開く</a>` : ''}
                 <button class="btn sm" type="button" data-act="edit-subevent" data-event-id="${e.id}" data-id="${s.id}">編集</button>
                 <button class="btn sm danger" type="button" data-act="delete-subevent" data-id="${s.id}">削除</button>
               </div>

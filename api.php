@@ -2388,14 +2388,16 @@ function actionSearch(): void {
         $params[] = '%"url"%';
     }
     if ($hasPastLive) {
+        $hasAnyNextLiveExpr = "(bp.next_lives IS NOT NULL AND bp.next_lives <> '' AND bp.next_lives <> '[]')";
         if (!$pastLiveIds) {
-            $where[] = "(bp.next_lives IS NOT NULL AND bp.next_lives <> '' AND bp.next_lives <> '[]')";
+            $where[] = $hasAnyNextLiveExpr;
         } else {
             $clauses = [];
             foreach ($pastLiveIds as $id) {
                 $clauses[] = 'bp.next_lives LIKE ?';
                 $params[] = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $id) . '"%';
             }
+            $clauses[] = $hasAnyNextLiveExpr;
             $where[] = '(' . implode(' OR ', $clauses) . ')';
         }
     }
