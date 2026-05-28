@@ -124,6 +124,14 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .modal-body{padding:18px;overflow:auto;flex:1}
 .modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
 .modal-sheet .btn,.confirm-box .btn{font-size:13px}
+.collab-modal-user{display:flex;gap:12px;align-items:center;border:1px solid var(--line);border-radius:16px;padding:12px;background:#fafafa}
+.collab-modal-avatar{width:44px;height:44px;border-radius:50%;background:#eee;display:grid;place-items:center;font-weight:800;overflow:hidden;flex-shrink:0}
+.collab-modal-avatar img{width:100%;height:100%;object-fit:cover}
+.collab-search-row{grid-template-columns:auto minmax(0,1fr);align-items:center;text-align:left}
+.collab-search-row .collab-modal-avatar{grid-row:1 / 3}
+.collab-share-box{display:grid;gap:10px;margin-top:14px}.collab-share-url{word-break:break-all;font-size:12px;line-height:1.6;background:#f7f7f7;border:1px solid var(--line);border-radius:14px;padding:10px}
+.welcome-icon{width:58px;height:58px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900;margin-bottom:12px}
+.welcome-center{text-align:center;display:grid;justify-items:center}.welcome-center .collab-modal-user{width:100%;text-align:left}
 #event-modal,#form-modal{align-items:stretch;background:#fff}
 #event-modal .modal-sheet,#form-modal .modal-sheet{max-width:760px;height:100dvh;max-height:none;border-radius:0;margin:0 auto;animation:none;box-shadow:none}
 #event-modal .modal-head,#form-modal .modal-head{position:sticky;top:0;background:#fff;z-index:2;padding:13px 16px}
@@ -367,6 +375,26 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
   </div>
 </div>
 
+<div class="modal-overlay" id="collab-modal" onclick="if(event.target===this)closeCollaboratorModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3 id="collab-modal-title">共同運営者を招待</h3>
+      <button class="modal-close" type="button" onclick="closeCollaboratorModal()">×</button>
+    </div>
+    <div class="modal-body" id="collab-modal-body"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="welcome-modal" onclick="if(event.target===this)closeWelcomeModal()">
+  <div class="modal-sheet">
+    <div class="modal-head">
+      <h3>共同運営者</h3>
+      <button class="modal-close" type="button" onclick="closeWelcomeModal()">×</button>
+    </div>
+    <div class="modal-body" id="welcome-modal-body"></div>
+  </div>
+</div>
+
 <!-- 確認モーダル -->
 <div class="confirm-overlay" id="confirm-overlay" onclick="if(event.target===this)closeConfirm()">
   <div class="confirm-box">
@@ -381,6 +409,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 
 <script>
 const API = '../api.php';
+const selectedAccountId = new URLSearchParams(location.search).get('account_id') || '';
 let account = null;
 let isDeveloper = false;
 let activeSettingsTab = 'menu';
@@ -402,8 +431,17 @@ let formQuestions = [];
 let responseView = { form:null, questions:[], rows:[] };
 let editingSubeventId = null;
 let editingSubeventEventId = null;
+let collaboratorSearchTimer = null;
+let collaboratorSelectedUser = null;
+let collaboratorInvitePayload = null;
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){
+  if (!url) return '';
+  if (/^https?:\/\//.test(url) || url.startsWith('data:') || url.startsWith('/')) return url;
+  if (url.startsWith('../')) return url;
+  return '../' + url.replace(/^\.\//, '');
+}
 function tagsText(a){return (a.hashtags||[]).join(', ')}
 function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'その他リンク'})[type] || 'その他リンク';}
@@ -488,7 +526,7 @@ function setSaveState(state, text){
   status.classList.toggle('dirty', state === 'error');
 }
 function switchSettingsTab(tab){
-  const allowed = ['menu','profile','links','events','forms','security'];
+  const allowed = ['menu','profile','links','events','forms','collaborators','security'];
   if (!allowed.includes(tab)) tab = 'menu';
   activeSettingsTab = tab;
   document.querySelectorAll('.settings-home').forEach(home => home.classList.toggle('active', tab === 'menu'));
@@ -514,7 +552,8 @@ function closeConfirm(){ document.getElementById('confirm-overlay').classList.re
 async function api(action, payload=null){
   const opt = { credentials:'include' };
   if (payload) { opt.method='POST'; opt.headers={'Content-Type':'application/json'}; opt.body=JSON.stringify(payload); }
-  const res = await fetch(`${API}?action=${action}`, opt);
+  const accountParam = selectedAccountId ? `&account_id=${encodeURIComponent(selectedAccountId)}` : '';
+  const res = await fetch(`${API}?action=${action}${accountParam}`, opt);
   const text = await res.text();
   try { return JSON.parse(text); }
   catch(e) {
@@ -535,9 +574,23 @@ async function init(){
 function render(){
   const root = document.getElementById('app');
   if (!account) {
+    const inviteToken = normalizeInviteToken(new URLSearchParams(location.search).get('invite') || '');
+    if (inviteToken) {
+      root.innerHTML = `<div class="card login">
+        <h2 style="margin:0 0 8px;font-size:22px;">共同運営者の招待</h2>
+        <p class="small" style="margin:0 0 16px;">Buddies profile の一般アカウントでログインし、この招待を受けるとコミュニティ管理機能を利用できます。招待されたアカウント以外では承認できません。</p>
+        <div class="field"><label>ユーザー名</label><input id="invite-login-id" autocomplete="username"></div>
+        <div class="field"><label>パスワード</label><input id="invite-login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')acceptInviteLogin('${esc(inviteToken)}')"></div>
+        <button class="btn primary" style="width:100%;margin-top:6px;" onclick="acceptInviteLogin('${esc(inviteToken)}')">ログインして招待を受ける</button>
+        <button class="btn" style="width:100%;margin-top:8px;" onclick="acceptInvite('${esc(inviteToken)}')">ログイン済みなので招待を受ける</button>
+        <div id="login-msg" class="msg"></div>
+      </div>`;
+      document.getElementById('save-bar').hidden = true;
+      return;
+    }
     root.innerHTML = `<div class="card login">
-      <h2 style="margin:0 0 8px;font-size:22px;">コミュニティアカウントログイン</h2>
-      <p class="small" style="margin:0 0 16px;">コミュニティアカウント専用ページです。開発者は通常ログイン状態のままアクセスできます。</p>
+      <h2 style="margin:0 0 8px;font-size:22px;">コミュニティ管理ログイン</h2>
+      <p class="small" style="margin:0 0 16px;">コミュニティアカウント本人、または共同運営者として連携済みのBuddies profileアカウントでログインできます。</p>
       <div class="field"><label>ログインID</label><input id="login-id" autocomplete="username"></div>
       <div class="field"><label>パスワード</label><input id="login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="btn primary" style="width:100%;margin-top:6px;" onclick="login()">ログイン</button>
@@ -548,6 +601,7 @@ function render(){
   }
 
   const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : 'コミュニティアカウント';
+  const isOwner = account.is_owner !== false;
   verifiedSns = accountSnsLinks(account);
   root.innerHTML = `
     <div class="settings-home" data-settings-home>
@@ -565,6 +619,7 @@ function render(){
           </button>
           <div style="min-width:0;flex:1;">
             <span class="verified-label">✓ ${esc(account.label || kindLabel)}</span><span class="kind">${esc(kindLabel)}</span>
+            ${!isOwner ? `<span class="kind">共同運営者</span>` : ''}
             <h2>${esc(account.display_name)}</h2>
             <div class="small">${esc(account.account_definition || '')}</div>
           </div>
@@ -593,14 +648,18 @@ function render(){
           <span class="settings-card-desc">アンケート作成と回答データを管理</span>
           <span class="settings-card-count" id="forms-count">読み込み中</span>
         </button>
+        <button class="settings-card" type="button" onclick="switchSettingsTab('collaborators')">
+          <span class="settings-card-title">共同運営者</span>
+          <span class="settings-card-desc">${isOwner ? '一般アカウントを招待して管理権限を共有' : '共同運営者として参加中'}</span>
+        </button>
         <a class="settings-card" href="./view.html?id=${encodeURIComponent(account.id)}" target="_blank" rel="noopener">
           <span class="settings-card-title">掲示板</span>
           <span class="settings-card-desc">公開ページで告知投稿と添付ファイルを管理</span>
         </a>
-        <button class="settings-card" type="button" onclick="switchSettingsTab('security')">
+        ${isOwner ? `<button class="settings-card" type="button" onclick="switchSettingsTab('security')">
           <span class="settings-card-title">セキュリティ</span>
           <span class="settings-card-desc">ログインパスワードを変更</span>
-        </button>
+        </button>` : ''}
       </div>
     </div>
 
@@ -664,7 +723,20 @@ function render(){
       </section>
     </div>
 
-    <div class="settings-panel" data-settings-panel="security">
+    <div class="settings-panel" data-settings-panel="collaborators">
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">共同運営者</h2><p class="settings-page-desc">一般Buddies profileアカウントから管理できるようにします</p></div></div>
+      <section class="settings-content">
+        ${isOwner ? `<p class="small" style="margin:0 0 10px;">表示名またはユーザー名で検索し、対象アカウントに紐付いた招待リンクを発行します。リンクを別アカウントで開いても承認できません。</p>
+        <div class="field"><label>招待するユーザーを検索</label><input id="collab-search" placeholder="表示名またはユーザー名を2文字以上入力" oninput="searchCollaboratorUsers()"></div>
+        <div id="collab-search-results" class="event-list"></div>
+        <div id="collab-invite-box"></div>` : `<div class="event-empty">共同運営者はイベント、フォーム、受付、プロフィール設定を利用できます。共同運営者の追加とパスワード変更はコミュニティアカウント本人のみ利用できます。</div>`}
+        <h3 style="font-size:15px;margin:16px 0 8px;">現在の共同運営者</h3>
+        <div id="collaborator-list" class="event-list"><div class="small">読み込み中…</div></div>
+        <div id="collab-msg" class="msg"></div>
+      </section>
+    </div>
+
+    ${isOwner ? `<div class="settings-panel" data-settings-panel="security">
       <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">セキュリティ</h2><p class="settings-page-desc">コミュニティアカウントのログイン設定</p></div></div>
       <section class="settings-content">
         <div class="field-row">
@@ -674,12 +746,13 @@ function render(){
         <div class="actions" style="margin-top:8px;"><button class="btn" type="button" data-act="change-password">変更</button></div>
         <div id="pw-msg" class="msg"></div>
       </section>
-    </div>`;
+    </div>` : ''}`;
 
   setDirty(false);
   switchSettingsTab(activeSettingsTab);
   loadEvents();
   loadForms();
+  loadCollaborators();
 }
 
 async function login(){
@@ -690,11 +763,190 @@ async function login(){
   document.getElementById('logout-btn').hidden = false;
   render();
 }
+async function acceptInviteLogin(token){
+  const login_id = val('invite-login-id');
+  const password = val('invite-login-pass');
+  if (!login_id || !password) { msg('login-msg', 'ユーザー名とパスワードを入力してください', false); return; }
+  const auth = await api('auth_login', { username:login_id, password });
+  if (!auth.ok) { msg('login-msg', auth.error || 'ログインできませんでした', false); return; }
+  await acceptInvite(token);
+}
+function normalizeInviteToken(raw){
+  raw = String(raw || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    raw = url.searchParams.get('invite') || raw;
+  } catch(e) {}
+  return raw.trim().replace(/[^a-fA-F0-9]/g, '').toLowerCase();
+}
+async function acceptInvite(token){
+  token = normalizeInviteToken(token);
+  const json = await api('verified_collaborator_invite_accept', { token });
+  if (!json.ok) { msg('login-msg', json.error || '招待を承認できませんでした', false); return; }
+  account = json.data.account;
+  isDeveloper = account && account.account_type === 'developer';
+  document.getElementById('logout-btn').hidden = false;
+  history.replaceState(null, '', location.pathname);
+  render();
+  openWelcomeModal(!!json.data.already_accepted);
+}
 async function logout(){
   await api('verified_logout', {});
   account=null; isDeveloper=false;
   document.getElementById('logout-btn').hidden=true;
   render();
+}
+
+async function loadCollaborators(){
+  if (!account) return;
+  const wrap = document.getElementById('collaborator-list');
+  if (!wrap) return;
+  const json = await api('verified_collaborator_list');
+  if (!json.ok) { wrap.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
+  const rows = json.data.collaborators || [];
+  wrap.innerHTML = rows.length ? rows.map(c => `<div class="event-row">
+    <div class="title">${esc(c.display_name)}<span class="vis">共同運営者</span></div>
+    <div class="meta">@${esc(c.username)} / 承認 ${esc(fmtDateDisplay(c.accepted_at) || '')}</div>
+    ${c.can_remove ? `<div class="row-actions"><button class="btn sm danger" type="button" onclick="removeCollaborator(${c.user_id}, ${c.is_self ? 'true' : 'false'})">${c.is_self ? '辞退' : '権限を削除'}</button></div>` : ''}
+  </div>`).join('') : '<div class="event-empty">共同運営者はまだいません</div>';
+}
+function searchCollaboratorUsers(){
+  clearTimeout(collaboratorSearchTimer);
+  collaboratorSearchTimer = setTimeout(async () => {
+    const q = val('collab-search');
+    const wrap = document.getElementById('collab-search-results');
+    if (!wrap) return;
+    collaboratorSelectedUser = null;
+    document.getElementById('collab-invite-box').innerHTML = '';
+    if (q.length < 2) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = '<div class="small">検索中…</div>';
+    const json = await api('verified_collaborator_search_users&q=' + encodeURIComponent(q));
+    if (!json.ok) { wrap.innerHTML = `<div class="event-empty">${esc(json.error || '検索できませんでした')}</div>`; return; }
+    const users = json.data || [];
+    wrap.innerHTML = users.length ? users.map(u => `<button class="event-row collab-search-row" type="button" onclick="openCollaboratorModal('${encodeURIComponent(JSON.stringify(u))}')">
+      ${collaboratorAvatarHtml(u)}
+      <div class="title">${esc(u.display_name)}<span class="vis">@${esc(u.username)}</span></div>
+      <div class="meta">${[u.oshi_member, u.location].filter(Boolean).map(esc).join(' / ') || 'プロフィール情報なし'}</div>
+    </button>`).join('') : '<div class="event-empty">該当するユーザーが見つかりません</div>';
+  }, 300);
+}
+function collaboratorAvatarHtml(user){
+  const icon = user.user_icon ? `<img src="${esc(assetUrl(user.user_icon))}" alt="">` : esc((user.display_name || user.username || '?')[0]);
+  return `<div class="collab-modal-avatar">${icon}</div>`;
+}
+function collaboratorUserHtml(user){
+  return `<div class="collab-modal-user">
+    ${collaboratorAvatarHtml(user)}
+    <div style="min-width:0;flex:1;">
+      <div class="title">${esc(user.display_name)}<span class="vis">@${esc(user.username)}</span></div>
+      <div class="meta">${[user.oshi_member, user.location].filter(Boolean).map(esc).join(' / ') || 'プロフィール情報なし'}</div>
+    </div>
+  </div>`;
+}
+function openCollaboratorModal(encoded){
+  const user = JSON.parse(decodeURIComponent(encoded));
+  collaboratorSelectedUser = user;
+  collaboratorInvitePayload = null;
+  document.getElementById('collab-modal-title').textContent = '共同運営者を招待';
+  document.getElementById('collab-modal-body').innerHTML = `
+    ${collaboratorUserHtml(user)}
+    <p class="small" style="margin:14px 0 0;">このアカウント専用の招待リンクを発行します。リンクを別アカウントで開いても承認できません。</p>
+    <div class="modal-foot" style="padding:14px 0 0;border-top:none;">
+      <button class="btn" type="button" onclick="closeCollaboratorModal()">キャンセル</button>
+      <button class="btn primary" type="button" onclick="createCollaboratorInvite()">招待リンクを作成</button>
+    </div>`;
+  document.getElementById('collab-modal').classList.add('open');
+}
+function closeCollaboratorModal(){ document.getElementById('collab-modal').classList.remove('open'); }
+function renderCollaboratorShareModal(){
+  if (!collaboratorInvitePayload || !collaboratorSelectedUser) return;
+  const url = collaboratorInvitePayload.invite_url;
+  document.getElementById('collab-modal-body').innerHTML = `
+    ${collaboratorUserHtml(collaboratorSelectedUser)}
+    <div class="collab-share-box">
+      <div>
+        <div class="title">${collaboratorInvitePayload.reused ? '既存の招待リンクを表示しています' : '招待リンクを作成しました'}</div>
+        <div class="meta">有効期限: ${esc(fmtDateDisplay(collaboratorInvitePayload.expires_at) || collaboratorInvitePayload.expires_at)}</div>
+      </div>
+      <div class="collab-share-url">${esc(url)}</div>
+      <div class="row-actions">
+        <button class="btn sm primary" type="button" onclick="shareCollaboratorInvite()">共有</button>
+        <button class="btn sm" id="collab-copy-btn" type="button" onclick="copyCollaboratorInvite()">リンクをコピー</button>
+        <a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">開く</a>
+      </div>
+    </div>`;
+}
+async function createCollaboratorInvite(){
+  if (!collaboratorSelectedUser) { msg('collab-msg', '招待するユーザーを選択してください', false); return; }
+  const json = await api('verified_collaborator_invite_create', { user_id: collaboratorSelectedUser.id });
+  if (!json.ok) { msg('collab-msg', json.error || '招待リンクを作成できませんでした', false); return; }
+  collaboratorInvitePayload = json.data;
+  renderCollaboratorShareModal();
+  msg('collab-msg', json.data.reused ? '既存の招待リンクを表示しました' : '招待リンクを作成しました', true);
+}
+async function shareCollaboratorInvite(){
+  if (!collaboratorInvitePayload) return;
+  const url = collaboratorInvitePayload.invite_url;
+  if (navigator.share) {
+    try { await navigator.share({ url }); }
+    catch(e) {}
+  } else {
+    await navigator.clipboard.writeText(url).catch(()=>{});
+    markCollaboratorInviteCopied();
+    msg('collab-msg', 'リンクをコピーしました', true);
+  }
+}
+function markCollaboratorInviteCopied(){
+  const btn = document.getElementById('collab-copy-btn');
+  if (!btn) return;
+  btn.textContent = '✓ コピー済み';
+  btn.classList.add('primary');
+}
+async function copyCollaboratorInvite(){
+  if (!collaboratorInvitePayload) return;
+  await navigator.clipboard.writeText(collaboratorInvitePayload.invite_url).catch(()=>{});
+  markCollaboratorInviteCopied();
+  msg('collab-msg', 'リンクをコピーしました', true);
+}
+function openWelcomeModal(alreadyAccepted){
+  if (!account) return;
+  const title = alreadyAccepted ? 'すでに共同運営者として参加済みです' : '共同運営者として参加しました';
+  const desc = alreadyAccepted
+    ? 'この招待リンクはすでに承認済みです。引き続きコミュニティ管理機能を利用できます。'
+    : 'コミュニティ管理機能を利用できるようになりました。イベント、フォーム、受付、プロフィール設定を管理できます。';
+  document.getElementById('welcome-modal-body').innerHTML = `
+    <div class="welcome-center">
+    <div class="welcome-icon">✓</div>
+    <h2 style="margin:0 0 8px;font-size:20px;text-align:center;">${esc(title)}</h2>
+    <p class="small" style="margin:0 0 14px;text-align:center;">${esc(desc)}</p>
+    <div class="collab-modal-user">
+      <div class="collab-modal-avatar">${account.icon_url ? `<img src="${esc(assetUrl(account.icon_url))}" alt="">` : esc((account.display_name || '?')[0])}</div>
+      <div style="min-width:0;flex:1;">
+        <div class="title">${esc(account.display_name)}</div>
+        <div class="meta">共同運営アカウント</div>
+      </div>
+    </div>
+    <div class="modal-foot" style="padding:14px 0 0;border-top:none;">
+      <button class="btn primary" type="button" onclick="closeWelcomeModal()">管理を始める</button>
+    </div>
+    </div>`;
+  document.getElementById('welcome-modal').classList.add('open');
+}
+function closeWelcomeModal(){ document.getElementById('welcome-modal').classList.remove('open'); }
+async function removeCollaborator(userId, isSelf){
+  const ok = await confirmDialog(isSelf ? '共同運営者を辞退' : '共同運営者の権限を削除', isSelf ? 'このコミュニティアカウントの共同運営者を辞退しますか？' : 'このユーザーの共同運営権限を削除しますか？');
+  if (!ok) return;
+  const json = await api('verified_collaborator_remove', { user_id:userId });
+  if (!json.ok) { msg('collab-msg', json.error || '変更できませんでした', false); return; }
+  msg('collab-msg', isSelf ? '共同運営者を辞退しました' : '共同運営権限を削除しました', true);
+  if (isSelf && account && !account.is_owner) {
+    account = null;
+    document.getElementById('logout-btn').hidden = true;
+    render();
+    return;
+  }
+  await loadCollaborators();
 }
 
 async function saveAll(){
@@ -1738,6 +1990,17 @@ window.saveAll = saveAll;
 window.changePassword = changePassword;
 window.logout = logout;
 window.login = login;
+window.acceptInviteLogin = acceptInviteLogin;
+window.acceptInvite = acceptInvite;
+window.searchCollaboratorUsers = searchCollaboratorUsers;
+window.openCollaboratorModal = openCollaboratorModal;
+window.closeCollaboratorModal = closeCollaboratorModal;
+window.createCollaboratorInvite = createCollaboratorInvite;
+window.shareCollaboratorInvite = shareCollaboratorInvite;
+window.copyCollaboratorInvite = copyCollaboratorInvite;
+window.markCollaboratorInviteCopied = markCollaboratorInviteCopied;
+window.closeWelcomeModal = closeWelcomeModal;
+window.removeCollaborator = removeCollaborator;
 window.loadImageFile = loadImageFile;
 window.closeOrBack = closeOrBack;
 window.closeConfirm = closeConfirm;
