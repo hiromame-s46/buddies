@@ -40,7 +40,7 @@ main{padding:14px;display:grid;gap:14px}.card{border:1px solid rgba(0,0,0,.07);b
 <script>
 const API='../api.php';
 const MEMBER_DATA='../../data/member.json';
-let targets=[],selectedEvent=null,rows=[],memberMap={},scanner=null,scannerRunning=false,scanningLocked=false,scannerStopping=Promise.resolve(),filter='all',pendingToken='';
+let targets=[],selectedEvent=null,rows=[],memberMap={},scanner=null,scannerRunning=false,scanningLocked=false,scannerStopping=Promise.resolve(),filter='all',pendingToken='',syncTimer=null,syncingRows=false;
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function assetUrl(url){if(!url)return '';if(/^https?:\/\//.test(url)||url.startsWith('data:'))return url;return url.startsWith('/')?url:'../'+url;}
 async function api(action,payload=null){const opt={credentials:'include'};if(payload){opt.method='POST';opt.headers={'Content-Type':'application/json'};opt.body=JSON.stringify(payload);}const res=await fetch(`${API}?action=${action}`,opt);const text=await res.text();try{return JSON.parse(text);}catch(e){return {ok:false,error:'サーバーから応答を取得できませんでした。'};}}
@@ -63,7 +63,7 @@ async function init(){
   const qs=new URLSearchParams(location.search);
   const wantedSub=Number(qs.get('subevent_id')||0),wantedEvent=Number(qs.get('event_id')||0);
   selectedEvent=targets.find(t=>wantedSub&&t.type==='subevent'&&t.id===wantedSub)||targets.find(t=>wantedEvent&&t.type==='event'&&t.id===wantedEvent)||targets[0];
-  render();await loadRows();
+  render();await loadRows();startSync();
 }
 function showError(title,note){document.getElementById('app').innerHTML=`<div class="card error-page"><h2>${esc(title)}</h2><p>${esc(note)}</p><a class="btn primary" href="./">管理画面へ戻る</a></div>`;}
 function targetOptions(){return targets.map(t=>`<option value="${esc(t.key)}" ${t.key===selectedEvent.key?'selected':''}>${esc(t.type==='subevent'?'└ '+t.label:t.label)}</option>`).join('');}
@@ -93,12 +93,16 @@ function render(){
 async function switchTab(tab){document.querySelectorAll('.tab').forEach(el=>el.classList.toggle('active',el.id===`tab-${tab}`));document.querySelectorAll('.panel').forEach(el=>el.classList.toggle('active',el.id===`panel-${tab}`));if(tab==='list')await stopScanner();}
 async function selectEvent(key){await stopScanner();selectedEvent=targets.find(t=>t.key===String(key))||targets[0];pendingToken='';document.querySelectorAll('#camera-target-select,#list-target-select').forEach(sel=>sel.value=selectedEvent.key);const label=document.querySelector('.camera-event');if(label)label.textContent=selectedEvent.title;await loadRows();}
 async function loadRows(){
-  if(!selectedEvent)return;
-  const result=selectedEvent.type==='subevent'?await api('subevent_participants_admin&id='+encodeURIComponent(selectedEvent.id)):await api('event_participants_admin&event_id='+encodeURIComponent(selectedEvent.id));
+  if(!selectedEvent||syncingRows)return;
+  syncingRows=true;
+  let result;
+  try{result=selectedEvent.type==='subevent'?await api('subevent_participants_admin&id='+encodeURIComponent(selectedEvent.id)):await api('event_participants_admin&event_id='+encodeURIComponent(selectedEvent.id));}
+  finally{syncingRows=false;}
   if(!result.ok){openResultSheet('err',null,'参加者リストを取得できません',result.error||'');return;}
   rows=selectedEvent.type==='subevent'?(result.data?.participants||[]):result.data||[];
   renderRows();
 }
+function startSync(){if(syncTimer)return;syncTimer=setInterval(()=>{if(document.hidden||!selectedEvent)return;if(document.querySelector('.sheet-overlay.open'))return;loadRows();},5000);}
 function avatarHtml(u){const member=(u.oshi_members||[])[0];const url=u.user_icon||(member&&memberMap[member]?.image)||'';return url?`<img src="${esc(assetUrl(url))}" alt="" onerror="this.remove()">`:esc((u.display_name||u.username||'?')[0]);}
 function mainTags(r){return selectedEvent.type==='subevent' ? `${!r.main_joined?'<span class="tag">メイン未参加</span>':!r.main_checked_in?'<span class="tag">メイン未受付</span>':''}` : '';}
 function renderRows(){

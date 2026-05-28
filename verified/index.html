@@ -402,6 +402,8 @@ let formQuestions = [];
 let responseView = { form:null, questions:[], rows:[] };
 let editingSubeventId = null;
 let editingSubeventEventId = null;
+let collaboratorSearchTimer = null;
+let collaboratorSelectedUser = null;
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function tagsText(a){return (a.hashtags||[]).join(', ')}
@@ -488,7 +490,7 @@ function setSaveState(state, text){
   status.classList.toggle('dirty', state === 'error');
 }
 function switchSettingsTab(tab){
-  const allowed = ['menu','profile','links','events','forms','security'];
+  const allowed = ['menu','profile','links','events','forms','collaborators','security'];
   if (!allowed.includes(tab)) tab = 'menu';
   activeSettingsTab = tab;
   document.querySelectorAll('.settings-home').forEach(home => home.classList.toggle('active', tab === 'menu'));
@@ -535,9 +537,23 @@ async function init(){
 function render(){
   const root = document.getElementById('app');
   if (!account) {
+    const inviteToken = new URLSearchParams(location.search).get('invite') || '';
+    if (inviteToken) {
+      root.innerHTML = `<div class="card login">
+        <h2 style="margin:0 0 8px;font-size:22px;">共同運営者の招待</h2>
+        <p class="small" style="margin:0 0 16px;">Buddies profile の一般アカウントでログインし、この招待を受けるとコミュニティ管理機能を利用できます。招待されたアカウント以外では承認できません。</p>
+        <div class="field"><label>ユーザー名</label><input id="invite-login-id" autocomplete="username"></div>
+        <div class="field"><label>パスワード</label><input id="invite-login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')acceptInviteLogin('${esc(inviteToken)}')"></div>
+        <button class="btn primary" style="width:100%;margin-top:6px;" onclick="acceptInviteLogin('${esc(inviteToken)}')">ログインして招待を受ける</button>
+        <button class="btn" style="width:100%;margin-top:8px;" onclick="acceptInvite('${esc(inviteToken)}')">ログイン済みなので招待を受ける</button>
+        <div id="login-msg" class="msg"></div>
+      </div>`;
+      document.getElementById('save-bar').hidden = true;
+      return;
+    }
     root.innerHTML = `<div class="card login">
-      <h2 style="margin:0 0 8px;font-size:22px;">コミュニティアカウントログイン</h2>
-      <p class="small" style="margin:0 0 16px;">コミュニティアカウント専用ページです。開発者は通常ログイン状態のままアクセスできます。</p>
+      <h2 style="margin:0 0 8px;font-size:22px;">コミュニティ管理ログイン</h2>
+      <p class="small" style="margin:0 0 16px;">コミュニティアカウント本人、または共同運営者として連携済みのBuddies profileアカウントでログインできます。</p>
       <div class="field"><label>ログインID</label><input id="login-id" autocomplete="username"></div>
       <div class="field"><label>パスワード</label><input id="login-pass" type="password" autocomplete="current-password" onkeydown="if(event.key==='Enter')login()"></div>
       <button class="btn primary" style="width:100%;margin-top:6px;" onclick="login()">ログイン</button>
@@ -548,6 +564,7 @@ function render(){
   }
 
   const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : 'コミュニティアカウント';
+  const isOwner = account.is_owner !== false;
   verifiedSns = accountSnsLinks(account);
   root.innerHTML = `
     <div class="settings-home" data-settings-home>
@@ -565,6 +582,7 @@ function render(){
           </button>
           <div style="min-width:0;flex:1;">
             <span class="verified-label">✓ ${esc(account.label || kindLabel)}</span><span class="kind">${esc(kindLabel)}</span>
+            ${!isOwner ? `<span class="kind">共同運営者</span>` : ''}
             <h2>${esc(account.display_name)}</h2>
             <div class="small">${esc(account.account_definition || '')}</div>
           </div>
@@ -593,14 +611,18 @@ function render(){
           <span class="settings-card-desc">アンケート作成と回答データを管理</span>
           <span class="settings-card-count" id="forms-count">読み込み中</span>
         </button>
+        <button class="settings-card" type="button" onclick="switchSettingsTab('collaborators')">
+          <span class="settings-card-title">共同運営者</span>
+          <span class="settings-card-desc">${isOwner ? '一般アカウントを招待して管理権限を共有' : '共同運営者として参加中'}</span>
+        </button>
         <a class="settings-card" href="./view.html?id=${encodeURIComponent(account.id)}" target="_blank" rel="noopener">
           <span class="settings-card-title">掲示板</span>
           <span class="settings-card-desc">公開ページで告知投稿と添付ファイルを管理</span>
         </a>
-        <button class="settings-card" type="button" onclick="switchSettingsTab('security')">
+        ${isOwner ? `<button class="settings-card" type="button" onclick="switchSettingsTab('security')">
           <span class="settings-card-title">セキュリティ</span>
           <span class="settings-card-desc">ログインパスワードを変更</span>
-        </button>
+        </button>` : ''}
       </div>
     </div>
 
@@ -664,7 +686,20 @@ function render(){
       </section>
     </div>
 
-    <div class="settings-panel" data-settings-panel="security">
+    <div class="settings-panel" data-settings-panel="collaborators">
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">共同運営者</h2><p class="settings-page-desc">一般Buddies profileアカウントから管理できるようにします</p></div></div>
+      <section class="settings-content">
+        ${isOwner ? `<p class="small" style="margin:0 0 10px;">表示名またはユーザー名で検索し、対象アカウントに紐付いた招待リンクを発行します。リンクを別アカウントで開いても承認できません。</p>
+        <div class="field"><label>招待するユーザーを検索</label><input id="collab-search" placeholder="表示名またはユーザー名を2文字以上入力" oninput="searchCollaboratorUsers()"></div>
+        <div id="collab-search-results" class="event-list"></div>
+        <div id="collab-invite-box"></div>` : `<div class="event-empty">共同運営者はイベント、フォーム、受付、プロフィール設定を利用できます。共同運営者の追加とパスワード変更はコミュニティアカウント本人のみ利用できます。</div>`}
+        <h3 style="font-size:15px;margin:16px 0 8px;">現在の共同運営者</h3>
+        <div id="collaborator-list" class="event-list"><div class="small">読み込み中…</div></div>
+        <div id="collab-msg" class="msg"></div>
+      </section>
+    </div>
+
+    ${isOwner ? `<div class="settings-panel" data-settings-panel="security">
       <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">セキュリティ</h2><p class="settings-page-desc">コミュニティアカウントのログイン設定</p></div></div>
       <section class="settings-content">
         <div class="field-row">
@@ -674,12 +709,13 @@ function render(){
         <div class="actions" style="margin-top:8px;"><button class="btn" type="button" data-act="change-password">変更</button></div>
         <div id="pw-msg" class="msg"></div>
       </section>
-    </div>`;
+    </div>` : ''}`;
 
   setDirty(false);
   switchSettingsTab(activeSettingsTab);
   loadEvents();
   loadForms();
+  loadCollaborators();
 }
 
 async function login(){
@@ -690,11 +726,91 @@ async function login(){
   document.getElementById('logout-btn').hidden = false;
   render();
 }
+async function acceptInviteLogin(token){
+  const login_id = val('invite-login-id');
+  const password = val('invite-login-pass');
+  if (!login_id || !password) { msg('login-msg', 'ユーザー名とパスワードを入力してください', false); return; }
+  const auth = await api('auth_login', { username:login_id, password });
+  if (!auth.ok) { msg('login-msg', auth.error || 'ログインできませんでした', false); return; }
+  await acceptInvite(token);
+}
+async function acceptInvite(token){
+  const json = await api('verified_collaborator_invite_accept', { token });
+  if (!json.ok) { msg('login-msg', json.error || '招待を承認できませんでした', false); return; }
+  account = json.data.account;
+  isDeveloper = account && account.account_type === 'developer';
+  document.getElementById('logout-btn').hidden = false;
+  history.replaceState(null, '', location.pathname);
+  render();
+}
 async function logout(){
   await api('verified_logout', {});
   account=null; isDeveloper=false;
   document.getElementById('logout-btn').hidden=true;
   render();
+}
+
+async function loadCollaborators(){
+  if (!account) return;
+  const wrap = document.getElementById('collaborator-list');
+  if (!wrap) return;
+  const json = await api('verified_collaborator_list');
+  if (!json.ok) { wrap.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
+  const rows = json.data.collaborators || [];
+  wrap.innerHTML = rows.length ? rows.map(c => `<div class="event-row">
+    <div class="title">${esc(c.display_name)}<span class="vis">共同運営者</span></div>
+    <div class="meta">@${esc(c.username)} / 承認 ${esc(fmtDateDisplay(c.accepted_at) || '')}</div>
+  </div>`).join('') : '<div class="event-empty">共同運営者はまだいません</div>';
+}
+function searchCollaboratorUsers(){
+  clearTimeout(collaboratorSearchTimer);
+  collaboratorSearchTimer = setTimeout(async () => {
+    const q = val('collab-search');
+    const wrap = document.getElementById('collab-search-results');
+    if (!wrap) return;
+    collaboratorSelectedUser = null;
+    document.getElementById('collab-invite-box').innerHTML = '';
+    if (q.length < 2) { wrap.innerHTML = ''; return; }
+    wrap.innerHTML = '<div class="small">検索中…</div>';
+    const json = await api('verified_collaborator_search_users&q=' + encodeURIComponent(q));
+    if (!json.ok) { wrap.innerHTML = `<div class="event-empty">${esc(json.error || '検索できませんでした')}</div>`; return; }
+    const users = json.data || [];
+    wrap.innerHTML = users.length ? users.map(u => `<button class="event-row" type="button" onclick="selectCollaboratorUser('${encodeURIComponent(JSON.stringify(u))}')">
+      <div class="title">${esc(u.display_name)}<span class="vis">@${esc(u.username)}</span></div>
+      <div class="meta">${[u.oshi_member, u.location].filter(Boolean).map(esc).join(' / ') || 'プロフィール情報なし'}</div>
+    </button>`).join('') : '<div class="event-empty">該当するユーザーが見つかりません</div>';
+  }, 300);
+}
+function selectCollaboratorUser(encoded){
+  const user = JSON.parse(decodeURIComponent(encoded));
+  collaboratorSelectedUser = user;
+  document.getElementById('collab-invite-box').innerHTML = `<div class="event-row">
+    <div class="title">${esc(user.display_name)}<span class="vis">@${esc(user.username)}</span></div>
+    <div class="meta">このアカウント宛の招待リンクを発行します。</div>
+    <div class="row-actions"><button class="btn sm primary" type="button" onclick="createCollaboratorInvite()">招待リンクを共有</button></div>
+  </div>`;
+}
+async function createCollaboratorInvite(){
+  if (!collaboratorSelectedUser) { msg('collab-msg', '招待するユーザーを選択してください', false); return; }
+  const json = await api('verified_collaborator_invite_create', { user_id: collaboratorSelectedUser.id });
+  if (!json.ok) { msg('collab-msg', json.error || '招待リンクを作成できませんでした', false); return; }
+  const url = json.data.invite_url;
+  const text = `${account.display_name} の共同運営者招待です。\n${url}`;
+  if (navigator.share) {
+    try { await navigator.share({ title:'共同運営者招待', text, url }); }
+    catch(e) {}
+  } else {
+    await navigator.clipboard.writeText(text).catch(()=>{});
+  }
+  document.getElementById('collab-invite-box').innerHTML = `<div class="event-row">
+    <div class="title">招待リンクを作成しました</div>
+    <div class="meta">${esc(json.data.target_user.display_name)} さん専用です。有効期限: ${esc(fmtDateDisplay(json.data.expires_at) || json.data.expires_at)}</div>
+    <div class="row-actions">
+      <button class="btn sm" type="button" onclick="navigator.clipboard.writeText('${esc(url)}')">リンクをコピー</button>
+      <a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">リンクを開く</a>
+    </div>
+  </div>`;
+  msg('collab-msg', '招待リンクを作成しました', true);
 }
 
 async function saveAll(){
@@ -1738,6 +1854,11 @@ window.saveAll = saveAll;
 window.changePassword = changePassword;
 window.logout = logout;
 window.login = login;
+window.acceptInviteLogin = acceptInviteLogin;
+window.acceptInvite = acceptInvite;
+window.searchCollaboratorUsers = searchCollaboratorUsers;
+window.selectCollaboratorUser = selectCollaboratorUser;
+window.createCollaboratorInvite = createCollaboratorInvite;
 window.loadImageFile = loadImageFile;
 window.closeOrBack = closeOrBack;
 window.closeConfirm = closeConfirm;

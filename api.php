@@ -90,6 +90,7 @@ function db(): PDO {
     } else {
         ensureBuddiesProfileSakulaboColumns($pdo);
         ensureBuddiesHistoryTable($pdo);
+        ensureVerifiedCollaboratorTables($pdo);
     }
     return $pdo;
 }
@@ -101,6 +102,37 @@ function tableColumns(PDO $pdo, string $table): array {
     } catch (\Throwable $e) {
         return [];
     }
+}
+
+function ensureVerifiedCollaboratorTables(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_collaborators (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        role VARCHAR(20) NOT NULL DEFAULT 'manager',
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        invited_by_user_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        accepted_at DATETIME NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_account_user (account_id, user_id),
+        KEY idx_user_status (user_id, status),
+        KEY idx_account_status (account_id, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_collab_invites (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        target_user_id BIGINT UNSIGNED NOT NULL,
+        invited_by_user_id BIGINT UNSIGNED NOT NULL,
+        token VARCHAR(128) NOT NULL UNIQUE,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        expires_at DATETIME NOT NULL,
+        accepted_at DATETIME NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_token_status (token, status),
+        KEY idx_account_status (account_id, status),
+        KEY idx_target_status (target_user_id, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
@@ -527,6 +559,35 @@ function runMigrations(PDO $pdo): void {
         KEY idx_account (account_id),
         KEY idx_expires (expires_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_collaborators (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        role VARCHAR(20) NOT NULL DEFAULT 'manager',
+        status VARCHAR(20) NOT NULL DEFAULT 'active',
+        invited_by_user_id BIGINT UNSIGNED NULL DEFAULT NULL,
+        accepted_at DATETIME NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_account_user (account_id, user_id),
+        KEY idx_user_status (user_id, status),
+        KEY idx_account_status (account_id, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_collab_invites (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        account_id BIGINT UNSIGNED NOT NULL,
+        target_user_id BIGINT UNSIGNED NOT NULL,
+        invited_by_user_id BIGINT UNSIGNED NOT NULL,
+        token VARCHAR(128) NOT NULL UNIQUE,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        expires_at DATETIME NOT NULL,
+        accepted_at DATETIME NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_token_status (token, status),
+        KEY idx_account_status (account_id, status),
+        KEY idx_target_status (target_user_id, status)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
 }
 
 // ── ヘルパー ─────────────────────────────────────────────
@@ -627,6 +688,24 @@ function verifiedAccountById(int $id): ?array {
     $st->execute([$id]);
     return $st->fetch() ?: null;
 }
+function collaboratorVerifiedAccountByUserId(int $userId): ?array {
+    if ($userId <= 0) return null;
+    $st = db()->prepare(
+        "SELECT a.*, c.role AS _access_role, c.user_id AS _access_user_id
+           FROM buddies_verified_collaborators c
+           JOIN buddies_verified_accounts a ON a.id = c.account_id
+          WHERE c.user_id = ? AND c.status = 'active' AND a.status != 'disabled'
+          ORDER BY c.accepted_at DESC, c.created_at DESC
+          LIMIT 1"
+    );
+    $st->execute([$userId]);
+    return $st->fetch() ?: null;
+}
+function markVerifiedOwner(array $a, ?int $userId = null): array {
+    $a['_access_role'] = 'owner';
+    $a['_access_user_id'] = $userId ?: (isset($a['user_id']) ? (int)$a['user_id'] : null);
+    return $a;
+}
 function developerVerifiedAccount(?array $u = null): ?array {
     $u ??= currentUser();
     if (!isHiromameAdmin($u)) return null;
@@ -674,8 +753,13 @@ function currentVerifiedAccount(): ?array {
     $u = currentUser();
     if ($u) {
         $a = verifiedAccountByUserId((int)$u['id']);
+        if ($a) return markVerifiedOwner($a, (int)$u['id']);
+        if (isHiromameAdmin($u)) {
+            $dev = developerVerifiedAccount($u);
+            if ($dev) return markVerifiedOwner($dev, (int)$u['id']);
+        }
+        $a = collaboratorVerifiedAccountByUserId((int)$u['id']);
         if ($a) return $a;
-        if (isHiromameAdmin($u)) return developerVerifiedAccount($u);
     }
 
     $token = getVerifiedToken();
@@ -687,11 +771,20 @@ function currentVerifiedAccount(): ?array {
          LIMIT 1"
     );
     $st->execute([$token]);
-    return $st->fetch() ?: null;
+    $a = $st->fetch();
+    return $a ? markVerifiedOwner($a, isset($a['user_id']) ? (int)$a['user_id'] : null) : null;
 }
 function requireVerifiedAccount(): array {
     $a = currentVerifiedAccount();
     if (!$a) err('コミュニティアカウントでのログインが必要です。', 401);
+    return $a;
+}
+function isVerifiedOwner(array $a): bool {
+    return ($a['_access_role'] ?? 'owner') === 'owner';
+}
+function requireVerifiedOwner(): array {
+    $a = requireVerifiedAccount();
+    if (!isVerifiedOwner($a)) err('この操作はコミュニティアカウント本人のみ利用できます。', 403);
     return $a;
 }
 function isHiromameAdmin(?array $u): bool {
@@ -1408,6 +1501,9 @@ function buildVerifiedData(array $a, bool $includePrivate = false): array {
         'hashtags'             => decodeJsonArray($a['hashtags'] ?? null),
         'recommend_priority'   => (int)($a['recommend_priority'] ?? 0),
         'status'               => $a['status'] ?? 'active',
+        'access_role'          => $a['_access_role'] ?? 'owner',
+        'access_user_id'       => isset($a['_access_user_id']) ? (int)$a['_access_user_id'] : null,
+        'is_owner'             => (($a['_access_role'] ?? 'owner') === 'owner'),
         'updated_at'           => $a['updated_at'] ?? null,
     ];
     if (!$includePrivate) unset($data['login_id']);
@@ -1568,6 +1664,10 @@ match ($action) {
     'verified_admin_update'   => actionVerifiedAdminUpdate(),
     'verified_admin_disable'  => actionVerifiedAdminDisable(),
     'verified_admin_reset_password' => actionVerifiedAdminResetPassword(),
+    'verified_collaborator_search_users' => actionVerifiedCollaboratorSearchUsers(),
+    'verified_collaborator_list' => actionVerifiedCollaboratorList(),
+    'verified_collaborator_invite_create' => actionVerifiedCollaboratorInviteCreate(),
+    'verified_collaborator_invite_accept' => actionVerifiedCollaboratorInviteAccept(),
     'verified_post_list'      => actionVerifiedPostList(),
     'verified_post_create'    => actionVerifiedPostCreate(),
     'verified_post_delete'    => actionVerifiedPostDelete(),
@@ -2990,7 +3090,12 @@ function actionVerifiedLogin(): void {
     if (!$user || !password_verify($pass, $user['password_hash'])) err('ログインIDまたはパスワードが正しくありません。', 401);
 
     $a = verifiedAccountByUserId((int)$user['id']);
-    if (!$a && isHiromameAdmin($user)) $a = developerVerifiedAccount($user);
+    if ($a) $a = markVerifiedOwner($a, (int)$user['id']);
+    if (!$a && isHiromameAdmin($user)) {
+        $dev = developerVerifiedAccount($user);
+        if ($dev) $a = markVerifiedOwner($dev, (int)$user['id']);
+    }
+    if (!$a) $a = collaboratorVerifiedAccountByUserId((int)$user['id']);
     if (!$a) err('コミュニティアカウントではありません。', 403);
 
     db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id = ? OR expires_at < NOW()')->execute([$user['id']]);
@@ -3040,7 +3145,7 @@ function actionVerifiedUpdate(): void {
 }
 
 function actionVerifiedChangePassword(): void {
-    $a = requireVerifiedAccount();
+    $a = requireVerifiedOwner();
     if (empty($a['user_id'])) err('連携ユーザーが見つかりません。管理者に連絡してください。', 409);
     $current = (string)(body()['current_password'] ?? '');
     $new = (string)(body()['new_password'] ?? '');
@@ -3206,6 +3311,119 @@ function actionVerifiedAdminResetPassword(): void {
     db()->prepare('DELETE FROM buddies_verified_sessions WHERE account_id=?')->execute([$id]);
     db()->prepare('DELETE FROM sakulabo_sessions WHERE user_id=?')->execute([$a['user_id']]);
     ok();
+}
+
+function communityInviteUrl(string $token): string {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $scheme = $https ? 'https' : 'http';
+    $host = $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp';
+    $dir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/satellite/buddies/api.php'), '/\\');
+    return $scheme . '://' . $host . $dir . '/verified/index.html?invite=' . rawurlencode($token);
+}
+
+function actionVerifiedCollaboratorSearchUsers(): void {
+    $a = requireVerifiedOwner();
+    $q = trim((string)($_GET['q'] ?? ''));
+    if (mb_strlen($q) < 2) ok([]);
+    $like = '%' . $q . '%';
+    $st = db()->prepare(
+        "SELECT u.id, u.username, u.display_name, u.user_icon, u.oshi_member, p.location
+           FROM sakulabo_users u
+           LEFT JOIN buddies_profiles p ON p.user_id = u.id
+          WHERE u.id != ? AND (u.display_name LIKE ? OR u.username LIKE ?)
+          ORDER BY CASE WHEN u.display_name = ? OR u.username = ? THEN 0 ELSE 1 END, u.display_name ASC, u.username ASC
+          LIMIT 20"
+    );
+    $st->execute([(int)($a['user_id'] ?? 0), $like, $like, $q, $q]);
+    ok(array_map(fn($u) => [
+        'id' => (int)$u['id'],
+        'username' => (string)$u['username'],
+        'display_name' => $u['display_name'] ?: $u['username'],
+        'user_icon' => $u['user_icon'] ?? null,
+        'oshi_member' => $u['oshi_member'] ?? null,
+        'location' => $u['location'] ?? null,
+    ], $st->fetchAll()));
+}
+
+function actionVerifiedCollaboratorList(): void {
+    $a = requireVerifiedAccount();
+    $st = db()->prepare(
+        "SELECT c.*, u.username, u.display_name, u.user_icon
+           FROM buddies_verified_collaborators c
+           JOIN sakulabo_users u ON u.id = c.user_id
+          WHERE c.account_id=? AND c.status='active'
+          ORDER BY c.accepted_at DESC, c.created_at DESC"
+    );
+    $st->execute([(int)$a['id']]);
+    ok([
+        'is_owner' => isVerifiedOwner($a),
+        'collaborators' => array_map(fn($r) => [
+            'id' => (int)$r['id'],
+            'user_id' => (int)$r['user_id'],
+            'display_name' => $r['display_name'] ?: $r['username'],
+            'username' => (string)$r['username'],
+            'user_icon' => $r['user_icon'] ?? null,
+            'role' => (string)$r['role'],
+            'accepted_at' => $r['accepted_at'],
+        ], $st->fetchAll()),
+    ]);
+}
+
+function actionVerifiedCollaboratorInviteCreate(): void {
+    $a = requireVerifiedOwner();
+    $targetId = (int)(body()['user_id'] ?? 0);
+    if ($targetId <= 0) err('招待するユーザーを選択してください。');
+    if (!empty($a['user_id']) && $targetId === (int)$a['user_id']) err('自分自身は招待できません。');
+    $u = db()->prepare('SELECT id, username, display_name, user_icon FROM sakulabo_users WHERE id=? LIMIT 1');
+    $u->execute([$targetId]);
+    $target = $u->fetch();
+    if (!$target) err('ユーザーが見つかりません。', 404);
+    $exists = db()->prepare("SELECT id FROM buddies_verified_collaborators WHERE account_id=? AND user_id=? AND status='active' LIMIT 1");
+    $exists->execute([(int)$a['id'], $targetId]);
+    if ($exists->fetch()) err('このユーザーはすでに共同運営者です。', 409);
+    db()->prepare("UPDATE buddies_verified_collab_invites SET status='revoked' WHERE account_id=? AND target_user_id=? AND status='pending'")
+        ->execute([(int)$a['id'], $targetId]);
+    $token = bin2hex(random_bytes(32));
+    $expires = date('Y-m-d H:i:s', strtotime('+14 days'));
+    db()->prepare("INSERT INTO buddies_verified_collab_invites (account_id,target_user_id,invited_by_user_id,token,expires_at) VALUES (?,?,?,?,?)")
+        ->execute([(int)$a['id'], $targetId, (int)($a['_access_user_id'] ?? $a['user_id'] ?? 0), $token, $expires]);
+    ok([
+        'token' => $token,
+        'invite_url' => communityInviteUrl($token),
+        'expires_at' => $expires,
+        'target_user' => [
+            'id' => (int)$target['id'],
+            'display_name' => $target['display_name'] ?: $target['username'],
+            'username' => (string)$target['username'],
+            'user_icon' => $target['user_icon'] ?? null,
+        ],
+    ]);
+}
+
+function actionVerifiedCollaboratorInviteAccept(): void {
+    $u = requireAuth();
+    $token = trim((string)(body()['token'] ?? $_GET['token'] ?? ''));
+    if ($token === '') err('招待リンクが正しくありません。');
+    $st = db()->prepare(
+        "SELECT i.*, a.display_name AS account_name, a.status AS account_status
+           FROM buddies_verified_collab_invites i
+           JOIN buddies_verified_accounts a ON a.id = i.account_id
+          WHERE i.token=? AND i.status='pending'
+          LIMIT 1"
+    );
+    $st->execute([$token]);
+    $invite = $st->fetch();
+    if (!$invite || $invite['account_status'] === 'disabled') err('招待が見つからないか無効です。', 404);
+    if (strtotime((string)$invite['expires_at']) < time()) err('招待リンクの有効期限が切れています。', 410);
+    if ((int)$invite['target_user_id'] !== (int)$u['id']) err('この招待は現在ログイン中のアカウント宛ではありません。対象のBuddies profileでログインしてください。', 403);
+    db()->prepare("INSERT INTO buddies_verified_collaborators (account_id,user_id,role,status,invited_by_user_id,accepted_at)
+                   VALUES (?,?, 'manager','active',?,NOW())
+                   ON DUPLICATE KEY UPDATE status='active', role='manager', invited_by_user_id=VALUES(invited_by_user_id), accepted_at=NOW()")
+        ->execute([(int)$invite['account_id'], (int)$u['id'], (int)$invite['invited_by_user_id']]);
+    db()->prepare("UPDATE buddies_verified_collab_invites SET status='accepted', accepted_at=NOW() WHERE id=?")
+        ->execute([(int)$invite['id']]);
+    $a = verifiedAccountById((int)$invite['account_id']);
+    ok(['account' => $a ? buildVerifiedData(['_access_role'=>'manager','_access_user_id'=>(int)$u['id']] + $a, true) : null]);
 }
 
 function actionVerifiedPostList(): void {
