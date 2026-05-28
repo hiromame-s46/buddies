@@ -3314,11 +3314,24 @@ function actionVerifiedAdminResetPassword(): void {
 }
 
 function communityInviteUrl(string $token): string {
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || (($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '') === 'https');
+    $forwardedProto = strtolower(trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0] ?? ''));
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $forwardedProto === 'https';
     $scheme = $https ? 'https' : 'http';
-    $host = $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp';
+    $host = trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_HOST'] ?? $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp'))[0] ?? 'buddies46.stars.ne.jp');
     $dir = rtrim(dirname($_SERVER['SCRIPT_NAME'] ?? '/satellite/buddies/api.php'), '/\\');
     return $scheme . '://' . $host . $dir . '/verified/index.html?invite=' . rawurlencode($token);
+}
+
+function normalizeCollaboratorInviteToken(string $raw): string {
+    $raw = trim($raw);
+    if ($raw === '') return '';
+    $parts = parse_url($raw);
+    if (isset($parts['query'])) {
+        parse_str((string)$parts['query'], $query);
+        if (!empty($query['invite'])) $raw = (string)$query['invite'];
+    }
+    $raw = trim(rawurldecode($raw));
+    return strtolower(preg_replace('/[^a-fA-F0-9]/', '', $raw) ?? '');
 }
 
 function actionVerifiedCollaboratorSearchUsers(): void {
@@ -3381,7 +3394,26 @@ function actionVerifiedCollaboratorInviteCreate(): void {
     $exists = db()->prepare("SELECT id FROM buddies_verified_collaborators WHERE account_id=? AND user_id=? AND status='active' LIMIT 1");
     $exists->execute([(int)$a['id'], $targetId]);
     if ($exists->fetch()) err('このユーザーはすでに共同運営者です。', 409);
-    db()->prepare("UPDATE buddies_verified_collab_invites SET status='revoked' WHERE account_id=? AND target_user_id=? AND status='pending'")
+
+    $pending = db()->prepare("SELECT token, expires_at FROM buddies_verified_collab_invites WHERE account_id=? AND target_user_id=? AND status='pending' AND expires_at > NOW() ORDER BY created_at DESC LIMIT 1");
+    $pending->execute([(int)$a['id'], $targetId]);
+    $existing = $pending->fetch();
+    if ($existing) {
+        ok([
+            'token' => (string)$existing['token'],
+            'invite_url' => communityInviteUrl((string)$existing['token']),
+            'expires_at' => $existing['expires_at'],
+            'reused' => true,
+            'target_user' => [
+                'id' => (int)$target['id'],
+                'display_name' => $target['display_name'] ?: $target['username'],
+                'username' => (string)$target['username'],
+                'user_icon' => $target['user_icon'] ?? null,
+            ],
+        ]);
+    }
+
+    db()->prepare("UPDATE buddies_verified_collab_invites SET status='expired' WHERE account_id=? AND target_user_id=? AND status='pending' AND expires_at <= NOW()")
         ->execute([(int)$a['id'], $targetId]);
     $token = bin2hex(random_bytes(32));
     $expires = date('Y-m-d H:i:s', strtotime('+14 days'));
@@ -3402,20 +3434,32 @@ function actionVerifiedCollaboratorInviteCreate(): void {
 
 function actionVerifiedCollaboratorInviteAccept(): void {
     $u = requireAuth();
-    $token = trim((string)(body()['token'] ?? $_GET['token'] ?? ''));
+    $token = normalizeCollaboratorInviteToken((string)(body()['token'] ?? $_GET['token'] ?? ''));
     if ($token === '') err('招待リンクが正しくありません。');
     $st = db()->prepare(
-        "SELECT i.*, a.display_name AS account_name, a.status AS account_status
+        "SELECT i.*, a.display_name AS account_name, a.status AS account_status, c.status AS collaborator_status
            FROM buddies_verified_collab_invites i
            JOIN buddies_verified_accounts a ON a.id = i.account_id
-          WHERE i.token=? AND i.status='pending'
+           LEFT JOIN buddies_verified_collaborators c ON c.account_id = i.account_id AND c.user_id = ?
+          WHERE i.token=?
           LIMIT 1"
     );
-    $st->execute([$token]);
+    $st->execute([(int)$u['id'], $token]);
     $invite = $st->fetch();
-    if (!$invite || $invite['account_status'] === 'disabled') err('招待が見つからないか無効です。', 404);
-    if (strtotime((string)$invite['expires_at']) < time()) err('招待リンクの有効期限が切れています。', 410);
+    if (!$invite) err('招待リンクが見つかりません。URLが途中で切れていないか確認してください。', 404);
+    if ($invite['account_status'] === 'disabled') err('このコミュニティアカウントは現在利用できません。', 410);
     if ((int)$invite['target_user_id'] !== (int)$u['id']) err('この招待は現在ログイン中のアカウント宛ではありません。対象のBuddies profileでログインしてください。', 403);
+    if ((string)$invite['status'] === 'accepted' && (string)($invite['collaborator_status'] ?? '') === 'active') {
+        $a = verifiedAccountById((int)$invite['account_id']);
+        ok(['account' => $a ? buildVerifiedData(['_access_role'=>'manager','_access_user_id'=>(int)$u['id']] + $a, true) : null, 'already_accepted' => true]);
+    }
+    if ((string)$invite['status'] === 'revoked') err('この招待リンクは新しい招待リンクに置き換えられています。主催者に最新のリンクを共有してもらってください。', 410);
+    if ((string)$invite['status'] === 'expired' || strtotime((string)$invite['expires_at']) < time()) {
+        db()->prepare("UPDATE buddies_verified_collab_invites SET status='expired' WHERE id=? AND status='pending'")
+            ->execute([(int)$invite['id']]);
+        err('招待リンクの有効期限が切れています。', 410);
+    }
+    if ((string)$invite['status'] !== 'pending') err('この招待リンクは利用できません。主催者に最新のリンクを共有してもらってください。', 410);
     db()->prepare("INSERT INTO buddies_verified_collaborators (account_id,user_id,role,status,invited_by_user_id,accepted_at)
                    VALUES (?,?, 'manager','active',?,NOW())
                    ON DUPLICATE KEY UPDATE status='active', role='manager', invited_by_user_id=VALUES(invited_by_user_id), accepted_at=NOW()")

@@ -537,7 +537,7 @@ async function init(){
 function render(){
   const root = document.getElementById('app');
   if (!account) {
-    const inviteToken = new URLSearchParams(location.search).get('invite') || '';
+    const inviteToken = normalizeInviteToken(new URLSearchParams(location.search).get('invite') || '');
     if (inviteToken) {
       root.innerHTML = `<div class="card login">
         <h2 style="margin:0 0 8px;font-size:22px;">共同運営者の招待</h2>
@@ -734,7 +734,17 @@ async function acceptInviteLogin(token){
   if (!auth.ok) { msg('login-msg', auth.error || 'ログインできませんでした', false); return; }
   await acceptInvite(token);
 }
+function normalizeInviteToken(raw){
+  raw = String(raw || '').trim();
+  if (!raw) return '';
+  try {
+    const url = new URL(raw);
+    raw = url.searchParams.get('invite') || raw;
+  } catch(e) {}
+  return raw.trim().replace(/[^a-fA-F0-9]/g, '').toLowerCase();
+}
 async function acceptInvite(token){
+  token = normalizeInviteToken(token);
   const json = await api('verified_collaborator_invite_accept', { token });
   if (!json.ok) { msg('login-msg', json.error || '招待を承認できませんでした', false); return; }
   account = json.data.account;
