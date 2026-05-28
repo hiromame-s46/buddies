@@ -432,6 +432,9 @@ function runMigrations(PDO $pdo): void {
         title VARCHAR(160) NOT NULL,
         description TEXT NULL DEFAULT NULL,
         questions TEXT NOT NULL,
+        form_mode VARCHAR(16) NOT NULL DEFAULT 'form',
+        allow_anonymous_vote TINYINT(1) NOT NULL DEFAULT 0,
+        show_results TINYINT(1) NOT NULL DEFAULT 0,
         visibility VARCHAR(16) NOT NULL DEFAULT 'public',
         collect_profile TINYINT(1) NOT NULL DEFAULT 0,
         one_response TINYINT(1) NOT NULL DEFAULT 1,
@@ -451,6 +454,18 @@ function runMigrations(PDO $pdo): void {
         KEY idx_form (form_id),
         KEY idx_form_user (form_id, user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    try {
+        $formCols = array_column($pdo->query('DESCRIBE buddies_forms')->fetchAll(), 'Field');
+        if (!in_array('form_mode', $formCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN form_mode VARCHAR(16) NOT NULL DEFAULT 'form' AFTER questions");
+        }
+        if (!in_array('allow_anonymous_vote', $formCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN allow_anonymous_vote TINYINT(1) NOT NULL DEFAULT 0 AFTER form_mode");
+        }
+        if (!in_array('show_results', $formCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN show_results TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_anonymous_vote");
+        }
+    } catch (\Throwable $e) {}
 
     try {
         $participantCols = array_column($pdo->query('DESCRIBE buddies_event_participants')->fetchAll(), 'Field');
@@ -1594,6 +1609,7 @@ match ($action) {
     'form_public_get'         => actionFormPublicGet(),
     'form_submit'             => actionFormSubmit(),
     'form_responses'          => actionFormResponses(),
+    'form_results'            => actionFormResults(),
 
     default => err('不明なアクションです。'),
 };
@@ -4605,6 +4621,9 @@ function ensureFormTables(): void {
         title VARCHAR(160) NOT NULL,
         description TEXT NULL DEFAULT NULL,
         questions TEXT NOT NULL,
+        form_mode VARCHAR(16) NOT NULL DEFAULT 'form',
+        allow_anonymous_vote TINYINT(1) NOT NULL DEFAULT 0,
+        show_results TINYINT(1) NOT NULL DEFAULT 0,
         visibility VARCHAR(16) NOT NULL DEFAULT 'public',
         collect_profile TINYINT(1) NOT NULL DEFAULT 0,
         one_response TINYINT(1) NOT NULL DEFAULT 1,
@@ -4624,6 +4643,18 @@ function ensureFormTables(): void {
         KEY idx_form (form_id),
         KEY idx_form_user (form_id, user_id)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    try {
+        $cols = array_column($pdo->query('DESCRIBE buddies_forms')->fetchAll(), 'Field');
+        if (!in_array('form_mode', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN form_mode VARCHAR(16) NOT NULL DEFAULT 'form' AFTER questions");
+        }
+        if (!in_array('allow_anonymous_vote', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN allow_anonymous_vote TINYINT(1) NOT NULL DEFAULT 0 AFTER form_mode");
+        }
+        if (!in_array('show_results', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN show_results TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_anonymous_vote");
+        }
+    } catch (\Throwable $e) {}
 }
 
 function normalizeFormQuestions($questions): array {
@@ -4662,10 +4693,33 @@ function formEditableFields(array $b): array {
     if (mb_strlen($description) > 4000) err('説明は4000文字以内で入力してください。');
     $visibility = (string)($b['visibility'] ?? 'public');
     if (!in_array($visibility, ['public','unlisted'], true)) $visibility = 'public';
-    return ['title'=>$title, 'description'=>$description !== '' ? $description : null, 'questions'=>normalizeFormQuestions($b['questions'] ?? []), 'visibility'=>$visibility, 'collect_profile'=>truthyFlag($b['collect_profile'] ?? 0), 'one_response'=>truthyFlag($b['one_response'] ?? 1)];
+    $mode = (string)($b['form_mode'] ?? $b['mode'] ?? 'form');
+    if (!in_array($mode, ['form','poll'], true)) $mode = 'form';
+    $questions = normalizeFormQuestions($b['questions'] ?? []);
+    if ($mode === 'poll') {
+        $hasChoice = false;
+        foreach ($questions as $q) {
+            if (in_array($q['type'] ?? '', ['radio','select','checkbox'], true) && !empty($q['options'])) {
+                $hasChoice = true;
+                break;
+            }
+        }
+        if (!$hasChoice) err('投票モードでは選択式の質問を1件以上設定してください。');
+    }
+    return [
+        'title'=>$title,
+        'description'=>$description !== '' ? $description : null,
+        'questions'=>$questions,
+        'form_mode'=>$mode,
+        'allow_anonymous_vote'=>$mode === 'poll' ? truthyFlag($b['allow_anonymous_vote'] ?? 0) : false,
+        'show_results'=>$mode === 'poll' ? truthyFlag($b['show_results'] ?? 0) : false,
+        'visibility'=>$visibility,
+        'collect_profile'=>$mode === 'poll' && truthyFlag($b['allow_anonymous_vote'] ?? 0) ? false : truthyFlag($b['collect_profile'] ?? 0),
+        'one_response'=>truthyFlag($b['one_response'] ?? 1),
+    ];
 }
 function buildFormData(array $f, bool $includePrivate = false): array {
-    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
+    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'form_mode'=>(string)($f['form_mode'] ?? 'form'), 'allow_anonymous_vote'=>!empty($f['allow_anonymous_vote']), 'show_results'=>!empty($f['show_results']), 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
     if ($includePrivate) {
         $st = db()->prepare('SELECT COUNT(*) FROM buddies_form_responses WHERE form_id=?');
         $st->execute([(int)$f['id']]);
@@ -4693,7 +4747,7 @@ function actionFormListByAccount(): void { ensureFormTables();
 }
 function actionFormCreate(): void { ensureFormTables();
     $a = requireVerifiedAccount(); $f = formEditableFields(body());
-    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,visibility,collect_profile,one_response) VALUES (?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['visibility'], $f['collect_profile'], $f['one_response']]);
+    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,form_mode,allow_anonymous_vote,show_results,visibility,collect_profile,one_response) VALUES (?,?,?,?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response']]);
     $id = (int)db()->lastInsertId(); $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=?'); $st->execute([$id]); ok(buildFormData($st->fetch(), true));
 }
 function actionFormUpdate(): void { ensureFormTables();
@@ -4701,7 +4755,7 @@ function actionFormUpdate(): void { ensureFormTables();
     $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=? LIMIT 1'); $st->execute([$id]); $form = $st->fetch();
     if (!$form || (int)$form['account_id'] !== (int)$a['id']) err('編集権限がありません。', 403);
     $f = formEditableFields($b);
-    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, visibility=?, collect_profile=?, one_response=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['visibility'], $f['collect_profile'], $f['one_response'], $id]);
+    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, form_mode=?, allow_anonymous_vote=?, show_results=?, visibility=?, collect_profile=?, one_response=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], $id]);
     $st->execute([$id]); ok(buildFormData($st->fetch(), true));
 }
 function actionFormDelete(): void { ensureFormTables();
@@ -4722,7 +4776,9 @@ function actionFormSubmit(): void { ensureFormTables();
     $st = db()->prepare("SELECT * FROM buddies_forms WHERE id=? AND status='active' LIMIT 1"); $st->execute([$id]); $f = $st->fetch();
     if (!$f) err('フォームが見つかりません。', 404);
     $u = currentUser(); $uid = $u ? (int)$u['id'] : null;
-    if (!$u) err('Buddies profileへのログインが必要です。', 401);
+    $isPoll = (string)($f['form_mode'] ?? 'form') === 'poll';
+    $anonymousVote = $isPoll && !empty($f['allow_anonymous_vote']);
+    if (!$u && !$anonymousVote) err('Buddies profileへのログインが必要です。', 401);
     if (!empty($f['one_response']) && $uid) { $dup = db()->prepare('SELECT id FROM buddies_form_responses WHERE form_id=? AND user_id=? LIMIT 1'); $dup->execute([$id, $uid]); if ($dup->fetch()) err('回答は1回までです。', 409); }
     $questions = json_decode((string)$f['questions'], true) ?: []; $answersIn = is_array($b['answers'] ?? null) ? $b['answers'] : []; $answers = [];
     foreach ($questions as $q) {
@@ -4748,8 +4804,53 @@ function actionFormSubmit(): void { ensureFormTables();
         }
         $answers[$qid] = $normalized;
     }
-    db()->prepare("INSERT INTO buddies_form_responses (form_id,user_id,answers,respondent_name) VALUES (?,?,?,?)")->execute([$id, $uid, json_encode($answers, JSON_UNESCAPED_UNICODE), !empty($f['collect_profile']) ? ($u['display_name'] ?: $u['username']) : null]);
+    db()->prepare("INSERT INTO buddies_form_responses (form_id,user_id,answers,respondent_name) VALUES (?,?,?,?)")->execute([$id, $uid, json_encode($answers, JSON_UNESCAPED_UNICODE), $u && !empty($f['collect_profile']) ? ($u['display_name'] ?: $u['username']) : null]);
     ok(['submitted'=>true]);
+}
+function buildFormResultData(array $f): array {
+    $questions = json_decode((string)$f['questions'], true) ?: [];
+    $choiceQuestions = array_values(array_filter($questions, fn($q) => in_array($q['type'] ?? '', ['radio','select','checkbox'], true) && !empty($q['options'])));
+    $r = db()->prepare("SELECT answers FROM buddies_form_responses WHERE form_id=?");
+    $r->execute([(int)$f['id']]);
+    $results = [];
+    foreach ($choiceQuestions as $q) {
+        $counts = [];
+        foreach ($q['options'] as $option) $counts[(string)$option] = 0;
+        $results[(string)$q['id']] = ['id'=>(string)$q['id'], 'label'=>(string)$q['label'], 'type'=>(string)$q['type'], 'total'=>0, 'options'=>array_map(fn($option) => ['label'=>(string)$option, 'count'=>0], $q['options'])];
+    }
+    foreach ($r->fetchAll() as $row) {
+        $answers = json_decode((string)$row['answers'], true) ?: [];
+        foreach ($choiceQuestions as $q) {
+            $qid = (string)$q['id'];
+            if (!array_key_exists($qid, $answers)) continue;
+            $values = is_array($answers[$qid]) ? $answers[$qid] : [$answers[$qid]];
+            $seen = [];
+            foreach ($values as $value) {
+                $value = (string)$value;
+                if ($value === '' || isset($seen[$value])) continue;
+                $seen[$value] = true;
+                foreach ($results[$qid]['options'] as &$option) {
+                    if ($option['label'] === $value) {
+                        $option['count']++;
+                        $results[$qid]['total']++;
+                        break;
+                    }
+                }
+                unset($option);
+            }
+        }
+    }
+    return ['form'=>buildFormData($f, false), 'results'=>array_values($results)];
+}
+function actionFormResults(): void { ensureFormTables();
+    $id = (int)($_GET['id'] ?? 0); if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_forms WHERE id=? AND status='active' LIMIT 1"); $st->execute([$id]); $f = $st->fetch();
+    if (!$f) err('フォームが見つかりません。', 404);
+    $viewer = currentVerifiedAccount();
+    $isOwner = $viewer && (int)$viewer['id'] === (int)$f['account_id'];
+    if ((string)($f['form_mode'] ?? 'form') !== 'poll') err('投票結果は投票モードのフォームでのみ利用できます。', 400);
+    if (!$isOwner && empty($f['show_results'])) err('この投票結果は公開されていません。', 403);
+    ok(buildFormResultData($f));
 }
 function actionFormResponses(): void { ensureFormTables();
     $a = requireVerifiedAccount(); $id = (int)($_GET['id'] ?? 0); if ($id <= 0) err('id は必須です。');

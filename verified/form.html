@@ -35,6 +35,7 @@
 .field input:not([type=radio]):not([type=checkbox]),.field textarea,.field select{width:100%;border:1px solid #ddd;border-radius:12px;padding:12px 13px;font:inherit;background:#fff;outline:none}
 .field input:focus,.field textarea:focus,.field select:focus{border-color:#111}
 .choice{padding:4px 0}
+.poll-results{margin-top:18px;border:1px solid #eee;border-radius:18px;background:#fff;padding:16px;display:grid;gap:12px}.poll-results h2{font-size:16px;margin:0;font-weight:900}.poll-question{display:grid;gap:8px}.poll-question-title{font-size:13px;font-weight:900}.poll-option{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.poll-bar{grid-column:1/3;height:8px;border-radius:999px;background:#eee;overflow:hidden}.poll-fill{height:100%;background:#111;border-radius:inherit}.poll-count{font-size:12px;color:#666;font-weight:900}
 @media(max-width:560px){.app{padding:16px}}
 </style>
 </head>
@@ -86,17 +87,20 @@ function render(){
   document.title = `${form.title} - Buddies profile`;
   syncBackLink();
   const canManage = currentAccount && Number(currentAccount.id) === Number(form.account_id);
+  const isPoll = form.form_mode === 'poll';
+  const canAnonymousVote = isPoll && form.allow_anonymous_vote;
   document.getElementById('root').innerHTML = `
     <div class="form-hero">
       <h1 class="title">${esc(form.title)}</h1>
       ${form.description ? `<p class="desc">${esc(form.description)}</p>` : ''}
     </div>
     <div class="notice">
-      <div>${form.collect_profile ? 'このフォームはBuddies profileの情報を回答と一緒に収集します。' : '回答画面と管理画面では匿名として扱われます。回答にはBuddies profileログインが必要です。'}</div>
-      ${form.viewer ? viewerHtml() : '<div>回答にはログインが必要です。</div>'}
+      <div>${isPoll ? 'このページは投票モードです。' : 'このページはフォーム回答ページです。'}${form.collect_profile ? 'Buddies profileの情報を回答と一緒に収集します。' : '回答画面と管理画面では匿名として扱われます。'}${canAnonymousVote ? 'ログインなしでも匿名で投票できます。' : '回答にはBuddies profileログインが必要です。'}</div>
+      ${form.viewer ? viewerHtml() : (canAnonymousVote ? '<div>匿名投票として送信できます。</div>' : '<div>回答にはログインが必要です。</div>')}
     </div>
     <div class="card">${(form.questions||[]).map(questionHtml).join('')}<button class="btn" onclick="confirmForm()">入力内容を確認する</button></div>
     <div id="msg" class="msg"></div>
+    ${isPoll && form.show_results ? `<section class="poll-results"><h2>投票結果</h2><div id="poll-results-body" class="empty">読み込み中…</div></section>` : ''}
     ${canManage ? `<section class="admin-panel">
       <h2>管理用回答情報</h2>
       <div class="admin-meta">この情報はフォームを管理しているコミュニティアカウントでログイン中のときだけ表示されます。</div>
@@ -106,6 +110,7 @@ function render(){
       </div>
       <div id="responses"></div>
     </section>` : ''}`;
+  if (isPoll && form.show_results) loadPollResults();
 }
 function collect(){
   const out={};
@@ -178,6 +183,10 @@ function renderDone(){
         <a class="btn secondary" href="../">ホームへ戻る</a>
       </div>
     </div>`;
+  if (form.form_mode === 'poll' && form.show_results) {
+    document.getElementById('root').insertAdjacentHTML('beforeend', '<section class="poll-results"><h2>投票結果</h2><div id="poll-results-body" class="empty">読み込み中…</div></section>');
+    loadPollResults();
+  }
 }
 function fmtDate(s){
   if(!s) return '';
@@ -188,6 +197,30 @@ function fmtDate(s){
 function responseValueText(value){
   if (Array.isArray(value)) return value.join('、');
   return value == null ? '' : String(value);
+}
+async function loadPollResults(){
+  const wrap = document.getElementById('poll-results-body');
+  if (!wrap) return;
+  const json = await api('form_results&id=' + encodeURIComponent(id));
+  if (!json.ok) {
+    wrap.innerHTML = `<div class="empty">${esc(json.error || '投票結果を読み込めませんでした')}</div>`;
+    return;
+  }
+  const results = json.data.results || [];
+  if (!results.length) {
+    wrap.innerHTML = '<div class="empty">集計できる投票項目がありません</div>';
+    return;
+  }
+  wrap.className = '';
+  wrap.innerHTML = results.map(q => `<div class="poll-question">
+    <div class="poll-question-title">${esc(q.label)}</div>
+    ${(q.options || []).map(o => {
+      const total = Math.max(Number(q.total || 0), 0);
+      const count = Number(o.count || 0);
+      const pct = total ? Math.round(count / total * 100) : 0;
+      return `<div class="poll-option"><div>${esc(o.label)}</div><div class="poll-count">${count}票・${pct}%</div><div class="poll-bar"><div class="poll-fill" style="width:${pct}%"></div></div></div>`;
+    }).join('')}
+  </div>`).join('');
 }
 async function loadResponses(){
   const wrap = document.getElementById('responses');
