@@ -43,6 +43,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .summary{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:12px 2px 10px}
 .summary-title{font-size:13px;font-weight:950}
 .summary-count{font-size:12px;color:#999;font-weight:900}
+.past-lives{margin:18px 0 20px;padding:15px;border:1px solid var(--line);border-radius:18px;background:#fafafa;display:grid;gap:10px}
+.past-lives-title{font-size:13px;font-weight:950;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.past-lives-count{font-size:11px;color:#999}
+.past-live-list{display:grid;gap:8px}
+.past-live-item{background:#fff;border:1px solid #eee;border-radius:14px;padding:11px 12px;display:grid;gap:4px}
+.past-live-date{font-size:11px;color:#777;font-weight:900}
+.past-live-name{font-size:13px;font-weight:900}
+.past-live-venue{font-size:12px;color:#777}
 .history-list{display:grid;gap:16px;position:relative;padding-bottom:12px}
 .history-list:before{content:"";position:absolute;left:9px;top:10px;bottom:18px;width:2px;border-radius:9999px;background:#e7e7e7}
 .history-item{position:relative;display:grid;grid-template-columns:28px 1fr;gap:12px;align-items:start}
@@ -74,8 +82,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 
 <script>
 const API = './api.php';
+const MEMBER_DATA = '../data/member.json';
 const LIVE_DATA = '../data/live.json';
 let profile = null;
+let memberMap = {};
 let liveOptions = [];
 let allHistoryItems = [];
 let filters = { live:false, image:false, q:'' };
@@ -83,7 +93,12 @@ let filters = { live:false, image:false, q:'' };
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function assetUrl(url){if(!url)return'';if(/^https?:\/\//.test(url)||url.startsWith('data:'))return url;return url.startsWith('/')?url:'./'+url;}
 function getDisplayName(p){return p?.display_name||p?.username||'名無し';}
-function avatarInner(p){const url=p?.user_icon||'';const name=getDisplayName(p);return url?`<img src="${esc(assetUrl(url))}" alt="">`:esc(name[0]||'?');}
+function avatarInner(p){
+  const oshiImage = p?.oshi_member ? memberMap[p.oshi_member]?.image : '';
+  const url = p?.user_icon || oshiImage || '';
+  const name = getDisplayName(p);
+  return url ? `<img src="${esc(assetUrl(url))}" alt="" onerror="this.style.display='none'">` : esc(name[0]||'?');
+}
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function liveDateObj(date){const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?new Date(Number(m[1]),Number(m[2])-1,Number(m[3])):null;}
 function liveDateLabel(date, weekday){const d=liveDateObj(date);if(!d)return date||'';const w=weekday||['日','月','火','水','木','金','土'][d.getDay()];return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w})`;}
@@ -125,15 +140,24 @@ function historyLiveDateItem(id){
   const d=liveDateObj(live.date);
   return {id:`live:${id}`,year:d?d.getFullYear():'',month:d?d.getMonth()+1:'',day:d?d.getDate():'',title:live.title||'ライブ',note:live.venue||'',live_id:id,image_url:'',is_live_only:true};
 }
-function mergedHistoryItems(p){
+function sortedHistoryItems(p){
   const base=Array.isArray(p?.buddies_history)?p.buddies_history.filter(Boolean):[];
-  const linked=new Set(base.map(item=>item.live_id).filter(Boolean));
-  const liveOnly=pastLiveIds(p).filter(id=>!linked.has(id)).map(historyLiveDateItem);
-  return [...base,...liveOnly].sort((a,b)=>{
+  return [...base].sort((a,b)=>{
     const ka=historyEntryDateKey(a),kb=historyEntryDateKey(b);
     if(ka!==kb)return kb.localeCompare(ka);
     return Number(b.id||0)-Number(a.id||0);
   });
+}
+function pastLivesHtml(p){
+  const ids=pastLiveIds(p);
+  if(!ids.length)return'';
+  return `<section class="past-lives">
+    <div class="past-lives-title"><span>参加したLIVE</span><span class="past-lives-count">${ids.length}公演</span></div>
+    <div class="past-live-list">${ids.map(id=>{
+      const live=liveDisplay(id);
+      return `<div class="past-live-item"><div class="past-live-date">${esc(liveDateLabel(live.date,live.weekday))}</div><div class="past-live-name">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="past-live-venue">${esc(live.venue)}</div>`:''}</div>`;
+    }).join('')}</div>
+  </section>`;
 }
 function historyLiveHtml(item){
   if(!item?.live_id)return'';
@@ -177,12 +201,13 @@ function toggleFilter(key){
 function render(){
   const name=getDisplayName(profile);
   document.title=`${name} - My Buddies history`;
-  allHistoryItems=mergedHistoryItems(profile);
+  allHistoryItems=sortedHistoryItems(profile);
   document.getElementById('app').innerHTML=`
     <section class="hero">
       <div class="avatar">${avatarInner(profile)}</div>
       <div><div class="name">${esc(name)}</div><div class="sub">My Buddies history</div></div>
     </section>
+    ${pastLivesHtml(profile)}
     <section class="filters">
       <input class="search" type="search" placeholder="キーワードで検索" oninput="filters.q=this.value;renderList()">
       <div class="chips">
@@ -203,10 +228,16 @@ async function load(){
   const id=parseInt(params.get('id')||params.get('uid')||'0',10);
   if(!id)return renderError('プロフィールが指定されていません。');
   try{
-    const [pRes,liveRes]=await Promise.all([
+    const [pRes,memberRes,liveRes]=await Promise.all([
       fetch(`${API}?action=buddies_public_profile_get&user_id=${id}`,{credentials:'include'}),
+      fetch(`${MEMBER_DATA}?_=${Date.now()}`).catch(()=>null),
       fetch(`${LIVE_DATA}?_=${Date.now()}`).catch(()=>null)
     ]);
+    if(memberRes){try{
+      const raw=await memberRes.json();
+      const members=Array.isArray(raw)?raw:Object.values(raw||{});
+      members.forEach(m=>{if(m?.name)memberMap[m.name]=m;});
+    }catch(e){memberMap={};}}
     if(liveRes){try{liveOptions=buildLiveOptions(await liveRes.json());}catch(e){liveOptions=[];}}
     const json=await pRes.json();
     if(!json.ok)return renderError(json.error||'プロフィールを取得できませんでした。');

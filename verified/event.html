@@ -46,8 +46,15 @@ main{padding:0 0 24px}
 .host-label{font-size:10px;font-weight:800;color:#7c5600;letter-spacing:.04em}
 .host-name{font-size:13px;font-weight:800;color:#111;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .desc{padding:0 20px;white-space:pre-wrap;font-size:14px;color:#333;margin:8px 0 18px}
+.fees{margin:4px 20px 18px;border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:13px 14px;display:grid;gap:8px}
+.fees-title{font-size:12px;font-weight:800;color:#555;letter-spacing:.04em}
+.fee-row{display:flex;align-items:baseline;justify-content:space-between;gap:16px;font-size:14px}
+.fee-label{font-weight:700;color:#333}.fee-amount{font-weight:800;color:#111;white-space:nowrap}
 .cta{padding:12px 20px;display:grid;gap:8px}
 .cta .custom-link{margin-top:8px}
+.owner-actions{margin:8px 20px 6px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);display:grid;gap:8px}
+.owner-actions-label{font-size:11px;font-weight:800;color:#777;letter-spacing:.06em}
+.owner-actions .btn{width:100%}
 .attachments{padding:0 20px;display:grid;gap:8px}
 .attachment{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;background:#fff;color:#111;text-decoration:none;padding:10px 12px}
 .attachment:hover{background:#fafafa}
@@ -89,6 +96,8 @@ main{padding:0 0 24px}
 .empty{padding:30px 16px;text-align:center;color:#888;font-size:13px}
 .msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin:8px 20px 0}
 .msg.show{display:block}.msg.err{background:#fff5f5;color:#d33}.msg.ok{background:#f0fff4;color:#276749}
+.certificate{margin:4px 20px 16px;padding:15px;border-radius:18px;background:#fff;color:#111;border:1px solid var(--line);box-shadow:0 6px 18px rgba(0,0,0,.04);display:grid;gap:6px}
+.certificate-label{font-size:10px;font-weight:800;letter-spacing:.14em;color:#7c5600}.certificate-title{font-size:17px;font-weight:900}.certificate-note{font-size:12px;color:#666}
 .edit-fab{position:fixed;right:18px;bottom:18px;z-index:30;width:56px;height:56px;border-radius:50%;background:#111;color:#fff;display:none;align-items:center;justify-content:center;text-decoration:none;box-shadow:0 10px 24px rgba(0,0,0,.22);border:1px solid #111}
 .edit-fab:hover{background:#222}
 .edit-fab svg{width:22px;height:22px}
@@ -106,7 +115,7 @@ main{padding:0 0 24px}
 .confirm-box{background:#fff;border-radius:18px;max-width:360px;width:100%;padding:20px;display:grid;gap:12px;box-shadow:0 18px 44px rgba(0,0,0,.2)}
 .confirm-box h3{margin:0;font-size:16px;font-weight:800}
 .confirm-box p{margin:0;color:#555;font-size:13px;line-height:1.7}
-.confirm-actions{display:flex;gap:8px;justify-content:flex-end}
+.confirm-actions{display:flex;gap:8px;justify-content:flex-end}.confirm-actions .btn{font-size:13px}
 @media(max-width:560px){.edit-fab{right:16px;bottom:16px}}
 </style>
 </head>
@@ -237,6 +246,25 @@ function attachmentSection(){
       }).join('')}
     </div>`;
 }
+function feeSection(){
+  const fees = Array.isArray(ev.fee_items) ? ev.fee_items : [];
+  if (!fees.length) return '';
+  return `<section class="fees"><div class="fees-title">参加費</div>${fees.map(f => `<div class="fee-row"><span class="fee-label">${esc(f.label)}</span><span class="fee-amount">${esc(f.amount)}</span></div>`).join('')}</section>`;
+}
+function certificateSection(){
+  if (!ev.is_checked_in) return '';
+  return `<section class="certificate"><div class="certificate-label">DIGITAL PARTICIPATION PASS</div><div class="certificate-title">✓ 受付済み</div><div class="certificate-note">${esc(ev.title)} に参加した記録です。</div></section>`;
+}
+function ownerReceptionSection(){
+  if (!isOwner()) return '';
+  const ready = ev.participant_enabled !== false && ev.checkin_enabled;
+  return `<section class="owner-actions">
+    <div class="owner-actions-label">主催者メニュー</div>
+    ${ready
+      ? `<a class="btn primary" href="./checkin.html?event_id=${encodeURIComponent(ev.id)}">QR受付を開始</a>`
+      : `<button class="btn primary" type="button" onclick="enableCheckinAndOpen()">参加受付・QR受付を有効にして開始</button>`}
+  </section>`;
+}
 
 async function safeJson(url, opt = {}){
   try {
@@ -298,8 +326,8 @@ function render(){
 
   const isPublic = (ev.visibility || 'public') === 'public';
   const joinButton = participantEnabled ? `
-      <button class="btn ${isJoined ? 'active-join' : isFull ? 'full' : 'gold'}" onclick="toggle('join')" ${isFull ? 'disabled' : ''}>
-        ${isJoined ? '✓ 参加中（タップでキャンセル）' : isFull ? '満員（受付終了）' : '参加する'}
+      <button class="btn ${isJoined ? 'active-join' : isFull ? 'full' : 'gold'}" onclick="toggle('join')" ${(isFull || ev.is_checked_in) ? 'disabled' : ''}>
+        ${ev.is_checked_in ? '✓ 受付済み' : isJoined ? '✓ 参加中（タップでキャンセル）' : isFull ? '満員（受付終了）' : '参加する'}
       </button>` : '';
   const likeButton = isPublic
     ? `
@@ -328,10 +356,13 @@ function render(){
       </div>
     </div>
     ${ev.description ? `<div class="desc">${esc(ev.description)}</div>` : ''}
+    ${feeSection()}
     <div class="cta">
       ${ctaButtons}
       ${extLink}
     </div>
+    ${ownerReceptionSection()}
+    ${certificateSection()}
     ${attachmentSection()}
     <div id="msg" class="msg"></div>
     <div class="section-title" id="subevents-title" style="display:none;">サブイベント</div>
@@ -339,16 +370,44 @@ function render(){
     <div id="subevents-toggle" class="subevents-toggle" style="display:none;"></div>
     ${participantEnabled ? `<div class="section-title">参加者（${ev.join_count}人）</div>
     <div id="participants" class="participants"><div class="empty">読み込み中…</div></div>` : ''}
-    ${isOwner() && participantEnabled ? `<section class="admin-panel">
+    ${isOwner() ? `<section class="admin-panel">
       <h2>管理用参加者情報</h2>
       <div class="admin-meta">この情報は主催アカウントでログイン中のときだけ表示されます。</div>
       <div class="admin-tools">
-        <button class="btn secondary" onclick="loadAdminParticipants()">詳細を表示</button>
+        ${participantEnabled ? `<button class="btn secondary" onclick="loadAdminParticipants()">参加者の詳細を表示</button>` : ''}
         <a class="btn secondary" href="./index.html?edit_event=${encodeURIComponent(ev.id)}" target="_blank" rel="noopener">管理画面で編集</a>
       </div>
       <div id="admin-participants"></div>
     </section>` : ''}
   `;
+}
+
+async function enableCheckinAndOpen(){
+  if (!isOwner()) return;
+  const r = await safeJson(`${API}?action=event_update`, {
+    method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      id: ev.id,
+      title: ev.title || '',
+      description: ev.description || '',
+      venue: ev.venue || '',
+      fee_items: Array.isArray(ev.fee_items) ? ev.fee_items : [],
+      starts_at: ev.starts_at || '',
+      ends_at: ev.ends_at || '',
+      capacity: ev.capacity || '',
+      external_label: ev.external_label || '',
+      external_url: ev.external_url || '',
+      external_button_highlight: !!ev.external_button_highlight,
+      participant_enabled: true,
+      checkin_enabled: true,
+      visibility: ev.visibility || 'public',
+    }),
+  });
+  if (!r.ok || !r.data || !r.data.ok) {
+    msg((r.data && r.data.error) || '受付を開始できませんでした。', false);
+    return;
+  }
+  location.href = `./checkin.html?event_id=${encodeURIComponent(ev.id)}`;
 }
 
 async function toggle(kind){
@@ -488,10 +547,12 @@ async function loadAdminParticipants(){
   wrap.innerHTML = `<div class="admin-list">${rows.map(row => {
     const u = row.user || {};
     const joined = row.joined_at ? `参加: ${esc(fmtDate(row.joined_at))}` : '';
+    const received = row.checked_in_at ? `✓ 受付済み: ${esc(fmtDate(row.checked_in_at))}${row.registered_on_site ? '（当日参加登録）' : ''}` : '未受付';
     const profile = `<a class="btn secondary" href="../view.html?id=${encodeURIComponent(u.id)}" target="_blank" rel="noopener">プロフィール</a>`;
     const subeventsText = (row.subevents || []).map(s => s.title).join('、');
     const details = [
       joined,
+      received,
       (u.oshi_members || []).length ? `推し: ${esc((u.oshi_members || []).join('、'))}` : '',
       u.location ? `都道府県: ${esc(u.location)}` : '',
       subeventsText ? `サブイベント: ${esc(subeventsText)}` : '',
@@ -510,6 +571,7 @@ async function loadAdminParticipants(){
 
 window.toggleSubeventsExpanded = toggleSubeventsExpanded;
 window.loadAdminParticipants = loadAdminParticipants;
+window.enableCheckinAndOpen = enableCheckinAndOpen;
 load();
 </script>
 </body>

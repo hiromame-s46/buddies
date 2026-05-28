@@ -475,7 +475,7 @@ async function loadVerifiedAccounts() {
   const res = await fetch(`${API}?action=verified_admin_list`, { credentials:'include' });
   const json = await res.json();
   if (!json.ok) {
-    document.getElementById('tab-content').innerHTML = `<div class="section"><div class="empty">コミュニティアカウント管理は、通常ログイン済みの開発者アカウント（uid=1）のみ利用できます。<br>${esc(json.error || '')}</div></div>`;
+    document.getElementById('tab-content').innerHTML = `<div class="section"><div class="empty">コミュニティ管理は、通常ログイン済みの開発者アカウント（uid=1）のみ利用できます。<br>${esc(json.error || '')}</div></div>`;
     return;
   }
   verifiedAccounts = json.data || [];
@@ -493,7 +493,6 @@ function renderVerifiedTab() {
           <input id="va-name" placeholder="表示名 例: 全国buddies会">
           <select id="va-type">
             <option value="verified">コミュニティアカウント</option>
-            <option value="official">コミュニティパートナー</option>
           </select>
           <input id="va-label" value="コミュニティアカウント" placeholder="ラベル">
           <input id="va-priority" type="number" value="50" placeholder="おすすめ優先度">
@@ -552,7 +551,6 @@ function openEditVerified(id){
       <div class="field"><label>種別</label>
         <select id="ev-type">
           <option value="verified" ${a.account_type==='verified'?'selected':''}>コミュニティアカウント</option>
-          <option value="official" ${a.account_type==='official'?'selected':''}>コミュニティパートナー</option>
           <option value="developer" ${a.account_type==='developer'?'selected':''} ${a.account_type==='developer'?'':'disabled'}>開発者アカウント</option>
         </select>
       </div>

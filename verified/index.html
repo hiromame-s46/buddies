@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
-<title>コミュニティアカウント管理 - Buddies profile</title>
+<title>コミュニティ管理 - Buddies profile</title>
 <meta name="robots" content="noindex,nofollow">
-<meta name="description" content="Buddies profile のコミュニティアカウント管理ページです。">
-<meta property="og:title" content="コミュニティアカウント管理 - Buddies profile">
-<meta property="og:description" content="Buddies profile のコミュニティアカウント管理ページです。">
+<meta name="description" content="Buddies profile のコミュニティ管理ページです。">
+<meta property="og:title" content="コミュニティ管理 - Buddies profile">
+<meta property="og:description" content="Buddies profile のコミュニティ管理ページです。">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/verified/">
 <meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
@@ -15,8 +15,8 @@
 <meta property="og:image:height" content="512">
 <meta property="og:site_name" content="Buddies">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="コミュニティアカウント管理 - Buddies profile">
-<meta name="twitter:description" content="Buddies profile のコミュニティアカウント管理ページです。">
+<meta name="twitter:title" content="コミュニティ管理 - Buddies profile">
+<meta name="twitter:description" content="Buddies profile のコミュニティ管理ページです。">
 <meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
 <link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/verified/">
 <link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png">
@@ -36,12 +36,27 @@ header h1{font-size:17px;margin:0;font-weight:800;flex:1}
 main{padding:16px;display:grid;gap:14px}
 .card{border:1px solid var(--line);border-radius:18px;padding:18px;background:#fff}
 .account-summary{border:1px solid var(--line);border-radius:18px;padding:16px;background:#fff;display:grid;gap:14px}
-.settings-tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-.settings-tab{min-height:44px;border:1px solid var(--line);border-radius:14px;background:#fafafa;color:#555;font:800 13px inherit;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px}
-.settings-tab.active{background:#111;border-color:#111;color:#fff}
+.settings-home{display:none;gap:12px}
+.settings-home.active{display:grid}
+.settings-home .developer-banner{margin-bottom:0}
+.settings-home-title{font-size:20px;font-weight:900;margin:4px 0 0}
+.settings-home-note{font-size:13px;color:var(--muted);margin:-5px 0 4px}
+.settings-menu{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.settings-card{border:1px solid var(--line);border-radius:17px;background:#fff;padding:17px 16px;text-align:left;text-decoration:none;cursor:pointer;display:grid;gap:6px;font:inherit;color:#111;transition:background .18s,border-color .18s}
+.settings-card:hover{background:#fafafa;border-color:#d6d6d6}
+.settings-card-title{font-size:15px;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+.settings-card-title::after{content:"›";color:#aaa;font-size:22px;line-height:1}
+.settings-card-desc{font-size:12px;color:var(--muted);line-height:1.6}
+.settings-card-count{display:inline-flex;width:max-content;border-radius:9999px;background:#f3f3f3;color:#555;padding:3px 8px;font-size:11px;font-weight:800}
 .settings-panel{display:none}
 .settings-panel.active{display:grid;gap:14px}
-@media(max-width:560px){.settings-tabs{grid-template-columns:repeat(2,minmax(0,1fr))}.settings-tab{font-size:12px}}
+.settings-page-head{display:flex;align-items:center;gap:10px;padding:2px 0}
+.settings-back{width:40px;height:40px;border:1px solid var(--line);border-radius:50%;background:#fff;color:#111;font:700 25px/1 inherit;cursor:pointer;display:grid;place-items:center;padding:0 0 2px}
+.settings-page-title{font-size:20px;font-weight:900;margin:0}
+.settings-page-desc{font-size:12px;color:var(--muted);margin:1px 0 0}
+.settings-content{display:grid;gap:12px;padding:2px 0 0}
+.settings-content .section-title{margin-bottom:4px}
+@media(max-width:560px){.settings-menu{grid-template-columns:minmax(0,1fr)}}
 .login{max-width:380px;margin:60px auto}
 .field{display:grid;gap:6px;margin-bottom:10px}
 .field label{font-size:12px;font-weight:700;color:#555}
@@ -50,10 +65,10 @@ main{padding:16px;display:grid;gap:14px}
 .field{min-width:0}
 input,textarea,select{width:100%;max-width:100%;border:1px solid var(--line);border-radius:12px;padding:11px 14px;font:inherit;font-size:14px;outline:none;background:#fff;color:#111;min-width:0;display:block;box-sizing:border-box}
 input[type=datetime-local]{font-size:13px;padding:10px 12px;width:100%;min-width:0;-webkit-min-logical-width:0;appearance:none;-webkit-appearance:none}
-.modal-body .field-row{grid-template-columns:minmax(0,1fr) !important}
 .modal-body{overflow-x:hidden}
 input:focus,textarea:focus,select:focus{border-color:#111}
 textarea{min-height:96px;resize:vertical;line-height:1.7}
+#description,#ev-desc,#form-desc{min-height:172px}
 .btn{height:44px;border-radius:9999px;border:1px solid var(--line);background:#fff;color:#111;font:700 14px inherit;padding:0 18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;white-space:nowrap}
 .btn:disabled{opacity:.5;cursor:not-allowed}
 .btn.primary{background:#111;color:#fff;border-color:#111}
@@ -75,7 +90,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .msg.err{background:#fff5f5;color:#d33}
 
 /* リンクカード */
-.link-card{border:1px solid var(--line);border-radius:14px;padding:12px 14px;background:#fafafa;margin-bottom:10px}
+.link-card{padding:4px 0 14px;margin-bottom:14px;border-bottom:1px solid var(--line)}
+.link-card:last-child{border-bottom:0;margin-bottom:0;padding-bottom:0}
 .link-card .link-card-title{font-size:11px;font-weight:800;color:#7c5600;letter-spacing:.04em;margin-bottom:8px;text-transform:uppercase}
 .link-card .field{margin-bottom:8px}
 .link-card .field:last-child{margin-bottom:0}
@@ -107,6 +123,27 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .modal-close:hover{background:#f3f3f3}
 .modal-body{padding:18px;overflow:auto;flex:1}
 .modal-foot{padding:12px 18px;border-top:1px solid var(--line);display:flex;gap:8px;justify-content:flex-end}
+.modal-sheet .btn,.confirm-box .btn{font-size:13px}
+#event-modal,#form-modal{align-items:stretch;background:#fff}
+#event-modal .modal-sheet,#form-modal .modal-sheet{max-width:760px;height:100dvh;max-height:none;border-radius:0;margin:0 auto;animation:none;box-shadow:none}
+#event-modal .modal-head,#form-modal .modal-head{position:sticky;top:0;background:#fff;z-index:2;padding:13px 16px}
+#event-modal .modal-body,#form-modal .modal-body{background:#fff;padding-bottom:92px}
+#event-modal .modal-foot,#form-modal .modal-foot{position:absolute;bottom:0;left:0;right:0;background:rgba(255,255,255,.96);backdrop-filter:blur(12px)}
+.modal-builder{display:grid;gap:14px}
+.builder-jump{display:flex;gap:7px;overflow-x:auto;padding:0 0 2px;scrollbar-width:none}
+.builder-jump::-webkit-scrollbar{display:none}
+.builder-jump button{height:34px;display:inline-flex;align-items:center;flex-shrink:0;padding:0 12px;border:1px solid var(--line);border-radius:9999px;background:#fff;color:#555;font:800 12px inherit;cursor:pointer}
+.builder-jump button:active{background:#f2f2f2;color:#111}
+.modal-section{border:0;border-top:1px solid var(--line);padding:18px 0 4px;display:grid;gap:12px;scroll-margin-top:12px}
+.modal-section:first-of-type{border-top:0;padding-top:2px}
+.modal-section-head{display:grid;gap:3px;margin-bottom:2px}
+.modal-section-title{font-size:15px;font-weight:900;color:#111}
+.modal-section-note{font-size:12px;color:var(--muted);line-height:1.6}
+.modal-section .field{margin-bottom:0}
+.modal-section .event-options{margin:0}
+.inline-help{font-size:11px;color:var(--muted);line-height:1.6;margin-top:-4px}
+.event-option-card:has(input:disabled){opacity:.52;cursor:not-allowed;box-shadow:none}
+@media(max-width:560px){.modal-body{padding:14px}.modal-body .field-row{grid-template-columns:minmax(0,1fr)}.modal-section{padding:16px 0 2px}}
 
 /* アイコンクロップ */
 .crop-area{display:grid;gap:14px;justify-items:center}
@@ -136,29 +173,42 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .event-option-title{font-size:14px;font-weight:900;color:#111;line-height:1.35}
 .event-option-desc{font-size:12px;color:#666;line-height:1.65}
 .event-option-badge{display:inline-flex;width:max-content;max-width:100%;align-items:center;border-radius:9999px;background:#fff4d6;color:#7c5600;border:1px solid #f3e3a8;font-size:11px;font-weight:900;padding:3px 8px;margin-top:2px}
+.event-row-checkin{display:inline-flex;align-items:center;gap:5px;border-radius:9999px;background:#f0fff4;color:#276749;border:1px solid #c6f6d5;padding:3px 9px;font-size:11px;font-weight:900}
+.fee-editor{display:grid;gap:8px}
+.fee-editor-row{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr) 42px;gap:8px;align-items:center}
+.fee-editor-row .btn{width:42px;padding:0}
+@media(max-width:560px){.fee-editor-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr) 40px}.fee-editor-row input{padding-left:10px;padding-right:10px}}
 @media(max-width:560px){.event-option-card{padding:13px 12px}.event-option-title{font-size:13px}.event-option-desc{font-size:12px}}
 .admin-table{display:grid;gap:8px}
 .admin-row{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;display:grid;gap:6px}
 .admin-row-title{font-size:14px;font-weight:800}
 .admin-detail{font-size:12px;color:#666;line-height:1.6}
-#form-modal .modal-sheet{max-width:680px}
 #responses-modal .modal-sheet{max-width:760px}
 .form-builder{display:grid;gap:14px}
-.form-builder-section{border:1px solid var(--line);border-radius:16px;background:#fff;padding:14px;display:grid;gap:12px}
+.form-builder-section{border:0;border-top:1px solid var(--line);padding:18px 0 4px;display:grid;gap:12px;scroll-margin-top:12px}
+.form-builder-section:first-of-type{border-top:0;padding-top:2px}
 .form-builder-section h4{margin:0;font-size:14px;font-weight:800}
 .form-builder-section .hint{font-size:12px;color:var(--muted);margin-top:-6px}
 .form-setup-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 @media(max-width:680px){.form-setup-grid{grid-template-columns:minmax(0,1fr)}}
-.form-setting-card{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:12px;display:grid;gap:8px}
+.form-setting-card{border:0;background:#fafafa;border-radius:12px;padding:12px;display:grid;gap:8px}
 .form-setting-card label{font-size:12px;font-weight:800;color:#555}
 .form-setting-card .small{font-size:11px}
 .form-question-toolbar{display:flex;gap:8px;flex-wrap:wrap}
+.form-add-group{display:flex;gap:6px;flex-wrap:wrap;align-items:center;background:#fafafa;border-radius:12px;padding:8px}
+.form-add-label{font-size:11px;font-weight:900;color:#777;margin-right:2px}
 .form-question-row{border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:12px;display:grid;gap:10px}
+.form-question-row.section-block{background:#fff8e1;border-color:#f3e3a8}
+.form-question-row.collapsed{gap:0;background:#fff}
 .form-question-head{display:flex;align-items:center;gap:8px}
 .form-question-no{width:28px;height:28px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800;flex-shrink:0}
 .form-question-title{font-size:13px;font-weight:800;flex:1}
 .form-question-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.question-summary{font-size:12px;color:var(--muted);font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:260px}
+.question-toggle{height:34px;padding:0 12px;border:1px solid var(--line);border-radius:9999px;background:#fff;font:800 12px inherit;cursor:pointer;color:#555}
 .form-question-row .field-row{grid-template-columns:minmax(0,1fr) 150px}
+.form-question-advanced{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.form-question-advanced input{background:#fff}
 .form-option-tools{display:flex;gap:6px;flex-wrap:wrap}
 .response-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-bottom:12px}
 .response-stat{border:1px solid var(--line);border-radius:14px;background:#fafafa;padding:10px 12px}
@@ -175,7 +225,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .response-answer-label{font-size:11px;color:#666;font-weight:800}
 .response-answer-value{font-size:13px;color:#111;white-space:pre-wrap;word-break:break-word}
 .response-empty-value{color:#999}
-@media(max-width:560px){.response-summary{grid-template-columns:minmax(0,1fr)}.response-head{display:grid}.form-question-row .field-row{grid-template-columns:minmax(0,1fr)}}
+@media(max-width:560px){.response-summary{grid-template-columns:minmax(0,1fr)}.response-head{display:grid}.form-question-row .field-row,.form-question-advanced{grid-template-columns:minmax(0,1fr)}}
 .subevent-box{margin-top:10px;padding:10px 12px;border-radius:14px;background:#fafafa;border:1px solid var(--line);display:grid;gap:8px}
 .subevent-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .subevent-title{font-size:12px;font-weight:800;color:#555}
@@ -210,7 +260,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 <div class="app">
   <header>
     <a class="crumb" href="../" onclick="return closeOrBack(event)">← Buddies</a>
-    <h1>コミュニティアカウント管理</h1>
+    <h1>コミュニティ管理</h1>
     <button class="btn sm danger" id="logout-btn" type="button" data-act="logout" hidden>ログアウト</button>
   </header>
   <main id="app"></main>
@@ -257,8 +307,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 <div class="modal-overlay" id="event-modal" onclick="if(event.target===this)closeEventForm()">
   <div class="modal-sheet">
     <div class="modal-head">
+      <button class="modal-close" type="button" data-act="close-event" aria-label="イベント一覧へ戻る">←</button>
       <h3 id="event-modal-title">イベントを編集</h3>
-      <button class="modal-close" type="button" data-act="close-event">×</button>
     </div>
     <div class="modal-body" id="event-modal-body"></div>
     <div class="modal-foot">
@@ -296,8 +346,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 <div class="modal-overlay" id="form-modal" onclick="if(event.target===this)closeFormModal()">
   <div class="modal-sheet">
     <div class="modal-head">
+      <button class="modal-close" type="button" onclick="closeFormModal()" aria-label="フォーム一覧へ戻る">←</button>
       <h3 id="form-modal-title">フォームを編集</h3>
-      <button class="modal-close" type="button" onclick="closeFormModal()">×</button>
     </div>
     <div class="modal-body" id="form-modal-body"></div>
     <div class="modal-foot">
@@ -333,7 +383,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 const API = '../api.php';
 let account = null;
 let isDeveloper = false;
-let activeSettingsTab = sessionStorage.getItem('buddies_verified_settings_tab') || 'profile';
+let activeSettingsTab = 'menu';
 const crop = { img:null, scale:1, x:0, y:0, dragStart:null, startX:0, startY:0 };
 let pendingIcon = null; // 未保存のアイコンデータURL
 let dirty = false;
@@ -341,11 +391,13 @@ let verifiedSns = [];
 let myEvents = [];
 let subeventsByEvent = {};
 let editingEventId = null;
+let editingFeeItems = [];
 let pendingEventCover = null;
 let pendingEventAttachments = [];
 let pendingExistingAttachment = null;
 let myForms = [];
 let editingFormId = null;
+let expandedFormQuestion = null;
 let formQuestions = [];
 let responseView = { form:null, questions:[], rows:[] };
 let editingSubeventId = null;
@@ -393,12 +445,34 @@ function msg(id, text, ok=true){
   el.className = 'msg show ' + (ok ? 'ok' : 'err');
   setTimeout(() => { if (el.textContent === text) el.classList.remove('show'); }, 4000);
 }
+function eventMsg(text, ok=true){
+  const inModal = document.getElementById('event-modal')?.classList.contains('open') && document.getElementById('event-editor-msg');
+  msg(inModal ? 'event-editor-msg' : 'event-msg', text, ok);
+}
+function formMsg(text, ok=true){
+  const inModal = document.getElementById('form-modal')?.classList.contains('open') && document.getElementById('form-editor-msg');
+  msg(inModal ? 'form-editor-msg' : 'form-msg', text, ok);
+}
+async function copyManagedLink(path, kind='event'){
+  try {
+    await navigator.clipboard.writeText(new URL(path, location.href).href);
+    (kind === 'form' ? formMsg : eventMsg)('共有リンクをコピーしました', true);
+  } catch (e) {
+    (kind === 'form' ? formMsg : eventMsg)('リンクをコピーできませんでした', false);
+  }
+}
+function showsSaveBar(){
+  return !!account && ['profile','links'].includes(activeSettingsTab);
+}
+function scrollModalSection(id){
+  document.getElementById(id)?.scrollIntoView({behavior:'smooth', block:'start'});
+}
 function setDirty(v){
   dirty = v;
   const bar = document.getElementById('save-bar');
   const status = document.getElementById('save-status');
   if (!bar || !status) return;
-  bar.hidden = !account;
+  bar.hidden = !showsSaveBar();
   bar.classList.remove('saving','saved','error');
   if (v) { status.textContent = '未保存の変更があります'; status.classList.add('dirty'); }
   else   { status.textContent = '変更はありません'; status.classList.remove('dirty'); }
@@ -407,17 +481,21 @@ function setSaveState(state, text){
   const bar = document.getElementById('save-bar');
   const status = document.getElementById('save-status');
   if (!bar || !status) return;
-  bar.hidden = !account;
+  bar.hidden = !showsSaveBar();
   bar.classList.remove('saving','saved','error');
   if (state) bar.classList.add(state);
   status.textContent = text;
   status.classList.toggle('dirty', state === 'error');
 }
 function switchSettingsTab(tab){
+  const allowed = ['menu','profile','links','events','forms','security'];
+  if (!allowed.includes(tab)) tab = 'menu';
   activeSettingsTab = tab;
-  sessionStorage.setItem('buddies_verified_settings_tab', tab);
-  document.querySelectorAll('.settings-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.settingsTab === tab));
+  document.querySelectorAll('.settings-home').forEach(home => home.classList.toggle('active', tab === 'menu'));
   document.querySelectorAll('.settings-panel').forEach(panel => panel.classList.toggle('active', panel.dataset.settingsPanel === tab));
+  const bar = document.getElementById('save-bar');
+  if (bar) bar.hidden = !showsSaveBar();
+  window.scrollTo({ top:0, left:0, behavior:'auto' });
 }
 function confirmDialog(title, text){
   return new Promise(resolve => {
@@ -469,40 +547,66 @@ function render(){
     return;
   }
 
-  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : account.account_type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント';
+  const kindLabel = account.account_type === 'developer' ? '開発者アカウント' : 'コミュニティアカウント';
   verifiedSns = accountSnsLinks(account);
   root.innerHTML = `
-    ${isDeveloper ? `
-      <div class="developer-banner">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-        <div><strong>開発者セッション</strong><br><span>管理者向け機能とコミュニティアカウントの管理が利用できます。<a href="../admin.html" style="color:#7c5600;font-weight:800;">コミュニティアカウント一覧へ →</a></span></div>
-      </div>
-    ` : ''}
-
-    <section class="account-summary">
-      <div class="account-head">
-        <button class="account-icon-btn" type="button" data-act="open-icon" title="タップしてアイコンを編集">
-          ${account.icon_url ? `<img src="../${esc(account.icon_url)}?_=${Date.now()}" alt="">` : esc((account.display_name||'？')[0])}
-          <span class="edit-hint">編集</span>
-        </button>
-        <div style="min-width:0;flex:1;">
-          <span class="verified-label">✓ ${esc(account.label || kindLabel)}</span><span class="kind">${esc(kindLabel)}</span>
-          <h2>${esc(account.display_name)}</h2>
-          <div class="small">${esc(account.account_definition || '')}</div>
+    <div class="settings-home" data-settings-home>
+      ${isDeveloper ? `
+        <div class="developer-banner">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          <div><strong>開発者セッション</strong><br><span>管理者向け機能とコミュニティアカウントの管理が利用できます。<a href="../admin.html" style="color:#7c5600;font-weight:800;">コミュニティアカウント一覧へ →</a></span></div>
         </div>
+      ` : ''}
+      <section class="account-summary">
+        <div class="account-head">
+          <button class="account-icon-btn" type="button" data-act="open-icon" title="タップしてアイコンを編集">
+            ${account.icon_url ? `<img src="../${esc(account.icon_url)}?_=${Date.now()}" alt="">` : esc((account.display_name||'？')[0])}
+            <span class="edit-hint">編集</span>
+          </button>
+          <div style="min-width:0;flex:1;">
+            <span class="verified-label">✓ ${esc(account.label || kindLabel)}</span><span class="kind">${esc(kindLabel)}</span>
+            <h2>${esc(account.display_name)}</h2>
+            <div class="small">${esc(account.account_definition || '')}</div>
+          </div>
+        </div>
+      </section>
+      <div>
+        <h2 class="settings-home-title">管理メニュー</h2>
+        <p class="settings-home-note">編集する項目を選択してください。</p>
       </div>
-      <div class="settings-tabs" role="tablist" aria-label="設定カテゴリ">
-        <button class="settings-tab active" type="button" data-settings-tab="profile" onclick="switchSettingsTab('profile')">プロフィール</button>
-        <button class="settings-tab" type="button" data-settings-tab="links" onclick="switchSettingsTab('links')">リンク</button>
-        <button class="settings-tab" type="button" data-settings-tab="events" onclick="switchSettingsTab('events')">イベント</button>
-        <button class="settings-tab" type="button" data-settings-tab="forms" onclick="switchSettingsTab('forms')">フォーム</button>
-        <button class="settings-tab" type="button" data-settings-tab="security" onclick="switchSettingsTab('security')">セキュリティ</button>
+      <div class="settings-menu">
+        <button class="settings-card" type="button" onclick="switchSettingsTab('profile')">
+          <span class="settings-card-title">プロフィール</span>
+          <span class="settings-card-desc">表示名、説明文、ハッシュタグを編集</span>
+        </button>
+        <button class="settings-card" type="button" onclick="switchSettingsTab('links')">
+          <span class="settings-card-title">リンク</span>
+          <span class="settings-card-desc">公式リンク、SNS、誘導ボタンを管理</span>
+        </button>
+        <button class="settings-card" type="button" onclick="switchSettingsTab('events')">
+          <span class="settings-card-title">イベント</span>
+          <span class="settings-card-desc">イベント、受付、参加者、サブイベントを管理</span>
+          <span class="settings-card-count" id="events-count">読み込み中</span>
+        </button>
+        <button class="settings-card" type="button" onclick="switchSettingsTab('forms')">
+          <span class="settings-card-title">フォーム</span>
+          <span class="settings-card-desc">アンケート作成と回答データを管理</span>
+          <span class="settings-card-count" id="forms-count">読み込み中</span>
+        </button>
+        <a class="settings-card" href="./view.html?id=${encodeURIComponent(account.id)}" target="_blank" rel="noopener">
+          <span class="settings-card-title">掲示板</span>
+          <span class="settings-card-desc">公開ページで告知投稿と添付ファイルを管理</span>
+        </a>
+        <button class="settings-card" type="button" onclick="switchSettingsTab('security')">
+          <span class="settings-card-title">セキュリティ</span>
+          <span class="settings-card-desc">ログインパスワードを変更</span>
+        </button>
       </div>
-    </section>
+    </div>
 
     <div class="settings-panel active" data-settings-panel="profile">
-      <section class="card">
-        <h2 class="section-title">公開情報</h2>
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">プロフィール</h2><p class="settings-page-desc">公開プロフィールに表示する基本情報</p></div></div>
+      <section class="settings-content">
         <div class="field"><label>表示名</label><input id="display_name" maxlength="100" value="${esc(account.display_name)}" oninput="setDirty(true)"></div>
         <div class="field"><label>ラベル（バッジ表示文言）</label><input id="label" maxlength="80" value="${esc(account.label||'')}" placeholder="${esc(kindLabel)}" oninput="setDirty(true)"></div>
         <div class="field"><label>説明文</label><textarea id="description" maxlength="2000" placeholder="アカウントの説明（プロフィール詳細に表示されます）" oninput="setDirty(true)">${esc(account.description||'')}</textarea></div>
@@ -511,8 +615,8 @@ function render(){
     </div>
 
     <div class="settings-panel" data-settings-panel="links">
-      <section class="card">
-        <h2 class="section-title">リンク</h2>
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">リンク</h2><p class="settings-page-desc">公開ページから案内するリンク</p></div></div>
+      <section class="settings-content">
         <div class="link-card">
           <div class="link-card-title">メインリンク</div>
           <div class="field"><label>ボタン文言</label><input id="primary_link_label" maxlength="80" value="${esc(account.primary_link_label||'')}" placeholder="例: 公式サイトを見る" oninput="setDirty(true)"></div>
@@ -536,8 +640,8 @@ function render(){
     </div>
 
     <div class="settings-panel" data-settings-panel="events">
-      <section class="card">
-        <h2 class="section-title">イベント管理</h2>
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">イベント</h2><p class="settings-page-desc">公開イベントと参加状況</p></div></div>
+      <section class="settings-content">
         <p class="small" style="margin:0 0 10px;">主催イベントを作成・編集できます。「非公開」は URL を知っている人のみアクセスできます。</p>
         <div class="actions" style="margin-bottom:10px;">
           <button class="btn primary" id="new-event-btn" type="button" data-act="new-event">+ 新しいイベント</button>
@@ -549,8 +653,8 @@ function render(){
     </div>
 
     <div class="settings-panel" data-settings-panel="forms">
-      <section class="card">
-        <h2 class="section-title">アンケート&フォーム</h2>
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">フォーム</h2><p class="settings-page-desc">応募、アンケート、受付フォーム</p></div></div>
+      <section class="settings-content">
         <p class="small" style="margin:0 0 10px;">公開/非公開、匿名回答、Buddies profile情報の収集、1回まで回答を設定できます。</p>
         <div class="actions" style="margin-bottom:10px;">
           <button class="btn primary" type="button" onclick="openFormModal()">+ 新しいフォーム</button>
@@ -561,8 +665,8 @@ function render(){
     </div>
 
     <div class="settings-panel" data-settings-panel="security">
-      <section class="card">
-        <h2 class="section-title">パスワード変更</h2>
+      <div class="settings-page-head"><button class="settings-back" type="button" onclick="switchSettingsTab('menu')" aria-label="管理メニューへ戻る">←</button><div><h2 class="settings-page-title">セキュリティ</h2><p class="settings-page-desc">コミュニティアカウントのログイン設定</p></div></div>
+      <section class="settings-content">
         <div class="field-row">
           <div class="field"><label>現在のパスワード</label><input id="current_password" type="password" autocomplete="current-password"></div>
           <div class="field"><label>新しいパスワード（8文字以上）</label><input id="new_password" type="password" autocomplete="new-password"></div>
@@ -743,11 +847,11 @@ function readFileAsDataUrl(file){
 function validateEventCoverFile(file){
   if (!file) return false;
   if (!['image/png','image/jpeg','image/webp'].includes(file.type)) {
-    msg('event-msg', 'カバー画像はPNG/JPEG/WebPのみアップロードできます', false);
+    eventMsg('カバー画像はPNG/JPEG/WebPのみアップロードできます', false);
     return false;
   }
   if (file.size > 5 * 1024 * 1024) {
-    msg('event-msg', 'カバー画像は5MB以内にしてください', false);
+    eventMsg('カバー画像は5MB以内にしてください', false);
     return false;
   }
   return true;
@@ -755,8 +859,8 @@ function validateEventCoverFile(file){
 function validateEventAttachmentFile(file){
   if (!file) return false;
   const okTypes = ['image/png','image/jpeg','image/webp','application/pdf'];
-  if (!okTypes.includes(file.type)) { msg('event-msg', '画像（PNG/JPEG/WebP）またはPDFのみ添付できます', false); return false; }
-  if (file.size > 5 * 1024 * 1024) { msg('event-msg', '添付ファイルは5MB以内にしてください', false); return false; }
+  if (!okTypes.includes(file.type)) { eventMsg('画像（PNG/JPEG/WebP）またはPDFのみ添付できます', false); return false; }
+  if (file.size > 5 * 1024 * 1024) { eventMsg('添付ファイルは5MB以内にしてください', false); return false; }
   return true;
 }
 function eventAttachmentHtml(e){
@@ -844,7 +948,7 @@ function clearPendingEventCover(){
 }
 function addPendingEventAttachment(file){
   if (!validateEventAttachmentFile(file)) return;
-  if (pendingEventAttachments.length >= 3) { msg('event-msg', '添付ファイルは3件までです', false); return; }
+  if (pendingEventAttachments.length >= 3) { eventMsg('添付ファイルは3件までです', false); return; }
   pendingEventAttachments.push({ file, name: defaultAttachmentName(file) });
   renderPendingEventFiles();
 }
@@ -858,6 +962,8 @@ function removePendingEventAttachment(i){
 async function loadEvents(){
   const json = await api('event_mine_list');
   myEvents = json.ok ? (json.data || []) : [];
+  const count = document.getElementById('events-count');
+  if (count) count.textContent = `${myEvents.length} 件`;
   await loadAllSubevents();
   renderEventList();
 }
@@ -893,7 +999,9 @@ function renderEventList(){
                 <span class="small">${s.participant_enabled === false ? '参加集計なし' : `参加 ${s.join_count || 0} 人${s.capacity ? ' / ' + s.capacity : ''}`}</span>
               </div>
               <div class="subevent-row-meta">${esc(fmtDateDisplay(s.starts_at) || '日時未定')}${s.venue ? ' ・ ' + esc(s.venue) : ''}</div>
+              ${e.checkin_enabled && s.participant_enabled !== false ? `<div class="subevent-row-meta">受付 ${s.checkin_count || 0} / ${s.join_count || 0} 人</div>` : ''}
               <div class="subevent-row-actions">
+                ${e.checkin_enabled && s.participant_enabled !== false ? `<a class="btn sm primary" href="./checkin.html?subevent_id=${s.id}" target="_blank" rel="noopener">受付を開く</a>` : ''}
                 <button class="btn sm" type="button" data-act="edit-subevent" data-event-id="${e.id}" data-id="${s.id}">編集</button>
                 <button class="btn sm danger" type="button" data-act="delete-subevent" data-id="${s.id}">削除</button>
               </div>
@@ -906,8 +1014,11 @@ function renderEventList(){
       <div class="title">${esc(e.title)}<span class="vis ${e.visibility === 'unlisted' ? 'unlisted' : ''}">${e.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
       <div class="meta">${esc(fmtDateDisplay(e.starts_at) || '日時未定')}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
       <div class="meta">${e.participant_enabled === false ? '参加集計なし' : `参加 ${e.join_count} 人${e.capacity ? ' ・ 定員 ' + e.capacity : ''}`}${e.visibility === 'public' ? ' / お気に入り ' + (e.like_count || 0) + ' 件' : ''}</div>
+      ${e.checkin_enabled ? `<div><span class="event-row-checkin">受付 ${e.checkin_count || 0} / ${e.join_count || 0} 人</span></div>` : ''}
       <div class="row-actions">
         <a class="btn sm" href="./event.html?id=${e.id}" target="_blank" rel="noopener">ページを開く</a>
+        <button class="btn sm" type="button" onclick="copyManagedLink('./event.html?id=${e.id}')">リンクをコピー</button>
+        ${e.checkin_enabled ? `<a class="btn sm primary" href="./checkin.html?event_id=${e.id}" target="_blank" rel="noopener">受付を開く</a>` : ''}
         ${e.participant_enabled === false ? '' : `<button class="btn sm" type="button" onclick="openParticipantsModal(${e.id})">参加者管理</button>`}
         <button class="btn sm" type="button" data-act="edit-event" data-id="${e.id}">編集</button>
         <button class="btn sm danger" type="button" data-act="delete-event" data-id="${e.id}">削除</button>
@@ -927,8 +1038,8 @@ async function openParticipantsModal(eventId = 0){
   body.innerHTML = rows.length ? `<div class="admin-table">${rows.map(r => {
     const u = r.user || {};
     return `<div class="admin-row">
-      <div class="admin-row-title">${esc(u.display_name || u.username || '')}</div>
-      <div class="admin-detail">イベント: ${esc(r.event_title || '')}<br>参加日時: ${esc(fmtDateDisplay(r.joined_at) || '')}${u.location ? '<br>都道府県: ' + esc(u.location) : ''}${(u.oshi_members||[]).length ? '<br>推し: ' + esc((u.oshi_members||[]).join(' / ')) : ''}</div>
+      <div class="admin-row-title">${r.checked_in_at ? '✓ ' : ''}${esc(u.display_name || u.username || '')}</div>
+      <div class="admin-detail">イベント: ${esc(r.event_title || '')}<br>${r.checked_in_at ? `受付済み: ${esc(fmtDateDisplay(r.checked_in_at) || '')}${r.registered_on_site ? '（当日参加登録）' : ''}` : '未受付'}<br>参加日時: ${esc(fmtDateDisplay(r.joined_at) || '')}${u.location ? '<br>都道府県: ' + esc(u.location) : ''}${(u.oshi_members||[]).length ? '<br>推し: ' + esc((u.oshi_members||[]).join(' / ')) : ''}</div>
       ${(r.subevents||[]).length ? `<div class="admin-detail">サブイベント: ${r.subevents.map(s=>esc(s.title)).join(' / ')}</div>` : ''}
       <a class="btn sm" href="../view.html?id=${u.id}" target="_blank" rel="noopener">プロフィール詳細</a>
     </div>`;
@@ -941,61 +1052,126 @@ function openEventForm(id = null){
   pendingEventAttachments = [];
   pendingExistingAttachment = null;
   const e = id ? myEvents.find(x => x.id === id) : null;
+  editingFeeItems = Array.isArray(e?.fee_items) ? JSON.parse(JSON.stringify(e.fee_items)) : [];
   document.getElementById('event-modal-title').textContent = id ? 'イベントを編集' : '新しいイベント';
   document.getElementById('event-save-btn').textContent = id ? '更新' : '作成';
   const body = document.getElementById('event-modal-body');
   body.innerHTML = `
-    <div class="field"><label>タイトル *</label><input id="ev-title" maxlength="160" value="${esc(e?.title || '')}"></div>
-    <div class="field"><label>説明</label><textarea id="ev-desc" maxlength="4000">${esc(e?.description || '')}</textarea></div>
-    <div class="field-row">
-      <div class="field"><label>開催日時</label><input id="ev-starts" type="datetime-local" value="${esc(fmtDateLocalInput(e?.starts_at))}"></div>
-      <div class="field"><label>終了日時</label><input id="ev-ends" type="datetime-local" value="${esc(fmtDateLocalInput(e?.ends_at))}"></div>
+    <div class="modal-builder">
+      <nav class="builder-jump" aria-label="イベント編集項目">
+        <button type="button" onclick="scrollModalSection('event-basic')">基本情報</button>
+        <button type="button" onclick="scrollModalSection('event-place')">日時・会場</button>
+        <button type="button" onclick="scrollModalSection('event-entry')">参加受付</button>
+        <button type="button" onclick="scrollModalSection('event-link')">公開・リンク</button>
+        <button type="button" onclick="scrollModalSection('event-media')">画像・資料</button>
+      </nav>
+      <div id="event-editor-msg" class="msg"></div>
+      <section class="modal-section" id="event-basic">
+        <div class="modal-section-head"><div class="modal-section-title">基本情報</div><div class="modal-section-note">公開ページの見出しとイベント概要です。</div></div>
+        <div class="field"><label>イベント名 *</label><input id="ev-title" maxlength="160" value="${esc(e?.title || '')}" placeholder="例: 全国Buddies会 2026"></div>
+        <div class="field"><label>説明</label><textarea id="ev-desc" maxlength="4000" placeholder="開催内容や参加者への案内を入力">${esc(e?.description || '')}</textarea></div>
+      </section>
+      <section class="modal-section" id="event-place">
+        <div class="modal-section-head"><div class="modal-section-title">日時・会場</div><div class="modal-section-note">未定の項目は空欄のまま公開できます。</div></div>
+        <div class="field-row">
+          <div class="field"><label>開始日時</label><input id="ev-starts" type="datetime-local" value="${esc(fmtDateLocalInput(e?.starts_at))}"></div>
+          <div class="field"><label>終了日時</label><input id="ev-ends" type="datetime-local" value="${esc(fmtDateLocalInput(e?.ends_at))}"></div>
+        </div>
+        <div class="field"><label>会場</label><input id="ev-venue" maxlength="200" value="${esc(e?.venue || '')}" placeholder="例: 大阪城ホール"></div>
+        <div class="field">
+          <label>参加費（任意）</label>
+          <div class="inline-help">区分と金額を複数設定できます。設定しなければ公開ページには表示されません。</div>
+          <div id="ev-fee-items" class="fee-editor"></div>
+          <button class="btn sm" type="button" style="margin-top:8px;" onclick="addEventFeeItem()">+ 区分を追加</button>
+        </div>
+      </section>
+      <section class="modal-section" id="event-entry">
+        <div class="modal-section-head"><div class="modal-section-title">参加受付</div><div class="modal-section-note">参加登録と当日の受付方法を設定します。</div></div>
+        <div class="field"><label>定員（任意）</label><input id="ev-capacity" type="number" min="1" max="100000" value="${e?.capacity || ''}" placeholder="例: 100"></div>
+        <div class="event-options">
+          <label class="event-option-card">
+            <input id="ev-participant-enabled" type="checkbox" ${!e || e.participant_enabled !== false ? 'checked' : ''} onchange="syncEventCheckinAvailability()">
+            <span class="event-option-body">
+              <span class="event-option-title">参加登録を受け付ける</span>
+              <span class="event-option-desc">イベントページに参加ボタンと参加人数を表示します。</span>
+            </span>
+          </label>
+          <label class="event-option-card">
+            <input id="ev-checkin-enabled" type="checkbox" ${e?.checkin_enabled ? 'checked' : ''}>
+            <span class="event-option-body">
+              <span class="event-option-title">デジタル参加証・QR受付を使う</span>
+              <span class="event-option-desc">既存のプロフィールQRを当日読み取り、受付済みチェックを付けます。参加登録とあわせて利用します。</span>
+              <span class="event-option-badge">受付ページを発行</span>
+            </span>
+          </label>
+        </div>
+      </section>
+      <section class="modal-section" id="event-link">
+        <div class="modal-section-head"><div class="modal-section-title">公開・案内リンク</div><div class="modal-section-note">一覧への掲載範囲と、チケット等の外部案内を設定します。</div></div>
+        <div class="field"><label>公開範囲</label>
+          <select id="ev-visibility">
+            <option value="public" ${(!e || e.visibility === 'public') ? 'selected' : ''}>公開（一覧に表示）</option>
+            <option value="unlisted" ${e?.visibility === 'unlisted' ? 'selected' : ''}>非公開（URLを知る人のみ）</option>
+          </select>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>外部リンクのボタン文言</label><input id="ev-extlabel" maxlength="80" value="${esc(e?.external_label || '')}" placeholder="例: チケット購入"></div>
+          <div class="field"><label>外部リンクURL</label><input id="ev-exturl" value="${esc(e?.external_url || '')}" placeholder="https://..."></div>
+        </div>
+        <div class="event-options">
+          <label class="event-option-card">
+            <input id="ev-ext-highlight" type="checkbox" ${e?.external_button_highlight ? 'checked' : ''}>
+            <span class="event-option-body">
+              <span class="event-option-title">外部リンクボタンを目立たせる</span>
+              <span class="event-option-desc">チケット購入、申込フォームなど優先して開いてほしいリンクを強調します。</span>
+              <span class="event-option-badge">黄色ボタン</span>
+            </span>
+          </label>
+        </div>
+      </section>
+      <section class="modal-section" id="event-media">
+        <div class="modal-section-head"><div class="modal-section-title">画像・配布資料</div><div class="modal-section-note">カバー画像と、参加者に見せる画像またはPDFを追加できます。</div></div>
+        ${id ? `<div class="field">
+          <label>カバー画像</label>
+          ${e?.cover_url ? `<img src="../${esc(e.cover_url)}" alt="" style="max-width:240px;border-radius:12px;display:block;margin-bottom:8px;">` : ''}
+          <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadEventCover(${id}, this.files[0])">
+        </div>${eventAttachmentHtml(e)}` : `<div id="pending-event-files">${pendingEventFilesHtml()}</div>`}
+      </section>
     </div>
-    <div class="field"><label>会場</label><input id="ev-venue" maxlength="200" value="${esc(e?.venue || '')}" placeholder="例: 大阪城ホール"></div>
-    <div class="field-row">
-      <div class="field"><label>満員数（任意）</label><input id="ev-capacity" type="number" min="1" max="100000" value="${e?.capacity || ''}"></div>
-      <div class="field"><label>公開設定</label>
-        <select id="ev-visibility">
-          <option value="public" ${(!e || e.visibility === 'public') ? 'selected' : ''}>公開（一覧に表示）</option>
-          <option value="unlisted" ${e?.visibility === 'unlisted' ? 'selected' : ''}>非公開（URLを知る人のみ）</option>
-        </select>
-      </div>
-    </div>
-    <div class="event-options">
-      <label class="event-option-card">
-        <input id="ev-participant-enabled" type="checkbox" ${!e || e.participant_enabled !== false ? 'checked' : ''}>
-        <span class="event-option-body">
-          <span class="event-option-title">参加者を集計する</span>
-          <span class="event-option-desc">オンにするとイベントページに「参加する」ボタンと参加者数を表示します。オフの場合、参加ボタンと参加者一覧は表示されません。</span>
-        </span>
-      </label>
-    </div>
-    <div class="field"><label>外部リンク文言</label><input id="ev-extlabel" maxlength="80" value="${esc(e?.external_label || '')}" placeholder="例: チケット購入"></div>
-    <div class="field"><label>外部リンクURL</label><input id="ev-exturl" value="${esc(e?.external_url || '')}" placeholder="https://..."></div>
-    <div class="event-options">
-      <label class="event-option-card">
-        <input id="ev-ext-highlight" type="checkbox" ${e?.external_button_highlight ? 'checked' : ''}>
-        <span class="event-option-body">
-          <span class="event-option-title">外部リンクボタンを目立たせる</span>
-          <span class="event-option-desc">チケット購入、応募フォームなど特に見てほしいリンクを黄色の強調ボタンで表示します。</span>
-          <span class="event-option-badge">黄色ボタン</span>
-        </span>
-      </label>
-    </div>
-    ${id ? `<div class="field">
-      <label>カバー画像</label>
-      ${e?.cover_url ? `<img src="../${esc(e.cover_url)}" alt="" style="max-width:240px;border-radius:12px;display:block;margin-bottom:8px;">` : ''}
-      <input type="file" accept="image/png,image/jpeg,image/webp" onchange="uploadEventCover(${id}, this.files[0])">
-    </div>${eventAttachmentHtml(e)}` : `<div id="pending-event-files">${pendingEventFilesHtml()}</div>`}
   `;
   document.getElementById('event-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  body.scrollTop = 0;
+  renderEventFeeItems();
+  syncEventCheckinAvailability();
 }
+function syncEventCheckinAvailability(){
+  const participant = document.getElementById('ev-participant-enabled');
+  const checkin = document.getElementById('ev-checkin-enabled');
+  if (!participant || !checkin) return;
+  checkin.disabled = !participant.checked;
+  if (!participant.checked) checkin.checked = false;
+}
+function renderEventFeeItems(){
+  const wrap = document.getElementById('ev-fee-items');
+  if (!wrap) return;
+  wrap.innerHTML = editingFeeItems.length ? editingFeeItems.map((item, i) => `
+    <div class="fee-editor-row">
+      <input maxlength="80" value="${esc(item.label || '')}" placeholder="例: 一般" oninput="editingFeeItems[${i}].label=this.value">
+      <input maxlength="80" value="${esc(item.amount || '')}" placeholder="例: 1,000円" oninput="editingFeeItems[${i}].amount=this.value">
+      <button class="btn sm danger" type="button" onclick="removeEventFeeItem(${i})" aria-label="削除">×</button>
+    </div>`).join('') : '<div class="small">参加費の登録はありません。</div>';
+}
+function addEventFeeItem(){ editingFeeItems.push({label:'', amount:''}); renderEventFeeItems(); }
+function removeEventFeeItem(i){ editingFeeItems.splice(i, 1); renderEventFeeItems(); }
 function closeEventForm(){
   editingEventId = null;
   pendingEventCover = null;
   pendingEventAttachments = [];
   pendingExistingAttachment = null;
+  editingFeeItems = [];
   document.getElementById('event-modal').classList.remove('open');
+  document.body.style.overflow = '';
 }
 async function saveEvent(){
   const saveBtn = document.getElementById('event-save-btn');
@@ -1004,6 +1180,7 @@ async function saveEvent(){
     title: val('ev-title'),
     description: val('ev-desc'),
     venue: val('ev-venue'),
+    fee_items: editingFeeItems.map(item => ({label:String(item.label || '').trim(), amount:String(item.amount || '').trim()})).filter(item => item.label && item.amount),
     starts_at: val('ev-starts'),
     ends_at: val('ev-ends'),
     capacity: val('ev-capacity'),
@@ -1011,6 +1188,7 @@ async function saveEvent(){
     external_url: val('ev-exturl'),
     external_button_highlight: document.getElementById('ev-ext-highlight')?.checked || false,
     participant_enabled: document.getElementById('ev-participant-enabled')?.checked !== false,
+    checkin_enabled: document.getElementById('ev-checkin-enabled')?.checked || false,
     visibility: val('ev-visibility') || 'public',
   };
   const action = editingEventId ? 'event_update' : 'event_create';
@@ -1019,7 +1197,7 @@ async function saveEvent(){
   const json = await api(action, payload);
   if (!json.ok) {
     if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingEventId ? '更新' : '作成'; }
-    msg('event-msg', json.error || '保存できませんでした', false);
+    eventMsg(json.error || '保存できませんでした', false);
     return;
   }
   const savedId = editingEventId || json.data?.id;
@@ -1046,8 +1224,8 @@ async function saveEvent(){
     }
   }
   if (saveBtn) { saveBtn.disabled = false; saveBtn.textContent = editingEventId ? '更新' : '作成'; }
-  msg('event-msg', uploadErrors.length ? `イベントは保存しました。一部ファイルのアップロードに失敗しました: ${uploadErrors.join(' / ')}` : (isNew ? 'イベントを作成しました' : 'イベントを更新しました'), uploadErrors.length === 0);
   closeEventForm();
+  eventMsg(uploadErrors.length ? `イベントは保存しました。一部ファイルのアップロードに失敗しました: ${uploadErrors.join(' / ')}` : (isNew ? 'イベントを作成しました' : 'イベントを更新しました'), uploadErrors.length === 0);
   loadEvents();
 }
 async function deleteEvent(id){
@@ -1062,6 +1240,8 @@ async function deleteEvent(id){
 async function loadForms(){
   const json = await api('form_mine_list');
   myForms = json.ok ? (json.data || []) : [];
+  const count = document.getElementById('forms-count');
+  if (count) count.textContent = `${myForms.length} 件`;
   renderFormList();
 }
 function renderFormList(){
@@ -1074,6 +1254,7 @@ function renderFormList(){
       <div class="meta">回答 ${f.response_count || 0} 件 / ${f.collect_profile ? 'Buddies情報を収集' : '匿名'} / ${f.one_response ? '1回まで' : '複数回答可'}</div>
       <div class="row-actions">
         <a class="btn sm" href="./form.html?id=${f.id}" target="_blank" rel="noopener">ページを開く</a>
+        <button class="btn sm" type="button" onclick="copyManagedLink('./form.html?id=${f.id}', 'form')">リンクをコピー</button>
         <button class="btn sm" type="button" onclick="openFormModal(${f.id})">編集</button>
         <button class="btn sm" type="button" onclick="openResponsesModal(${f.id})">回答一覧</button>
         <button class="btn sm danger" type="button" onclick="deleteForm(${f.id})">削除</button>
@@ -1083,17 +1264,24 @@ function renderFormList(){
 function openFormModal(id = null){
   editingFormId = id;
   const f = id ? myForms.find(x => x.id === id) : null;
-  formQuestions = f ? JSON.parse(JSON.stringify(f.questions || [])) : [{id:'q1',label:'',type:'text',required:1,options:[]}];
+  formQuestions = f ? JSON.parse(JSON.stringify(f.questions || [])) : [{id:'q1',label:'',type:'text',required:1,options:[],help:'',placeholder:''}];
+  expandedFormQuestion = formQuestions.length ? 0 : null;
   document.getElementById('form-modal-title').textContent = id ? 'フォームを編集' : '新しいフォーム';
   document.getElementById('form-modal-body').innerHTML = `
     <div class="form-builder">
-      <section class="form-builder-section">
-        <h4>基本情報</h4>
+      <nav class="builder-jump" aria-label="フォーム作成項目">
+        <button type="button" onclick="scrollModalSection('form-basic')">基本情報</button>
+        <button type="button" onclick="scrollModalSection('form-rules')">公開・回答条件</button>
+        <button type="button" onclick="scrollModalSection('form-questions')">質問項目</button>
+      </nav>
+      <div id="form-editor-msg" class="msg"></div>
+      <section class="form-builder-section" id="form-basic">
+        <div class="modal-section-head"><div class="modal-section-title">基本情報</div><div class="modal-section-note">回答ページのタイトルと最初に表示する案内文です。</div></div>
         <div class="field"><label>フォーム名 *</label><input id="form-title" maxlength="160" value="${esc(f?.title || '')}" placeholder="例：イベント参加後アンケート"></div>
         <div class="field"><label>説明</label><textarea id="form-desc" maxlength="4000" placeholder="回答者に伝えたい補足があれば入力">${esc(f?.description || '')}</textarea></div>
       </section>
-      <section class="form-builder-section">
-        <h4>回答設定</h4>
+      <section class="form-builder-section" id="form-rules">
+        <div class="modal-section-head"><div class="modal-section-title">公開・回答条件</div><div class="modal-section-note">誰が回答でき、管理画面で何が見えるかを設定します。</div></div>
         <div class="form-setup-grid">
           <div class="form-setting-card">
             <label for="form-visibility">公開範囲</label>
@@ -1109,7 +1297,7 @@ function openFormModal(id = null){
               <option value="0" ${!f?.collect_profile?'selected':''}>匿名で表示</option>
               <option value="1" ${f?.collect_profile?'selected':''}>Buddies profileを表示</option>
             </select>
-            <div class="small">匿名でもDBにはユーザーIDを保存し、管理画面には表示しません。</div>
+            <div class="small">メールアドレスや電話番号は取得しません。匿名時は管理画面にプロフィールを表示しません。</div>
           </div>
           <div class="form-setting-card">
             <label>回答回数</label>
@@ -1118,26 +1306,40 @@ function openFormModal(id = null){
           </div>
         </div>
       </section>
-      <section class="form-builder-section">
-        <h4>質問</h4>
-        <div class="hint">よく使う形式を選んで追加し、必要な質問文だけ編集できます。</div>
+      <section class="form-builder-section" id="form-questions">
+        <div class="modal-section-head"><div class="modal-section-title">質問項目</div><div class="modal-section-note">質問は最大30件。見出しで回答内容をセクション分けできます。</div></div>
         <div id="form-question-list" class="admin-table"></div>
-        <div class="form-question-toolbar">
-          <button class="btn sm" type="button" onclick="addFormQuestion('text')">+ 短文</button>
-          <button class="btn sm" type="button" onclick="addFormQuestion('textarea')">+ 長文</button>
-          <button class="btn sm" type="button" onclick="addFormQuestion('radio')">+ 単一選択</button>
-          <button class="btn sm" type="button" onclick="addFormQuestion('checkbox')">+ 複数選択</button>
-          <button class="btn sm" type="button" onclick="addFormQuestion('select')">+ プルダウン</button>
+        <div class="form-question-toolbar" aria-label="質問を追加">
+          <div class="form-add-group">
+            <span class="form-add-label">構成</span>
+            <button class="btn sm" type="button" onclick="addFormQuestion('section')">+ 見出し</button>
+          </div>
+          <div class="form-add-group">
+            <span class="form-add-label">入力</span>
+            <button class="btn sm" type="button" onclick="addFormQuestion('text')">+ 短文</button>
+            <button class="btn sm" type="button" onclick="addFormQuestion('textarea')">+ 長文</button>
+            <button class="btn sm" type="button" onclick="addFormQuestion('number')">+ 数値</button>
+            <button class="btn sm" type="button" onclick="addFormQuestion('date')">+ 日付</button>
+            <button class="btn sm" type="button" onclick="addFormQuestion('url')">+ URL</button>
+          </div>
+          <div class="form-add-group">
+            <span class="form-add-label">選択</span>
+            <button class="btn sm" type="button" onclick="addFormQuestion('radio')">+ 1つ選択</button>
+            <button class="btn sm" type="button" onclick="addFormQuestion('checkbox')">+ 複数選択</button>
+            <button class="btn sm" type="button" onclick="addFormQuestion('select')">+ メニュー</button>
+          </div>
         </div>
       </section>
     </div>
   `;
   renderFormQuestions();
   document.getElementById('form-modal').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  document.getElementById('form-modal-body').scrollTop = 0;
 }
-function closeFormModal(){ document.getElementById('form-modal').classList.remove('open'); editingFormId=null; formQuestions=[]; }
+function closeFormModal(){ document.getElementById('form-modal').classList.remove('open'); document.body.style.overflow=''; editingFormId=null; expandedFormQuestion=null; formQuestions=[]; }
 function formTypeLabel(type){
-  return ({text:'短文', textarea:'長文', radio:'単一選択', checkbox:'複数選択', select:'プルダウン'})[type] || '短文';
+  return ({section:'セクション見出し',text:'短文',textarea:'長文',number:'数値',date:'日付',url:'URL',radio:'単一選択',checkbox:'複数選択',select:'プルダウン'})[type] || '短文';
 }
 function ensureQuestionOptions(q){
   if (!['radio','checkbox','select'].includes(q.type)) return;
@@ -1147,25 +1349,30 @@ function renderFormQuestions(){
   const wrap = document.getElementById('form-question-list');
   if (!wrap) return;
   if (!formQuestions.length) {
-    wrap.innerHTML = '<div class="event-empty">質問がありません。上のボタンから追加してください。</div>';
+    wrap.innerHTML = '<div class="event-empty">質問がありません。下の追加ボタンから追加してください。</div>';
     return;
   }
-  wrap.innerHTML = formQuestions.map((q,i)=>`
-    <div class="form-question-row">
+  wrap.innerHTML = formQuestions.map((q,i)=>{
+    const expanded = expandedFormQuestion === i;
+    return `
+    <div class="form-question-row ${q.type==='section'?'section-block':''} ${expanded?'':'collapsed'}">
       <div class="form-question-head">
         <div class="form-question-no">${i + 1}</div>
-        <div class="form-question-title">${esc(formTypeLabel(q.type))}</div>
+        <div class="form-question-title">${esc(formTypeLabel(q.type))}${expanded ? '' : `<div class="question-summary">${esc(q.label || '未入力の質問')}</div>`}</div>
         <div class="form-question-actions">
-          <button class="btn sm" type="button" ${i===0?'disabled':''} onclick="moveFormQuestion(${i},-1)">上へ</button>
-          <button class="btn sm" type="button" ${i===formQuestions.length-1?'disabled':''} onclick="moveFormQuestion(${i},1)">下へ</button>
-          <button class="btn sm danger" type="button" onclick="removeFormQuestion(${i})">削除</button>
+          <button class="question-toggle" type="button" onclick="toggleFormQuestion(${i})">${expanded ? '閉じる' : '編集'}</button>
         </div>
       </div>
+      ${expanded ? `
       <div class="field-row">
         <input value="${esc(q.label||'')}" placeholder="質問文" oninput="formQuestions[${i}].label=this.value">
         <select onchange="formQuestions[${i}].type=this.value;ensureQuestionOptions(formQuestions[${i}]);renderFormQuestions()">
-          ${['text','textarea','radio','checkbox','select'].map(t=>`<option value="${t}" ${q.type===t?'selected':''}>${formTypeLabel(t)}</option>`).join('')}
+          ${['section','text','textarea','number','date','url','radio','checkbox','select'].map(t=>`<option value="${t}" ${q.type===t?'selected':''}>${formTypeLabel(t)}</option>`).join('')}
         </select>
+      </div>
+      <div class="form-question-advanced">
+        <input value="${esc(q.help||'')}" maxlength="240" placeholder="${q.type==='section'?'セクションの説明（任意）':'補足説明（任意）'}" oninput="formQuestions[${i}].help=this.value">
+        ${q.type === 'section' ? '' : `<input value="${esc(q.placeholder||'')}" maxlength="120" placeholder="入力例・プレースホルダー（任意）" oninput="formQuestions[${i}].placeholder=this.value">`}
       </div>
       ${['radio','checkbox','select'].includes(q.type) ? `
         <div class="field">
@@ -1177,17 +1384,29 @@ function renderFormQuestions(){
             <button class="btn sm" type="button" onclick="setFormQuestionOptions(${i}, ['とても良い','良い','普通','改善してほしい'])">満足度</button>
           </div>
         </div>` : ''}
-      <label class="small"><input type="checkbox" ${q.required?'checked':''} onchange="formQuestions[${i}].required=this.checked?1:0"> 必須項目にする</label>
-    </div>`).join('');
+      ${q.type === 'section' ? '<div class="small">回答項目をまとめる説明用ブロックです。</div>' : `<label class="small"><input type="checkbox" ${q.required?'checked':''} onchange="formQuestions[${i}].required=this.checked?1:0"> 必須項目にする</label>`}
+      <div class="form-question-actions">
+        <button class="btn sm" type="button" ${i===0?'disabled':''} onclick="moveFormQuestion(${i},-1)">上へ</button>
+        <button class="btn sm" type="button" ${i===formQuestions.length-1?'disabled':''} onclick="moveFormQuestion(${i},1)">下へ</button>
+        <button class="btn sm danger" type="button" onclick="removeFormQuestion(${i})">削除</button>
+      </div>` : ''}
+    </div>`}).join('');
 }
+function toggleFormQuestion(i){ expandedFormQuestion = expandedFormQuestion === i ? null : i; renderFormQuestions(); }
 function addFormQuestion(type = 'text'){
-  const q = {id:'q'+Date.now()+Math.random().toString(16).slice(2),label:'',type,required:0,options:[]};
+  if (formQuestions.length >= 30) {
+    formMsg('質問は30件まで追加できます。', false);
+    return;
+  }
+  const q = {id:'q'+Date.now()+Math.random().toString(16).slice(2),label:'',type,required:0,options:[],help:'',placeholder:''};
   ensureQuestionOptions(q);
   formQuestions.push(q);
+  expandedFormQuestion = formQuestions.length - 1;
   renderFormQuestions();
 }
 function removeFormQuestion(i){
   formQuestions.splice(i,1);
+  expandedFormQuestion = formQuestions.length ? Math.min(i, formQuestions.length - 1) : null;
   renderFormQuestions();
 }
 function moveFormQuestion(i, dir){
@@ -1196,6 +1415,8 @@ function moveFormQuestion(i, dir){
   const tmp = formQuestions[i];
   formQuestions[i] = formQuestions[next];
   formQuestions[next] = tmp;
+  if (expandedFormQuestion === i) expandedFormQuestion = next;
+  else if (expandedFormQuestion === next) expandedFormQuestion = i;
   renderFormQuestions();
 }
 function setFormQuestionOptions(i, options){
@@ -1211,8 +1432,8 @@ async function saveForm(){
   };
   if (editingFormId) payload.id = editingFormId;
   const json = await api(editingFormId ? 'form_update' : 'form_create', payload);
-  if (!json.ok) { msg('form-msg', json.error || '保存できませんでした', false); return; }
-  closeFormModal(); msg('form-msg', '保存しました', true); loadForms();
+  if (!json.ok) { formMsg(json.error || '保存できませんでした', false); return; }
+  closeFormModal(); formMsg('保存しました', true); loadForms();
 }
 async function deleteForm(id){
   const ok = await confirmDialog('フォームを削除', 'このフォームを削除しますか？');
@@ -1228,7 +1449,7 @@ async function openResponsesModal(id){
   const json = await api('form_responses&id=' + encodeURIComponent(id));
   if (!json.ok) { body.innerHTML = `<div class="event-empty">${esc(json.error || '読み込めませんでした')}</div>`; return; }
   const form = json.data.form;
-  const qs = form.questions || [];
+  const qs = (form.questions || []).filter(q => q.type !== 'section');
   const rows = json.data.responses || [];
   responseView = { form, questions:qs, rows };
   body.innerHTML = `
@@ -1312,8 +1533,8 @@ async function uploadEventCover(id, file){
   if (!validateEventCoverFile(file)) return;
   const data = await readFileAsDataUrl(file);
   const json = await api('event_upload_cover', { id, image:data });
-  if (!json.ok) { msg('event-msg', json.error || '画像を保存できませんでした', false); return; }
-  msg('event-msg', 'カバー画像を更新しました', true);
+  if (!json.ok) { eventMsg(json.error || '画像を保存できませんでした', false); return; }
+  eventMsg('カバー画像を更新しました', true);
   loadEvents();
 }
 async function uploadEventAttachment(id, file){
@@ -1327,23 +1548,23 @@ async function uploadPendingExistingAttachment(id){
   const item = pendingExistingAttachment;
   const data = await readFileAsDataUrl(item.file);
   const json = await api('event_upload_attachment', { id, name:item.name || defaultAttachmentName(item.file), file:data });
-  if (!json.ok) { msg('event-msg', json.error || '添付ファイルを保存できませんでした', false); return; }
+  if (!json.ok) { eventMsg(json.error || '添付ファイルを保存できませんでした', false); return; }
   pendingExistingAttachment = null;
-  msg('event-msg', '添付ファイルを追加しました', true);
   const fresh = await api('event_mine_list');
   if (fresh.ok) myEvents = fresh.data || [];
   openEventForm(id);
+  eventMsg('添付ファイルを追加しました', true);
   renderEventList();
 }
 async function deleteEventAttachment(id, fileId){
   const ok = await confirmDialog('添付ファイルを削除', 'この添付ファイルを削除しますか？');
   if (!ok) return;
   const json = await api('event_delete_attachment', { id, file_id:fileId });
-  if (!json.ok) { msg('event-msg', json.error || '添付ファイルを削除できませんでした', false); return; }
-  msg('event-msg', '添付ファイルを削除しました', true);
+  if (!json.ok) { eventMsg(json.error || '添付ファイルを削除できませんでした', false); return; }
   const fresh = await api('event_mine_list');
   if (fresh.ok) myEvents = fresh.data || [];
   openEventForm(id);
+  eventMsg('添付ファイルを削除しました', true);
   renderEventList();
 }
 async function uploadSubeventCover(id, file){
