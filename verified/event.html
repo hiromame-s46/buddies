@@ -93,6 +93,7 @@ main{padding:0 0 24px}
 .avatar img{width:100%;height:100%;object-fit:cover}
 .p-name{font-weight:700;font-size:14px}
 .p-meta{font-size:12px;color:#888}
+.board-preview{padding:0 12px;display:grid;gap:10px}.board-post{border:1px solid var(--line);border-radius:18px;background:#fff;padding:13px;display:grid;gap:8px}.board-post.pinned{border-color:#f2d98c;background:#fffdf5}.board-pin{display:inline-flex;width:max-content;border-radius:9999px;background:#fff4d6;color:#7c5600;font-size:10px;font-weight:900;padding:2px 8px}.board-date{font-size:11px;color:#888;font-weight:800}.board-body{font-size:13px;color:#222;line-height:1.7;display:-webkit-box;-webkit-line-clamp:4;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}.board-body p{margin:0 0 6px}.board-body a{color:#111;font-weight:900}.board-more{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:9999px;background:#f3f3f3;color:#111;text-decoration:none;font-size:13px;font-weight:900}
 .empty{padding:30px 16px;text-align:center;color:#888;font-size:13px}
 .msg{display:none;padding:10px 12px;border-radius:10px;font-size:13px;font-weight:700;margin:8px 20px 0}
 .msg.show{display:block}.msg.err{background:#fff5f5;color:#d33}.msg.ok{background:#f0fff4;color:#276749}
@@ -161,6 +162,7 @@ let me = null;
 let currentAccount = null;
 let hostAccount = null;
 let subevents = [];
+let boardPosts = [];
 let subeventsExpanded = false;
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
@@ -189,6 +191,12 @@ function fmtDate(s){
   const d = new Date(s.replace(' ', 'T'));
   if (isNaN(d)) return '';
   return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function markdown(text){
+  let html = esc(text || '');
+  html = html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  html = html.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
+  return html.split(/\n{2,}/).map(p => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 }
 function msg(text, ok=true){
   const el = document.getElementById('msg');
@@ -307,12 +315,15 @@ async function load(){
     return;
   }
   ev = evR.data.data;
+  const targetVaR = await safeJson(`${API}?action=verified_me&account_id=${encodeURIComponent(ev.account_id)}`);
+  currentAccount = (targetVaR.ok && targetVaR.data && targetVaR.data.ok) ? targetVaR.data.data : currentAccount;
   const hostR = await safeJson(`${API}?action=verified_public_get&id=${encodeURIComponent(ev.account_id)}`);
   hostAccount = (hostR.ok && hostR.data && hostR.data.ok) ? hostR.data.data : null;
   syncBackLink();
   render();
   showEditFabIfOwner();
   loadSubevents(id);
+  loadBoardPreview(id);
   loadParticipants(id);
 }
 
@@ -365,6 +376,8 @@ function render(){
     ${certificateSection()}
     ${attachmentSection()}
     <div id="msg" class="msg"></div>
+    <div id="board-title" class="section-title" style="display:none;">掲示板</div>
+    <div id="board-preview" class="board-preview"></div>
     <div class="section-title" id="subevents-title" style="display:none;">サブイベント</div>
     <div id="subevents" class="subevents"></div>
     <div id="subevents-toggle" class="subevents-toggle" style="display:none;"></div>
@@ -495,6 +508,33 @@ function renderSubevents(){
 function toggleSubeventsExpanded(){
   subeventsExpanded = !subeventsExpanded;
   renderSubevents();
+}
+
+async function loadBoardPreview(id){
+  const wrap = document.getElementById('board-preview');
+  const title = document.getElementById('board-title');
+  if (!wrap || !title) return;
+  try {
+    const r = await safeJson(`${API}?action=verified_post_list&event_id=${encodeURIComponent(id)}&limit=4`);
+    if (!r.ok || !r.data || !r.data.ok) return;
+    boardPosts = r.data.data || [];
+  } catch(e) { return; }
+  if (!boardPosts.length) {
+    if (isOwner()) {
+      title.style.display = '';
+      wrap.innerHTML = `<a class="board-more" href="./board.html?event_id=${encodeURIComponent(id)}">掲示板を作成する</a>`;
+    }
+    return;
+  }
+  title.style.display = '';
+  const hasMore = boardPosts.length > 3;
+  const shown = hasMore ? boardPosts.slice(0, 3) : boardPosts;
+  wrap.innerHTML = shown.map(p => `<article class="board-post ${p.pinned ? 'pinned' : ''}">
+    ${p.pinned ? '<div class="board-pin">PINNED</div>' : ''}
+    <div class="board-date">${esc(fmtDate(p.created_at))}</div>
+    ${p.body ? `<div class="board-body">${markdown(p.body)}</div>` : ''}
+    ${p.link_url ? `<a class="board-more" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label || 'リンクを開く')}</a>` : ''}
+  </article>`).join('') + (hasMore || isOwner() ? `<a class="board-more" href="./board.html?event_id=${encodeURIComponent(id)}">${hasMore ? 'もっと見る' : '掲示板を開く'}</a>` : '');
 }
 
 let participantsLoading = false;

@@ -1581,10 +1581,12 @@ function ensureVerifiedPostTables(): void {
     db()->exec("CREATE TABLE IF NOT EXISTS buddies_verified_posts (
         id          BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
         account_id  BIGINT UNSIGNED NOT NULL,
+        event_id    BIGINT UNSIGNED NULL DEFAULT NULL,
         body        TEXT NULL DEFAULT NULL,
         link_url    VARCHAR(2048) NULL DEFAULT NULL,
         link_label  VARCHAR(120) NULL DEFAULT NULL,
         files       TEXT NULL DEFAULT NULL,
+        pinned      TINYINT(1) NOT NULL DEFAULT 0,
         file_url    VARCHAR(2048) NULL DEFAULT NULL,
         file_name   VARCHAR(160) NULL DEFAULT NULL,
         file_mime   VARCHAR(80) NULL DEFAULT NULL,
@@ -1592,12 +1594,19 @@ function ensureVerifiedPostTables(): void {
         status      VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at  TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-        KEY idx_account_status_created (account_id, status, created_at)
+        KEY idx_account_status_created (account_id, status, created_at),
+        KEY idx_event_status_pinned_created (event_id, status, pinned, created_at)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
     try {
         $cols = array_column(db()->query('DESCRIBE buddies_verified_posts')->fetchAll(), 'Field');
+        if (!in_array('event_id', $cols, true)) {
+            db()->exec("ALTER TABLE buddies_verified_posts ADD COLUMN event_id BIGINT UNSIGNED NULL DEFAULT NULL AFTER account_id");
+        }
         if (!in_array('files', $cols, true)) {
             db()->exec("ALTER TABLE buddies_verified_posts ADD COLUMN files TEXT NULL DEFAULT NULL AFTER link_label");
+        }
+        if (!in_array('pinned', $cols, true)) {
+            db()->exec("ALTER TABLE buddies_verified_posts ADD COLUMN pinned TINYINT(1) NOT NULL DEFAULT 0 AFTER files");
         }
     } catch (\Throwable $e) {}
 }
@@ -1629,10 +1638,12 @@ function buildVerifiedPostData(array $p): array {
     return [
         'id' => (int)$p['id'],
         'account_id' => (int)$p['account_id'],
+        'event_id' => isset($p['event_id']) && $p['event_id'] !== null ? (int)$p['event_id'] : null,
         'body' => $p['body'] ?? '',
         'link_url' => $p['link_url'] ?? null,
         'link_label' => $p['link_label'] ?? null,
         'files' => verifiedPostFiles($p),
+        'pinned' => !empty($p['pinned']),
         'file_url' => $p['file_url'] ?? null,
         'file_name' => $p['file_name'] ?? null,
         'file_mime' => $p['file_mime'] ?? null,
@@ -1702,6 +1713,7 @@ match ($action) {
     'verified_post_list'      => actionVerifiedPostList(),
     'verified_post_create'    => actionVerifiedPostCreate(),
     'verified_post_delete'    => actionVerifiedPostDelete(),
+    'verified_post_pin'       => actionVerifiedPostPin(),
 
     'event_list_by_account'   => actionEventListByAccount(),
     'event_get'               => actionEventGet(),
@@ -3542,14 +3554,30 @@ function actionVerifiedCollaboratorRemove(): void {
 
 function actionVerifiedPostList(): void {
     ensureVerifiedPostTables();
+    $eventId = (int)($_GET['event_id'] ?? 0);
     $accountId = (int)($_GET['account_id'] ?? 0);
-    if ($accountId <= 0) err('account_id は必須です。');
+    if ($eventId > 0) {
+        ensureEventTables();
+        $ev = db()->prepare("SELECT account_id FROM buddies_events WHERE id=? AND status!='disabled' LIMIT 1");
+        $ev->execute([$eventId]);
+        $event = $ev->fetch();
+        if (!$event) err('イベントが見つかりません。', 404);
+        $accountId = (int)$event['account_id'];
+    }
+    if ($accountId <= 0) err('account_id または event_id は必須です。');
     $a = verifiedAccountById($accountId);
     if (!$a || ($a['status'] ?? 'active') !== 'active' || !canUseVerifiedBoard($a)) ok([]);
     $limit = min(max((int)($_GET['limit'] ?? 20), 1), 50);
-    $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND status='active' ORDER BY created_at DESC, id DESC LIMIT ?");
-    $st->bindValue(1, $accountId, PDO::PARAM_INT);
-    $st->bindValue(2, $limit, PDO::PARAM_INT);
+    if ($eventId > 0) {
+        $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND event_id=? AND status='active' ORDER BY pinned DESC, created_at DESC, id DESC LIMIT ?");
+        $st->bindValue(1, $accountId, PDO::PARAM_INT);
+        $st->bindValue(2, $eventId, PDO::PARAM_INT);
+        $st->bindValue(3, $limit, PDO::PARAM_INT);
+    } else {
+        $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND event_id IS NULL AND status='active' ORDER BY pinned DESC, created_at DESC, id DESC LIMIT ?");
+        $st->bindValue(1, $accountId, PDO::PARAM_INT);
+        $st->bindValue(2, $limit, PDO::PARAM_INT);
+    }
     $st->execute();
     ok(array_map(fn($p) => buildVerifiedPostData($p), $st->fetchAll()));
 }
@@ -3559,6 +3587,15 @@ function actionVerifiedPostCreate(): void {
     $a = requireVerifiedAccount();
     if (!canUseVerifiedBoard($a)) err('このコミュニティアカウントでは掲示板を利用できません。', 403);
     $b = body();
+    $eventId = (int)($b['event_id'] ?? 0);
+    if ($eventId > 0) {
+        ensureEventTables();
+        $ev = db()->prepare("SELECT id FROM buddies_events WHERE id=? AND account_id=? AND status!='disabled' LIMIT 1");
+        $ev->execute([$eventId, (int)$a['id']]);
+        if (!$ev->fetch()) err('イベント掲示板の投稿権限がありません。', 403);
+    } else {
+        $eventId = null;
+    }
     $body = trim((string)($b['body'] ?? ''));
     if (mb_strlen($body) > 8000) err('本文は8000文字以内で入力してください。');
     $linkUrl = cleanUrl($b['link_url'] ?? null);
@@ -3618,10 +3655,10 @@ function actionVerifiedPostCreate(): void {
     if ($body === '' && !$linkUrl && !$files) err('本文、リンク、ファイルのいずれかを入力してください。');
 
     $first = $files[0] ?? null;
-    db()->prepare("INSERT INTO buddies_verified_posts (account_id, body, link_url, link_label, files, file_url, file_name, file_mime, file_size)
-                   VALUES (?,?,?,?,?,?,?,?,?)")
+    db()->prepare("INSERT INTO buddies_verified_posts (account_id, event_id, body, link_url, link_label, files, file_url, file_name, file_mime, file_size)
+                   VALUES (?,?,?,?,?,?,?,?,?,?)")
        ->execute([
-           (int)$a['id'], $body !== '' ? $body : null, $linkUrl, $linkLabel,
+           (int)$a['id'], $eventId, $body !== '' ? $body : null, $linkUrl, $linkLabel,
            $files ? json_encode($files, JSON_UNESCAPED_UNICODE) : null,
            $first['url'] ?? null, $first['name'] ?? null, $first['mime'] ?? null, $first['size'] ?? null,
        ]);
@@ -3648,6 +3685,21 @@ function actionVerifiedPostDelete(): void {
     }
     db()->prepare("UPDATE buddies_verified_posts SET status='disabled' WHERE id=?")->execute([$id]);
     ok();
+}
+
+function actionVerifiedPostPin(): void {
+    ensureVerifiedPostTables();
+    $a = requireVerifiedAccount();
+    if (!canUseVerifiedBoard($a)) err('このコミュニティアカウントでは掲示板を利用できません。', 403);
+    $id = (int)(body()['id'] ?? 0);
+    $pinned = truthyFlag(body()['pinned'] ?? 0) ? 1 : 0;
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE id=? AND status='active' LIMIT 1");
+    $st->execute([$id]);
+    $p = $st->fetch();
+    if (!$p || (int)$p['account_id'] !== (int)$a['id']) err('編集権限がありません。', 403);
+    db()->prepare("UPDATE buddies_verified_posts SET pinned=? WHERE id=?")->execute([$pinned, $id]);
+    ok(['id' => $id, 'pinned' => (bool)$pinned]);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
