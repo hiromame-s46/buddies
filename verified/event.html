@@ -253,7 +253,7 @@ function feeSection(){
 }
 function certificateSection(){
   if (!ev.is_checked_in) return '';
-  return `<section class="certificate"><div class="certificate-label">DIGITAL PARTICIPATION PASS</div><div class="certificate-title">✓ 受付済み・参加証発行済み</div><div class="certificate-note">${esc(ev.title)} に参加した記録です。</div></section>`;
+  return `<section class="certificate"><div class="certificate-label">DIGITAL PARTICIPATION PASS</div><div class="certificate-title">✓ 受付済み</div><div class="certificate-note">${esc(ev.title)} に参加した記録です。</div></section>`;
 }
 function ownerReceptionSection(){
   if (!isOwner()) return '';
