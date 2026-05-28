@@ -433,6 +433,12 @@ let collaboratorSelectedUser = null;
 let collaboratorInvitePayload = null;
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function assetUrl(url){
+  if (!url) return '';
+  if (/^https?:\/\//.test(url) || url.startsWith('data:') || url.startsWith('/')) return url;
+  if (url.startsWith('../')) return url;
+  return '../' + url.replace(/^\.\//, '');
+}
 function tagsText(a){return (a.hashtags||[]).join(', ')}
 function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
 function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'その他リンク'})[type] || 'その他リンク';}
@@ -822,7 +828,7 @@ function searchCollaboratorUsers(){
   }, 300);
 }
 function collaboratorUserHtml(user){
-  const icon = user.user_icon ? `<img src="../${esc(user.user_icon)}" alt="">` : esc((user.display_name || user.username || '?')[0]);
+  const icon = user.user_icon ? `<img src="${esc(assetUrl(user.user_icon))}" alt="">` : esc((user.display_name || user.username || '?')[0]);
   return `<div class="collab-modal-user">
     <div class="collab-modal-avatar">${icon}</div>
     <div style="min-width:0;flex:1;">
@@ -859,7 +865,7 @@ function renderCollaboratorShareModal(){
       <div class="collab-share-url">${esc(url)}</div>
       <div class="row-actions">
         <button class="btn sm primary" type="button" onclick="shareCollaboratorInvite()">共有</button>
-        <button class="btn sm" type="button" onclick="copyCollaboratorInvite()">リンクをコピー</button>
+        <button class="btn sm" id="collab-copy-btn" type="button" onclick="copyCollaboratorInvite()">リンクをコピー</button>
         <a class="btn sm" href="${esc(url)}" target="_blank" rel="noopener">開く</a>
       </div>
     </div>`;
@@ -875,18 +881,25 @@ async function createCollaboratorInvite(){
 async function shareCollaboratorInvite(){
   if (!collaboratorInvitePayload) return;
   const url = collaboratorInvitePayload.invite_url;
-  const text = `${account.display_name} の共同運営者招待です。\n${url}`;
   if (navigator.share) {
-    try { await navigator.share({ title:'共同運営者招待', text, url }); }
+    try { await navigator.share({ url }); }
     catch(e) {}
   } else {
-    await navigator.clipboard.writeText(text).catch(()=>{});
-    msg('collab-msg', '招待文面をコピーしました', true);
+    await navigator.clipboard.writeText(url).catch(()=>{});
+    markCollaboratorInviteCopied();
+    msg('collab-msg', 'リンクをコピーしました', true);
   }
+}
+function markCollaboratorInviteCopied(){
+  const btn = document.getElementById('collab-copy-btn');
+  if (!btn) return;
+  btn.textContent = '✓ コピー済み';
+  btn.classList.add('primary');
 }
 async function copyCollaboratorInvite(){
   if (!collaboratorInvitePayload) return;
   await navigator.clipboard.writeText(collaboratorInvitePayload.invite_url).catch(()=>{});
+  markCollaboratorInviteCopied();
   msg('collab-msg', 'リンクをコピーしました', true);
 }
 function openWelcomeModal(alreadyAccepted){
@@ -900,7 +913,7 @@ function openWelcomeModal(alreadyAccepted){
     <h2 style="margin:0 0 8px;font-size:20px;">${esc(title)}</h2>
     <p class="small" style="margin:0 0 14px;">${esc(desc)}</p>
     <div class="collab-modal-user">
-      <div class="collab-modal-avatar">${account.icon_url ? `<img src="../${esc(account.icon_url)}" alt="">` : esc((account.display_name || '?')[0])}</div>
+      <div class="collab-modal-avatar">${account.icon_url ? `<img src="${esc(assetUrl(account.icon_url))}" alt="">` : esc((account.display_name || '?')[0])}</div>
       <div style="min-width:0;flex:1;">
         <div class="title">${esc(account.display_name)}</div>
         <div class="meta">共同運営アカウント</div>
@@ -1976,6 +1989,7 @@ window.closeCollaboratorModal = closeCollaboratorModal;
 window.createCollaboratorInvite = createCollaboratorInvite;
 window.shareCollaboratorInvite = shareCollaboratorInvite;
 window.copyCollaboratorInvite = copyCollaboratorInvite;
+window.markCollaboratorInviteCopied = markCollaboratorInviteCopied;
 window.closeWelcomeModal = closeWelcomeModal;
 window.removeCollaborator = removeCollaborator;
 window.loadImageFile = loadImageFile;
