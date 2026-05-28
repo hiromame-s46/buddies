@@ -131,6 +131,7 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .collab-search-row .collab-modal-avatar{grid-row:1 / 3}
 .collab-share-box{display:grid;gap:10px;margin-top:14px}.collab-share-url{word-break:break-all;font-size:12px;line-height:1.6;background:#f7f7f7;border:1px solid var(--line);border-radius:14px;padding:10px}
 .welcome-icon{width:58px;height:58px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:24px;font-weight:900;margin-bottom:12px}
+.welcome-center{text-align:center;display:grid;justify-items:center}.welcome-center .collab-modal-user{width:100%;text-align:left}
 #event-modal,#form-modal{align-items:stretch;background:#fff}
 #event-modal .modal-sheet,#form-modal .modal-sheet{max-width:760px;height:100dvh;max-height:none;border-radius:0;margin:0 auto;animation:none;box-shadow:none}
 #event-modal .modal-head,#form-modal .modal-head{position:sticky;top:0;background:#fff;z-index:2;padding:13px 16px}
@@ -915,9 +916,10 @@ function openWelcomeModal(alreadyAccepted){
     ? 'この招待リンクはすでに承認済みです。引き続きコミュニティ管理機能を利用できます。'
     : 'コミュニティ管理機能を利用できるようになりました。イベント、フォーム、受付、プロフィール設定を管理できます。';
   document.getElementById('welcome-modal-body').innerHTML = `
+    <div class="welcome-center">
     <div class="welcome-icon">✓</div>
-    <h2 style="margin:0 0 8px;font-size:20px;">${esc(title)}</h2>
-    <p class="small" style="margin:0 0 14px;">${esc(desc)}</p>
+    <h2 style="margin:0 0 8px;font-size:20px;text-align:center;">${esc(title)}</h2>
+    <p class="small" style="margin:0 0 14px;text-align:center;">${esc(desc)}</p>
     <div class="collab-modal-user">
       <div class="collab-modal-avatar">${account.icon_url ? `<img src="${esc(assetUrl(account.icon_url))}" alt="">` : esc((account.display_name || '?')[0])}</div>
       <div style="min-width:0;flex:1;">
@@ -927,6 +929,7 @@ function openWelcomeModal(alreadyAccepted){
     </div>
     <div class="modal-foot" style="padding:14px 0 0;border-top:none;">
       <button class="btn primary" type="button" onclick="closeWelcomeModal()">管理を始める</button>
+    </div>
     </div>`;
   document.getElementById('welcome-modal').classList.add('open');
 }
