@@ -1251,7 +1251,7 @@ function renderFormList(){
   wrap.innerHTML = myForms.map(f => `
     <div class="event-row">
       <div class="title">${esc(f.title)}<span class="vis ${f.visibility === 'unlisted' ? 'unlisted' : ''}">${f.visibility === 'unlisted' ? '非公開' : '公開'}</span></div>
-      <div class="meta">回答 ${f.response_count || 0} 件 / ${f.collect_profile ? 'Buddies情報を収集' : '匿名'} / ${f.one_response ? '1回まで' : '複数回答可'}</div>
+      <div class="meta">${f.form_mode === 'poll' ? '投票' : 'フォーム'} / 回答 ${f.response_count || 0} 件 / ${f.collect_profile ? 'Buddies情報を収集' : '匿名'} / ${f.one_response ? '1回まで' : '複数回答可'}${f.form_mode === 'poll' && f.show_results ? ' / 結果公開' : ''}</div>
       <div class="row-actions">
         <a class="btn sm" href="./form.html?id=${f.id}" target="_blank" rel="noopener">ページを開く</a>
         <button class="btn sm" type="button" onclick="copyManagedLink('./form.html?id=${f.id}', 'form')">リンクをコピー</button>
@@ -1284,6 +1284,14 @@ function openFormModal(id = null){
         <div class="modal-section-head"><div class="modal-section-title">公開・回答条件</div><div class="modal-section-note">誰が回答でき、管理画面で何が見えるかを設定します。</div></div>
         <div class="form-setup-grid">
           <div class="form-setting-card">
+            <label for="form-mode">フォーム種別</label>
+            <select id="form-mode" onchange="syncFormModeSettings()">
+              <option value="form" ${!f || (f.form_mode || 'form') === 'form' ? 'selected' : ''}>通常フォーム</option>
+              <option value="poll" ${f?.form_mode === 'poll' ? 'selected' : ''}>投票モード</option>
+            </select>
+            <div class="small">投票モードでは選択式質問の集計結果を表示できます。</div>
+          </div>
+          <div class="form-setting-card">
             <label for="form-visibility">公開範囲</label>
             <select id="form-visibility">
               <option value="public" ${(!f || f.visibility==='public')?'selected':''}>公開</option>
@@ -1303,6 +1311,12 @@ function openFormModal(id = null){
             <label>回答回数</label>
             <label class="small"><input id="form-one-response" type="checkbox" ${!f || f.one_response ? 'checked' : ''}> 1アカウント1回まで</label>
             <div class="small">チェックを外すと同じユーザーが複数回回答できます。</div>
+          </div>
+          <div class="form-setting-card poll-setting">
+            <label>投票オプション</label>
+            <label class="small"><input id="form-anonymous-vote" type="checkbox" ${f?.allow_anonymous_vote ? 'checked' : ''} onchange="syncFormModeSettings()"> 匿名投票を許可する</label>
+            <label class="small"><input id="form-show-results" type="checkbox" ${f?.show_results ? 'checked' : ''}> 投票結果を公開する</label>
+            <div class="small">結果公開をオンにすると、誰でも選択肢ごとの票数を確認できます。</div>
           </div>
         </div>
       </section>
@@ -1333,11 +1347,22 @@ function openFormModal(id = null){
     </div>
   `;
   renderFormQuestions();
+  syncFormModeSettings();
   document.getElementById('form-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
   document.getElementById('form-modal-body').scrollTop = 0;
 }
 function closeFormModal(){ document.getElementById('form-modal').classList.remove('open'); document.body.style.overflow=''; editingFormId=null; expandedFormQuestion=null; formQuestions=[]; }
+function syncFormModeSettings(){
+  const isPoll = val('form-mode') === 'poll';
+  document.querySelectorAll('.poll-setting').forEach(el => el.style.display = isPoll ? '' : 'none');
+  const collect = document.getElementById('form-collect');
+  const anonymous = document.getElementById('form-anonymous-vote');
+  if (collect) {
+    collect.disabled = isPoll && !!anonymous?.checked;
+    if (collect.disabled) collect.value = '0';
+  }
+}
 function formTypeLabel(type){
   return ({section:'セクション見出し',text:'短文',textarea:'長文',number:'数値',date:'日付',url:'URL',radio:'単一選択',checkbox:'複数選択',select:'プルダウン'})[type] || '短文';
 }
@@ -1426,8 +1451,10 @@ function setFormQuestionOptions(i, options){
 }
 async function saveForm(){
   const payload = {
-    title: val('form-title'), description: val('form-desc'), visibility: val('form-visibility'),
+    title: val('form-title'), description: val('form-desc'), visibility: val('form-visibility'), form_mode: val('form-mode') || 'form',
     collect_profile: val('form-collect') === '1', one_response: document.getElementById('form-one-response').checked,
+    allow_anonymous_vote: document.getElementById('form-anonymous-vote')?.checked || false,
+    show_results: document.getElementById('form-show-results')?.checked || false,
     questions: formQuestions.map((q,i)=>({...q,id:q.id||('q'+i)})),
   };
   if (editingFormId) payload.id = editingFormId;
