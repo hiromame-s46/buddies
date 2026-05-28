@@ -2013,6 +2013,9 @@ function getOshi1Color(profile) {
 function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
 function isDeveloperAccount(p) { return p && DEVELOPER_IDS.has(Number(p.id)); }
 function currentVerifiedAccount() { return me && me.verified_account ? me.verified_account : null; }
+function collaboratorVerifiedAccounts() {
+  return Array.isArray(me?.verified_collaborator_accounts) ? me.verified_collaborator_accounts : [];
+}
 // コミュニティアカウントが紐づくユーザー（developer 含む）。通常編集を禁止し、管理ページで編集させる
 function isVerifiedManagedUser(p) {
   if (!p) return false;
@@ -3331,7 +3334,29 @@ function renderVerifiedAccountMyPage() {
 
 function renderVerifiedMyPage() {
   const wrap = document.getElementById('verified-mypage-section');
-  if (wrap) wrap.innerHTML = '';
+  if (!wrap) return;
+  const accounts = collaboratorVerifiedAccounts();
+  if (!accounts.length) { wrap.innerHTML = ''; return; }
+  wrap.innerHTML = `<section class="card verified-mypage-card" style="margin-top:16px;">
+    <div>
+      <div class="verified-label">共同運営者</div>
+      <div class="verified-mypage-title" style="margin-top:8px;">共同運営アカウント</div>
+      <div class="verified-mypage-note">参加中のコミュニティアカウントを一般アカウントから開けます。</div>
+    </div>
+    <div class="profile-list">
+      ${accounts.map(a => {
+        const icon = a.icon_url ? `<img src="${esc(assetUrl(a.icon_url))}" alt="">` : esc((a.display_name || '認')[0]);
+        return `<a class="profile-mini" href="./verified/?account_id=${encodeURIComponent(a.id)}" style="text-decoration:none;color:inherit;">
+          <div class="verified-icon" style="width:48px;height:48px;">${icon}</div>
+          <div class="profile-mini-info">
+            <div class="profile-mini-name">${esc(a.display_name)}</div>
+            <div class="profile-mini-meta">${esc(a.label || accountTypeLabel(a.account_type))} / 共同運営者</div>
+          </div>
+          <i>›</i>
+        </a>`;
+      }).join('')}
+    </div>
+  </section>`;
 }
 
 function renderExchangedSection() {

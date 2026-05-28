@@ -688,18 +688,36 @@ function verifiedAccountById(int $id): ?array {
     $st->execute([$id]);
     return $st->fetch() ?: null;
 }
-function collaboratorVerifiedAccountByUserId(int $userId): ?array {
+function collaboratorVerifiedAccountByUserId(int $userId, ?int $accountId = null): ?array {
     if ($userId <= 0) return null;
+    $params = [$userId];
+    $accountFilter = '';
+    if ($accountId !== null && $accountId > 0) {
+        $accountFilter = ' AND c.account_id = ?';
+        $params[] = $accountId;
+    }
     $st = db()->prepare(
         "SELECT a.*, c.role AS _access_role, c.user_id AS _access_user_id
            FROM buddies_verified_collaborators c
            JOIN buddies_verified_accounts a ON a.id = c.account_id
-          WHERE c.user_id = ? AND c.status = 'active' AND a.status != 'disabled'
+          WHERE c.user_id = ? AND c.status = 'active' AND a.status != 'disabled'{$accountFilter}
           ORDER BY c.accepted_at DESC, c.created_at DESC
           LIMIT 1"
     );
-    $st->execute([$userId]);
+    $st->execute($params);
     return $st->fetch() ?: null;
+}
+function collaboratorVerifiedAccountsByUserId(int $userId): array {
+    if ($userId <= 0) return [];
+    $st = db()->prepare(
+        "SELECT a.*, c.role AS _access_role, c.user_id AS _access_user_id, c.accepted_at AS _collaborator_accepted_at
+           FROM buddies_verified_collaborators c
+           JOIN buddies_verified_accounts a ON a.id = c.account_id
+          WHERE c.user_id = ? AND c.status = 'active' AND a.status != 'disabled'
+          ORDER BY c.accepted_at DESC, c.created_at DESC"
+    );
+    $st->execute([$userId]);
+    return $st->fetchAll();
 }
 function markVerifiedOwner(array $a, ?int $userId = null): array {
     $a['_access_role'] = 'owner';
@@ -752,6 +770,15 @@ function developerVerifiedAccount(?array $u = null): ?array {
 function currentVerifiedAccount(): ?array {
     $u = currentUser();
     if ($u) {
+        $requestedAccountId = (int)($_GET['account_id'] ?? (body()['account_id'] ?? 0));
+        if ($requestedAccountId > 0) {
+            $requested = verifiedAccountById($requestedAccountId);
+            if ($requested && isset($requested['user_id']) && (int)$requested['user_id'] === (int)$u['id']) {
+                return markVerifiedOwner($requested, (int)$u['id']);
+            }
+            $collab = collaboratorVerifiedAccountByUserId((int)$u['id'], $requestedAccountId);
+            if ($collab) return $collab;
+        }
         $a = verifiedAccountByUserId((int)$u['id']);
         if ($a) return markVerifiedOwner($a, (int)$u['id']);
         if (isHiromameAdmin($u)) {
@@ -869,6 +896,9 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
     if (!$verified && isHiromameAdmin($u)) $verified = developerVerifiedAccount($u);
     $data['account_role'] = $verified ? normalizeVerifiedType($verified['account_type'] ?? 'verified') : 'user';
     $data['verified_account'] = $verified ? buildVerifiedData($verified, $includePrivate) : null;
+    $data['verified_collaborator_accounts'] = $includePrivate
+        ? array_map(fn($a) => buildVerifiedData($a, true), collaboratorVerifiedAccountsByUserId((int)$u['id']))
+        : [];
     $data['sakulabo_favorites'] = getSakulaboFavoritesForProfile(
         (int)$u['id'],
         !empty($data['show_favorite_mimis']),
@@ -1668,6 +1698,7 @@ match ($action) {
     'verified_collaborator_list' => actionVerifiedCollaboratorList(),
     'verified_collaborator_invite_create' => actionVerifiedCollaboratorInviteCreate(),
     'verified_collaborator_invite_accept' => actionVerifiedCollaboratorInviteAccept(),
+    'verified_collaborator_remove' => actionVerifiedCollaboratorRemove(),
     'verified_post_list'      => actionVerifiedPostList(),
     'verified_post_create'    => actionVerifiedPostCreate(),
     'verified_post_delete'    => actionVerifiedPostDelete(),
@@ -3089,8 +3120,20 @@ function actionVerifiedLogin(): void {
     $user = $st->fetch();
     if (!$user || !password_verify($pass, $user['password_hash'])) err('ログインIDまたはパスワードが正しくありません。', 401);
 
-    $a = verifiedAccountByUserId((int)$user['id']);
-    if ($a) $a = markVerifiedOwner($a, (int)$user['id']);
+    $requestedAccountId = (int)($_GET['account_id'] ?? (body()['account_id'] ?? 0));
+    $a = null;
+    if ($requestedAccountId > 0) {
+        $requested = verifiedAccountById($requestedAccountId);
+        if ($requested && isset($requested['user_id']) && (int)$requested['user_id'] === (int)$user['id']) {
+            $a = markVerifiedOwner($requested, (int)$user['id']);
+        }
+        if (!$a) $a = collaboratorVerifiedAccountByUserId((int)$user['id'], $requestedAccountId);
+        if (!$a) err('このコミュニティアカウントを開く権限がありません。', 403);
+    }
+    if (!$a) {
+        $a = verifiedAccountByUserId((int)$user['id']);
+        if ($a) $a = markVerifiedOwner($a, (int)$user['id']);
+    }
     if (!$a && isHiromameAdmin($user)) {
         $dev = developerVerifiedAccount($user);
         if ($dev) $a = markVerifiedOwner($dev, (int)$user['id']);
@@ -3360,6 +3403,8 @@ function actionVerifiedCollaboratorSearchUsers(): void {
 
 function actionVerifiedCollaboratorList(): void {
     $a = requireVerifiedAccount();
+    $accessUserId = (int)($a['_access_user_id'] ?? 0);
+    $isOwner = isVerifiedOwner($a);
     $st = db()->prepare(
         "SELECT c.*, u.username, u.display_name, u.user_icon
            FROM buddies_verified_collaborators c
@@ -3369,7 +3414,7 @@ function actionVerifiedCollaboratorList(): void {
     );
     $st->execute([(int)$a['id']]);
     ok([
-        'is_owner' => isVerifiedOwner($a),
+        'is_owner' => $isOwner,
         'collaborators' => array_map(fn($r) => [
             'id' => (int)$r['id'],
             'user_id' => (int)$r['user_id'],
@@ -3378,6 +3423,8 @@ function actionVerifiedCollaboratorList(): void {
             'user_icon' => $r['user_icon'] ?? null,
             'role' => (string)$r['role'],
             'accepted_at' => $r['accepted_at'],
+            'is_self' => $accessUserId > 0 && (int)$r['user_id'] === $accessUserId,
+            'can_remove' => $isOwner || ($accessUserId > 0 && (int)$r['user_id'] === $accessUserId),
         ], $st->fetchAll()),
     ]);
 }
@@ -3466,8 +3513,31 @@ function actionVerifiedCollaboratorInviteAccept(): void {
         ->execute([(int)$invite['account_id'], (int)$u['id'], (int)$invite['invited_by_user_id']]);
     db()->prepare("UPDATE buddies_verified_collab_invites SET status='accepted', accepted_at=NOW() WHERE id=?")
         ->execute([(int)$invite['id']]);
+    db()->prepare("UPDATE buddies_verified_collab_invites SET status='revoked' WHERE account_id=? AND target_user_id=? AND id!=? AND status='pending'")
+        ->execute([(int)$invite['account_id'], (int)$u['id'], (int)$invite['id']]);
     $a = verifiedAccountById((int)$invite['account_id']);
     ok(['account' => $a ? buildVerifiedData(['_access_role'=>'manager','_access_user_id'=>(int)$u['id']] + $a, true) : null]);
+}
+
+function actionVerifiedCollaboratorRemove(): void {
+    $a = requireVerifiedAccount();
+    $targetUserId = (int)(body()['user_id'] ?? 0);
+    if ($targetUserId <= 0) err('対象の共同運営者を選択してください。');
+    $accessUserId = (int)($a['_access_user_id'] ?? 0);
+    $isOwner = isVerifiedOwner($a);
+    if (!$isOwner && $targetUserId !== $accessUserId) err('共同運営者を削除する権限がありません。', 403);
+
+    $st = db()->prepare("SELECT * FROM buddies_verified_collaborators WHERE account_id=? AND user_id=? AND status='active' LIMIT 1");
+    $st->execute([(int)$a['id'], $targetUserId]);
+    $collab = $st->fetch();
+    if (!$collab) err('共同運営者が見つかりません。', 404);
+
+    $newStatus = $isOwner && $targetUserId !== $accessUserId ? 'removed' : 'resigned';
+    db()->prepare("UPDATE buddies_verified_collaborators SET status=? WHERE id=?")
+        ->execute([$newStatus, (int)$collab['id']]);
+    db()->prepare("UPDATE buddies_verified_collab_invites SET status='revoked' WHERE account_id=? AND target_user_id=? AND status='pending'")
+        ->execute([(int)$a['id'], $targetUserId]);
+    ok(['status' => $newStatus]);
 }
 
 function actionVerifiedPostList(): void {
