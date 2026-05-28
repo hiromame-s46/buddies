@@ -86,7 +86,7 @@ h1{font-size:28px;letter-spacing:-.04em;line-height:1.08;margin-top:4px}
 <body>
 <div class="app">
   <header class="header">
-    <button class="back" type="button" onclick="history.length>1?history.back():location.href='./index.html'" aria-label="戻る">←</button>
+    <button class="back" type="button" onclick="history.length>1?history.back():location.href='./index.html'" aria-label="戻る" data-nosnippet>←</button>
     <div class="head-title">Today’s 櫻坂</div>
     <span></span>
   </header>
@@ -103,7 +103,7 @@ h1{font-size:28px;letter-spacing:-.04em;line-height:1.08;margin-top:4px}
     </div>
   </section>
 
-  <main id="content"><div class="skeleton">読み込み中…</div></main>
+  <main id="content"><div class="skeleton" data-nosnippet>読み込み中…</div></main>
 </div>
 
 <script>

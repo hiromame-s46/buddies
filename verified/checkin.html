@@ -32,8 +32,8 @@ main{padding:14px;display:grid;gap:14px}.card{border:1px solid rgba(0,0,0,.07);b
 </head>
 <body>
 <div class="app">
-  <header><a class="back" href="./">← 管理画面</a><div class="head"><div class="head-title">デジタル参加証・QR受付</div><div class="head-sub">既存のプロフィールQRを読み取ります</div></div></header>
-  <main id="app"><div class="empty">読み込み中...</div></main>
+  <header><a class="back" href="./" data-nosnippet>← 管理画面</a><div class="head"><div class="head-title">デジタル参加証・QR受付</div><div class="head-sub">既存のプロフィールQRを読み取ります</div></div></header>
+  <main id="app"><div class="empty" data-nosnippet>読み込み中...</div></main>
 </div>
 <div class="sheet-overlay" id="result-sheet" onclick="if(event.target===this)closeSheet('result-sheet')"><div class="sheet" id="result-sheet-body"></div></div>
 <div class="sheet-overlay" id="person-sheet" onclick="if(event.target===this)closeSheet('person-sheet')"><div class="sheet" id="person-sheet-body"></div></div>
