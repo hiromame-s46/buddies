@@ -323,7 +323,7 @@ async function load(){
   render();
   showEditFabIfOwner();
   loadSubevents(id);
-  loadBoardPreview(id);
+  loadBoardPreview(ev.account_id);
   loadParticipants(id);
 }
 
@@ -512,22 +512,20 @@ function toggleSubeventsExpanded(){
   renderSubevents();
 }
 
-async function loadBoardPreview(id){
+async function loadBoardPreview(accountId){
   const wrap = document.getElementById('board-preview');
   const title = document.getElementById('board-title');
   const pinnedWrap = document.getElementById('pinned-board-preview');
   const pinnedTitle = document.getElementById('pinned-board-title');
   if (!wrap || !title || !pinnedWrap || !pinnedTitle) return;
   try {
-    const r = await safeJson(`${API}?action=verified_post_list&event_id=${encodeURIComponent(id)}&limit=4`);
+    const r = await safeJson(`${API}?action=verified_post_list&account_id=${encodeURIComponent(accountId)}&limit=4`);
     if (!r.ok || !r.data || !r.data.ok) return;
     boardPosts = r.data.data || [];
   } catch(e) { return; }
   if (!boardPosts.length) {
-    if (isOwner()) {
-      title.style.display = '';
-      wrap.innerHTML = `<a class="board-more" href="./board.html?event_id=${encodeURIComponent(id)}">掲示板を作成する</a>`;
-    }
+    title.style.display = 'none';
+    wrap.innerHTML = '';
     return;
   }
   const pinned = boardPosts.filter(p => p.pinned).slice(0, 3);
@@ -545,12 +543,13 @@ async function loadBoardPreview(id){
   }
   const hasMore = boardPosts.length > 3;
   const shown = boardPosts.filter(p => !p.pinned).slice(0, 3);
-  title.style.display = shown.length || hasMore || isOwner() ? '' : 'none';
+  title.textContent = '主催者からのお知らせ';
+  title.style.display = shown.length || hasMore ? '' : 'none';
   wrap.innerHTML = shown.map(p => `<article class="board-post">
     <div class="board-date">${esc(fmtDate(p.created_at))}</div>
     ${p.body ? `<div class="board-body">${markdown(p.body)}</div>` : ''}
     ${p.link_url ? `<a class="board-more" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label || 'リンクを開く')}</a>` : ''}
-  </article>`).join('') + (hasMore || isOwner() ? `<a class="board-more" href="./board.html?event_id=${encodeURIComponent(id)}">${hasMore ? 'もっと見る' : '掲示板を開く'}</a>` : '');
+  </article>`).join('') + (hasMore ? `<a class="board-more" href="./board.html?account_id=${encodeURIComponent(accountId)}">もっと見る</a>` : '');
 }
 
 let participantsLoading = false;
