@@ -30,8 +30,12 @@ main{padding:16px;display:grid;gap:16px}
 .body{font-size:14px;color:#222;overflow-wrap:anywhere;line-height:1.8}.body p{margin:0 0 9px}.body p:last-child{margin-bottom:0}.body a{color:#111;font-weight:900;text-decoration-thickness:2px;text-underline-offset:3px}.body strong{font-weight:900}
 .images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.image{aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#f3f3f3}.image img{width:100%;height:100%;object-fit:cover;display:block}
 .file,.post-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border-radius:14px;background:#f3f3f3;color:#111;text-decoration:none;font-weight:900;font-size:13px;padding:0 12px}.post-link{background:#111;color:#fff;border-radius:9999px}
+.files{display:grid;gap:8px}
+.audience{display:inline-flex;width:max-content;align-items:center;gap:5px;border-radius:9999px;background:#f4f4f4;color:#555;font-size:11px;font-weight:900;padding:4px 9px}
 .post-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-top:2px;padding-top:2px}.toast{display:none;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:800}.toast.show{display:block}.toast.err{background:#fff5f5;color:#d33}.toast.ok{background:#f0fff4;color:#276749}
 .section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:2px}.section-heading h2{margin:0;font-size:15px}.section-heading span{font-size:11px;color:#888;font-weight:800}
+.create-card{border:1px solid var(--line);border-radius:22px;background:#fff;padding:12px;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:0 8px 22px rgba(0,0,0,.035)}.create-card b{font-size:14px}.create-card span{display:block;font-size:12px;color:#777;line-height:1.45}
+.sheet-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:80;display:none;align-items:flex-end;justify-content:center}.sheet-overlay.open{display:flex}.sheet{width:100%;max-width:720px;max-height:88dvh;overflow:auto;background:#fff;border-radius:24px 24px 0 0;padding:16px;display:grid;gap:13px;box-shadow:0 -18px 40px rgba(0,0,0,.18)}.sheet-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.sheet-title{font-size:17px;font-weight:950}.sheet-note{font-size:12px;color:#777}.sheet-close{width:38px;height:38px;border:1px solid var(--line);border-radius:50%;background:#fff;font:900 18px inherit}.field{display:grid;gap:6px}.field label{font-size:12px;font-weight:900;color:#555}.field textarea,.field input,.field select{width:100%;border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:12px;font:inherit}.field textarea{min-height:150px;line-height:1.7;resize:vertical}.field textarea:focus,.field input:focus,.field select:focus{outline:2px solid rgba(17,17,17,.08);border-color:#bbb;background:#fff}.attach-box{border:1px dashed #d7d7d7;border-radius:18px;background:#fafafa;padding:12px;display:grid;gap:8px}.file-pick{display:flex;align-items:center;justify-content:center;min-height:44px;border-radius:9999px;background:#fff;border:1px solid var(--line);font-weight:900;cursor:pointer}.file-pick input{display:none}.picked{display:grid;gap:7px}.picked-item{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:14px;padding:8px 10px;font-size:12px;font-weight:800}.picked-item span{min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.picked-item button{border:none;background:#fff5f5;color:#d33;border-radius:9999px;font-weight:900;padding:5px 8px}.sheet-actions{position:sticky;bottom:-16px;background:linear-gradient(180deg,rgba(255,255,255,.82),#fff 34%);padding-top:10px;display:grid;gap:8px}
 @media(max-width:560px){main{padding:12px}.composer-row{grid-template-columns:1fr}.hero{align-items:flex-start}.title{font-size:18px}}
 </style>
 </head>
@@ -45,7 +49,7 @@ const API='../api.php';
 const qs=new URLSearchParams(location.search);
 const accountId=Number(qs.get('account_id')||0);
 const eventId=Number(qs.get('event_id')||0);
-let account=null,eventData=null,currentAccount=null,posts=[];
+let account=null,eventData=null,currentAccount=null,posts=[],events=[],selectedFiles=[];
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 function assetUrl(url){if(!url)return '';if(/^https?:\/\//.test(url)||url.startsWith('data:'))return url;return url.startsWith('/')?url:'../'+url;}
 async function api(action,payload=null){const opt={credentials:'include'};if(payload){opt.method='POST';opt.headers={'Content-Type':'application/json'};opt.body=JSON.stringify(payload);}const r=await fetch(`${API}?action=${action}`,opt);return r.json();}
@@ -79,14 +83,34 @@ function renderShell(){
   const icon=account.icon_url?`<img src="${esc(assetUrl(account.icon_url))}" alt="">`:esc((account.display_name||'?')[0]);
   document.getElementById('app').innerHTML=`
     <section class="hero"><div class="icon">${icon}</div><div class="hero-main"><div class="kicker">COMMUNITY BOARD</div><div class="title">${esc(pageTitle())}</div><div class="note">${esc(account.display_name)} からのお知らせをまとめて確認できます。</div></div></section>
-    ${canManage()?`<section class="composer"><textarea id="post-body" maxlength="8000" placeholder="掲示板に投稿する内容を書いてください。Markdownの **太字** や [リンク](https://...) も使えます。"></textarea><div class="composer-row"><input id="post-link-label" maxlength="120" placeholder="リンク文言（任意）"><input id="post-link-url" placeholder="https://...（任意）"></div><div class="actions"><button class="btn primary" id="post-submit" onclick="submitPost()">投稿する</button></div><div id="post-msg" class="toast"></div></section>`:''}
+    ${canManage()?`<section class="create-card"><div><b>新しい投稿を作成</b><span>画像2枚、PDFファイル2件まで添付できます。</span></div><button class="btn primary" onclick="openPostSheet()">投稿する</button></section>${postSheetHtml()}`:''}
     <div class="section-heading"><h2>投稿一覧</h2><span id="post-count">読み込み中</span></div>
     <section class="messages" id="posts"><div class="empty">読み込み中…</div></section>`;
+  if(canManage()) loadAudienceEvents();
 }
+function postSheetHtml(){
+  return `<div class="sheet-overlay" id="post-sheet" onclick="if(event.target===this)closePostSheet()"><section class="sheet" role="dialog" aria-modal="true" aria-labelledby="post-sheet-title">
+    <div class="sheet-head"><div><div class="sheet-title" id="post-sheet-title">掲示板に投稿</div><div class="sheet-note">必要な人にだけ届くよう、公開範囲も設定できます。</div></div><button class="sheet-close" type="button" onclick="closePostSheet()">×</button></div>
+    <div class="field"><label for="post-body">本文</label><textarea id="post-body" maxlength="8000" placeholder="お知らせ内容を書いてください。Markdownの **太字** や [リンク](https://...) も使えます。"></textarea></div>
+    <div class="composer-row"><div class="field"><label for="post-link-label">リンク文言</label><input id="post-link-label" maxlength="120" placeholder="例: 詳細を見る"></div><div class="field"><label for="post-link-url">リンクURL</label><input id="post-link-url" inputmode="url" placeholder="https://..."></div></div>
+    <div class="field"><label for="post-audience-event">公開範囲</label><select id="post-audience-event"><option value="">全員に表示</option></select><div class="small">イベントを選ぶと、そのイベントに参加登録しているユーザーだけに表示します。</div></div>
+    <div class="attach-box"><label class="file-pick">画像・PDFを選択<input id="post-files" type="file" accept="image/png,image/jpeg,image/webp,application/pdf" multiple onchange="handlePostFiles(this.files)"></label><div class="small">画像は2枚まで自動圧縮、PDFは2件まで添付できます。</div><div class="picked" id="picked-files"></div></div>
+    <div id="post-msg" class="toast"></div>
+    <div class="sheet-actions"><button class="btn primary" id="post-submit" onclick="submitPost()">投稿する</button><button class="btn" type="button" onclick="closePostSheet()">キャンセル</button></div>
+  </section></div>`;
+}
+function openPostSheet(){document.getElementById('post-sheet')?.classList.add('open');}
+function closePostSheet(){document.getElementById('post-sheet')?.classList.remove('open');}
 async function loadPosts(){
   const json=await api('verified_post_list&account_id='+encodeURIComponent(account.id)+'&limit=50').catch(()=>({ok:false}));
   posts=json.ok?(json.data||[]):[];
   renderPosts();
+}
+async function loadAudienceEvents(){
+  const select=document.getElementById('post-audience-event'); if(!select||!account)return;
+  const json=await api('event_mine_list&account_id='+encodeURIComponent(account.id)).catch(()=>({ok:false}));
+  events=json.ok?(json.data||[]):[];
+  select.innerHTML='<option value="">全員に表示</option>'+events.map(e=>`<option value="${esc(e.id)}">${esc(e.title||'イベント')}</option>`).join('');
 }
 function renderPosts(){
   const wrap=document.getElementById('posts'); if(!wrap)return;
@@ -96,25 +120,56 @@ function renderPosts(){
   wrap.innerHTML=posts.map(p=>{
     const files=Array.isArray(p.files)?p.files:[];
     const images=files.filter(f=>String(f.mime||'').startsWith('image/')).slice(0,2);
-    const pdf=files.find(f=>String(f.mime||'')==='application/pdf');
+    const docs=files.filter(f=>!String(f.mime||'').startsWith('image/'));
     const imgHtml=images.length?`<div class="images">${images.map(f=>`<a class="image" href="${esc(assetUrl(f.url))}" target="_blank" rel="noopener"><img src="${esc(assetUrl(f.url))}" alt=""></a>`).join('')}</div>`:'';
-    const pdfHtml=pdf?`<a class="file" href="${esc(assetUrl(pdf.url))}" target="_blank" rel="noopener">PDF: ${esc(pdf.name||'添付ファイル')}</a>`:'';
+    const fileHtml=docs.length?`<div class="files">${docs.map(f=>`<a class="file" href="${esc(assetUrl(f.url))}" target="_blank" rel="noopener">PDF: ${esc(f.name||'添付ファイル')}</a>`).join('')}</div>`:'';
     const link=p.link_url?`<a class="post-link" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label||'リンクを開く')}</a>`:'';
+    const audience=p.audience_event_id?`<span class="audience">参加者限定: ${esc(p.audience_event_title||'イベント')}</span>`:'';
     return `<article class="msg"><div class="bubble ${p.pinned?'pinned':''}">
       <div class="post-head"><div class="icon">${icon}</div><div class="post-head-main"><div class="post-author">${esc(account.display_name)}</div><div class="meta">${p.pinned?'<span class="pin">固定</span>':''}<span>${esc(fmtDate(p.created_at))}</span></div></div></div>
-      ${p.body?`<div class="body">${markdown(p.body)}</div>`:''}${imgHtml}${pdfHtml}${link}${canManage()?`<div class="post-actions"><button class="btn gold" onclick="togglePin(${p.id},${p.pinned?'false':'true'})">${p.pinned?'ピン解除':'ピン留め'}</button><button class="btn danger" onclick="deletePost(${p.id})">削除</button></div>`:''}</div></article>`;
+      ${audience}${p.body?`<div class="body">${markdown(p.body)}</div>`:''}${imgHtml}${fileHtml}${link}${canManage()?`<div class="post-actions"><button class="btn gold" onclick="togglePin(${p.id},${p.pinned?'false':'true'})">${p.pinned?'ピン解除':'ピン留め'}</button><button class="btn danger" onclick="deletePost(${p.id})">削除</button></div>`:''}</div></article>`;
   }).join('');
 }
 function showMsg(text,ok=true){const el=document.getElementById('post-msg');if(!el)return;el.textContent=text;el.className='toast show '+(ok?'ok':'err');}
+function renderSelectedFiles(){
+  const wrap=document.getElementById('picked-files'); if(!wrap)return;
+  wrap.innerHTML=selectedFiles.map((f,i)=>`<div class="picked-item"><span>${esc(f.name)}${f.kind==='image'?'（画像）':'（PDF）'}</span><button type="button" onclick="removeSelectedFile(${i})">削除</button></div>`).join('');
+}
+function removeSelectedFile(i){selectedFiles.splice(i,1);renderSelectedFiles();}
+async function handlePostFiles(list){
+  const incoming=Array.from(list||[]);
+  for(const file of incoming){
+    const isImage=file.type.startsWith('image/');
+    const isPdf=file.type==='application/pdf';
+    if(!isImage&&!isPdf){showMsg('画像またはPDFを選択してください。',false);continue;}
+    if(isImage&&selectedFiles.filter(f=>f.kind==='image').length>=2){showMsg('画像は2枚までです。',false);continue;}
+    if(isPdf&&selectedFiles.filter(f=>f.kind==='file').length>=2){showMsg('ファイルは2件までです。',false);continue;}
+    const data=isImage?await compressImageFile(file):await fileToDataUrl(file);
+    selectedFiles.push({name:file.name,kind:isImage?'image':'file',data});
+  }
+  const input=document.getElementById('post-files'); if(input)input.value='';
+  renderSelectedFiles();
+}
+function fileToDataUrl(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result||''));r.onerror=reject;r.readAsDataURL(file);});}
+async function compressImageFile(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((resolve,reject)=>{const im=new Image();im.onload=()=>resolve(im);im.onerror=reject;im.src=url;});
+    const max=1600,scale=Math.min(1,max/Math.max(img.width,img.height));
+    const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));
+    canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);
+    return canvas.toDataURL('image/jpeg',0.82);
+  }finally{URL.revokeObjectURL(url);}
+}
 async function submitPost(){
   if(!canManage())return;
   const btn=document.getElementById('post-submit');
-  const payload={account_id:account.id,body:document.getElementById('post-body').value.trim(),link_label:document.getElementById('post-link-label').value.trim(),link_url:document.getElementById('post-link-url').value.trim()};
+  const payload={account_id:account.id,body:document.getElementById('post-body').value.trim(),link_label:document.getElementById('post-link-label').value.trim(),link_url:document.getElementById('post-link-url').value.trim(),audience_event_id:document.getElementById('post-audience-event').value||null,files:selectedFiles.map(f=>({data:f.data,name:f.name}))};
   btn.disabled=true;btn.textContent='投稿中…';
-  try{const json=await api('verified_post_create',payload);if(!json.ok){showMsg(json.error||'投稿できませんでした',false);return;}document.getElementById('post-body').value='';document.getElementById('post-link-label').value='';document.getElementById('post-link-url').value='';showMsg('投稿しました',true);await loadPosts();}finally{btn.disabled=false;btn.textContent='投稿する';}
+  try{const json=await api('verified_post_create',payload);if(!json.ok){showMsg(json.error||'投稿できませんでした',false);return;}document.getElementById('post-body').value='';document.getElementById('post-link-label').value='';document.getElementById('post-link-url').value='';document.getElementById('post-audience-event').value='';selectedFiles=[];renderSelectedFiles();showMsg('投稿しました',true);await loadPosts();setTimeout(closePostSheet,350);}finally{btn.disabled=false;btn.textContent='投稿する';}
 }
 async function togglePin(id,pinned){if(!canManage())return;const json=await api('verified_post_pin',{account_id:account.id,id,pinned});if(!json.ok){alert(json.error||'変更できませんでした');return;}await loadPosts();}
-async function deletePost(id){if(!canManage()||!confirm('この投稿を削除しますか？'))return;const json=await api('verified_post_delete',{account_id:account.id,id});if(!json.ok){alert(json.error||'削除できませんでした');return;}await loadPosts();}
+async function deletePost(id){if(!canManage()||!confirm('この投稿を削除しますか？添付画像・ファイルも削除されます。'))return;const json=await api('verified_post_delete',{account_id:account.id,id});if(!json.ok){alert(json.error||'削除できませんでした');return;}await loadPosts();}
 load();
 </script>
 </body>

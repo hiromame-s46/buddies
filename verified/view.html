@@ -94,6 +94,8 @@ main{padding:20px}
 .post-image img{width:100%;height:100%;object-fit:cover;display:block;cursor:zoom-in;background:#f7f7f7}
 .file-link{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:14px;background:#fafafa;color:#111;text-decoration:none;padding:10px 12px;font-weight:800;font-size:13px}
 .file-icon{width:34px;height:34px;border-radius:10px;background:#eee;display:grid;place-items:center;font-size:11px;color:#555;flex-shrink:0}
+.post-files{display:grid;gap:8px}
+.post-audience{display:inline-flex;width:max-content;border-radius:9999px;background:#f4f4f4;color:#555;font-size:11px;font-weight:900;padding:4px 9px}
 .post-link{display:flex;align-items:center;justify-content:center;min-height:42px;border-radius:9999px;background:#111;color:#fff;text-decoration:none;font-weight:800;font-size:13px;padding:0 16px}
 .post-actions{display:flex;justify-content:flex-end}.post-delete{border:none;background:#fff5f5;color:#d33;border-radius:9999px;font-weight:800;padding:8px 12px;cursor:pointer}
 .post.pinned{border-color:#f2d98c;background:linear-gradient(180deg,#fffdf7,#fff);box-shadow:0 10px 26px rgba(124,86,0,.08)}.post-pin{display:inline-flex;width:max-content;border-radius:9999px;background:#fff4d6;color:#7c5600;font-size:10px;font-weight:900;padding:2px 8px}.post.pinned .post-body{font-size:14px;font-weight:650}
@@ -468,15 +470,17 @@ function renderPosts(){
   wrap.innerHTML = shown.map(p => {
     const files = Array.isArray(p.files) ? p.files : [];
     const images = files.filter(f => String(f.mime || '').startsWith('image/')).slice(0, 2);
-    const pdf = files.find(f => String(f.mime || '') === 'application/pdf');
+    const docs = files.filter(f => !String(f.mime || '').startsWith('image/'));
     const imageHtml = images.length ? `<div class="post-images">${images.map(f => `<div class="post-image"><img src="${esc(assetUrl(f.url))}" alt="${esc(f.name || '')}" onclick="openImageLightbox('${esc(assetUrl(f.url))}')"></div>`).join('')}</div>` : '';
-    const pdfHtml = pdf ? `<a class="file-link" href="${esc(assetUrl(pdf.url))}" target="_blank" rel="noopener"><span class="file-icon">PDF</span><span style="min-width:0;flex:1;">${esc(pdf.name || 'PDFファイル')}<br><span style="font-size:11px;color:#777;">${esc(fmtFileSize(pdf.size))}</span></span></a>` : '';
+    const fileHtml = docs.length ? `<div class="post-files">${docs.map(f => `<a class="file-link" href="${esc(assetUrl(f.url))}" target="_blank" rel="noopener"><span class="file-icon">PDF</span><span style="min-width:0;flex:1;">${esc(f.name || 'PDFファイル')}<br><span style="font-size:11px;color:#777;">${esc(fmtFileSize(f.size))}</span></span></a>`).join('')}</div>` : '';
     const link = p.link_url ? `<a class="post-link" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label || 'リンクを開く')}</a>` : '';
+    const audience = p.audience_event_id ? `<span class="post-audience">参加者限定: ${esc(p.audience_event_title || 'イベント')}</span>` : '';
     return `<article class="post">
       <div class="post-head"><div class="post-icon">${icon}</div><div class="post-meta"><div class="post-author">${esc(viewedAccount.display_name || 'コミュニティ')}</div><div class="post-date">${esc(fmtPostDate(p.created_at))}</div></div></div>
+      ${audience}
       ${p.body ? `<div class="post-body">${markdown(p.body)}</div>` : ''}
       ${imageHtml}
-      ${pdfHtml}
+      ${fileHtml}
       ${link}
       ${owner ? `<div class="post-actions"><button class="post-delete" type="button" onclick="deletePost(${p.id})">削除</button></div>` : ''}
     </article>`;
@@ -492,9 +496,11 @@ function renderPinnedPosts(){
   const icon = boardIconHtml();
   wrap.innerHTML = pinned.map(p => {
     const link = p.link_url ? `<a class="post-link" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label || 'リンクを開く')}</a>` : '';
+    const audience = p.audience_event_id ? `<span class="post-audience">参加者限定: ${esc(p.audience_event_title || 'イベント')}</span>` : '';
     return `<article class="post pinned">
       <div class="post-pin">固定</div>
       <div class="post-head"><div class="post-icon">${icon}</div><div class="post-meta"><div class="post-author">${esc(viewedAccount.display_name || 'コミュニティ')}</div><div class="post-date">${esc(fmtPostDate(p.created_at))}</div></div></div>
+      ${audience}
       ${p.body ? `<div class="post-body">${markdown(p.body)}</div>` : ''}
       ${link}
     </article>`;
