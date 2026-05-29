@@ -3568,16 +3568,9 @@ function actionVerifiedPostList(): void {
     $a = verifiedAccountById($accountId);
     if (!$a || ($a['status'] ?? 'active') !== 'active' || !canUseVerifiedBoard($a)) ok([]);
     $limit = min(max((int)($_GET['limit'] ?? 20), 1), 50);
-    if ($eventId > 0) {
-        $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND event_id=? AND status='active' ORDER BY pinned DESC, created_at DESC, id DESC LIMIT ?");
-        $st->bindValue(1, $accountId, PDO::PARAM_INT);
-        $st->bindValue(2, $eventId, PDO::PARAM_INT);
-        $st->bindValue(3, $limit, PDO::PARAM_INT);
-    } else {
-        $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND event_id IS NULL AND status='active' ORDER BY pinned DESC, created_at DESC, id DESC LIMIT ?");
-        $st->bindValue(1, $accountId, PDO::PARAM_INT);
-        $st->bindValue(2, $limit, PDO::PARAM_INT);
-    }
+    $st = db()->prepare("SELECT * FROM buddies_verified_posts WHERE account_id=? AND event_id IS NULL AND status='active' ORDER BY pinned DESC, created_at DESC, id DESC LIMIT ?");
+    $st->bindValue(1, $accountId, PDO::PARAM_INT);
+    $st->bindValue(2, $limit, PDO::PARAM_INT);
     $st->execute();
     ok(array_map(fn($p) => buildVerifiedPostData($p), $st->fetchAll()));
 }
@@ -3587,15 +3580,7 @@ function actionVerifiedPostCreate(): void {
     $a = requireVerifiedAccount();
     if (!canUseVerifiedBoard($a)) err('このコミュニティアカウントでは掲示板を利用できません。', 403);
     $b = body();
-    $eventId = (int)($b['event_id'] ?? 0);
-    if ($eventId > 0) {
-        ensureEventTables();
-        $ev = db()->prepare("SELECT id FROM buddies_events WHERE id=? AND account_id=? AND status!='disabled' LIMIT 1");
-        $ev->execute([$eventId, (int)$a['id']]);
-        if (!$ev->fetch()) err('イベント掲示板の投稿権限がありません。', 403);
-    } else {
-        $eventId = null;
-    }
+    $eventId = null;
     $body = trim((string)($b['body'] ?? ''));
     if (mb_strlen($body) > 8000) err('本文は8000文字以内で入力してください。');
     $linkUrl = cleanUrl($b['link_url'] ?? null);

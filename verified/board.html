@@ -12,26 +12,27 @@
 <link rel="manifest" href="../icon/site.webmanifest">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-:root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--gold:#e6b422}
-body{margin:0;background:var(--soft);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
-.app{max-width:720px;margin:0 auto;min-height:100dvh;background:#fff}
+:root{--line:#e8e8e8;--ink:#111;--muted:#666;--soft:#f7f7f7;--gold:#e6b422;--paper:#fff}
+body{margin:0;background:linear-gradient(180deg,#f6f6f6,#fff 280px);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif;line-height:1.6}
+.app{max-width:720px;margin:0 auto;min-height:100dvh;background:rgba(255,255,255,.96)}
 header{position:sticky;top:0;z-index:20;background:rgba(255,255,255,.94);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:12px 16px;display:flex;align-items:center;gap:10px;min-height:58px}
 .back{color:#111;text-decoration:none;font-weight:800;font-size:14px;padding:7px 10px;border-radius:9999px}.back:hover{background:#f3f3f3}
 .head{min-width:0;flex:1;text-align:center;margin-right:54px}.head-title{font-size:15px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.head-sub{font-size:11px;color:#777;font-weight:800}
-main{padding:16px;display:grid;gap:14px}
-.hero{border:1px solid var(--line);border-radius:22px;background:#fff;padding:14px;display:flex;gap:12px;align-items:center}
+main{padding:16px;display:grid;gap:16px}
+.hero{border:1px solid var(--line);border-radius:24px;background:var(--paper);padding:16px;display:flex;gap:13px;align-items:center;box-shadow:0 10px 28px rgba(0,0,0,.04)}
 .icon{width:54px;height:54px;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;overflow:hidden;font-weight:900;color:#777;flex-shrink:0}.icon img{width:100%;height:100%;object-fit:cover}
-.hero-main{min-width:0;flex:1}.kicker{font-size:11px;color:#7c5600;font-weight:900;letter-spacing:.08em}.title{font-size:18px;font-weight:950;line-height:1.35}.note{font-size:12px;color:#666;line-height:1.5}
-.composer{border:1px solid var(--line);border-radius:22px;background:#fafafa;padding:12px;display:grid;gap:10px}.composer textarea{width:100%;min-height:96px;border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px;font:inherit;line-height:1.7;resize:vertical}.composer input{width:100%;border:1px solid var(--line);border-radius:14px;background:#fff;padding:10px 12px;font:inherit}
+.hero-main{min-width:0;flex:1}.kicker{font-size:11px;color:#7c5600;font-weight:900;letter-spacing:.08em}.title{font-size:19px;font-weight:950;line-height:1.35}.note{font-size:12px;color:#666;line-height:1.55;margin-top:2px}
+.composer{border:1px solid var(--line);border-radius:24px;background:#fff;padding:14px;display:grid;gap:12px;box-shadow:0 10px 28px rgba(0,0,0,.035)}.composer textarea{width:100%;min-height:112px;border:1px solid var(--line);border-radius:18px;background:#fafafa;padding:13px;font:inherit;line-height:1.7;resize:vertical}.composer textarea:focus,.composer input:focus{outline:2px solid rgba(17,17,17,.08);border-color:#bbb;background:#fff}.composer input{width:100%;border:1px solid var(--line);border-radius:15px;background:#fafafa;padding:11px 12px;font:inherit}
 .composer-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.btn{min-height:42px;border:1px solid var(--line);border-radius:9999px;background:#fff;color:#111;padding:0 15px;font:800 13px inherit;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;cursor:pointer}.btn.primary{background:#111;color:#fff;border-color:#111}.btn.danger{background:#fff5f5;color:#d33;border-color:#f3c2c2}.btn.gold{background:#fff9e8;color:#7c5600;border-color:#f2d98c}.btn:disabled{opacity:.55;cursor:wait}
-.small{font-size:12px;color:#777}.messages{display:grid;gap:12px}.empty{padding:36px 12px;text-align:center;color:#888;font-size:13px;border:1px dashed var(--line);border-radius:20px}
-.msg{display:flex;gap:10px;align-items:flex-start}.msg .icon{width:38px;height:38px;font-size:15px}.bubble{min-width:0;max-width:calc(100% - 48px);border:1px solid var(--line);border-radius:20px 20px 20px 6px;background:#fff;padding:12px 13px;display:grid;gap:8px;box-shadow:0 4px 14px rgba(0,0,0,.035)}.bubble.pinned{border-color:#f2d98c;background:#fffdf5}
-.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:#777;font-weight:800}.pin{display:inline-flex;border-radius:9999px;background:#fff4d6;color:#7c5600;padding:2px 8px;font-size:10px;font-weight:900}
-.body{font-size:14px;color:#222;overflow-wrap:anywhere}.body p{margin:0 0 8px}.body p:last-child{margin-bottom:0}.body a{color:#111;font-weight:900}.body strong{font-weight:900}
+.small{font-size:12px;color:#777}.messages{display:grid;gap:12px}.empty{padding:42px 14px;text-align:center;color:#888;font-size:13px;border:1px dashed var(--line);border-radius:22px;background:#fff}
+.msg{display:block}.msg .icon{width:38px;height:38px;font-size:15px}.bubble{min-width:0;border:1px solid var(--line);border-radius:22px;background:#fff;padding:14px;display:grid;gap:11px;box-shadow:0 8px 22px rgba(0,0,0,.04)}.bubble.pinned{border-color:#f2d98c;background:linear-gradient(180deg,#fffdf7,#fff);box-shadow:0 10px 28px rgba(124,86,0,.08)}
+.post-head{display:flex;align-items:center;gap:10px;min-width:0}.post-head-main{min-width:0;flex:1}.post-author{font-size:13px;font-weight:900;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11px;color:#777;font-weight:800}.pin{display:inline-flex;border-radius:9999px;background:#fff4d6;color:#7c5600;padding:2px 8px;font-size:10px;font-weight:900}
+.body{font-size:14px;color:#222;overflow-wrap:anywhere;line-height:1.8}.body p{margin:0 0 9px}.body p:last-child{margin-bottom:0}.body a{color:#111;font-weight:900;text-decoration-thickness:2px;text-underline-offset:3px}.body strong{font-weight:900}
 .images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.image{aspect-ratio:1/1;border-radius:14px;overflow:hidden;background:#f3f3f3}.image img{width:100%;height:100%;object-fit:cover;display:block}
 .file,.post-link{display:flex;align-items:center;justify-content:center;gap:8px;min-height:40px;border-radius:14px;background:#f3f3f3;color:#111;text-decoration:none;font-weight:900;font-size:13px;padding:0 12px}.post-link{background:#111;color:#fff;border-radius:9999px}
-.post-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-top:2px}.toast{display:none;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:800}.toast.show{display:block}.toast.err{background:#fff5f5;color:#d33}.toast.ok{background:#f0fff4;color:#276749}
-@media(max-width:560px){main{padding:12px}.composer-row{grid-template-columns:1fr}.bubble{max-width:calc(100% - 46px)}}
+.post-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end;margin-top:2px;padding-top:2px}.toast{display:none;border-radius:14px;padding:10px 12px;font-size:13px;font-weight:800}.toast.show{display:block}.toast.err{background:#fff5f5;color:#d33}.toast.ok{background:#f0fff4;color:#276749}
+.section-heading{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;margin-top:2px}.section-heading h2{margin:0;font-size:15px}.section-heading span{font-size:11px;color:#888;font-weight:800}
+@media(max-width:560px){main{padding:12px}.composer-row{grid-template-columns:1fr}.hero{align-items:flex-start}.title{font-size:18px}}
 </style>
 </head>
 <body>
@@ -51,24 +52,23 @@ async function api(action,payload=null){const opt={credentials:'include'};if(pay
 function fmtDate(s){if(!s)return '';const d=new Date(String(s).replace(' ','T'));if(isNaN(d))return '';return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
 function markdown(text){let html=esc(text||'');html=html.replace(/\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)/g,'<a href="$2" target="_blank" rel="noopener">$1</a>');html=html.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>');return html.split(/\n{2,}/).map(p=>`<p>${p.replace(/\n/g,'<br>')}</p>`).join('');}
 function canManage(){return account&&currentAccount&&Number(currentAccount.id)===Number(account.id)&&['developer','verified'].includes(account.account_type);}
-function pageTitle(){return eventData?`${eventData.title} の掲示板`:`${account?.display_name||'コミュニティ'} の掲示板`;}
+function pageTitle(){return `${account?.display_name||'コミュニティ'} の掲示板`;}
 async function load(){
   try{
-    if(eventId){
+    let targetAccountId=accountId;
+    if(!targetAccountId&&eventId){
       const ev=await api('event_get&id='+encodeURIComponent(eventId)); if(!ev.ok) return renderError(ev.error||'イベントが見つかりません。');
       eventData=ev.data;
-      const acc=await api('verified_public_get&id='+encodeURIComponent(eventData.account_id)); if(!acc.ok) return renderError(acc.error||'コミュニティが見つかりません。');
-      account=acc.data;
-    }else{
-      if(!accountId) return renderError('掲示板が指定されていません。');
-      const acc=await api('verified_public_get&id='+encodeURIComponent(accountId)); if(!acc.ok) return renderError(acc.error||'コミュニティが見つかりません。');
-      account=acc.data;
+      targetAccountId=Number(eventData.account_id||0);
     }
+    if(!targetAccountId) return renderError('掲示板が指定されていません。');
+    const acc=await api('verified_public_get&id='+encodeURIComponent(targetAccountId)); if(!acc.ok) return renderError(acc.error||'コミュニティが見つかりません。');
+    account=acc.data;
     const me=await api('verified_me&account_id='+encodeURIComponent(account.id)).catch(()=>({ok:false}));
     currentAccount=me.ok?me.data:null;
     document.title=pageTitle()+' - Buddies profile';
     document.getElementById('head-title').textContent='掲示板';
-    document.getElementById('head-sub').textContent=eventData?'イベント別掲示板':'コミュニティ掲示板';
+    document.getElementById('head-sub').textContent='プロフィール掲示板';
     document.getElementById('back-link').href=eventData?`./event.html?id=${encodeURIComponent(eventData.id)}`:`./view.html?id=${encodeURIComponent(account.id)}`;
     renderShell();
     await loadPosts();
@@ -78,19 +78,20 @@ function renderError(text){document.getElementById('app').innerHTML=`<div class=
 function renderShell(){
   const icon=account.icon_url?`<img src="${esc(assetUrl(account.icon_url))}" alt="">`:esc((account.display_name||'?')[0]);
   document.getElementById('app').innerHTML=`
-    <section class="hero"><div class="icon">${icon}</div><div class="hero-main"><div class="kicker">${eventData?'EVENT BOARD':'COMMUNITY BOARD'}</div><div class="title">${esc(pageTitle())}</div><div class="note">${esc(account.display_name)} からのお知らせをチャット形式で確認できます。</div></div></section>
+    <section class="hero"><div class="icon">${icon}</div><div class="hero-main"><div class="kicker">COMMUNITY BOARD</div><div class="title">${esc(pageTitle())}</div><div class="note">${esc(account.display_name)} からのお知らせをまとめて確認できます。</div></div></section>
     ${canManage()?`<section class="composer"><textarea id="post-body" maxlength="8000" placeholder="掲示板に投稿する内容を書いてください。Markdownの **太字** や [リンク](https://...) も使えます。"></textarea><div class="composer-row"><input id="post-link-label" maxlength="120" placeholder="リンク文言（任意）"><input id="post-link-url" placeholder="https://...（任意）"></div><div class="actions"><button class="btn primary" id="post-submit" onclick="submitPost()">投稿する</button></div><div id="post-msg" class="toast"></div></section>`:''}
+    <div class="section-heading"><h2>投稿一覧</h2><span id="post-count">読み込み中</span></div>
     <section class="messages" id="posts"><div class="empty">読み込み中…</div></section>`;
 }
 async function loadPosts(){
-  const query=eventId?`event_id=${encodeURIComponent(eventId)}`:`account_id=${encodeURIComponent(account.id)}`;
-  const json=await api('verified_post_list&'+query+'&limit=50').catch(()=>({ok:false}));
+  const json=await api('verified_post_list&account_id='+encodeURIComponent(account.id)+'&limit=50').catch(()=>({ok:false}));
   posts=json.ok?(json.data||[]):[];
   renderPosts();
 }
 function renderPosts(){
   const wrap=document.getElementById('posts'); if(!wrap)return;
-  if(!posts.length){wrap.innerHTML='<div class="empty">まだ投稿はありません</div>';return;}
+  const count=document.getElementById('post-count'); if(count)count.textContent=posts.length?`${posts.length}件`:'投稿なし';
+  if(!posts.length){wrap.innerHTML='<div class="empty">まだ投稿はありません<br>主催者からのお知らせが投稿されると、ここに表示されます。</div>';return;}
   const icon=account.icon_url?`<img src="${esc(assetUrl(account.icon_url))}" alt="">`:esc((account.display_name||'?')[0]);
   wrap.innerHTML=posts.map(p=>{
     const files=Array.isArray(p.files)?p.files:[];
@@ -99,14 +100,16 @@ function renderPosts(){
     const imgHtml=images.length?`<div class="images">${images.map(f=>`<a class="image" href="${esc(assetUrl(f.url))}" target="_blank" rel="noopener"><img src="${esc(assetUrl(f.url))}" alt=""></a>`).join('')}</div>`:'';
     const pdfHtml=pdf?`<a class="file" href="${esc(assetUrl(pdf.url))}" target="_blank" rel="noopener">PDF: ${esc(pdf.name||'添付ファイル')}</a>`:'';
     const link=p.link_url?`<a class="post-link" href="${esc(p.link_url)}" target="_blank" rel="noopener">${esc(p.link_label||'リンクを開く')}</a>`:'';
-    return `<article class="msg"><div class="icon">${icon}</div><div class="bubble ${p.pinned?'pinned':''}"><div class="meta">${p.pinned?'<span class="pin">PINNED</span>':''}<span>${esc(account.display_name)}</span><span>${esc(fmtDate(p.created_at))}</span></div>${p.body?`<div class="body">${markdown(p.body)}</div>`:''}${imgHtml}${pdfHtml}${link}${canManage()?`<div class="post-actions"><button class="btn gold" onclick="togglePin(${p.id},${p.pinned?'false':'true'})">${p.pinned?'ピン解除':'ピン留め'}</button><button class="btn danger" onclick="deletePost(${p.id})">削除</button></div>`:''}</div></article>`;
+    return `<article class="msg"><div class="bubble ${p.pinned?'pinned':''}">
+      <div class="post-head"><div class="icon">${icon}</div><div class="post-head-main"><div class="post-author">${esc(account.display_name)}</div><div class="meta">${p.pinned?'<span class="pin">固定</span>':''}<span>${esc(fmtDate(p.created_at))}</span></div></div></div>
+      ${p.body?`<div class="body">${markdown(p.body)}</div>`:''}${imgHtml}${pdfHtml}${link}${canManage()?`<div class="post-actions"><button class="btn gold" onclick="togglePin(${p.id},${p.pinned?'false':'true'})">${p.pinned?'ピン解除':'ピン留め'}</button><button class="btn danger" onclick="deletePost(${p.id})">削除</button></div>`:''}</div></article>`;
   }).join('');
 }
 function showMsg(text,ok=true){const el=document.getElementById('post-msg');if(!el)return;el.textContent=text;el.className='toast show '+(ok?'ok':'err');}
 async function submitPost(){
   if(!canManage())return;
   const btn=document.getElementById('post-submit');
-  const payload={account_id:account.id,event_id:eventId||undefined,body:document.getElementById('post-body').value.trim(),link_label:document.getElementById('post-link-label').value.trim(),link_url:document.getElementById('post-link-url').value.trim()};
+  const payload={account_id:account.id,body:document.getElementById('post-body').value.trim(),link_label:document.getElementById('post-link-label').value.trim(),link_url:document.getElementById('post-link-url').value.trim()};
   btn.disabled=true;btn.textContent='投稿中…';
   try{const json=await api('verified_post_create',payload);if(!json.ok){showMsg(json.error||'投稿できませんでした',false);return;}document.getElementById('post-body').value='';document.getElementById('post-link-label').value='';document.getElementById('post-link-url').value='';showMsg('投稿しました',true);await loadPosts();}finally{btn.disabled=false;btn.textContent='投稿する';}
 }
