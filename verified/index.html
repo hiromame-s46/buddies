@@ -444,14 +444,14 @@ function assetUrl(url){
 }
 function tagsText(a){return (a.hashtags||[]).join(', ')}
 function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
-function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'その他リンク'})[type] || 'その他リンク';}
+function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',line:'LINE',note:'note',ameba:'Ameba',link:'その他リンク'})[type] || 'その他リンク';}
 function accountSnsLinks(a){
   const links = Array.isArray(a.sns_links) ? a.sns_links.filter(s => s && s.url) : [];
   if (a.x_url && !links.some(s => s.url === a.x_url)) links.unshift({ type:'x', url:a.x_url, label:'X' });
-  return links.slice(0, 10).map(s => ({ type:s.type || 'link', url:s.url || '', label:s.label || '' }));
+  return links.map(s => ({ type:s.type || 'link', url:s.url || '', label:s.label || '' }));
 }
 function snsEditorHtml(){
-  const options = ['x','threads','instagram','tiktok','youtube','github','link'];
+  const options = ['x','threads','instagram','tiktok','youtube','github','line','note','ameba','link'];
   return `<div class="sns-editor" id="sns-editor">
     ${verifiedSns.map((s,i)=>`
       <div class="sns-row">
@@ -463,13 +463,13 @@ function snsEditorHtml(){
       </div>
     `).join('')}
   </div>
-  <button class="btn sm" type="button" onclick="addVerifiedSns()" ${verifiedSns.length >= 10 ? 'disabled' : ''}>+ SNSリンクを追加</button>`;
+  <button class="btn sm" type="button" onclick="addVerifiedSns()">+ SNSリンクを追加</button>`;
 }
 function renderVerifiedSns(){
   const wrap = document.getElementById('sns-editor-wrap');
   if (wrap) wrap.innerHTML = snsEditorHtml();
 }
-function addVerifiedSns(){ if (verifiedSns.length >= 10) return; verifiedSns.push({type:'x',url:'',label:''}); renderVerifiedSns(); setDirty(true); }
+function addVerifiedSns(){ verifiedSns.push({type:'x',url:'',label:''}); renderVerifiedSns(); setDirty(true); }
 function updateVerifiedSns(i,k,v){ if (!verifiedSns[i]) return; verifiedSns[i][k] = v; setDirty(true); }
 function removeVerifiedSns(i){ verifiedSns.splice(i,1); renderVerifiedSns(); setDirty(true); }
 function closeOrBack(e){
@@ -957,7 +957,7 @@ async function saveAll(){
     secondary_link_label: val('secondary_link_label'), secondary_link_url: val('secondary_link_url'),
     cta_label: val('cta_label'), cta_url: val('cta_url'),
     x_url: (verifiedSns.find(s => s.type === 'x' && s.url && s.url.trim()) || {}).url || '',
-    sns_links: verifiedSns.filter(s => s.url && s.url.trim()).slice(0, 10),
+    sns_links: verifiedSns.filter(s => s.url && s.url.trim()),
     hashtags: val('hashtags').split(',').map(s=>s.trim()).filter(Boolean),
   };
   const btn = document.getElementById('save-btn');
