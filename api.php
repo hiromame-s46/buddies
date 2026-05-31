@@ -1490,7 +1490,7 @@ function ensureLoginNameAvailable(string $name, ?int $excludeUserId = null, ?int
 }
 function normalizeSnsLinks($links, int $limit = 10): array {
     if (!is_array($links)) return [];
-    $allowed = ['x', 'threads', 'instagram', 'tiktok', 'youtube', 'github', 'link'];
+    $allowed = ['x', 'threads', 'instagram', 'tiktok', 'youtube', 'github', 'line', 'note', 'ameba', 'link'];
     $out = [];
     foreach ($links as $link) {
         if (!is_array($link)) continue;
@@ -1697,6 +1697,8 @@ match ($action) {
 
     'admin_tag_list'          => actionAdminTagList(),
     'admin_tag_merge'         => actionAdminTagMerge(),
+    'admin_profile_link_list' => actionAdminProfileLinkList(),
+    'admin_profile_link_update' => actionAdminProfileLinkUpdate(),
 
     'verified_login'          => actionVerifiedLogin(),
     'verified_logout'         => actionVerifiedLogout(),
@@ -2007,7 +2009,7 @@ function actionProfileUpdate(): void {
     $favSongs     = isset($b['favorite_songs']) && is_array($b['favorite_songs']) ? array_slice($b['favorite_songs'], 0, 3) : null;
     $nextLives    = isset($b['next_lives'])     && is_array($b['next_lives'])     ? array_slice($b['next_lives'],     0, 60) : null;
     $nextLiveSeats = isset($b['next_live_seats']) && is_array($b['next_live_seats']) ? $b['next_live_seats'] : null;
-    $snsLinks     = isset($b['sns_links'])      && is_array($b['sns_links'])      ? array_slice($b['sns_links'],      0, 4) : null;
+    $snsLinks     = isset($b['sns_links'])      && is_array($b['sns_links'])      ? array_slice($b['sns_links'],      0, 10) : null;
 
     $followStance = opt('follow_stance', null);
     if ($followStance && !in_array($followStance, ['silent_ok', 'hello_please'], true)) $followStance = null;
@@ -3075,6 +3077,47 @@ function actionAdminTagMerge(): void {
     ok(['updated' => $updated, 'from' => $from, 'to' => $to, 'type' => $type]);
 }
 
+function actionAdminProfileLinkList(): void {
+    requireAdmin();
+    $q = trim((string)($_GET['q'] ?? ''));
+    $sql = "SELECT u.id, u.username, u.display_name, u.user_icon, bp.sns_links
+              FROM sakulabo_users u
+              LEFT JOIN buddies_profiles bp ON bp.user_id = u.id";
+    $params = [];
+    if ($q !== '') {
+        $sql .= " WHERE u.display_name LIKE ? OR u.username LIKE ?";
+        $params = ['%' . $q . '%', '%' . $q . '%'];
+    }
+    $sql .= " ORDER BY u.id DESC LIMIT 100";
+    $st = db()->prepare($sql);
+    $st->execute($params);
+    ok(array_map(function($r) {
+        $links = !empty($r['sns_links']) ? (json_decode((string)$r['sns_links'], true) ?: []) : [];
+        return [
+            'id' => (int)$r['id'],
+            'username' => $r['username'],
+            'display_name' => $r['display_name'] ?: $r['username'],
+            'user_icon' => $r['user_icon'] ?? null,
+            'sns_links' => normalizeSnsLinks($links, 500),
+        ];
+    }, $st->fetchAll()));
+}
+
+function actionAdminProfileLinkUpdate(): void {
+    requireAdmin();
+    $b = body();
+    $userId = (int)($b['user_id'] ?? 0);
+    if ($userId <= 0) err('user_id は必須です。');
+    $st = db()->prepare("SELECT id FROM sakulabo_users WHERE id=? LIMIT 1");
+    $st->execute([$userId]);
+    if (!$st->fetch()) err('ユーザーが見つかりません。', 404);
+    $links = normalizeSnsLinks($b['sns_links'] ?? [], 10);
+    db()->prepare("INSERT INTO buddies_profiles (user_id, sns_links) VALUES (?,?)
+                   ON DUPLICATE KEY UPDATE sns_links=VALUES(sns_links)")
+        ->execute([$userId, json_encode($links, JSON_UNESCAPED_UNICODE)]);
+    ok(['user_id' => $userId, 'sns_links' => $links]);
+}
+
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  コミュニティアカウント
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -3082,7 +3125,7 @@ function verifiedEditableFields(array $b, bool $preserveDeveloperType = true): a
     $hashtags = isset($b['hashtags']) && is_array($b['hashtags'])
         ? array_slice(array_values(array_filter(array_map(fn($v) => trim((string)$v), $b['hashtags']))), 0, 6)
         : null;
-    $snsLinks = normalizeSnsLinks($b['sns_links'] ?? [], 10);
+    $snsLinks = normalizeSnsLinks($b['sns_links'] ?? [], 500);
     $legacyXUrl = cleanUrl($b['x_url'] ?? null);
     if (!$legacyXUrl) {
         foreach ($snsLinks as $link) {

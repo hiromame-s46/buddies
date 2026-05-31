@@ -114,6 +114,17 @@ header h1{font-size:18px;font-weight:800;flex:1;}
     .modal-body .field label{font-size:12px;font-weight:700;color:#555}
     .modal-body input,.modal-body textarea,.modal-body select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;outline:none;background:#fff;min-width:0;box-sizing:border-box}
     .modal-body textarea{min-height:80px;resize:vertical;line-height:1.6}
+    .sns-admin-editor{display:grid;gap:8px;margin:8px 0 12px}
+    .sns-admin-row{display:grid;grid-template-columns:132px minmax(0,1fr) minmax(0,120px) 40px;gap:8px;align-items:center}
+    .sns-admin-row .btn{width:40px;padding:0}
+    .user-link-list{display:grid;gap:8px}
+    .user-link-row{border:1px solid var(--line);border-radius:14px;background:#fff;padding:12px;display:grid;gap:8px}
+    .user-link-head{display:flex;align-items:center;gap:10px}
+    .user-link-icon{width:38px;height:38px;border-radius:50%;background:#f2f2f2;display:grid;place-items:center;overflow:hidden;font-weight:800;color:#777;flex-shrink:0}
+    .user-link-icon img{width:100%;height:100%;object-fit:cover}
+    .user-link-name{font-size:14px;font-weight:800}
+    .user-link-meta{font-size:12px;color:#777}
+    @media(max-width:640px){.sns-admin-row{grid-template-columns:1fr 40px}.sns-admin-row input{grid-column:1/-1}.sns-admin-row .sns-label-input{grid-row:3}}
 </style>
 </head>
 <body>
@@ -141,6 +152,7 @@ header h1{font-size:18px;font-weight:800;flex:1;}
 	  <div class="tabs">
 	    <button class="tab active" onclick="switchTab('tags')">興味タグ</button>
 	    <button class="tab" onclick="switchTab('songs')">楽曲タグ</button>
+	    <button class="tab" onclick="switchTab('profile_links')">ユーザーリンク</button>
 	    <button class="tab" onclick="switchTab('verified')">コミュニティアカウント</button>
 	  </div>
 
@@ -171,6 +183,8 @@ let allItems = [];
 let filtered = [];
 let selectedNames = new Set();
 let verifiedAccounts = [];
+let profileLinkUsers = [];
+let editingProfileLinkUser = null;
 
 document.getElementById('admin-password-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') doLogin();
@@ -251,10 +265,12 @@ function switchTab(type) {
   document.querySelectorAll('.tab').forEach(t => {
     const active = (type === 'tags' && t.textContent.includes('興味'))
       || (type === 'songs' && t.textContent.includes('楽曲'))
+      || (type === 'profile_links' && t.textContent.includes('ユーザーリンク'))
       || (type === 'verified' && t.textContent.includes('コミュニティ'));
     t.classList.toggle('active', active);
   });
   if (type === 'verified') loadVerifiedAccounts();
+  else if (type === 'profile_links') loadProfileLinks();
   else loadTagList();
 }
 
@@ -356,7 +372,51 @@ function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
+function assetUrl(url){
+  if(!url) return '';
+  if(/^https?:\/\//.test(url) || url.startsWith('data:')) return url;
+  return url.startsWith('/') ? url : './' + url;
+}
+
+function snsLabel(type){
+  return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',line:'LINE',note:'note',ameba:'Ameba',link:'その他リンク'})[type] || 'その他リンク';
+}
+function snsOptions(){
+  return ['x','threads','instagram','tiktok','youtube','github','line','note','ameba','link'];
+}
+function normalizeAdminLinks(links, fallbackXUrl = ''){
+  const out = Array.isArray(links) ? links.filter(s => s && s.url).map(s => ({ type:s.type || 'link', url:s.url || '', label:s.label || '' })) : [];
+  if (fallbackXUrl && !out.some(s => s.url === fallbackXUrl)) out.unshift({ type:'x', url:fallbackXUrl, label:'X' });
+  return out;
+}
+function snsAdminEditorHtml(links, prefix, limit = 10){
+  return `<div class="sns-admin-editor" id="${prefix}-sns-editor">
+    ${links.map((s,i)=>`<div class="sns-admin-row">
+      <select onchange="updateAdminSns('${prefix}',${i},'type',this.value)">${snsOptions().map(type => `<option value="${type}" ${s.type===type?'selected':''}>${snsLabel(type)}</option>`).join('')}</select>
+      <input value="${esc(s.url||'')}" placeholder="https://..." oninput="updateAdminSns('${prefix}',${i},'url',this.value)">
+      <input class="sns-label-input" value="${esc(s.label||'')}" placeholder="表示名" oninput="updateAdminSns('${prefix}',${i},'label',this.value)">
+      <button class="btn" type="button" onclick="removeAdminSns('${prefix}',${i})">×</button>
+    </div>`).join('')}
+  </div><button class="btn" type="button" onclick="addAdminSns('${prefix}',${limit})" ${links.length >= limit ? 'disabled' : ''}>+ SNSリンクを追加</button>`;
+}
+
+function adminSnsStore(prefix){
+  if (prefix === 'ev') return window._editingVerifiedSns || (window._editingVerifiedSns = []);
+  if (prefix === 'profile') return editingProfileLinkUser?.sns_links || [];
+  return window._newVerifiedSns || (window._newVerifiedSns = []);
+}
+function updateAdminSns(prefix,i,k,v){ const store=adminSnsStore(prefix); if(store[i]) store[i][k]=v; }
+function removeAdminSns(prefix,i){ adminSnsStore(prefix).splice(i,1); renderAdminSns(prefix); }
+function addAdminSns(prefix,limit=10){ const store=adminSnsStore(prefix); if(store.length>=limit) return; store.push({type:'x',url:'',label:''}); renderAdminSns(prefix); }
+function renderAdminSns(prefix){
+  const wrap = document.getElementById(`${prefix}-sns-wrap`);
+  if (!wrap) return;
+  const limit = prefix === 'profile' ? 10 : 500;
+  wrap.innerHTML = snsAdminEditorHtml(adminSnsStore(prefix), prefix, limit);
+}
+
 function renderTab() {
+  if (currentType === 'profile_links') { renderProfileLinksTab(); return; }
   if (currentType === 'verified') { renderVerifiedTab(); return; }
   const label = currentType === 'tags' ? '興味タグ' : '楽曲タグ';
   const suggestions = buildMergeSuggestions(allItems);
@@ -482,7 +542,92 @@ async function loadVerifiedAccounts() {
   renderVerifiedTab();
 }
 
+async function loadProfileLinks(q = '') {
+  document.getElementById('tab-content').innerHTML = '<div class="loading">読み込み中…</div>';
+  const res = await fetch(`${API}?action=admin_profile_link_list&q=${encodeURIComponent(q)}`, { credentials:'include' });
+  const json = await res.json();
+  if (!json.ok) {
+    document.getElementById('tab-content').innerHTML = `<div class="section"><div class="empty">ユーザーリンク管理は開発者アカウントのみ利用できます。<br>${esc(json.error || '')}</div></div>`;
+    return;
+  }
+  profileLinkUsers = json.data || [];
+  renderProfileLinksTab(q);
+}
+
+function renderProfileLinksTab(q = '') {
+  document.getElementById('tab-content').innerHTML = `
+    <div class="section fill-section">
+      <div class="section-title">ユーザーSNSリンク管理</div>
+      <div class="search-wrap">
+        <input id="profile-link-search" value="${esc(q)}" placeholder="表示名・ユーザー名で検索" onkeydown="if(event.key==='Enter')loadProfileLinks(this.value)">
+      </div>
+      <button class="btn" onclick="loadProfileLinks(document.getElementById('profile-link-search').value)">検索</button>
+      <div class="user-link-list" style="margin-top:12px;">
+        ${profileLinkUsers.length ? profileLinkUsers.map(userLinkRow).join('') : '<div class="empty">ユーザーが見つかりません</div>'}
+      </div>
+    </div>`;
+}
+
+function userLinkRow(u) {
+  const icon = u.user_icon ? `<img src="${esc(assetUrl(u.user_icon))}" alt="">` : esc((u.display_name || u.username || '?')[0]);
+  const count = (u.sns_links || []).filter(s => s && s.url).length;
+  return `<div class="user-link-row">
+    <div class="user-link-head">
+      <div class="user-link-icon">${icon}</div>
+      <div style="min-width:0;flex:1;">
+        <div class="user-link-name">${esc(u.display_name || u.username || '')}</div>
+        <div class="user-link-meta">@${esc(u.username || '')} / uid:${esc(u.id)} / SNS ${count}件</div>
+      </div>
+      <button class="btn btn-primary" onclick="openProfileLinkEditor(${u.id})">リンク編集</button>
+    </div>
+  </div>`;
+}
+
+function openProfileLinkEditor(userId) {
+  const user = profileLinkUsers.find(u => Number(u.id) === Number(userId));
+  if (!user) return;
+  editingProfileLinkUser = { ...user, sns_links: normalizeAdminLinks(user.sns_links || []) };
+  const body = document.getElementById('edit-verified-body');
+  body.innerHTML = `
+    <input type="hidden" id="profile-link-user-id" value="${esc(user.id)}">
+    <div class="field"><label>対象ユーザー</label><input value="${esc(user.display_name || user.username || '')} / @${esc(user.username || '')}" disabled></div>
+    <div class="field"><label>SNSリンク（最大10件）</label><div id="profile-sns-wrap">${snsAdminEditorHtml(editingProfileLinkUser.sns_links, 'profile', 10)}</div></div>
+    <div id="ev-edit-msg" class="result-msg"></div>
+  `;
+  document.querySelector('#edit-verified-modal .modal-head h3').textContent = 'ユーザーSNSリンクを編集';
+  document.querySelector('#edit-verified-modal .modal-foot .btn-primary').setAttribute('onclick', 'saveProfileLinks()');
+  document.getElementById('edit-verified-modal').classList.add('open');
+}
+
+async function saveProfileLinks() {
+  if (!editingProfileLinkUser) return;
+  const payload = {
+    user_id: editingProfileLinkUser.id,
+    sns_links: (editingProfileLinkUser.sns_links || []).filter(s => s.url && s.url.trim()).slice(0, 10),
+  };
+  const res = await fetch(`${API}?action=admin_profile_link_update`, {
+    method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(payload),
+  });
+  const json = await res.json();
+  const msg = document.getElementById('ev-edit-msg');
+  msg.style.display = 'block';
+  msg.className = 'result-msg ' + (json.ok ? 'ok' : 'err');
+  msg.textContent = json.ok ? '更新しました' : (json.error || '更新に失敗しました');
+  if (json.ok) {
+    closeEditVerified();
+    await loadProfileLinks(document.getElementById('profile-link-search')?.value || '');
+  }
+}
+
 function renderVerifiedTab() {
+  window._newVerifiedSns = [
+    { type:'x', url:'', label:'X' },
+    { type:'instagram', url:'', label:'Instagram' },
+    { type:'threads', url:'', label:'Threads' },
+    { type:'tiktok', url:'', label:'TikTok' },
+    { type:'youtube', url:'', label:'YouTube' },
+  ];
   document.getElementById('tab-content').innerHTML = `
     <div class="section">
       <div class="section-title">コミュニティアカウント作成</div>
@@ -505,13 +650,9 @@ function renderVerifiedTab() {
           <input id="va-secondary-url" placeholder="サブ1リンクURL">
           <input id="va-cta-label" placeholder="サブ2ボタン文言">
           <input id="va-cta-url" placeholder="サブ2リンクURL">
-          <input id="va-x-url" placeholder="X URL">
-          <input id="va-instagram-url" placeholder="Instagram URL">
-          <input id="va-threads-url" placeholder="Threads URL">
-          <input id="va-tiktok-url" placeholder="TikTok URL">
-          <input id="va-youtube-url" placeholder="YouTube URL">
           <input id="va-tags" placeholder="ハッシュタグ（カンマ区切り）">
         </div>
+        <div class="field"><label>SNSリンク</label><div id="va-sns-wrap">${snsAdminEditorHtml(window._newVerifiedSns, 'va', 500)}</div></div>
         <button class="btn btn-primary" onclick="createVerifiedAccount()">作成</button>
         <div id="verified-result" class="result-msg"></div>
       </div>
@@ -543,6 +684,10 @@ function verifiedRow(a) {
 function openEditVerified(id){
   const a = verifiedAccounts.find(x => x.id === id);
   if (!a) return;
+  editingProfileLinkUser = null;
+  document.querySelector('#edit-verified-modal .modal-head h3').textContent = 'コミュニティアカウントを編集';
+  document.querySelector('#edit-verified-modal .modal-foot .btn-primary').setAttribute('onclick', 'saveEditVerified()');
+  window._editingVerifiedSns = normalizeAdminLinks(a.sns_links || [], a.x_url || '');
   const body = document.getElementById('edit-verified-body');
   body.innerHTML = `
     <input type="hidden" id="ev-id" value="${a.id}">
@@ -572,19 +717,17 @@ function openEditVerified(id){
       <div class="field"><label>サブリンクURL</label><input id="ev-surl" value="${esc(a.secondary_link_url||'')}"></div>
       <div class="field"><label>サブ2ボタン文言</label><input id="ev-ctalabel" value="${esc(a.cta_label||'')}"></div>
       <div class="field"><label>サブ2リンクURL</label><input id="ev-ctaurl" value="${esc(a.cta_url||'')}"></div>
-      <div class="field"><label>X URL</label><input id="ev-xurl" value="${esc(a.x_url||'')}"></div>
-      <div class="field"><label>Instagram URL</label><input id="ev-instagram-url" value="${esc(((a.sns_links||[]).find(s=>s.type==='instagram')||{}).url||'')}"></div>
-      <div class="field"><label>Threads URL</label><input id="ev-threads-url" value="${esc(((a.sns_links||[]).find(s=>s.type==='threads')||{}).url||'')}"></div>
-      <div class="field"><label>TikTok URL</label><input id="ev-tiktok-url" value="${esc(((a.sns_links||[]).find(s=>s.type==='tiktok')||{}).url||'')}"></div>
-      <div class="field"><label>YouTube URL</label><input id="ev-youtube-url" value="${esc(((a.sns_links||[]).find(s=>s.type==='youtube')||{}).url||'')}"></div>
       <div class="field"><label>ハッシュタグ（カンマ区切り）</label><input id="ev-hashtags" value="${esc((a.hashtags||[]).join(', '))}"></div>
     </div>
+    <div class="field"><label>SNSリンク</label><div id="ev-sns-wrap">${snsAdminEditorHtml(window._editingVerifiedSns, 'ev', 500)}</div></div>
     <div id="ev-edit-msg" class="result-msg"></div>
   `;
   document.getElementById('edit-verified-modal').classList.add('open');
 }
 function closeEditVerified(){
   document.getElementById('edit-verified-modal').classList.remove('open');
+  document.querySelector('#edit-verified-modal .modal-head h3').textContent = 'コミュニティアカウントを編集';
+  document.querySelector('#edit-verified-modal .modal-foot .btn-primary').setAttribute('onclick', 'saveEditVerified()');
 }
 async function saveEditVerified(){
   const id = Number(document.getElementById('ev-id').value);
@@ -600,14 +743,8 @@ async function saveEditVerified(){
     secondary_link_url:   document.getElementById('ev-surl').value.trim(),
     cta_label: document.getElementById('ev-ctalabel').value.trim(),
     cta_url: document.getElementById('ev-ctaurl').value.trim(),
-    x_url: document.getElementById('ev-xurl').value.trim(),
-    sns_links: [
-      { type:'x', url: document.getElementById('ev-xurl').value.trim(), label:'X' },
-      { type:'instagram', url: document.getElementById('ev-instagram-url').value.trim(), label:'Instagram' },
-      { type:'threads', url: document.getElementById('ev-threads-url').value.trim(), label:'Threads' },
-      { type:'tiktok', url: document.getElementById('ev-tiktok-url').value.trim(), label:'TikTok' },
-      { type:'youtube', url: document.getElementById('ev-youtube-url').value.trim(), label:'YouTube' },
-    ].filter(s => s.url),
+    x_url: ((window._editingVerifiedSns || []).find(s => s.type === 'x' && s.url && s.url.trim()) || {}).url || '',
+    sns_links: (window._editingVerifiedSns || []).filter(s => s.url && s.url.trim()),
     hashtags: document.getElementById('ev-hashtags').value.split(',').map(s=>s.trim()).filter(Boolean),
     recommend_priority: Number(document.getElementById('ev-priority').value || 0),
     status: document.getElementById('ev-status').value,
@@ -642,14 +779,8 @@ async function createVerifiedAccount() {
     secondary_link_url: document.getElementById('va-secondary-url').value.trim(),
     cta_label: document.getElementById('va-cta-label').value.trim(),
     cta_url: document.getElementById('va-cta-url').value.trim(),
-    x_url: document.getElementById('va-x-url').value.trim(),
-    sns_links: [
-      { type:'x', url: document.getElementById('va-x-url').value.trim(), label:'X' },
-      { type:'instagram', url: document.getElementById('va-instagram-url').value.trim(), label:'Instagram' },
-      { type:'threads', url: document.getElementById('va-threads-url').value.trim(), label:'Threads' },
-      { type:'tiktok', url: document.getElementById('va-tiktok-url').value.trim(), label:'TikTok' },
-      { type:'youtube', url: document.getElementById('va-youtube-url').value.trim(), label:'YouTube' },
-    ].filter(s => s.url),
+    x_url: ((window._newVerifiedSns || []).find(s => s.type === 'x' && s.url && s.url.trim()) || {}).url || '',
+    sns_links: (window._newVerifiedSns || []).filter(s => s.url && s.url.trim()),
     hashtags: document.getElementById('va-tags').value.split(',').map(s=>s.trim()).filter(Boolean),
   };
   const res = await fetch(`${API}?action=verified_admin_create`, {
