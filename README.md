@@ -32,6 +32,51 @@ icon/                   Favicon and PWA icons
 uploads/                User generated files, ignored by Git
 ```
 
+## Technology Stack / 使用技術
+
+This project intentionally stays small and deployable on a standard PHP shared-hosting environment.
+
+- **Frontend**
+  - Plain HTML, CSS, and vanilla JavaScript
+  - Mobile-first responsive UI
+  - Progressive enhancement with lightweight inline page scripts
+  - QR reading flows using browser camera APIs where available
+  - SVG-based icons and locally hosted favicon/PWA assets
+- **Backend**
+  - PHP JSON API in `api.php`
+  - PDO MySQL access with prepared statements
+  - Automatic idempotent schema creation/migration on API boot
+  - Cookie-based user sessions
+  - HMAC-signed short-lived QR tokens for profile/event check-in flows
+- **Storage**
+  - MySQL/MariaDB tables for profiles, community accounts, events, forms, boards, check-ins, and history
+  - JSON columns/text fields for flexible profile and form configuration
+  - Local file storage under `uploads/` for generated user/community assets
+- **Operations**
+  - Environment-variable based admin utility passwords
+  - GitHub Actions syntax and secret-pattern checks
+  - Static JSON status/release feed under `status/`
+
+## Original Implementation Details / 独自実装
+
+- **Unified community account model**
+  コミュニティアカウントは専用ログインだけでなく、共同運営者の一般Buddies profileからも管理できる設計です。招待リンクは対象ユーザーIDと受諾ユーザーを照合し、承認済みリンクは再利用できない前提で扱います。
+
+- **Event and subevent check-in model**
+  メインイベントとサブイベントを分離し、それぞれ独立して受付状態を持てます。QR受付は既存プロフィールQRを活用し、未登録参加者を現地登録扱いにできる運用を想定しています。
+
+- **Form and voting mode**
+  通常フォームと投票フォームを同じフォーム基盤で扱います。匿名投票、結果公開、回答一覧などをフォーム定義側で切り替えられるようにしています。
+
+- **Profile-centric live history**
+  NEXT LIVEと過去参加ライブはプロフィールに紐づく公開情報として扱い、履歴ページや公開プロフィールで表示できます。実験用の詳細座席レイアウト機能は本リリースには含めていません。
+
+- **Open Graph card flow**
+  公開プロフィール共有向けにOG画像生成系のPHPを分離し、通常ページと共有カードの役割を分けています。
+
+- **Security-aware lightweight deployment**
+  大きなフレームワークに依存せず、共有サーバーで動かしやすい構成を保ちながら、CORS、Cookie、アップロード、管理ツール、GitHub公開時の除外設定を段階的に強化しています。
+
 ## Requirements
 
 - PHP 8.1+ recommended
