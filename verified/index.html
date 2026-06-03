@@ -454,6 +454,7 @@ function defaultActionConfig(kind = 'form'){
     body:kind === 'event' ? 'イベントへの参加登録を受け付けました。' : 'フォームへの回答を受け付けました。',
     button_label:'',
     button_url:'',
+    show_button_after_popup:false,
   };
 }
 function actionConfigFrom(item, kind = 'form'){
@@ -484,6 +485,13 @@ function actionConfigEditorHtml(prefix, cfg, labels){
         </select>
         <div class="inline-help" id="${prefix}-action-mode-help"></div>
       </div>
+      <label class="event-option-card" id="${prefix}-action-popup-button-option">
+        <input id="${prefix}-action-after-popup-button" type="checkbox" ${cfg.show_button_after_popup ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">ポップアップ後もボタンを表示する</span>
+          <span class="event-option-desc">オフの場合は完了直後のポップアップだけ表示します。参加を取り消して再参加した場合は再度ポップアップします。</span>
+        </span>
+      </label>
       <div class="field-row">
         <div class="field"><label>タイトル</label><input id="${prefix}-action-title" maxlength="80" value="${esc(cfg.title || '')}" placeholder="${esc(defaultActionConfig(prefix === 'ev' ? 'event' : 'form').title)}"></div>
         <div class="field"><label>ボタン文言（任意）</label><input id="${prefix}-action-button-label" maxlength="80" value="${esc(cfg.button_label || '')}" placeholder="例: 詳細を見る"></div>
@@ -498,9 +506,11 @@ function syncActionEditor(prefix){
   if (fields) fields.style.display = enabled ? 'grid' : 'none';
   const mode = val(`${prefix}-action-mode`) || 'popup';
   const help = document.getElementById(`${prefix}-action-mode-help`);
+  const popupButtonOption = document.getElementById(`${prefix}-action-popup-button-option`);
+  if (popupButtonOption) popupButtonOption.style.display = enabled && mode === 'popup' ? 'flex' : 'none';
   if (help) help.textContent = mode === 'button'
     ? '完了後の画面や参加中のイベントページに、設定したリンクボタンを表示します。'
-    : '完了直後にハーフモーダルでタイトル・本文・任意ボタンを表示します。';
+    : '完了直後に中央ポップアップでタイトル・本文・任意ボタンを表示します。';
 }
 function collectActionConfig(prefix, kind = 'form'){
   const cfg = defaultActionConfig(kind);
@@ -510,6 +520,7 @@ function collectActionConfig(prefix, kind = 'form'){
   cfg.body = val(`${prefix}-action-body`);
   cfg.button_label = val(`${prefix}-action-button-label`);
   cfg.button_url = val(`${prefix}-action-button-url`);
+  cfg.show_button_after_popup = document.getElementById(`${prefix}-action-after-popup-button`)?.checked || false;
   return cfg;
 }
 function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',line:'LINE',note:'note',ameba:'Ameba',link:'その他リンク'})[type] || 'その他リンク';}

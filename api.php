@@ -3989,8 +3989,9 @@ function normalizeActionConfig($raw, string $context = 'form'): array {
     $body = mb_substr(trim((string)($raw['body'] ?? '')), 0, 500);
     $buttonLabel = mb_substr(trim((string)($raw['button_label'] ?? '')), 0, 80);
     $buttonUrl = cleanUrl(is_string($raw['button_url'] ?? null) ? $raw['button_url'] : null);
+    $showButtonAfterPopup = truthyFlag($raw['show_button_after_popup'] ?? 0) === 1;
     if (!$enabled) {
-        return ['enabled' => false, 'mode' => 'popup', 'title' => '', 'body' => '', 'button_label' => '', 'button_url' => null];
+        return ['enabled' => false, 'mode' => 'popup', 'title' => '', 'body' => '', 'button_label' => '', 'button_url' => null, 'show_button_after_popup' => false];
     }
     if ($title === '') $title = $context === 'event' ? '参加登録が完了しました' : '送信が完了しました';
     if ($body === '') $body = $context === 'event' ? 'イベントへの参加登録を受け付けました。' : 'フォームへの回答を受け付けました。';
@@ -4002,6 +4003,7 @@ function normalizeActionConfig($raw, string $context = 'form'): array {
         'body' => $body,
         'button_label' => $buttonLabel,
         'button_url' => $buttonUrl,
+        'show_button_after_popup' => $showButtonAfterPopup,
     ];
 }
 function actionConfigJson(array $config): ?string {
