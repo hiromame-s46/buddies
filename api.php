@@ -376,6 +376,7 @@ function runMigrations(PDO $pdo): void {
         participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         checkin_enabled TINYINT(1) NOT NULL DEFAULT 0,
         fee_items TEXT NULL DEFAULT NULL COMMENT 'JSON array of {label,amount}',
+        action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after join',
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public' COMMENT 'public | unlisted',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -402,6 +403,9 @@ function runMigrations(PDO $pdo): void {
     }
     if (!in_array('fee_items', $eventCols, true)) {
         $pdo->exec("ALTER TABLE buddies_events ADD COLUMN fee_items TEXT NULL DEFAULT NULL COMMENT 'JSON array of {label,amount}' AFTER checkin_enabled");
+    }
+    if (!in_array('action_config', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after join' AFTER fee_items");
     }
 
     // ─ コミュニティアカウント掲示板 ─
@@ -485,6 +489,7 @@ function runMigrations(PDO $pdo): void {
         visibility VARCHAR(16) NOT NULL DEFAULT 'public',
         collect_profile TINYINT(1) NOT NULL DEFAULT 0,
         one_response TINYINT(1) NOT NULL DEFAULT 1,
+        action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after submit',
         status VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -511,6 +516,9 @@ function runMigrations(PDO $pdo): void {
         }
         if (!in_array('show_results', $formCols, true)) {
             $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN show_results TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_anonymous_vote");
+        }
+        if (!in_array('action_config', $formCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after submit' AFTER one_response");
         }
     } catch (\Throwable $e) {}
 
@@ -3805,6 +3813,7 @@ function ensureEventTables(): void {
         participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         checkin_enabled TINYINT(1) NOT NULL DEFAULT 0,
         fee_items TEXT NULL DEFAULT NULL,
+        action_config TEXT NULL DEFAULT NULL,
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -3877,6 +3886,9 @@ function ensureEventTables(): void {
         }
         if (!in_array('fee_items', $cols, true)) {
             $pdo->exec("ALTER TABLE buddies_events ADD COLUMN fee_items TEXT NULL DEFAULT NULL AFTER checkin_enabled");
+        }
+        if (!in_array('action_config', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN action_config TEXT NULL DEFAULT NULL AFTER fee_items");
         }
         $participantCols = array_column($pdo->query('DESCRIBE buddies_event_participants')->fetchAll(), 'Field');
         if (!in_array('checked_in_at', $participantCols, true)) {
@@ -3964,6 +3976,39 @@ function eventFeeItems(array $e): array {
         return ($label !== '' && $amount !== '') ? ['label' => $label, 'amount' => $amount] : null;
     }, array_slice($arr, 0, 20))));
 }
+function normalizeActionConfig($raw, string $context = 'form'): array {
+    if (is_string($raw)) {
+        $decoded = json_decode($raw, true);
+        $raw = is_array($decoded) ? $decoded : [];
+    }
+    if (!is_array($raw)) $raw = [];
+    $enabled = truthyFlag($raw['enabled'] ?? 0) === 1;
+    $mode = (string)($raw['mode'] ?? 'popup');
+    if (!in_array($mode, ['popup', 'button'], true)) $mode = 'popup';
+    $title = mb_substr(trim((string)($raw['title'] ?? '')), 0, 80);
+    $body = mb_substr(trim((string)($raw['body'] ?? '')), 0, 500);
+    $buttonLabel = mb_substr(trim((string)($raw['button_label'] ?? '')), 0, 80);
+    $buttonUrl = cleanUrl(is_string($raw['button_url'] ?? null) ? $raw['button_url'] : null);
+    if (!$enabled) {
+        return ['enabled' => false, 'mode' => 'popup', 'title' => '', 'body' => '', 'button_label' => '', 'button_url' => null];
+    }
+    if ($title === '') $title = $context === 'event' ? '参加登録が完了しました' : '送信が完了しました';
+    if ($body === '') $body = $context === 'event' ? 'イベントへの参加登録を受け付けました。' : 'フォームへの回答を受け付けました。';
+    if ($buttonLabel === '') $buttonLabel = $buttonUrl ? 'リンクを開く' : '';
+    return [
+        'enabled' => true,
+        'mode' => $mode,
+        'title' => $title,
+        'body' => $body,
+        'button_label' => $buttonLabel,
+        'button_url' => $buttonUrl,
+    ];
+}
+function actionConfigJson(array $config): ?string {
+    if (empty($config['enabled'])) return null;
+    $encoded = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    return is_string($encoded) ? $encoded : null;
+}
 function cleanUploadFileName(string $name, string $fallback): string {
     $name = trim(basename($name));
     $name = preg_replace('/[^\p{L}\p{N}._ -]+/u', '_', $name);
@@ -4032,6 +4077,7 @@ function eventEditableFields(array $b): array {
     $participantEnabled = truthyFlag($b['participant_enabled'] ?? 1);
     $checkinEnabled = $participantEnabled && truthyFlag($b['checkin_enabled'] ?? 0);
     $feeItems = eventFeeItems(['fee_items' => $b['fee_items'] ?? []]);
+    $actionConfig = normalizeActionConfig($b['action_config'] ?? null, 'event');
     return [
         'title'          => $title,
         'description'    => $description !== '' ? $description : null,
@@ -4045,6 +4091,7 @@ function eventEditableFields(array $b): array {
         'participant_enabled' => $participantEnabled,
         'checkin_enabled' => $checkinEnabled,
         'fee_items'      => $feeItems,
+        'action_config'   => $actionConfig,
         'visibility'     => $visibility,
     ];
 }
@@ -4088,6 +4135,7 @@ function buildEventData(array $e, ?int $viewerId = null, bool $includeAttachment
         'participant_enabled' => !isset($e['participant_enabled']) || !empty($e['participant_enabled']),
         'checkin_enabled' => !empty($e['checkin_enabled']),
         'fee_items'      => eventFeeItems($e),
+        'action_config'   => normalizeActionConfig($e['action_config'] ?? null, 'event'),
         'visibility'     => $visibility,
         'status'         => $e['status'],
         'created_at'     => $e['created_at'],
@@ -4221,12 +4269,12 @@ function actionEventCreate(): void { ensureEventTables();
     $a = requireVerifiedAccount();
     $f = eventEditableFields(body());
     db()->prepare("INSERT INTO buddies_events
-        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, checkin_enabled, fee_items, visibility)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, checkin_enabled, fee_items, action_config, visibility)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
        ->execute([(int)$a['id'], $f['title'], $f['description'], $f['venue'],
                   $f['starts_at'], $f['ends_at'], $f['capacity'], $f['external_url'], $f['external_label'],
                   $f['external_button_highlight'], $f['participant_enabled'], $f['checkin_enabled'],
-                  json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), $f['visibility']]);
+                  json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), actionConfigJson($f['action_config']), $f['visibility']]);
     $id = (int)db()->lastInsertId();
     $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
     $st->execute([$id]);
@@ -4244,10 +4292,11 @@ function actionEventUpdate(): void { ensureEventTables();
     $f = eventEditableFields($b);
     db()->prepare("UPDATE buddies_events SET
         title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
-        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, checkin_enabled=?, fee_items=?, visibility=? WHERE id=?")
+        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, checkin_enabled=?, fee_items=?, action_config=?, visibility=? WHERE id=?")
        ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
                   $f['capacity'], $f['external_url'], $f['external_label'], $f['external_button_highlight'],
-                  $f['participant_enabled'], $f['checkin_enabled'], json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), $f['visibility'], $id]);
+                  $f['participant_enabled'], $f['checkin_enabled'], json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE),
+                  actionConfigJson($f['action_config']), $f['visibility'], $id]);
     if ($f['visibility'] !== 'public') {
         db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND kind='like'")
            ->execute([$id]);
@@ -4458,7 +4507,12 @@ function actionEventJoin(): void { ensureEventTables();
     $mySt = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
     $mySt->execute([$eventId, $uid]);
     $kinds = array_column($mySt->fetchAll(), 'kind');
-    ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true)]);
+    ok([
+        'my_kinds' => $kinds,
+        'is_joined' => in_array('join', $kinds, true),
+        'is_liked' => in_array('like', $kinds, true),
+        'action_config' => ($kind === 'join' && $state === 'on') ? normalizeActionConfig($e['action_config'] ?? null, 'event') : null,
+    ]);
 }
 
 function actionQrToken(): void {
@@ -5089,6 +5143,7 @@ function ensureFormTables(): void {
         visibility VARCHAR(16) NOT NULL DEFAULT 'public',
         collect_profile TINYINT(1) NOT NULL DEFAULT 0,
         one_response TINYINT(1) NOT NULL DEFAULT 1,
+        action_config TEXT NULL DEFAULT NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -5115,6 +5170,9 @@ function ensureFormTables(): void {
         }
         if (!in_array('show_results', $cols, true)) {
             $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN show_results TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_anonymous_vote");
+        }
+        if (!in_array('action_config', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN action_config TEXT NULL DEFAULT NULL AFTER one_response");
         }
     } catch (\Throwable $e) {}
 }
@@ -5178,10 +5236,11 @@ function formEditableFields(array $b): array {
         'visibility'=>$visibility,
         'collect_profile'=>$mode === 'poll' && truthyFlag($b['allow_anonymous_vote'] ?? 0) ? false : truthyFlag($b['collect_profile'] ?? 0),
         'one_response'=>truthyFlag($b['one_response'] ?? 1),
+        'action_config'=>normalizeActionConfig($b['action_config'] ?? null, 'form'),
     ];
 }
 function buildFormData(array $f, bool $includePrivate = false): array {
-    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'form_mode'=>(string)($f['form_mode'] ?? 'form'), 'allow_anonymous_vote'=>!empty($f['allow_anonymous_vote']), 'show_results'=>!empty($f['show_results']), 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
+    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'form_mode'=>(string)($f['form_mode'] ?? 'form'), 'allow_anonymous_vote'=>!empty($f['allow_anonymous_vote']), 'show_results'=>!empty($f['show_results']), 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'action_config'=>normalizeActionConfig($f['action_config'] ?? null, 'form'), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
     if ($includePrivate) {
         $st = db()->prepare('SELECT COUNT(*) FROM buddies_form_responses WHERE form_id=?');
         $st->execute([(int)$f['id']]);
@@ -5209,7 +5268,7 @@ function actionFormListByAccount(): void { ensureFormTables();
 }
 function actionFormCreate(): void { ensureFormTables();
     $a = requireVerifiedAccount(); $f = formEditableFields(body());
-    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,form_mode,allow_anonymous_vote,show_results,visibility,collect_profile,one_response) VALUES (?,?,?,?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response']]);
+    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,form_mode,allow_anonymous_vote,show_results,visibility,collect_profile,one_response,action_config) VALUES (?,?,?,?,?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], actionConfigJson($f['action_config'])]);
     $id = (int)db()->lastInsertId(); $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=?'); $st->execute([$id]); ok(buildFormData($st->fetch(), true));
 }
 function actionFormUpdate(): void { ensureFormTables();
@@ -5217,7 +5276,7 @@ function actionFormUpdate(): void { ensureFormTables();
     $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=? LIMIT 1'); $st->execute([$id]); $form = $st->fetch();
     if (!$form || (int)$form['account_id'] !== (int)$a['id']) err('編集権限がありません。', 403);
     $f = formEditableFields($b);
-    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, form_mode=?, allow_anonymous_vote=?, show_results=?, visibility=?, collect_profile=?, one_response=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], $id]);
+    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, form_mode=?, allow_anonymous_vote=?, show_results=?, visibility=?, collect_profile=?, one_response=?, action_config=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], actionConfigJson($f['action_config']), $id]);
     $st->execute([$id]); ok(buildFormData($st->fetch(), true));
 }
 function actionFormDelete(): void { ensureFormTables();
@@ -5267,7 +5326,7 @@ function actionFormSubmit(): void { ensureFormTables();
         $answers[$qid] = $normalized;
     }
     db()->prepare("INSERT INTO buddies_form_responses (form_id,user_id,answers,respondent_name) VALUES (?,?,?,?)")->execute([$id, $uid, json_encode($answers, JSON_UNESCAPED_UNICODE), $u && !empty($f['collect_profile']) ? ($u['display_name'] ?: $u['username']) : null]);
-    ok(['submitted'=>true]);
+    ok(['submitted'=>true, 'action_config'=>normalizeActionConfig($f['action_config'] ?? null, 'form')]);
 }
 function buildFormResultData(array $f): array {
     $questions = json_decode((string)$f['questions'], true) ?: [];
