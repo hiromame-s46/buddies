@@ -38,7 +38,9 @@ error_reporting(E_ALL);
 $config = require __DIR__ . '/../../../api/config.php';
 
 define('SESSION_EXPIRE_HOURS', 720);
-define('ALLOWED_ORIGINS', ['*']);
+define('ALLOWED_ORIGINS', [
+    'https://buddies46.stars.ne.jp',
+]);
 define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v13.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
 define('SAKUMIMI_DATA_PATH', __DIR__ . '/../data/sakumimi_data.json');
@@ -52,10 +54,23 @@ if (!headers_sent()) {
     header('Content-Type: application/json; charset=UTF-8');
     header('X-Content-Type-Options: nosniff');
 }
-$origin = $_SERVER['HTTP_ORIGIN'] ?? '*';
-if (in_array('*', ALLOWED_ORIGINS, true) || in_array($origin, ALLOWED_ORIGINS, true)) {
+header('Referrer-Policy: strict-origin-when-cross-origin');
+header('X-Frame-Options: SAMEORIGIN');
+header('Permissions-Policy: camera=(self), microphone=(), geolocation=()');
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+$origin = $_SERVER['HTTP_ORIGIN'] ?? '';
+$allowedOrigins = ALLOWED_ORIGINS;
+$envOrigins = getenv('BUDDIES_ALLOWED_ORIGINS');
+if ($envOrigins) {
+    $allowedOrigins = array_values(array_filter(array_map('trim', explode(',', $envOrigins))));
+}
+$sameHostOrigin = (!empty($_SERVER['HTTP_HOST']) ? ((!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https://' : 'http://') . $_SERVER['HTTP_HOST'] : '');
+if ($origin !== '' && (in_array($origin, $allowedOrigins, true) || ($sameHostOrigin !== '' && $origin === $sameHostOrigin))) {
     header("Access-Control-Allow-Origin: $origin");
     header('Access-Control-Allow-Credentials: true');
+    header('Vary: Origin');
 }
 header('Access-Control-Allow-Methods: GET, POST, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Session-Token, X-Verified-Token');
@@ -642,6 +657,15 @@ function requireAuth(): array {
     return $u;
 }
 function generateToken(): string { return bin2hex(random_bytes(32)); }
+function secureCookieOptions(int $expires): array {
+    return [
+        'expires'  => $expires,
+        'path'     => '/',
+        'secure'   => !empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off',
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ];
+}
 function qrSigningKey(): string {
     global $config;
     return hash('sha256', (string)($config['password'] ?? '') . '|buddies-profile-qr');
@@ -657,24 +681,14 @@ function signedQrUserId(string $token): int {
     return hash_equals($expected, $signature) ? $uid : 0;
 }
 function setSessionCookie(string $token): void {
-    setcookie('sakulabo_token', $token, [
-        'expires'  => time() + SESSION_EXPIRE_HOURS * 3600,
-        'path'     => '/',
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
+    setcookie('sakulabo_token', $token, secureCookieOptions(time() + SESSION_EXPIRE_HOURS * 3600));
 }
 function getVerifiedToken(): ?string {
     $h = $_SERVER['HTTP_X_VERIFIED_TOKEN'] ?? ($_COOKIE['buddies_verified_token'] ?? null);
     return $h ? trim($h) : null;
 }
 function setVerifiedCookie(string $token): void {
-    setcookie('buddies_verified_token', $token, [
-        'expires'  => time() + SESSION_EXPIRE_HOURS * 3600,
-        'path'     => '/',
-        'httponly' => true,
-        'samesite' => 'Lax',
-    ]);
+    setcookie('buddies_verified_token', $token, secureCookieOptions(time() + SESSION_EXPIRE_HOURS * 3600));
 }
 function verifiedAccountByUserId(int $userId): ?array {
     if ($userId <= 0) return null;
@@ -1843,7 +1857,7 @@ function actionLogin(): void {
 function actionLogout(): void {
     $token = getToken();
     if ($token) db()->prepare('DELETE FROM sakulabo_sessions WHERE token = ?')->execute([$token]);
-    setcookie('sakulabo_token', '', ['expires' => time() - 3600, 'path' => '/']);
+    setcookie('sakulabo_token', '', secureCookieOptions(time() - 3600));
     ok();
 }
 
@@ -3217,8 +3231,8 @@ function actionVerifiedLogout(): void {
     if ($token) db()->prepare('DELETE FROM sakulabo_sessions WHERE token = ?')->execute([$token]);
     $legacyToken = getVerifiedToken();
     if ($legacyToken) db()->prepare('DELETE FROM buddies_verified_sessions WHERE token = ?')->execute([$legacyToken]);
-    setcookie('sakulabo_token', '', ['expires' => time() - 3600, 'path' => '/']);
-    setcookie('buddies_verified_token', '', ['expires' => time() - 3600, 'path' => '/']);
+    setcookie('sakulabo_token', '', secureCookieOptions(time() - 3600));
+    setcookie('buddies_verified_token', '', secureCookieOptions(time() - 3600));
     ok();
 }
 

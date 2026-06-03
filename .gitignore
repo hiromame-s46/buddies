@@ -1,7 +1,20 @@
 .DS_Store
 
+# Environment / secrets
+.env
+.env.*
+!.env.example
+config.php
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+
 # Local schema/runtime markers
 .buddies_schema_*.lock
+*.lock.local
 
 # User generated uploads
 uploads/
@@ -12,3 +25,25 @@ uploads/
 *のコピー.html
 old.html
 
+# Logs / runtime dumps
+*.log
+logs/
+tmp/
+cache/
+*.sqlite
+*.sqlite3
+*.sql
+*.dump
+
+# Dependencies / tooling caches
+node_modules/
+vendor/
+.phpunit.cache/
+.pytest_cache/
+.cache/
+
+# Editor / OS files
+.idea/
+.vscode/
+*.swp
+*.swo

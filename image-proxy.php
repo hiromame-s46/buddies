@@ -8,6 +8,11 @@ if (!$url || !filter_var($url, FILTER_VALIDATE_URL)) {
 }
 
 $host = parse_url($url, PHP_URL_HOST) ?: '';
+$scheme = parse_url($url, PHP_URL_SCHEME) ?: '';
+if ($scheme !== 'https') {
+    http_response_code(400);
+    exit;
+}
 $allowedHosts = [
     'sakurazaka46.com',
     'cdn.sakurazaka46.com',
@@ -40,6 +45,10 @@ if (!$data) {
     http_response_code(404);
     exit;
 }
+if (strlen($data) > 5 * 1024 * 1024) {
+    http_response_code(413);
+    exit;
+}
 
 $info = @getimagesizefromstring($data);
 if (!$info || empty($info['mime']) || !str_starts_with($info['mime'], 'image/')) {
@@ -49,5 +58,7 @@ if (!$info || empty($info['mime']) || !str_starts_with($info['mime'], 'image/'))
 
 header('Content-Type: ' . $info['mime']);
 header('Cache-Control: public, max-age=86400');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 header('Access-Control-Allow-Origin: *');
 echo $data;

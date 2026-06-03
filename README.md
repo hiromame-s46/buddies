@@ -1,155 +1,121 @@
-# Buddies — 櫻坂46ファン向けコミュニティマッチングプラットフォーム
+# Buddies profile
 
-Buddies（バディーズ）は、櫻坂46を推している人同士が繋がるためのプラットフォームです。プロフィールを作成して、同じメンバーを推している人や共通の興味を持つ人を見つけ、新しい友達や仲間と出会えます。
+櫻坂46ファン同士がプロフィール、NEXT LIVE、参加履歴、コミュニティイベントを通じてつながるためのWebアプリです。
 
-## 📱 主な機能
+This is a lightweight community profile and event-management app for Sakurazaka46 fans.
 
-### 🏠 ホーム
-アプリの入口です。ログイン状態に応じてタブが表示されます。
-- **未ログイン時**: ログイン・新規登録フォームが表示されます
-- **ログイン済み**: マイページ、探す、設定タブへの案内が表示されます
+> 非公式ファンプロジェクトです。櫻坂46公式、Seed & Flower、Sony Music、各会場とは関係ありません。
 
-### 👤 マイページ
-自分のプロフィールを確認・編集できます。
+## Features / 主な機能
 
-#### プロフィール表示
-- **基本情報**: 表示名、性別、活動地域、年齢
-- **推し情報**: 
-  - 推し始めた時期
-  - 推しメン（最大3人、1番目が第一推し）
-  - 好きな曲（最大3曲）
-- **自己紹介**: 好きなこと、活動エリアなどを自由に記入
-- **興味タグ**: ライブ参戦、グッズ推奨など（最大5個）
-- **SNSリンク**: X、Threads、Instagram、TikTok、YouTube、カスタムリンク（最大4個）
-  - SNS設定済みの場合、プロフィール上部に「SNS登録済み」バッジが表示されます
-- **フォローのスタンス**:
-  - 無言フォローOK
-  - フォロー前に一言欲しい
-- **紹介タグ**: X上でワンタップで投稿できるプロフィール紹介テンプレート
+- 一般ユーザー向けプロフィール作成、推しメン、好きな曲、SNSリンク、QR交換
+- NEXT LIVE と過去参加ライブの表示
+- Buddies search、共通点ベースの検索・フィルタ
+- コミュニティアカウント、共同運営者招待、イベント管理
+- イベント/サブイベント参加、QR受付、受付済みリスト同期
+- フォーム、投票モード、回答一覧、公開結果表示
+- コミュニティ掲示板、ピン留め投稿、添付ファイル対応
+- Xシェアカード、公開プロフィール、verifiedプロフィール
 
-#### プロフィール編集
-「編集」ボタンからプロフィールを編集できます。
+## Repository Layout
 
-**基本情報編集**
-- 表示名（20文字まで）
-- 性別（男性/女性/その他/未選択）
-- 活動地域（都道府県選択）
-- 自己紹介（500文字まで）
+```text
+api.php                 Main JSON API and DB migrations
+index.html              User app shell
+view.html               Public profile page
+live.html               NEXT LIVE page
+history.html            Public history page
+verified/               Community account, events, forms, check-in
+status/                 Public status and release pages
+help/                   Help center pages
+icon/                   Favicon and PWA icons
+uploads/                User generated files, ignored by Git
+```
 
-**推し情報編集**
-- 推し始めた時期（年選択）
-- 推しメン追加: 推しメンの名前を入力するとサジェストが表示されます。最大3人まで追加可能。1番目が第一推しになります。
-- 好きな曲追加: 曲名を入力するとサジェストが表示されます。入力欄の上に候補リストが表示されます。ひらがな・カタカナは区別なく検索できます。最大3曲まで追加可能。
-- 興味タグ追加: タグを入力するとサジェストが表示されます。同様にひらがな・カタカナは区別なく検索できます。最大5個まで追加可能。
+## Requirements
 
-**SNS編集**
-- SNSの種類を選択（X、Threads、Instagram、TikTok、YouTube、カスタムリンク）
-- URLを入力
-- SNSリンクが1つ以上あると、「フォローのスタンス」設定が表示されます
-- 最大4個まで追加可能
+- PHP 8.1+ recommended
+- MySQL/MariaDB with PDO MySQL
+- HTTPS in production
+- A private config file outside this repository:
 
-**紹介タグ編集**
-- テンプレート選択:
-  - **スタンダード**: 基本情報（地域・性別・世代）、推しメン、フォロー時のお願いを含むフル版
-  - **シンプル**: 推しメン情報のみのシンプル版
-  - **にぎやか**: 絵文字を多用した賑やかな版
-  - **カスタム**: 自分で自由に編集可能
-- プロフィール画面の「X」ボタンをタップすると、このテンプレートテキストがクリップボードにコピーされ、Xで投稿できます
+```php
+<?php
+return [
+    'host' => 'localhost',
+    'dbname' => 'database_name',
+    'username' => 'database_user',
+    'password' => 'database_password',
+];
+```
 
-### 🔍 探す
-同じ推し、共通の興味を持つ人を見つけられます。
+`api.php` currently loads this file from `../../../api/config.php`. Keep credentials outside the public web root and outside Git.
 
-#### 検索
-- **テキスト検索**: 名前、推しメン名、興味タグ、好きな曲で検索できます
-- **クリアボタン**: 入力欄の右側に×ボタンが表示され、タップするとすぐに検索欄をクリアできます
+## Local Development
 
-#### フィルター
-「フィルター」ボタンでより細かい条件で絞り込めます。複数のタブから条件を指定できます。
+```bash
+php -S 127.0.0.1:8000 -t ..
+```
 
-**メンバータブ**
-- マッチング条件: 「いずれか」（1人でも一致）、「全員一致」（全員推している）を選択可能
-- 推しメンを複数選択して絞り込み
+Then open:
 
-**興味タブ**
-- 登録されている人気の興味タグから選択
-- タグが追加されると、そのタグを選択している人が表示されます
-- 自分で入力して追加するボタンはありません（登録されているタグのみから選択）
+```text
+http://127.0.0.1:8000/buddies/
+```
 
-**楽曲タブ**
-- 登録されている人気の楽曲から選択
-- 楽曲が追加されると、その曲を好きな人が表示されます
-- 自分で入力して追加するボタンはありません（登録されている楽曲のみから選択）
+Database migrations are created automatically by `api.php` when the API is first accessed.
 
-**SNSタブ**
-- 「SNS設定済みのみ表示」をオンにすると、SNSリンクを登録している人のみが表示されます
+## Environment Variables
 
-#### 検索結果
-マッチした人のプロフィールカードが表示されます。
-- スクロールで自動的に次のページが読み込まれます（無限スクロール）
-- プロフィールカードをタップするとプロフィール詳細モーダルが開きます
+Use environment variables for operational secrets and admin-only tools:
 
-### 👥 プロフィール詳細
-検索結果やマイページからプロフィールカードをタップすると詳細モーダルが開きます。
+```bash
+BUDDIES_ALLOWED_ORIGINS="https://buddies46.stars.ne.jp"
+BUDDIES_STATUS_ADMIN_PASSWORD="change-me"
+BUDDIES_HELP_ADMIN_PASSWORD="change-me"
+```
 
-#### 表示内容
-- 表示名とプロフィール画像
-- SNS登録済みバッジ（設定済みの場合）
-- 基本情報（性別、地域、年齢）
-- マッチ理由の表示（共通の推しメンや興味タグがあれば「〇〇推し同士」などと表示）
-- My推し情報（推し始めた時期、推しメン、好きな曲）
-- 自己紹介文
-- 興味タグ
-- SNSリンク（クリック/タップで外部サイトへ）
-- プロフィール画像（タップで拡大表示）
+Do not commit production values. Use server-level environment configuration or a private deployment secret store.
 
-#### 操作
-- 推しメン名や好きな曲をタップすると、その条件で検索できます
-- 興味タグをタップすると、そのタグで検索できます
-- SNSアイコンをタップすると、SNSプロフィールへジャンプします
-- 共有ボタン: Xでシェアできます（プロフィール情報テキストがツイート欄に挿入されます）
+## Security Notes
 
-### 🎨 プロフィール画像設定
-マイページの画像をタップして、プロフィール画像を変更できます。
+- Session cookies are `HttpOnly`, `SameSite=Lax`, and `Secure` on HTTPS.
+- API CORS allows same-origin and configured origins only; wildcard credentialed CORS is intentionally avoided.
+- Admin utility passwords are read from environment variables. If they are not set, login is disabled.
+- Uploaded user files are stored under `uploads/`, which is excluded from Git.
+- Keep `config.php`, `.env`, private keys, DB dumps, logs, and backups out of the repository.
+- Report security issues privately. See [SECURITY.md](SECURITY.md).
 
-- アイコンピッカーが開き、複数のデザインから選択可能
-- 背景色とアイコンスタイルを組み合わせてカスタマイズ
-- 初期設定では自動生成されたアイコンが表示されます
+## GitHub / Open Source Hygiene
 
-### ⚙️ アカウント設定
-マイページの「設定」ボタンから、アカウント関連の設定ができます。
+- `.gitignore` excludes uploads, local schema markers, secrets, logs, caches, and dependency directories.
+- The security workflow checks PHP syntax and scans changed source for common committed-secret patterns.
+- Do not open public issues containing credentials, tokens, private URLs, or user personal data.
+- Before publishing a release, check:
+  - `php -l api.php`
+  - HTML inline script syntax
+  - `git diff --check`
+  - No generated uploads or local secrets are staged
 
-- **ユーザー名変更**: 英数字・アンダースコア使用可（3〜32文字）
-- **パスワード変更**: 8文字以上の新しいパスワードを設定
-- **ログアウト**: このデバイスからサインアウト
+## Release Process
 
-## 💾 データ管理
+1. Update [CHANGELOG.md](CHANGELOG.md).
+2. Commit the release changes.
+3. Create an annotated tag, for example:
 
-### プロフィール情報の保存
-- すべてのプロフィール情報は自動的に保存されます
-- 編集画面で「保存」ボタンをタップすると変更が確定します
-- 「キャンセル」で編集を破棄できます
+```bash
+git tag -a v2.1.0 -m "Release v2.1.0"
+git push origin main --tags
+```
 
-### 削除機能
-- 各項目（推しメン、好きな曲、興味タグ、SNS）の×ボタンで個別に削除可能
+## License / Usage
 
-## 🌐 ブラウザ対応
-
-- モバイルブラウザ（iOS Safari、Android Chrome等）推奨
-- デスクトップブラウザも対応（Chrome、Safari、Firefox等）
-- 日本語IME対応（変換中の誤送信を防止）
-
-## 📝 ヒント
-
-初めてプロフィールを作成するときは、以下の情報を入力することをお勧めします：
-
-1. **推しメンを設定**: 同じメンバーを推している人が見つけやすくなります
-2. **好きな曲を追加**: 音楽の好みで繋がれます
-3. **興味タグを設定**: ライブ参戦、グッズ推奨などの活動スタイルを共有
-4. **自己紹介文を記入**: あなたの人柄が伝わりやすくなります
-5. **SNSリンクを設定**: フォローしやすくなります
+This repository contains application code for a fan project. Before reusing it publicly, review third-party assets, icons, venue/member data, and service-specific terms.
 
 ---
 
-## サポート
+# 日本語メモ
 
-不具合や機能リクエストがある場合は、お問い合わせフォームからご連絡ください。
+本番運用時は、DB設定ファイル・環境変数・アップロードファイルを必ずGit管理外に置いてください。
+
+コミュニティ向け機能は、イベント受付やフォーム回答などユーザー情報を扱うため、最小限の取得・明示的な公開設定・管理者権限の分離を前提に設計します。

@@ -1,14 +1,23 @@
 <?php
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Lax');
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+  ini_set('session.cookie_secure', '1');
+  header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 session_start();
-$password = '447686'; // 必ず変更
+$password = getenv('BUDDIES_STATUS_ADMIN_PASSWORD') ?: '';
 
 if (isset($_POST['login'])) {
-  if ($_POST['password'] === $password) {
+  if ($password !== '' && hash_equals($password, (string)($_POST['password'] ?? ''))) {
     $_SESSION['admin'] = true;
     header('Location: admin.php');
     exit;
   }
-  $error = 'パスワードが違います';
+  $error = $password === '' ? '管理パスワードが設定されていません' : 'パスワードが違います';
 }
 if (isset($_GET['logout'])) {
   session_destroy();

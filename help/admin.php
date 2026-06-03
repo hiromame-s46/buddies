@@ -1,9 +1,18 @@
 <?php
+ini_set('session.cookie_httponly', '1');
+ini_set('session.cookie_samesite', 'Lax');
+if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+  ini_set('session.cookie_secure', '1');
+  header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
+}
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 session_start();
-$ADMIN_PASS = '447686';
+$ADMIN_PASS = getenv('BUDDIES_HELP_ADMIN_PASSWORD') ?: '';
 
 if(isset($_POST['logout'])){ session_destroy(); header('Location: admin.php'); exit; }
-if(isset($_POST['pass'])){ if($_POST['pass']===$ADMIN_PASS){ $_SESSION['admin']=1; } else { $err='パスワードが違います'; } }
+if(isset($_POST['pass'])){ if($ADMIN_PASS !== '' && hash_equals($ADMIN_PASS, (string)$_POST['pass'])){ $_SESSION['admin']=1; } else { $err=$ADMIN_PASS === '' ? '管理パスワードが設定されていません' : 'パスワードが違います'; } }
 
 $dataFile='data.json';
 if(!file_exists($dataFile)) file_put_contents($dataFile, json_encode(['categories'=>[]],JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
@@ -74,6 +83,7 @@ if(empty($_SESSION['admin'])): ?>
 <link rel="manifest" href="../icon/site.webmanifest">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 <style>
 :root{--line:#e5e5e5}
 *{box-sizing:border-box}html,body{height:100%}
@@ -217,7 +227,8 @@ function delItem(id,cat){
   document.getElementById('delForm').submit();
 }
 function md(a,b){ const s=fBody.selectionStart, e=fBody.selectionEnd, t=fBody.value; fBody.value=t.slice(0,s)+a+t.slice(s,e)+b+t.slice(e); fBody.focus(); fBody.selectionStart=s+a.length; fBody.selectionEnd=e+a.length; updatePreview(); }
-function updatePreview(){ preview.innerHTML = marked.parse(fBody.value||'*プレビューがここに表示されます*'); }
+function safeMarkdown(s){ return DOMPurify.sanitize(marked.parse(s||''), {USE_PROFILES:{html:true}}); }
+function updatePreview(){ preview.innerHTML = safeMarkdown(fBody.value||'*プレビューがここに表示されます*'); }
 fBody.addEventListener('input', updatePreview);
 function beforeSave(){ if(!fCat.value.trim()||!fTitle.value.trim()){ alert('カテゴリとタイトルは必須です'); return false;} return true; }
 function openFormNew(){ document.getElementById('fTitle').textContent='新規記事'; fId.value=''; fCat.value=''; fTitle.value=''; fDesc.value=''; fBody.value=''; updatePreview(); openForm(); }

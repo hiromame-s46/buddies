@@ -1,5 +1,8 @@
 <?php
 header('Content-Type: text/html; charset=utf-8');
+header('X-Frame-Options: SAMEORIGIN');
+header('X-Content-Type-Options: nosniff');
+header('Referrer-Policy: strict-origin-when-cross-origin');
 $data = file_exists('data.json') ? file_get_contents('data.json') : '{"categories":[]}';
 ?>
 <!DOCTYPE html>
@@ -124,6 +127,7 @@ button{border:0;background:none;padding:0;cursor:pointer}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 <script>
 const DATA = <?= $data ?>;
 const list = document.getElementById('list');
@@ -135,7 +139,9 @@ const aTitle = document.getElementById('aTitle');
 
 const items = DATA.categories.flatMap(c => c.items.map(i => ({...i, cat:c.title})));
 
-function nl2br(s){ return (s||'').replace(/\n/g,'<br>'); }
+function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
+function safeMarkdown(s){ return DOMPurify.sanitize(marked.parse(s||''), {USE_PROFILES:{html:true}}); }
 
 function render(filter=''){
   list.innerHTML='';
@@ -165,7 +171,7 @@ function render(filter=''){
 }
 function open(it){
   aTitle.textContent = it.title;
-  aBody.innerHTML = marked.parse(it.body||'');
+  aBody.innerHTML = safeMarkdown(it.body||'');
   article.classList.add('on');
   document.body.style.overflow='hidden';
 }

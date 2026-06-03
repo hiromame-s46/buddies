@@ -1,0 +1,37 @@
+name: Security checks
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  php-and-secret-check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: PHP syntax check
+        run: |
+          find . -name '*.php' -not -path './uploads/*' -print0 \
+            | xargs -0 -n1 php -l
+
+      - name: Check for common committed secrets
+        run: |
+          if grep -RInE "(api[_-]?key|secret|private[_-]?key|password)[[:space:]]*=[[:space:]]*['\"][^'\"]{8,}" \
+            --include='*.php' --include='*.html' --include='*.js' --include='*.md' . \
+            --exclude-dir=.git --exclude-dir=uploads --exclude-dir=node_modules --exclude-dir=vendor; then
+            echo "Potential committed secret found. Review the matches above."
+            exit 1
+          fi
