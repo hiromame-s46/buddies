@@ -119,6 +119,26 @@ function tableColumns(PDO $pdo, string $table): array {
     }
 }
 
+function envv(string $key, ?string $default = null): ?string {
+    static $env = null;
+    if ($env === null) {
+        $env = [];
+        foreach ([__DIR__ . '/../mail-system/.env', __DIR__ . '/.env'] as $file) {
+            if (!is_file($file)) continue;
+            foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+                $line = trim($line);
+                if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) continue;
+                [$k, $v] = array_map('trim', explode('=', $line, 2));
+                if ($k === '') continue;
+                $env[$k] = trim($v, " \t\n\r\0\x0B\"'");
+            }
+        }
+    }
+    if (array_key_exists($key, $env)) return $env[$key];
+    $v = getenv($key);
+    return $v === false ? $default : (string)$v;
+}
+
 function ensureVerifiedCollaboratorTables(PDO $pdo): void {
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_verified_collaborators (
         id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
@@ -376,6 +396,7 @@ function runMigrations(PDO $pdo): void {
         participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         checkin_enabled TINYINT(1) NOT NULL DEFAULT 0,
         fee_items TEXT NULL DEFAULT NULL COMMENT 'JSON array of {label,amount}',
+        action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after join',
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public' COMMENT 'public | unlisted',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -402,6 +423,9 @@ function runMigrations(PDO $pdo): void {
     }
     if (!in_array('fee_items', $eventCols, true)) {
         $pdo->exec("ALTER TABLE buddies_events ADD COLUMN fee_items TEXT NULL DEFAULT NULL COMMENT 'JSON array of {label,amount}' AFTER checkin_enabled");
+    }
+    if (!in_array('action_config', $eventCols, true)) {
+        $pdo->exec("ALTER TABLE buddies_events ADD COLUMN action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after join' AFTER fee_items");
     }
 
     // ─ コミュニティアカウント掲示板 ─
@@ -485,6 +509,7 @@ function runMigrations(PDO $pdo): void {
         visibility VARCHAR(16) NOT NULL DEFAULT 'public',
         collect_profile TINYINT(1) NOT NULL DEFAULT 0,
         one_response TINYINT(1) NOT NULL DEFAULT 1,
+        action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after submit',
         status VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -511,6 +536,9 @@ function runMigrations(PDO $pdo): void {
         }
         if (!in_array('show_results', $formCols, true)) {
             $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN show_results TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_anonymous_vote");
+        }
+        if (!in_array('action_config', $formCols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN action_config TEXT NULL DEFAULT NULL COMMENT 'JSON action after submit' AFTER one_response");
         }
     } catch (\Throwable $e) {}
 
@@ -618,6 +646,7 @@ function err(string $msg, int $code = 400): never {
 function body(): array {
     static $b = null;
     if ($b !== null) return $b;
+    if (!empty($_POST)) { $b = $_POST; return $b; }
     $b = json_decode(file_get_contents('php://input'), true) ?? [];
     return $b;
 }
@@ -877,8 +906,8 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['bio']            = $bp['bio']           ?? null;
         $data['tags']           = $bp['tags']           ? json_decode($bp['tags'],           true) : [];
         $data['favorite_songs'] = $bp['favorite_songs'] ? json_decode($bp['favorite_songs'], true) : [];
-        $data['next_lives']     = !empty($bp['next_lives']) ? json_decode($bp['next_lives'], true) : [];
-        $data['next_live_seats'] = !empty($bp['next_live_seats']) ? (json_decode($bp['next_live_seats'], true) ?: []) : [];
+        $data['next_lives']     = normalizeLiveIds(!empty($bp['next_lives']) ? (json_decode($bp['next_lives'], true) ?: []) : []);
+        $data['next_live_seats'] = normalizeNextLiveSeats(!empty($bp['next_live_seats']) ? (json_decode($bp['next_live_seats'], true) ?: []) : [], $data['next_lives']);
         $data['sns_links']      = $bp['sns_links']      ? json_decode($bp['sns_links'],      true) : [];
         $data['follow_stance']  = $bp['follow_stance'] ?? null;
         $data['post_template']  = $bp['post_template'] ?? null;
@@ -951,8 +980,8 @@ function buildRowData(array $r): array {
         'bio'           => $r['bio']           ?? null,
         'tags'          => isset($r['tags'])           && $r['tags']           ? json_decode($r['tags'],           true) : [],
         'favorite_songs'=> isset($r['favorite_songs']) && $r['favorite_songs'] ? json_decode($r['favorite_songs'], true) : [],
-        'next_lives'    => isset($r['next_lives'])     && $r['next_lives']     ? json_decode($r['next_lives'],     true) : [],
-        'next_live_seats' => isset($r['next_live_seats']) && $r['next_live_seats'] ? (json_decode($r['next_live_seats'], true) ?: []) : [],
+        'next_lives'    => normalizeLiveIds(isset($r['next_lives']) && $r['next_lives'] ? (json_decode($r['next_lives'], true) ?: []) : []),
+        'next_live_seats' => normalizeNextLiveSeats(isset($r['next_live_seats']) && $r['next_live_seats'] ? (json_decode($r['next_live_seats'], true) ?: []) : [], isset($r['next_lives']) && $r['next_lives'] ? (json_decode($r['next_lives'], true) ?: []) : []),
         'sns_links'     => isset($r['sns_links'])      && $r['sns_links']      ? json_decode($r['sns_links'],      true) : [],
         'follow_stance' => $r['follow_stance'] ?? null,
         'post_template' => $r['post_template'] ?? null,
@@ -970,12 +999,86 @@ function decodeJsonArray(?string $json): array {
     return is_array($arr) ? array_values(array_filter($arr, fn($v) => is_string($v) && trim($v) !== '')) : [];
 }
 
-function normalizeNextLiveSeats($value, array $allowedLives = []): array {
+function ambiguousLiveDates(): array {
+    static $dates = null;
+    if ($dates !== null) return $dates;
+    $dates = [];
+    $path = __DIR__ . '/../data/live.json';
+    if (!is_file($path)) return $dates;
+    $raw = json_decode((string)file_get_contents($path), true);
+    $counts = [];
+    $items = is_array($raw['items'] ?? null) ? $raw['items'] : (is_array($raw) ? $raw : []);
+    foreach ($items as $live) {
+        foreach ((array)($live['performances'] ?? []) as $perf) {
+            $date = trim((string)($perf['date'] ?? ''));
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) {
+                $counts[$date] = ($counts[$date] ?? 0) + 1;
+            }
+        }
+    }
+    foreach ($counts as $date => $count) {
+        if ($count > 1) $dates[$date] = true;
+    }
+    return $dates;
+}
+
+function liveIdDate(string $id): string {
+    $date = explode('|', $id, 2)[0] ?? '';
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : '';
+}
+
+function normalizeLiveId(string $id): string {
+    $id = trim($id);
+    $date = liveIdDate($id);
+    return ($date !== '' && !isset(ambiguousLiveDates()[$date])) ? $date : $id;
+}
+
+function normalizeLiveIds(array $ids): array {
+    $out = [];
+    $seen = [];
+    foreach ($ids as $id) {
+        $normalized = normalizeLiveId((string)$id);
+        if ($normalized === '' || mb_strlen($normalized) > 260 || isset($seen[$normalized])) continue;
+        $seen[$normalized] = true;
+        $out[] = $normalized;
+    }
+    return $out;
+}
+
+function normalizeLiveSeatMap($value, array $allowedLives = []): array {
     if (!is_array($value)) return [];
-    $allowed = array_flip(array_map('strval', $allowedLives));
+    $allowed = array_flip(array_map('strval', normalizeLiveIds($allowedLives)));
     $out = [];
     foreach ($value as $liveId => $seat) {
-        $liveId = trim((string)$liveId);
+        $normalized = normalizeLiveId((string)$liveId);
+        if ($normalized === '' || mb_strlen($normalized) > 260) continue;
+        if ($allowedLives && !isset($allowed[$normalized])) continue;
+        if (!is_array($seat)) continue;
+        $out[$normalized] = $seat;
+    }
+    return $out;
+}
+
+function liveJsonLikePatterns(string $id): array {
+    $normalized = normalizeLiveId($id);
+    $date = liveIdDate($normalized);
+    $ids = [$normalized];
+    if ($date !== '' && !isset(ambiguousLiveDates()[$date])) {
+        $ids[] = $date . '|';
+    }
+    $patterns = [];
+    foreach (array_unique($ids) as $v) {
+        $patterns[] = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $v) . '%';
+    }
+    return $patterns;
+}
+
+function normalizeNextLiveSeats($value, array $allowedLives = []): array {
+    $value = normalizeLiveSeatMap($value, $allowedLives);
+    $allowed = array_flip(array_map('strval', normalizeLiveIds($allowedLives)));
+    $out = [];
+    foreach ($value as $liveId => $seat) {
+        $liveId = normalizeLiveId((string)$liveId);
         if ($liveId === '' || mb_strlen($liveId) > 260) continue;
         if ($allowedLives && !isset($allowed[$liveId])) continue;
         if (!is_array($seat)) continue;
@@ -1023,7 +1126,7 @@ function getBuddiesHistoryForProfile(int $userId): array {
                 'day' => $r['happened_day'] !== null ? (int)$r['happened_day'] : null,
                 'title' => (string)$r['title'],
                 'note' => $r['note'] !== null ? (string)$r['note'] : '',
-                'live_id' => $r['live_id'] !== null ? (string)$r['live_id'] : '',
+                'live_id' => $r['live_id'] !== null ? normalizeLiveId((string)$r['live_id']) : '',
                 'image_url' => $r['image_url'] !== null ? (string)$r['image_url'] : '',
                 'image_mime' => $r['image_mime'] !== null ? (string)$r['image_mime'] : '',
                 'image_size' => $r['image_size'] !== null ? (int)$r['image_size'] : 0,
@@ -1046,7 +1149,7 @@ function normalizeBuddiesHistoryItems($items): array {
         $day = isset($item['day']) && $item['day'] !== '' && $item['day'] !== null ? (int)$item['day'] : null;
         $title = trim((string)($item['title'] ?? ''));
         $note = trim((string)($item['note'] ?? ''));
-        $liveId = trim((string)($item['live_id'] ?? ''));
+        $liveId = normalizeLiveId(trim((string)($item['live_id'] ?? '')));
         if ($year < 1990 || $year > $maxYear) err('My Buddies history の年が正しくありません。');
         if ($month !== null && ($month < 1 || $month > 12)) err('My Buddies history の月が正しくありません。');
         if ($day !== null && $month === null) err('日を入力する場合は月も入力してください。');
@@ -1711,6 +1814,8 @@ match ($action) {
 
     'admin_tag_list'          => actionAdminTagList(),
     'admin_tag_merge'         => actionAdminTagMerge(),
+    'admin_live_id_list'      => actionAdminLiveIdList(),
+    'admin_live_id_merge'     => actionAdminLiveIdMerge(),
     'admin_profile_link_list' => actionAdminProfileLinkList(),
     'admin_profile_link_update' => actionAdminProfileLinkUpdate(),
 
@@ -1776,6 +1881,20 @@ match ($action) {
     'form_submit'             => actionFormSubmit(),
     'form_responses'          => actionFormResponses(),
     'form_results'            => actionFormResults(),
+
+    'contact_mine_list'       => actionContactMineList(),
+    'contact_update'          => actionContactUpdate(),
+    'contact_update_message'  => actionContactUpdateMessage(),
+    'contact_cancel'          => actionContactCancel(),
+    'contact_user_reply'      => actionContactUserReply(),
+    'contact_mark_read'       => actionContactMarkRead(),
+    'contact_user_hide'       => actionContactUserHide(),
+    'contact_admin_list'      => actionContactAdminList(),
+    'contact_admin_get'       => actionContactAdminGet(),
+    'contact_admin_reply'     => actionContactAdminReply(),
+    'contact_admin_send_mail' => actionContactAdminSendMail(),
+    'contact_admin_update_status' => actionContactAdminUpdateStatus(),
+    'contact_admin_delete'    => actionContactAdminDelete(),
 
     default => err('不明なアクションです。'),
 };
@@ -2041,10 +2160,10 @@ function actionProfileUpdate(): void {
     if ($bio          && mb_strlen($bio)          > 500)  err('自己紹介は500文字以内で入力してください。');
     if ($postTemplate && mb_strlen($postTemplate) > 1000) err('SNS紹介タグは1000文字以内で入力してください。');
     if ($nextLives !== null) {
-        $nextLives = array_values(array_unique(array_filter(array_map(function($v) {
+        $nextLives = normalizeLiveIds(array_values(array_unique(array_filter(array_map(function($v) {
             $v = trim((string)$v);
             return $v !== '' && mb_strlen($v) <= 260 ? $v : '';
-        }, $nextLives))));
+        }, $nextLives)))));
     }
     $nextLiveSeats = normalizeNextLiveSeats($nextLiveSeats, $nextLives ?? []);
 
@@ -2115,10 +2234,10 @@ function actionNextLiveUpdate(): void {
 
     $nextLives = isset($b['next_lives']) && is_array($b['next_lives']) ? $b['next_lives'] : $currentLives;
     $nextLives = array_slice($nextLives, 0, 60);
-    $nextLives = array_values(array_unique(array_filter(array_map(function($v) {
+    $nextLives = normalizeLiveIds(array_values(array_unique(array_filter(array_map(function($v) {
         $v = trim((string)$v);
         return $v !== '' && mb_strlen($v) <= 260 ? $v : '';
-    }, $nextLives))));
+    }, $nextLives)))));
 
     $nextLiveSeats = isset($b['next_live_seats']) && is_array($b['next_live_seats']) ? $b['next_live_seats'] : $currentSeats;
     $nextLiveSeats = normalizeNextLiveSeats($nextLiveSeats, $nextLives);
@@ -2150,8 +2269,12 @@ function actionLiveParticipants(): void {
     $params = [];
     $where = ["bp.next_lives IS NOT NULL", "bp.next_lives <> ''", "bp.next_lives <> '[]'"];
     if ($liveId !== '') {
-        $where[] = 'bp.next_lives LIKE ?';
-        $params[] = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $liveId) . '"%';
+        $clauses = [];
+        foreach (liveJsonLikePatterns($liveId) as $pattern) {
+            $clauses[] = 'bp.next_lives LIKE ?';
+            $params[] = $pattern;
+        }
+        $where[] = '(' . implode(' OR ', $clauses) . ')';
     }
     $params[] = $limit;
     $sql = "SELECT $selectCols
@@ -2173,10 +2296,10 @@ function actionHistoryUpdate(): void {
         ? array_slice($b['next_lives'], 0, 60)
         : null;
     if ($nextLives !== null) {
-        $nextLives = array_values(array_unique(array_filter(array_map(function($v) {
+        $nextLives = normalizeLiveIds(array_values(array_unique(array_filter(array_map(function($v) {
             $v = trim((string)$v);
             return $v !== '' && mb_strlen($v) <= 260 ? $v : '';
-        }, $nextLives))));
+        }, $nextLives)))));
     }
     ensureBuddiesHistoryTable(db());
     $pdo = db();
@@ -2251,7 +2374,7 @@ function actionHistoryUpdate(): void {
     $bp = getBuddiesProfile((int)$me['id']);
     ok([
         'history' => getBuddiesHistoryForProfile((int)$me['id']),
-        'next_lives' => !empty($bp['next_lives']) ? (json_decode($bp['next_lives'], true) ?: []) : [],
+        'next_lives' => normalizeLiveIds(!empty($bp['next_lives']) ? (json_decode($bp['next_lives'], true) ?: []) : []),
     ]);
 }
 
@@ -2293,7 +2416,7 @@ function actionHistoryOnDay(): void {
             'day' => (int)$r['happened_day'],
             'title' => (string)$r['title'],
             'note' => $r['note'] !== null ? (string)$r['note'] : '',
-            'live_id' => $r['live_id'] !== null ? (string)$r['live_id'] : '',
+            'live_id' => $r['live_id'] !== null ? normalizeLiveId((string)$r['live_id']) : '',
             'image_url' => $r['image_url'] !== null ? (string)$r['image_url'] : '',
         ];
     }, $st->fetchAll()));
@@ -2443,9 +2566,9 @@ function actionSearch(): void {
     $me     = currentUser();
     $myId   = $me ? (int)$me['id'] : 0;
     $myBpForSearch = $myId ? getBuddiesProfile($myId) : null;
-    $myNextLivesForSearch = ($myBpForSearch && !empty($myBpForSearch['next_lives']))
+    $myNextLivesForSearch = normalizeLiveIds(($myBpForSearch && !empty($myBpForSearch['next_lives']))
         ? (json_decode($myBpForSearch['next_lives'], true) ?: [])
-        : [];
+        : []);
 
     // 推しメン絞り込み（複数指定 + AND/OR + 第一推し指定）
     $oshisRaw = $_GET['oshis'] ?? '';
@@ -2466,7 +2589,7 @@ function actionSearch(): void {
 
     // NEXTライブ絞り込み（OR: 同じ公演を含む）
     $livesRaw = $_GET['live_ids'] ?? '';
-    $liveIds  = array_values(array_filter(array_map('trim', explode(',', $livesRaw))));
+    $liveIds  = normalizeLiveIds(array_values(array_filter(array_map('trim', explode(',', $livesRaw)))));
     $liveIds  = array_slice(array_unique($liveIds), 0, 20);
     $liveMode = strtolower(trim($_GET['live_mode'] ?? 'or')) === 'and' ? 'and' : 'or';
 
@@ -2477,7 +2600,7 @@ function actionSearch(): void {
     $showsBlogs = !empty($_GET['shows_blogs']) && $_GET['shows_blogs'] !== '0' && $_GET['shows_blogs'] !== 'false';
     $pastLiveIdsInput = json_decode((string)($_GET['past_live_ids'] ?? '[]'), true);
     $pastLiveIds = is_array($pastLiveIdsInput)
-        ? array_slice(array_values(array_unique(array_filter(array_map('trim', $pastLiveIdsInput)))), 0, 100)
+        ? array_slice(normalizeLiveIds(array_values(array_unique(array_filter(array_map('trim', $pastLiveIdsInput))))), 0, 100)
         : [];
 
     $selectCols = '
@@ -2550,13 +2673,19 @@ function actionSearch(): void {
     if (!empty($liveIds)) {
         $clauses = [];
         foreach ($liveIds as $id) {
-            $pattern = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $id) . '"%';
+            $patterns = liveJsonLikePatterns($id);
             if ($liveMode === 'and') {
-                $where[]  = 'bp.next_lives LIKE ?';
-                $params[] = $pattern;
+                $sub = [];
+                foreach ($patterns as $pattern) {
+                    $sub[] = 'bp.next_lives LIKE ?';
+                    $params[] = $pattern;
+                }
+                $where[] = '(' . implode(' OR ', $sub) . ')';
             } else {
-                $clauses[] = 'bp.next_lives LIKE ?';
-                $params[]  = $pattern;
+                foreach ($patterns as $pattern) {
+                    $clauses[] = 'bp.next_lives LIKE ?';
+                    $params[]  = $pattern;
+                }
             }
         }
         if ($liveMode !== 'and' && $clauses) {
@@ -2576,8 +2705,10 @@ function actionSearch(): void {
         } else {
             $clauses = [];
             foreach ($pastLiveIds as $id) {
-                $clauses[] = 'bp.next_lives LIKE ?';
-                $params[] = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $id) . '"%';
+                foreach (liveJsonLikePatterns($id) as $pattern) {
+                    $clauses[] = 'bp.next_lives LIKE ?';
+                    $params[] = $pattern;
+                }
             }
             $clauses[] = $hasAnyNextLiveExpr;
             $where[] = '(' . implode(' OR ', $clauses) . ')';
@@ -2600,8 +2731,11 @@ function actionSearch(): void {
     $hasSnsExpr = "(CASE WHEN bp.sns_links IS NOT NULL AND bp.sns_links <> '' AND bp.sns_links <> '[]' AND bp.sns_links LIKE '%\"url\"%' THEN 1 ELSE 0 END)";
     $liveMatchParts = [];
     foreach (array_slice(array_values(array_filter($myNextLivesForSearch, 'is_string')), 0, 20) as $id) {
-        $pattern = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $id) . '"%';
-        $liveMatchParts[] = "(CASE WHEN bp.next_lives LIKE " . db()->quote($pattern) . " THEN 1 ELSE 0 END)";
+        $parts = [];
+        foreach (liveJsonLikePatterns($id) as $pattern) {
+            $parts[] = "bp.next_lives LIKE " . db()->quote($pattern);
+        }
+        if ($parts) $liveMatchParts[] = "(CASE WHEN (" . implode(' OR ', $parts) . ") THEN 1 ELSE 0 END)";
     }
     $liveMatchExpr = $liveMatchParts ? '(' . implode(' + ', $liveMatchParts) . ')' : '0';
     $completionExpr =
@@ -2677,7 +2811,7 @@ function actionFilterOptions(): void {
                 $seen = [];
                 foreach ($arr as $id) {
                     if (!is_string($id)) continue;
-                    $id = trim($id);
+                    $id = normalizeLiveId(trim($id));
                     if ($id === '' || isset($seen[$id])) continue;
                     $seen[$id] = true;
                     $liveCount[$id] = ($liveCount[$id] ?? 0) + 1;
@@ -2719,8 +2853,8 @@ function actionSimilar(): void {
     $myOshi3   = $me['oshi_member_3'] ?? null;
     $myOshis   = array_values(array_filter([$myOshi1, $myOshi2, $myOshi3]));
     $myTags    = ($myBp && $myBp['tags'])   ? (json_decode($myBp['tags'],   true) ?? []) : [];
-    $myNextLives = ($myBp && !empty($myBp['next_lives'])) ? (json_decode($myBp['next_lives'], true) ?? []) : [];
-    $myNextLiveSeats = ($myBp && !empty($myBp['next_live_seats'])) ? (json_decode($myBp['next_live_seats'], true) ?? []) : [];
+    $myNextLives = normalizeLiveIds(($myBp && !empty($myBp['next_lives'])) ? (json_decode($myBp['next_lives'], true) ?? []) : []);
+    $myNextLiveSeats = normalizeNextLiveSeats(($myBp && !empty($myBp['next_live_seats'])) ? (json_decode($myBp['next_live_seats'], true) ?? []) : [], $myNextLives);
     $myLocation = $myBp['location']         ?? null;
     $myStance  = $myBp['follow_stance']     ?? null;
     $myAge     = null;
@@ -2823,13 +2957,13 @@ function actionSimilar(): void {
         }
 
         // NEXTライブ一致（同じ公演に参加予定）
-        $cNextLives = ($c['next_lives']) ? (json_decode($c['next_lives'], true) ?? []) : [];
+        $cNextLives = normalizeLiveIds(($c['next_lives']) ? (json_decode($c['next_lives'], true) ?? []) : []);
         $liveOverlap = array_intersect($myNextLives, is_array($cNextLives) ? $cNextLives : []);
         if ($liveOverlap) {
             $score += count($liveOverlap) * 12;
             $reasons[] = '同じ公演に参加予定';
         }
-        $cNextLiveSeats = ($c['next_live_seats']) ? (json_decode($c['next_live_seats'], true) ?? []) : [];
+        $cNextLiveSeats = normalizeNextLiveSeats(($c['next_live_seats']) ? (json_decode($c['next_live_seats'], true) ?? []) : [], $cNextLives);
         foreach ($liveOverlap as $liveId) {
             $mySeat = is_array($myNextLiveSeats[$liveId] ?? null) ? $myNextLiveSeats[$liveId] : [];
             $cSeat = is_array($cNextLiveSeats[$liveId] ?? null) ? $cNextLiveSeats[$liveId] : [];
@@ -3089,6 +3223,151 @@ function actionAdminTagMerge(): void {
     }
 
     ok(['updated' => $updated, 'from' => $from, 'to' => $to, 'type' => $type]);
+}
+
+function collectAdminLiveIdCandidates(): array {
+    $items = [];
+    $touch = function(string $id, string $where) use (&$items) {
+        $from = trim($id);
+        if ($from === '') return;
+        $to = normalizeLiveId($from);
+        if ($to === '' || $to === $from) return;
+        if (!isset($items[$from])) {
+            $items[$from] = [
+                'from' => $from,
+                'to' => $to,
+                'date' => liveIdDate($from),
+                'next_lives' => 0,
+                'next_live_seats' => 0,
+                'history' => 0,
+                'total' => 0,
+            ];
+        }
+        $key = in_array($where, ['next_lives', 'next_live_seats', 'history'], true) ? $where : 'next_lives';
+        $items[$from][$key]++;
+        $items[$from]['total']++;
+    };
+
+    $st = db()->query("SELECT next_lives, next_live_seats FROM buddies_profiles
+                       WHERE next_lives IS NOT NULL OR next_live_seats IS NOT NULL");
+    foreach ($st->fetchAll() as $r) {
+        $lives = !empty($r['next_lives']) ? json_decode($r['next_lives'], true) : [];
+        if (is_array($lives)) {
+            foreach ($lives as $id) if (is_string($id)) $touch($id, 'next_lives');
+        }
+        $seats = !empty($r['next_live_seats']) ? json_decode($r['next_live_seats'], true) : [];
+        if (is_array($seats)) {
+            foreach (array_keys($seats) as $id) $touch((string)$id, 'next_live_seats');
+        }
+    }
+
+    try {
+        ensureBuddiesHistoryTable(db());
+        $hist = db()->query("SELECT live_id FROM buddies_history WHERE live_id IS NOT NULL AND live_id <> ''");
+        foreach ($hist->fetchAll() as $r) $touch((string)$r['live_id'], 'history');
+    } catch (\Throwable $e) {}
+
+    $out = array_values($items);
+    usort($out, fn($a, $b) => strcmp((string)$a['date'], (string)$b['date']) ?: strcmp((string)$a['from'], (string)$b['from']));
+    return $out;
+}
+
+function actionAdminLiveIdList(): void {
+    requireAdmin();
+    ok([
+        'items' => collectAdminLiveIdCandidates(),
+        'ambiguous_dates' => array_keys(ambiguousLiveDates()),
+    ]);
+}
+
+function actionAdminLiveIdMerge(): void {
+    requireAdmin();
+    $b = body();
+    $all = !empty($b['all']);
+    $from = trim((string)($b['from'] ?? ''));
+    $to = trim((string)($b['to'] ?? ''));
+
+    $mappings = [];
+    if ($all) {
+        foreach (collectAdminLiveIdCandidates() as $item) {
+            $mappings[(string)$item['from']] = (string)$item['to'];
+        }
+    } else {
+        if ($from === '') err('from は必須です。');
+        $to = $to !== '' ? normalizeLiveId($to) : normalizeLiveId($from);
+        if ($to === '' || $to === $from) err('統合できるライブIDではありません。');
+        if (isset(ambiguousLiveDates()[liveIdDate($from)])) err('同日複数公演の可能性がある日付は自動統合できません。');
+        $mappings[$from] = $to;
+    }
+    if (!$mappings) ok(['updated_profiles' => 0, 'updated_seats' => 0, 'updated_history' => 0, 'mappings' => []]);
+
+    $updatedProfiles = 0;
+    $updatedSeats = 0;
+    $st = db()->query("SELECT user_id, next_lives, next_live_seats FROM buddies_profiles
+                       WHERE next_lives IS NOT NULL OR next_live_seats IS NOT NULL");
+    $upd = db()->prepare('UPDATE buddies_profiles SET next_lives = ?, next_live_seats = ? WHERE user_id = ?');
+    foreach ($st->fetchAll() as $r) {
+        $changedLives = false;
+        $changedSeats = false;
+        $lives = !empty($r['next_lives']) ? json_decode($r['next_lives'], true) : [];
+        $seats = !empty($r['next_live_seats']) ? json_decode($r['next_live_seats'], true) : [];
+        $lives = is_array($lives) ? $lives : [];
+        $seats = is_array($seats) ? $seats : [];
+
+        $newLives = [];
+        $seenLives = [];
+        foreach ($lives as $id) {
+            if (!is_string($id)) continue;
+            $next = $mappings[$id] ?? normalizeLiveId($id);
+            if ($next !== $id) $changedLives = true;
+            if ($next !== '' && !isset($seenLives[$next])) {
+                $seenLives[$next] = true;
+                $newLives[] = $next;
+            }
+        }
+
+        $newSeats = [];
+        foreach ($seats as $id => $seat) {
+            $id = (string)$id;
+            $next = $mappings[$id] ?? normalizeLiveId($id);
+            if ($next !== $id) $changedSeats = true;
+            if ($next === '') continue;
+            if (!isset($newSeats[$next])) $newSeats[$next] = $seat;
+        }
+        $newSeats = normalizeNextLiveSeats($newSeats, $newLives);
+
+        if ($changedLives || $changedSeats) {
+            $upd->execute([
+                $newLives ? json_encode($newLives, JSON_UNESCAPED_UNICODE) : null,
+                $newSeats ? json_encode($newSeats, JSON_UNESCAPED_UNICODE) : null,
+                (int)$r['user_id'],
+            ]);
+            if ($changedLives) $updatedProfiles++;
+            if ($changedSeats) $updatedSeats++;
+        }
+    }
+
+    $updatedHistory = 0;
+    try {
+        ensureBuddiesHistoryTable(db());
+        $hist = db()->query("SELECT id, live_id FROM buddies_history WHERE live_id IS NOT NULL AND live_id <> ''");
+        $updHist = db()->prepare('UPDATE buddies_history SET live_id = ? WHERE id = ?');
+        foreach ($hist->fetchAll() as $r) {
+            $id = (string)$r['live_id'];
+            $next = $mappings[$id] ?? normalizeLiveId($id);
+            if ($next !== '' && $next !== $id) {
+                $updHist->execute([$next, (int)$r['id']]);
+                $updatedHistory++;
+            }
+        }
+    } catch (\Throwable $e) {}
+
+    ok([
+        'updated_profiles' => $updatedProfiles,
+        'updated_seats' => $updatedSeats,
+        'updated_history' => $updatedHistory,
+        'mappings' => array_map(fn($from, $to) => ['from' => $from, 'to' => $to], array_keys($mappings), array_values($mappings)),
+    ]);
 }
 
 function actionAdminProfileLinkList(): void {
@@ -3805,6 +4084,7 @@ function ensureEventTables(): void {
         participant_enabled TINYINT(1) NOT NULL DEFAULT 1,
         checkin_enabled TINYINT(1) NOT NULL DEFAULT 0,
         fee_items TEXT NULL DEFAULT NULL,
+        action_config TEXT NULL DEFAULT NULL,
         visibility    VARCHAR(16) NOT NULL DEFAULT 'public',
         status        VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -3877,6 +4157,9 @@ function ensureEventTables(): void {
         }
         if (!in_array('fee_items', $cols, true)) {
             $pdo->exec("ALTER TABLE buddies_events ADD COLUMN fee_items TEXT NULL DEFAULT NULL AFTER checkin_enabled");
+        }
+        if (!in_array('action_config', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_events ADD COLUMN action_config TEXT NULL DEFAULT NULL AFTER fee_items");
         }
         $participantCols = array_column($pdo->query('DESCRIBE buddies_event_participants')->fetchAll(), 'Field');
         if (!in_array('checked_in_at', $participantCols, true)) {
@@ -3964,6 +4247,41 @@ function eventFeeItems(array $e): array {
         return ($label !== '' && $amount !== '') ? ['label' => $label, 'amount' => $amount] : null;
     }, array_slice($arr, 0, 20))));
 }
+function normalizeActionConfig($raw, string $context = 'form'): array {
+    if (is_string($raw)) {
+        $decoded = json_decode($raw, true);
+        $raw = is_array($decoded) ? $decoded : [];
+    }
+    if (!is_array($raw)) $raw = [];
+    $enabled = truthyFlag($raw['enabled'] ?? 0) === 1;
+    $mode = (string)($raw['mode'] ?? 'popup');
+    if (!in_array($mode, ['popup', 'button'], true)) $mode = 'popup';
+    $title = mb_substr(trim((string)($raw['title'] ?? '')), 0, 80);
+    $body = mb_substr(trim((string)($raw['body'] ?? '')), 0, 500);
+    $buttonLabel = mb_substr(trim((string)($raw['button_label'] ?? '')), 0, 80);
+    $buttonUrl = cleanUrl(is_string($raw['button_url'] ?? null) ? $raw['button_url'] : null);
+    $showButtonAfterPopup = truthyFlag($raw['show_button_after_popup'] ?? 0) === 1;
+    if (!$enabled) {
+        return ['enabled' => false, 'mode' => 'popup', 'title' => '', 'body' => '', 'button_label' => '', 'button_url' => null, 'show_button_after_popup' => false];
+    }
+    if ($title === '') $title = $context === 'event' ? '参加登録が完了しました' : '送信が完了しました';
+    if ($body === '') $body = $context === 'event' ? 'イベントへの参加登録を受け付けました。' : 'フォームへの回答を受け付けました。';
+    if ($buttonLabel === '') $buttonLabel = $buttonUrl ? 'リンクを開く' : '';
+    return [
+        'enabled' => true,
+        'mode' => $mode,
+        'title' => $title,
+        'body' => $body,
+        'button_label' => $buttonLabel,
+        'button_url' => $buttonUrl,
+        'show_button_after_popup' => $showButtonAfterPopup,
+    ];
+}
+function actionConfigJson(array $config): ?string {
+    if (empty($config['enabled'])) return null;
+    $encoded = json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    return is_string($encoded) ? $encoded : null;
+}
 function cleanUploadFileName(string $name, string $fallback): string {
     $name = trim(basename($name));
     $name = preg_replace('/[^\p{L}\p{N}._ -]+/u', '_', $name);
@@ -4032,6 +4350,7 @@ function eventEditableFields(array $b): array {
     $participantEnabled = truthyFlag($b['participant_enabled'] ?? 1);
     $checkinEnabled = $participantEnabled && truthyFlag($b['checkin_enabled'] ?? 0);
     $feeItems = eventFeeItems(['fee_items' => $b['fee_items'] ?? []]);
+    $actionConfig = normalizeActionConfig($b['action_config'] ?? null, 'event');
     return [
         'title'          => $title,
         'description'    => $description !== '' ? $description : null,
@@ -4045,6 +4364,7 @@ function eventEditableFields(array $b): array {
         'participant_enabled' => $participantEnabled,
         'checkin_enabled' => $checkinEnabled,
         'fee_items'      => $feeItems,
+        'action_config'   => $actionConfig,
         'visibility'     => $visibility,
     ];
 }
@@ -4088,6 +4408,7 @@ function buildEventData(array $e, ?int $viewerId = null, bool $includeAttachment
         'participant_enabled' => !isset($e['participant_enabled']) || !empty($e['participant_enabled']),
         'checkin_enabled' => !empty($e['checkin_enabled']),
         'fee_items'      => eventFeeItems($e),
+        'action_config'   => normalizeActionConfig($e['action_config'] ?? null, 'event'),
         'visibility'     => $visibility,
         'status'         => $e['status'],
         'created_at'     => $e['created_at'],
@@ -4221,12 +4542,12 @@ function actionEventCreate(): void { ensureEventTables();
     $a = requireVerifiedAccount();
     $f = eventEditableFields(body());
     db()->prepare("INSERT INTO buddies_events
-        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, checkin_enabled, fee_items, visibility)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+        (account_id, title, description, venue, starts_at, ends_at, capacity, external_url, external_label, external_button_highlight, participant_enabled, checkin_enabled, fee_items, action_config, visibility)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
        ->execute([(int)$a['id'], $f['title'], $f['description'], $f['venue'],
                   $f['starts_at'], $f['ends_at'], $f['capacity'], $f['external_url'], $f['external_label'],
                   $f['external_button_highlight'], $f['participant_enabled'], $f['checkin_enabled'],
-                  json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), $f['visibility']]);
+                  json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), actionConfigJson($f['action_config']), $f['visibility']]);
     $id = (int)db()->lastInsertId();
     $st = db()->prepare("SELECT * FROM buddies_events WHERE id=? LIMIT 1");
     $st->execute([$id]);
@@ -4244,10 +4565,11 @@ function actionEventUpdate(): void { ensureEventTables();
     $f = eventEditableFields($b);
     db()->prepare("UPDATE buddies_events SET
         title=?, description=?, venue=?, starts_at=?, ends_at=?, capacity=?,
-        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, checkin_enabled=?, fee_items=?, visibility=? WHERE id=?")
+        external_url=?, external_label=?, external_button_highlight=?, participant_enabled=?, checkin_enabled=?, fee_items=?, action_config=?, visibility=? WHERE id=?")
        ->execute([$f['title'], $f['description'], $f['venue'], $f['starts_at'], $f['ends_at'],
                   $f['capacity'], $f['external_url'], $f['external_label'], $f['external_button_highlight'],
-                  $f['participant_enabled'], $f['checkin_enabled'], json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE), $f['visibility'], $id]);
+                  $f['participant_enabled'], $f['checkin_enabled'], json_encode($f['fee_items'], JSON_UNESCAPED_UNICODE),
+                  actionConfigJson($f['action_config']), $f['visibility'], $id]);
     if ($f['visibility'] !== 'public') {
         db()->prepare("DELETE FROM buddies_event_participants WHERE event_id=? AND kind='like'")
            ->execute([$id]);
@@ -4458,7 +4780,12 @@ function actionEventJoin(): void { ensureEventTables();
     $mySt = db()->prepare("SELECT kind FROM buddies_event_participants WHERE event_id=? AND user_id=?");
     $mySt->execute([$eventId, $uid]);
     $kinds = array_column($mySt->fetchAll(), 'kind');
-    ok(['my_kinds' => $kinds, 'is_joined' => in_array('join', $kinds, true), 'is_liked' => in_array('like', $kinds, true)]);
+    ok([
+        'my_kinds' => $kinds,
+        'is_joined' => in_array('join', $kinds, true),
+        'is_liked' => in_array('like', $kinds, true),
+        'action_config' => ($kind === 'join' && $state === 'on') ? normalizeActionConfig($e['action_config'] ?? null, 'event') : null,
+    ]);
 }
 
 function actionQrToken(): void {
@@ -5089,6 +5416,7 @@ function ensureFormTables(): void {
         visibility VARCHAR(16) NOT NULL DEFAULT 'public',
         collect_profile TINYINT(1) NOT NULL DEFAULT 0,
         one_response TINYINT(1) NOT NULL DEFAULT 1,
+        action_config TEXT NULL DEFAULT NULL,
         status VARCHAR(20) NOT NULL DEFAULT 'active',
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -5115,6 +5443,9 @@ function ensureFormTables(): void {
         }
         if (!in_array('show_results', $cols, true)) {
             $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN show_results TINYINT(1) NOT NULL DEFAULT 0 AFTER allow_anonymous_vote");
+        }
+        if (!in_array('action_config', $cols, true)) {
+            $pdo->exec("ALTER TABLE buddies_forms ADD COLUMN action_config TEXT NULL DEFAULT NULL AFTER one_response");
         }
     } catch (\Throwable $e) {}
 }
@@ -5178,10 +5509,11 @@ function formEditableFields(array $b): array {
         'visibility'=>$visibility,
         'collect_profile'=>$mode === 'poll' && truthyFlag($b['allow_anonymous_vote'] ?? 0) ? false : truthyFlag($b['collect_profile'] ?? 0),
         'one_response'=>truthyFlag($b['one_response'] ?? 1),
+        'action_config'=>normalizeActionConfig($b['action_config'] ?? null, 'form'),
     ];
 }
 function buildFormData(array $f, bool $includePrivate = false): array {
-    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'form_mode'=>(string)($f['form_mode'] ?? 'form'), 'allow_anonymous_vote'=>!empty($f['allow_anonymous_vote']), 'show_results'=>!empty($f['show_results']), 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
+    $data = ['id'=>(int)$f['id'], 'account_id'=>(int)$f['account_id'], 'title'=>(string)$f['title'], 'description'=>$f['description'], 'questions'=>json_decode((string)$f['questions'], true) ?: [], 'form_mode'=>(string)($f['form_mode'] ?? 'form'), 'allow_anonymous_vote'=>!empty($f['allow_anonymous_vote']), 'show_results'=>!empty($f['show_results']), 'visibility'=>(string)$f['visibility'], 'collect_profile'=>!empty($f['collect_profile']), 'one_response'=>!empty($f['one_response']), 'action_config'=>normalizeActionConfig($f['action_config'] ?? null, 'form'), 'status'=>(string)$f['status'], 'created_at'=>$f['created_at']];
     if ($includePrivate) {
         $st = db()->prepare('SELECT COUNT(*) FROM buddies_form_responses WHERE form_id=?');
         $st->execute([(int)$f['id']]);
@@ -5209,7 +5541,7 @@ function actionFormListByAccount(): void { ensureFormTables();
 }
 function actionFormCreate(): void { ensureFormTables();
     $a = requireVerifiedAccount(); $f = formEditableFields(body());
-    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,form_mode,allow_anonymous_vote,show_results,visibility,collect_profile,one_response) VALUES (?,?,?,?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response']]);
+    db()->prepare("INSERT INTO buddies_forms (account_id,title,description,questions,form_mode,allow_anonymous_vote,show_results,visibility,collect_profile,one_response,action_config) VALUES (?,?,?,?,?,?,?,?,?,?,?)")->execute([(int)$a['id'], $f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], actionConfigJson($f['action_config'])]);
     $id = (int)db()->lastInsertId(); $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=?'); $st->execute([$id]); ok(buildFormData($st->fetch(), true));
 }
 function actionFormUpdate(): void { ensureFormTables();
@@ -5217,7 +5549,7 @@ function actionFormUpdate(): void { ensureFormTables();
     $st = db()->prepare('SELECT * FROM buddies_forms WHERE id=? LIMIT 1'); $st->execute([$id]); $form = $st->fetch();
     if (!$form || (int)$form['account_id'] !== (int)$a['id']) err('編集権限がありません。', 403);
     $f = formEditableFields($b);
-    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, form_mode=?, allow_anonymous_vote=?, show_results=?, visibility=?, collect_profile=?, one_response=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], $id]);
+    db()->prepare("UPDATE buddies_forms SET title=?, description=?, questions=?, form_mode=?, allow_anonymous_vote=?, show_results=?, visibility=?, collect_profile=?, one_response=?, action_config=? WHERE id=?")->execute([$f['title'], $f['description'], json_encode($f['questions'], JSON_UNESCAPED_UNICODE), $f['form_mode'], $f['allow_anonymous_vote'], $f['show_results'], $f['visibility'], $f['collect_profile'], $f['one_response'], actionConfigJson($f['action_config']), $id]);
     $st->execute([$id]); ok(buildFormData($st->fetch(), true));
 }
 function actionFormDelete(): void { ensureFormTables();
@@ -5267,7 +5599,7 @@ function actionFormSubmit(): void { ensureFormTables();
         $answers[$qid] = $normalized;
     }
     db()->prepare("INSERT INTO buddies_form_responses (form_id,user_id,answers,respondent_name) VALUES (?,?,?,?)")->execute([$id, $uid, json_encode($answers, JSON_UNESCAPED_UNICODE), $u && !empty($f['collect_profile']) ? ($u['display_name'] ?: $u['username']) : null]);
-    ok(['submitted'=>true]);
+    ok(['submitted'=>true, 'action_config'=>normalizeActionConfig($f['action_config'] ?? null, 'form')]);
 }
 function buildFormResultData(array $f): array {
     $questions = json_decode((string)$f['questions'], true) ?: [];
@@ -5322,4 +5654,774 @@ function actionFormResponses(): void { ensureFormTables();
     $r->execute([$id]);
     $collectProfile = !empty($f['collect_profile']);
     ok(['form'=>buildFormData($f, true), 'responses'=>array_map(fn($row) => ['id'=>(int)$row['id'], 'user_id'=>$collectProfile && $row['user_id'] !== null ? (int)$row['user_id'] : null, 'respondent_name'=>$collectProfile ? ($row['respondent_name'] ?: ($row['display_name'] ?: $row['username'])) : '匿名', 'user_icon'=>$collectProfile ? ($row['user_icon'] ?? null) : null, 'oshi_member'=>$collectProfile ? ($row['oshi_member'] ?? null) : null, 'location'=>$collectProfile ? ($row['location'] ?? null) : null, 'answers'=>json_decode((string)$row['answers'], true) ?: [], 'created_at'=>$row['created_at']], $r->fetchAll())]);
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  チャット型お問い合わせ
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function contactAllowedCategories(): array {
+    return [
+        'お問い合わせ', 'サイトの感想や意見', '情報の提供', '不具合の報告',
+        '誤情報の報告', '機能のリクエスト', 'サイトのリクエストや提案',
+        '情報請求', 'その他',
+    ];
+}
+function contactAllowedStatuses(): array {
+    return ['open','rejected','pending','accepted','replied','cancelled','closed'];
+}
+function contactStatusLabelForApi(string $status): string {
+    return match ($status) {
+        'rejected' => '棄却',
+        'cancelled' => '取りやめ',
+        'pending' => '保留中',
+        'accepted' => '受付済',
+        'replied' => '返信済',
+        'closed' => '受付済',
+        default => '受付中',
+    };
+}
+function contactGenerateCode(PDO $pdo): string {
+    $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    for ($try = 0; $try < 200; $try++) {
+        $code = '';
+        for ($i = 0; $i < 4; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
+        $st = $pdo->prepare('SELECT id FROM buddies_contact_inquiries WHERE contact_code=? LIMIT 1');
+        $st->execute([$code]);
+        if (!$st->fetch()) return $code;
+    }
+    throw new RuntimeException('管理番号の生成に失敗しました。');
+}
+function ensureContactTables(): void {
+    $pdo = db();
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_contact_inquiries (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        contact_code CHAR(4) NOT NULL,
+        user_id INT NULL,
+        account_mode VARCHAR(20) NOT NULL DEFAULT 'guest',
+        requester_name VARCHAR(128) NULL,
+        requester_username VARCHAR(64) NULL,
+        category VARCHAR(80) NOT NULL,
+        title VARCHAR(200) NULL,
+        site_name VARCHAR(200) NULL,
+        message TEXT NOT NULL,
+        need_reply TINYINT(1) NOT NULL DEFAULT 1,
+        reply_channel VARCHAR(20) NOT NULL DEFAULT 'site',
+        dm_service VARCHAR(32) NULL,
+        dm_account VARCHAR(120) NULL,
+        email_notification TINYINT(1) NOT NULL DEFAULT 0,
+        status VARCHAR(20) NOT NULL DEFAULT 'open',
+        admin_replied_at DATETIME NULL,
+        user_read_at DATETIME NULL,
+        user_hidden_at DATETIME NULL,
+        admin_read_at DATETIME NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_contact_code (contact_code),
+        INDEX idx_contact_user (user_id, created_at),
+        INDEX idx_contact_status (status, created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+
+    $cols = tableColumns($pdo, 'buddies_contact_inquiries');
+    if ($cols && !in_array('contact_code', $cols, true)) {
+        $pdo->exec("ALTER TABLE buddies_contact_inquiries ADD COLUMN contact_code CHAR(4) NULL AFTER id");
+        $rows = $pdo->query("SELECT id FROM buddies_contact_inquiries WHERE contact_code IS NULL OR contact_code='' ORDER BY id ASC")->fetchAll();
+        foreach ($rows as $row) {
+            $code = contactGenerateCode($pdo);
+            $pdo->prepare('UPDATE buddies_contact_inquiries SET contact_code=? WHERE id=?')->execute([$code, (int)$row['id']]);
+        }
+        try { $pdo->exec("ALTER TABLE buddies_contact_inquiries MODIFY contact_code CHAR(4) NOT NULL"); } catch (Throwable $e) {}
+        try { $pdo->exec("ALTER TABLE buddies_contact_inquiries ADD UNIQUE KEY uq_contact_code (contact_code)"); } catch (Throwable $e) {}
+    }
+    $cols = tableColumns($pdo, 'buddies_contact_inquiries');
+    if ($cols) {
+        if (!in_array('user_read_at', $cols, true)) {
+            try { $pdo->exec("ALTER TABLE buddies_contact_inquiries ADD COLUMN user_read_at DATETIME NULL AFTER admin_replied_at"); } catch (Throwable $e) {}
+        }
+        if (!in_array('user_hidden_at', $cols, true)) {
+            try { $pdo->exec("ALTER TABLE buddies_contact_inquiries ADD COLUMN user_hidden_at DATETIME NULL AFTER user_read_at"); } catch (Throwable $e) {}
+        }
+        if (!in_array('admin_read_at', $cols, true)) {
+            $after = in_array('user_hidden_at', $cols, true) ? 'user_hidden_at' : 'user_read_at';
+            try { $pdo->exec("ALTER TABLE buddies_contact_inquiries ADD COLUMN admin_read_at DATETIME NULL AFTER {$after}"); } catch (Throwable $e) {}
+        }
+    }
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_contact_messages (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        inquiry_id BIGINT UNSIGNED NOT NULL,
+        sender VARCHAR(20) NOT NULL DEFAULT 'user',
+        body TEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_contact_messages_inquiry (inquiry_id, id),
+        CONSTRAINT fk_contact_messages_inquiry FOREIGN KEY (inquiry_id)
+          REFERENCES buddies_contact_inquiries(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_contact_images (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        inquiry_id BIGINT UNSIGNED NOT NULL,
+        message_id BIGINT UNSIGNED NULL,
+        file_path VARCHAR(255) NOT NULL,
+        file_url VARCHAR(512) NOT NULL,
+        original_name VARCHAR(255) NULL,
+        mime_type VARCHAR(80) NOT NULL,
+        size_bytes INT UNSIGNED NOT NULL DEFAULT 0,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_contact_images_inquiry (inquiry_id, id),
+        CONSTRAINT fk_contact_images_inquiry FOREIGN KEY (inquiry_id)
+          REFERENCES buddies_contact_inquiries(id) ON DELETE CASCADE
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $imgCols = tableColumns($pdo, 'buddies_contact_images');
+    if ($imgCols && !in_array('message_id', $imgCols, true)) {
+        try { $pdo->exec("ALTER TABLE buddies_contact_images ADD COLUMN message_id BIGINT UNSIGNED NULL AFTER inquiry_id"); } catch (Throwable $e) {}
+    }
+}
+function contactClean($value, int $max = 1000): string {
+    $value = trim((string)$value);
+    return mb_strlen($value) > $max ? mb_substr($value, 0, $max) : $value;
+}
+function contactRateLimit(string $key, int $seconds = 4): void {
+    $safe = preg_replace('/[^A-Za-z0-9_\-]/', '_', $key);
+    $file = sys_get_temp_dir() . '/buddies_contact_' . $safe . '.txt';
+    $now = time();
+    if (is_file($file) && ($now - (int)@file_get_contents($file)) < $seconds) {
+        err('連続送信を防止しています。数秒後にもう一度お試しください。', 429);
+    }
+    @file_put_contents($file, (string)$now, LOCK_EX);
+}
+function contactNormalizePayload(array $b, bool $loggedIn): array {
+    $category = contactClean($b['category'] ?? '', 80);
+    if (!in_array($category, contactAllowedCategories(), true)) err('不正なカテゴリです。');
+    $message = contactClean($b['message'] ?? '', 3000);
+    if ($message === '') err('本文を入力してください。');
+    $title = contactClean($b['title'] ?? '', 200);
+    $siteName = contactClean($b['site_name'] ?? '', 200);
+    if (in_array($category, ['不具合の報告', '誤情報の報告'], true) && $siteName === '') err('対象サイト名を入力してください。');
+
+    $accountMode = (string)($b['account_mode'] ?? ($loggedIn ? 'profile' : 'guest'));
+    if (!$loggedIn) $accountMode = 'guest';
+    if (!in_array($accountMode, ['guest','anonymous','profile'], true)) $accountMode = $loggedIn ? 'profile' : 'guest';
+
+    $needRaw = $b['need_reply'] ?? '希望する';
+    $needReply = !in_array((string)$needRaw, ['0','false','希望しない','不要','no'], true);
+    $replyChannel = (string)($b['reply_channel'] ?? ($loggedIn ? 'site' : 'dm'));
+    if (!$needReply) $replyChannel = 'none';
+    elseif (!$loggedIn && $replyChannel === 'site') $replyChannel = 'dm';
+    if (!in_array($replyChannel, ['site','dm','none'], true)) $replyChannel = $needReply ? ($loggedIn ? 'site' : 'dm') : 'none';
+
+    $dmService = contactClean($b['sns_service'] ?? $b['dm_service'] ?? '', 32);
+    $dmAccount = contactClean($b['sns_account'] ?? $b['dm_account'] ?? '', 120);
+    if ($needReply && $replyChannel === 'dm') {
+        if (!in_array($dmService, ['X', 'Instagram'], true)) err('DM返信は X または Instagram を選択してください。');
+        if ($dmAccount === '') err('DM返信用のアカウント名を入力してください。');
+    }
+
+    return [
+        'category'=>$category,
+        'title'=>$title,
+        'site_name'=>$siteName,
+        'message'=>$message,
+        'account_mode'=>$accountMode,
+        'need_reply'=>$needReply ? 1 : 0,
+        'reply_channel'=>$replyChannel,
+        'dm_service'=>$replyChannel === 'dm' ? $dmService : '',
+        'dm_account'=>$replyChannel === 'dm' ? $dmAccount : '',
+        'email_notification'=>0,
+    ];
+}
+function contactAdminUrl(string $code): string {
+    $override = getenv('BUDDIES_CONTACT_ADMIN_URL') ?: '';
+    if ($override !== '') return str_contains($override, '%s') ? sprintf($override, $code) : rtrim($override, '?&') . '?' . rawurlencode($code);
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $https ? 'https' : 'http';
+    $host = preg_replace('/[\r\n\0]/', '', $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp');
+    $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+    if (preg_match('~/Form$~i', $dir)) $dir = rtrim(dirname($dir), '/');
+    if ($dir === '/' || $dir === '.') $dir = '';
+    return $scheme . '://' . $host . $dir . '/admin.html?tab=contacts&contact=' . rawurlencode($code);
+}
+
+function contactMailAdmin(string $subject, string $body): bool {
+    mb_language('Japanese');
+    mb_internal_encoding('UTF-8');
+    $to = 'nagahiro.s122@gmail.com';
+    $from = 'noreply@buddies46.stars.ne.jp';
+    $headers = "From: {$from}\r\n";
+    $headers .= "MIME-Version: 1.0\r\n";
+    $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+    $headers .= "Content-Transfer-Encoding: 8bit\r\n";
+    $encoded = '=?UTF-8?B?' . base64_encode(preg_replace('/[\r\n\0]/', '', $subject)) . '?=';
+    return mail($to, $encoded, $body, $headers, '-f ' . escapeshellarg($from));
+}
+function contactReplyLabelForMail(array $r): string {
+    if (empty($r['need_reply'])) return '返信不要';
+    if (($r['reply_channel'] ?? '') === 'site') return 'このサイトで返信を受け取る';
+    if (($r['reply_channel'] ?? '') === 'dm') return 'DMで返信を受け取る / ' . ($r['dm_service'] ?? '') . ' ' . ($r['dm_account'] ?? '');
+    return 'なし';
+}
+function contactAccountLabelForMail(array $r): string {
+    $mode = (string)($r['account_mode'] ?? 'guest');
+    if ($mode === 'anonymous') return '匿名（ログインユーザーID: ' . ($r['user_id'] ?? '-') . '）';
+    if ($mode === 'profile') return (($r['requester_name'] ?? '') ?: (($r['display_name'] ?? '') ?: ($r['username'] ?? ''))) . (!empty($r['requester_username'] ?? $r['username'] ?? '') ? ' / @' . (($r['requester_username'] ?? '') ?: $r['username']) : '');
+    return 'ログインなし';
+}
+function contactNotifyAdmin(string $kind, array $r): void {
+    $code = (string)($r['contact_code'] ?? ('ID' . (int)$r['id']));
+    $subject = "[お問い合わせ {$code}] {$kind}";
+    $body  = "お問い合わせが{$kind}されました。\n\n";
+    $body .= "────────────────────\n";
+    $body .= "管理番号: {$code}\n";
+    $body .= "カテゴリ: " . ($r['category'] ?? '') . "\n";
+    if (!empty($r['site_name'])) $body .= "対象サイト名: " . $r['site_name'] . "\n";
+    $body .= "ステータス: " . contactStatusLabelForApi((string)($r['status'] ?? 'open')) . "\n";
+    $body .= "返信方法: " . contactReplyLabelForMail($r) . "\n";
+    $body .= "アカウント: " . contactAccountLabelForMail($r) . "\n";
+    $body .= "管理画面: " . contactAdminUrl($code) . "\n";
+    $body .= "────────────────────\n";
+    $body .= "本文:\n" . ($r['message'] ?? '') . "\n";
+    $body .= "────────────────────\n";
+    $body .= "通知日時: " . date('Y/m/d H:i:s') . "\n";
+    contactMailAdmin($subject, $body);
+}
+function contactFetchJoined(int $id): ?array {
+    $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon
+        FROM buddies_contact_inquiries ci
+        LEFT JOIN sakulabo_users u ON u.id = ci.user_id
+        WHERE ci.id=? LIMIT 1");
+    $st->execute([$id]);
+    return $st->fetch() ?: null;
+}
+function buildContactInquiryData(array $r, bool $includeMessages = false): array {
+    $mode = (string)($r['account_mode'] ?? 'guest');
+    $isAnonymous = $mode === 'anonymous';
+    $name = 'ログインなし';
+    if ($mode === 'anonymous') $name = '匿名';
+    elseif (!empty($r['requester_name'])) $name = (string)$r['requester_name'];
+    elseif (!empty($r['display_name'])) $name = (string)$r['display_name'];
+    elseif (!empty($r['username'])) $name = (string)$r['username'];
+    $data = [
+        'id'=>(int)$r['id'],
+        'contact_code'=>(string)($r['contact_code'] ?? ''),
+        'user_id'=>($r['user_id'] !== null && !$isAnonymous) ? (int)$r['user_id'] : null,
+        'raw_user_id'=>$r['user_id'] !== null ? (int)$r['user_id'] : null,
+        'account_mode'=>$mode,
+        'display_name'=>$name,
+        'username'=>($isAnonymous ? null : ($r['requester_username'] ?? $r['username'] ?? null)),
+        'category'=>(string)$r['category'],
+        'title'=>(string)($r['title'] ?? ''),
+        'site_name'=>(string)($r['site_name'] ?? ''),
+        'message'=>(string)$r['message'],
+        'need_reply'=>!empty($r['need_reply']),
+        'reply_channel'=>(string)$r['reply_channel'],
+        'dm_service'=>(string)($r['dm_service'] ?? ''),
+        'dm_account'=>(string)($r['dm_account'] ?? ''),
+        'email_notification'=>!empty($r['email_notification']),
+        'status'=>(string)$r['status'],
+        'status_label'=>contactStatusLabelForApi((string)($r['status'] ?? 'open')),
+        'admin_replied_at'=>$r['admin_replied_at'] ?? null,
+        'user_read_at'=>$r['user_read_at'] ?? null,
+        'admin_read_at'=>$r['admin_read_at'] ?? null,
+        'user_hidden_at'=>$r['user_hidden_at'] ?? null,
+        'is_user_hidden'=>!empty($r['user_hidden_at']),
+        'created_at'=>$r['created_at'] ?? null,
+        'updated_at'=>$r['updated_at'] ?? null,
+        'can_edit'=>($r['user_id'] !== null && (string)$r['status'] === 'open' && empty($r['admin_replied_at']) && (time() - strtotime((string)($r['created_at'] ?? '1970-01-01'))) <= 86400),
+        'can_cancel'=>($r['user_id'] !== null && (string)$r['status'] === 'open'),
+        'image_count'=>(int)($r['image_count'] ?? 0),
+        'admin_reply_count'=>(int)($r['admin_reply_count'] ?? 0),
+        'unread_admin_count'=>(int)($r['unread_admin_count'] ?? 0),
+        'unread_user_count'=>(int)($r['unread_user_count'] ?? 0),
+        'latest_message'=>(string)($r['latest_message'] ?? ''),
+        'latest_sender'=>(string)($r['latest_sender'] ?? ''),
+        'latest_at'=>$r['latest_at'] ?? null,
+    ];
+    if ($includeMessages) {
+        $st = db()->prepare('SELECT id, sender, body, created_at FROM buddies_contact_messages WHERE inquiry_id=? ORDER BY id ASC');
+        $st->execute([(int)$r['id']]);
+        $messageRows = $st->fetchAll();
+        $adminMessages = array_values(array_filter($messageRows, fn($m) => (string)$m['sender'] === 'admin'));
+        $data['messages'] = array_map(function($m) use ($r, $adminMessages) {
+            $createdTs = strtotime((string)($m['created_at'] ?? '')) ?: 0;
+            $hasAdminAfter = false;
+            foreach ($adminMessages as $am) {
+                if ((int)$am['id'] > (int)$m['id']) { $hasAdminAfter = true; break; }
+            }
+            $canEdit = ((string)$m['sender'] === 'user'
+                && (string)($r['status'] ?? '') === 'open'
+                && !$hasAdminAfter
+                && $createdTs > 0
+                && (time() - $createdTs) <= 86400);
+            return [
+                'id'=>(int)$m['id'],
+                'sender'=>(string)$m['sender'],
+                'body'=>(string)$m['body'],
+                'created_at'=>$m['created_at'],
+                'can_edit'=>$canEdit,
+            ];
+        }, $messageRows);
+        $img = db()->prepare('SELECT id, message_id, file_url, original_name, mime_type, size_bytes, created_at FROM buddies_contact_images WHERE inquiry_id=? ORDER BY id ASC');
+        $img->execute([(int)$r['id']]);
+        $data['images'] = array_map(fn($x) => [
+            'id'=>(int)$x['id'],
+            'message_id'=>isset($x['message_id']) ? (int)$x['message_id'] : 0,
+            'url'=>(string)$x['file_url'],
+            'original_name'=>(string)($x['original_name'] ?? ''),
+            'mime_type'=>(string)$x['mime_type'],
+            'size_bytes'=>(int)$x['size_bytes'],
+            'created_at'=>$x['created_at'],
+        ], $img->fetchAll());
+    }
+    return $data;
+}
+function actionContactMineList(): void { ensureContactTables();
+    $u = requireAuth();
+    $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon,
+        (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count,
+        (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='admin') AS admin_reply_count,
+        (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='admin' AND (ci.user_read_at IS NULL OR cm.created_at > ci.user_read_at)) AS unread_admin_count,
+        (SELECT cm.body FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_message,
+        (SELECT cm.sender FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_sender,
+        (SELECT cm.created_at FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_at
+        FROM buddies_contact_inquiries ci
+        LEFT JOIN sakulabo_users u ON u.id = ci.user_id
+        WHERE ci.user_id=? AND ci.user_hidden_at IS NULL
+        ORDER BY ci.updated_at DESC, ci.created_at DESC");
+    $st->execute([(int)$u['id']]);
+    ok(array_map(fn($r) => buildContactInquiryData($r, true), $st->fetchAll()));
+}
+function actionContactMarkRead(): void { ensureContactTables();
+    $u = requireAuth();
+    $id = (int)(body()['id'] ?? ($_GET['id'] ?? 0));
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('UPDATE buddies_contact_inquiries SET user_read_at=NOW() WHERE id=? AND user_id=?');
+    $st->execute([$id, (int)$u['id']]);
+    ok(['read'=>true]);
+}
+function actionContactUpdate(): void { ensureContactTables();
+    $u = requireAuth();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $message = contactClean($b['message'] ?? '', 3000);
+    if ($message === '') err('本文を入力してください。');
+    $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? AND user_id=? LIMIT 1');
+    $st->execute([$id, (int)$u['id']]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if ((string)$r['status'] !== 'open') err('取りやめ済みのお問い合わせは変更できません。');
+    if (!empty($r['admin_replied_at'])) err('管理者返信後は本文を変更できません。');
+    $createdTs = strtotime((string)($r['created_at'] ?? '')) ?: 0;
+    if ($createdTs <= 0 || (time() - $createdTs) > 86400) err('本文を変更できるのは送信から24時間以内です。');
+    db()->prepare('UPDATE buddies_contact_inquiries SET message=? WHERE id=? AND user_id=?')
+      ->execute([$message, $id, (int)$u['id']]);
+    db()->prepare("UPDATE buddies_contact_messages SET body=? WHERE inquiry_id=? AND sender='user' ORDER BY id ASC LIMIT 1")
+      ->execute([$message, $id]);
+    $row = contactFetchJoined($id);
+    if ($row) contactNotifyAdmin('本文変更', $row);
+    ok(buildContactInquiryData($row ?: [], true));
+}
+
+function actionContactUpdateMessage(): void { ensureContactTables();
+    $u = requireAuth();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    $messageId = (int)($b['message_id'] ?? 0);
+    if ($id <= 0 || $messageId <= 0) err('id と message_id は必須です。');
+    $message = contactClean($b['message'] ?? '', 3000);
+    if ($message === '') err('本文を入力してください。');
+
+    $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? AND user_id=? LIMIT 1');
+    $st->execute([$id, (int)$u['id']]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if ((string)$r['status'] !== 'open') err('取りやめ済みのお問い合わせは変更できません。');
+
+    $ms = db()->prepare("SELECT * FROM buddies_contact_messages WHERE id=? AND inquiry_id=? AND sender='user' LIMIT 1");
+    $ms->execute([$messageId, $id]);
+    $m = $ms->fetch();
+    if (!$m) err('本文が見つかりません。', 404);
+
+    $createdTs = strtotime((string)($m['created_at'] ?? '')) ?: 0;
+    if ($createdTs <= 0 || (time() - $createdTs) > 86400) err('本文を変更できるのは送信から24時間以内です。');
+
+    $after = db()->prepare("SELECT COUNT(*) FROM buddies_contact_messages WHERE inquiry_id=? AND sender='admin' AND id > ?");
+    $after->execute([$id, $messageId]);
+    if ((int)$after->fetchColumn() > 0) err('管理者返信後はこの本文を変更できません。');
+
+    db()->prepare("UPDATE buddies_contact_messages SET body=? WHERE id=? AND inquiry_id=? AND sender='user'")
+      ->execute([$message, $messageId, $id]);
+
+    $first = db()->prepare("SELECT id FROM buddies_contact_messages WHERE inquiry_id=? AND sender='user' ORDER BY id ASC LIMIT 1");
+    $first->execute([$id]);
+    if ((int)$first->fetchColumn() === $messageId) {
+        db()->prepare('UPDATE buddies_contact_inquiries SET message=?, updated_at=NOW() WHERE id=? AND user_id=?')
+          ->execute([$message, $id, (int)$u['id']]);
+    } else {
+        db()->prepare('UPDATE buddies_contact_inquiries SET updated_at=NOW() WHERE id=? AND user_id=?')
+          ->execute([$id, (int)$u['id']]);
+    }
+
+    $row = contactFetchJoined($id);
+    if ($row) {
+        $row['message'] = $message;
+        contactNotifyAdmin('本文変更', $row);
+    }
+    ok(buildContactInquiryData($row ?: [], true));
+}
+
+function actionContactCancel(): void { ensureContactTables();
+    $u = requireAuth();
+    $id = (int)(body()['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $before = contactFetchJoined($id);
+    if (!$before || (int)($before['user_id'] ?? 0) !== (int)$u['id']) err('お問い合わせが見つかりません。', 404);
+    $st = db()->prepare("UPDATE buddies_contact_inquiries SET status='cancelled' WHERE id=? AND user_id=? AND status='open'");
+    $st->execute([$id, (int)$u['id']]);
+    $cancelled = $st->rowCount() > 0;
+    if ($cancelled) {
+        $row = contactFetchJoined($id);
+        if ($row) contactNotifyAdmin('取りやめ', $row);
+    }
+    ok(['cancelled'=>$cancelled]);
+}
+
+function contactImageFromUpload(string $tmp, string $mime) {
+    return match ($mime) {
+        'image/jpeg' => @imagecreatefromjpeg($tmp),
+        'image/png'  => @imagecreatefrompng($tmp),
+        'image/gif'  => @imagecreatefromgif($tmp),
+        'image/webp' => function_exists('imagecreatefromwebp') ? @imagecreatefromwebp($tmp) : false,
+        default      => false,
+    };
+}
+function contactSaveCompressedJpeg(string $tmp, string $mime, string $dest): bool {
+    if (!function_exists('imagecreatetruecolor') || !function_exists('imagejpeg')) return @copy($tmp, $dest);
+    $src = contactImageFromUpload($tmp, $mime);
+    if (!$src) return @copy($tmp, $dest);
+    $w = imagesx($src); $h = imagesy($src);
+    if ($w <= 0 || $h <= 0) { imagedestroy($src); return false; }
+    $max = 1600; $scale = min(1, $max / max($w, $h));
+    $nw = max(1, (int)round($w * $scale)); $nh = max(1, (int)round($h * $scale));
+    $dst = imagecreatetruecolor($nw, $nh);
+    $white = imagecolorallocate($dst, 255, 255, 255);
+    imagefilledrectangle($dst, 0, 0, $nw, $nh, $white);
+    imagecopyresampled($dst, $src, 0, 0, 0, 0, $nw, $nh, $w, $h);
+    $ok = imagejpeg($dst, $dest, 78);
+    imagedestroy($src); imagedestroy($dst);
+    return $ok;
+}
+function contactPublicBaseFromApi(): string {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $https ? 'https' : 'http';
+    $host = preg_replace('/[\r\n\0]/', '', $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp');
+    $apiDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+    $parent = rtrim(dirname($apiDir), '/');
+    if ($parent === '.' || $parent === '/') $parent = '';
+    return $scheme . '://' . $host . $parent . '/Form/';
+}
+function contactSaveUploadedImages(PDO $pdo, int $inquiryId, ?int $messageId, string $code, int $maxAdd = 1): array {
+    if (empty($_FILES['images'])) return [];
+    $cur = $pdo->prepare('SELECT COUNT(*) FROM buddies_contact_images WHERE inquiry_id=?');
+    $cur->execute([$inquiryId]);
+    $remaining = 10 - (int)$cur->fetchColumn();
+    if ($remaining <= 0) err('画像はお問い合わせごとに合計10枚までです。');
+    $limit = min($maxAdd, $remaining);
+    $files = $_FILES['images'];
+    $names = is_array($files['name']) ? $files['name'] : [$files['name']];
+    $tmps  = is_array($files['tmp_name']) ? $files['tmp_name'] : [$files['tmp_name']];
+    $errs  = is_array($files['error']) ? $files['error'] : [$files['error']];
+    $sizes = is_array($files['size']) ? $files['size'] : [$files['size']];
+    $allowed = ['image/jpeg','image/png','image/gif','image/webp'];
+    $dir = dirname(__DIR__) . '/Form/img';
+    if (!is_dir($dir) && !@mkdir($dir, 0755, true)) err('画像保存先を作成できません。');
+    $saved = [];
+    for ($i=0; $i<min(count($names), $limit); $i++) {
+        if (($errs[$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
+        if (($sizes[$i] ?? 0) > 5 * 1024 * 1024) err('画像は1枚5MBまでです。');
+        $tmp = $tmps[$i] ?? '';
+        if (!is_uploaded_file($tmp)) continue;
+        $mime = mime_content_type($tmp) ?: '';
+        if (!in_array($mime, $allowed, true) || @getimagesize($tmp) === false) err('対応していない画像形式です。');
+        $filename = $code . '_m' . ($messageId ?: 0) . '_' . ($i + 1) . '_' . bin2hex(random_bytes(4)) . '.jpg';
+        $dest = $dir . '/' . $filename;
+        if (!contactSaveCompressedJpeg($tmp, $mime, $dest)) continue;
+        $relative = 'img/' . $filename;
+        $url = contactPublicBaseFromApi() . $relative;
+        $size = (int)@filesize($dest);
+        $original = contactClean((string)($names[$i] ?? ''), 255);
+        $pdo->prepare('INSERT INTO buddies_contact_images (inquiry_id, message_id, file_path, file_url, original_name, mime_type, size_bytes) VALUES (?,?,?,?,?,?,?)')
+            ->execute([$inquiryId, $messageId, $relative, $url, $original, 'image/jpeg', $size]);
+        $saved[] = ['path'=>$dest,'url'=>$url,'name'=>$filename,'mime'=>'image/jpeg','size'=>$size];
+    }
+    return $saved;
+}
+function contactMailAdminWithImages(string $subject, string $body, array $images): bool {
+    if (!$images) return contactMailAdmin($subject, $body);
+    mb_language('Japanese'); mb_internal_encoding('UTF-8');
+    $to = 'nagahiro.s122@gmail.com'; $from = 'noreply@buddies46.stars.ne.jp';
+    $boundary = bin2hex(random_bytes(16));
+    $headers = "From: {$from}\r\nMIME-Version: 1.0\r\nContent-Type: multipart/mixed; boundary=\"{$boundary}\"\r\n";
+    $mime = "--{$boundary}\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n{$body}\r\n";
+    foreach ($images as $img) {
+        if (empty($img['path']) || !is_file($img['path'])) continue;
+        $name = preg_replace('/[\r\n\0]/', '', (string)($img['name'] ?? 'image.jpg'));
+        $content = chunk_split(base64_encode(file_get_contents($img['path'])));
+        $mime .= "--{$boundary}\r\nContent-Type: image/jpeg; name=\"{$name}\"\r\nContent-Transfer-Encoding: base64\r\nContent-Disposition: attachment; filename=\"{$name}\"\r\n\r\n{$content}\r\n";
+    }
+    $mime .= "--{$boundary}--";
+    $encoded = '=?UTF-8?B?' . base64_encode(preg_replace('/[\r\n\0]/', '', $subject)) . '?=';
+    return mail($to, $encoded, $mime, $headers, '-f ' . escapeshellarg($from));
+}
+
+function actionContactUserReply(): void { ensureContactTables();
+    $u = requireAuth();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    $message = contactClean($b['message'] ?? '', 4000);
+    if ($id <= 0) err('id は必須です。');
+    if ($message === '') err('本文を入力してください。');
+    $pdo = db();
+    $st = $pdo->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? AND user_id=? LIMIT 1');
+    $st->execute([$id, (int)$u['id']]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if (!in_array((string)$r['status'], ['open','pending'], true)) err('このステータスのお問い合わせには送信できません。');
+    contactRateLimit('user_reply_' . (int)$u['id'] . '_' . $id, 4);
+    $pdo->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
+      ->execute([$id, 'user', $message]);
+    $messageId = (int)$pdo->lastInsertId();
+    $code = (string)($r['contact_code'] ?? ('ID' . $id));
+    $images = contactSaveUploadedImages($pdo, $id, $messageId, $code, 1);
+    $row = contactFetchJoined($id);
+    if ($row) {
+        $subject = "[お問い合わせ {$code}] 追加メッセージ";
+        $body  = "お問い合わせに追加メッセージが送信されました。\n\n";
+        $body .= "────────────────────\n";
+        $body .= "管理番号: {$code}\n";
+        $body .= "カテゴリ: " . ($row['category'] ?? '') . "\n";
+        if (!empty($row['site_name'])) $body .= "対象サイト名: " . $row['site_name'] . "\n";
+        $body .= "ステータス: " . contactStatusLabelForApi((string)($row['status'] ?? 'open')) . "\n";
+        $body .= "画像: " . (count($images) ? count($images) . "枚添付" : 'なし') . "\n";
+        $body .= "返信方法: " . contactReplyLabelForMail($row) . "\n";
+        $body .= "アカウント: " . contactAccountLabelForMail($row) . "\n";
+        $body .= "管理画面: " . contactAdminUrl($code) . "\n";
+        $body .= "────────────────────\n";
+        $body .= "追加メッセージ:\n" . $message . "\n";
+        $body .= "────────────────────\n";
+        $body .= "通知日時: " . date('Y/m/d H:i:s') . "\n";
+        contactMailAdminWithImages($subject, $body, $images);
+    }
+    $fresh = $row ?: contactFetchJoined($id);
+    if (!$fresh) err('お問い合わせが見つかりません。', 404);
+    ok(buildContactInquiryData($fresh, true));
+}
+
+function actionContactUserHide(): void { ensureContactTables();
+    $u = requireAuth();
+    $id = (int)(body()['id'] ?? ($_GET['id'] ?? 0));
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('SELECT id, status FROM buddies_contact_inquiries WHERE id=? AND user_id=? LIMIT 1');
+    $st->execute([$id, (int)$u['id']]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if (!in_array((string)$r['status'], ['rejected','cancelled','accepted','replied','closed'], true)) {
+        err('棄却・取りやめ・受付済・返信済のお問い合わせのみ非表示にできます。');
+    }
+    db()->prepare('UPDATE buddies_contact_inquiries SET user_hidden_at=NOW() WHERE id=? AND user_id=?')->execute([$id, (int)$u['id']]);
+    ok(['hidden'=>true, 'id'=>$id]);
+}
+function actionContactAdminList(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $st = db()->query("SELECT ci.*, u.username, u.display_name, u.user_icon,
+        (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='admin') AS admin_reply_count,
+        (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='user' AND (ci.admin_read_at IS NULL OR cm.created_at > ci.admin_read_at)) AS unread_user_count,
+        (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count,
+        (SELECT cm.body FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_message,
+        (SELECT cm.sender FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_sender,
+        (SELECT cm.created_at FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_at
+        FROM buddies_contact_inquiries ci
+        LEFT JOIN sakulabo_users u ON u.id = ci.user_id
+        ORDER BY CASE WHEN (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='user' AND (ci.admin_read_at IS NULL OR cm.created_at > ci.admin_read_at)) > 0 THEN 0 ELSE 1 END,
+                 CASE ci.status WHEN 'open' THEN 0 WHEN 'pending' THEN 1 WHEN 'accepted' THEN 2 WHEN 'replied' THEN 3 WHEN 'rejected' THEN 4 WHEN 'cancelled' THEN 5 WHEN 'closed' THEN 6 ELSE 7 END,
+                 ci.updated_at DESC, ci.created_at DESC
+        LIMIT 300");
+    $rows = $st->fetchAll();
+    ok(array_map(function($r) {
+        return buildContactInquiryData($r, false);
+    }, $rows));
+}
+function actionContactAdminGet(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $id = (int)($_GET['id'] ?? 0);
+    $code = strtoupper(contactClean($_GET['code'] ?? $_GET['contact_code'] ?? '', 8));
+    if ($id <= 0 && $code === '') err('id または code は必須です。');
+    if ($id > 0) {
+        $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon,
+            (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count
+            FROM buddies_contact_inquiries ci
+            LEFT JOIN sakulabo_users u ON u.id = ci.user_id
+            WHERE ci.id=? LIMIT 1");
+        $st->execute([$id]);
+    } else {
+        $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon,
+            (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count
+            FROM buddies_contact_inquiries ci
+            LEFT JOIN sakulabo_users u ON u.id = ci.user_id
+            WHERE ci.contact_code=? LIMIT 1");
+        $st->execute([$code]);
+    }
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    try { db()->prepare('UPDATE buddies_contact_inquiries SET admin_read_at=NOW() WHERE id=?')->execute([(int)$r['id']]); } catch (Throwable $e) {}
+    $r['unread_user_count'] = 0;
+    ok(buildContactInquiryData($r, true));
+}
+function actionContactAdminReply(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    $reply = contactClean($b['reply'] ?? '', 4000);
+    if ($id <= 0) err('id は必須です。');
+    if ($reply === '') err('返信内容を入力してください。');
+    $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if (in_array((string)$r['status'], ['rejected','cancelled','accepted','replied','closed'], true)) err('このステータスのお問い合わせには返信を追加できません。');
+    contactRateLimit('admin_reply_' . $id, 4);
+    db()->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
+      ->execute([$id, 'admin', $reply]);
+    db()->prepare("UPDATE buddies_contact_inquiries SET admin_replied_at=NOW(), status=CASE WHEN status IN ('accepted','replied','rejected','cancelled','closed') THEN status ELSE 'open' END, updated_at=NOW() WHERE id=?")->execute([$id]);
+    $fresh = contactFetchJoined($id);
+    ok(['replied'=>true, 'inquiry'=>$fresh ? buildContactInquiryData($fresh, true) : null]);
+}
+
+function ensureContactMailSubscriptionColumn(): void {
+    $cols = tableColumns(db(), 'buddies_todo_email_subscriptions');
+    if (!$cols) return;
+    if (!in_array('contact_enabled', $cols, true)) {
+        try {
+            db()->exec("ALTER TABLE buddies_todo_email_subscriptions ADD COLUMN contact_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER checklist_enabled");
+        } catch (Throwable $e) {}
+    }
+}
+
+function contactMailSubscriptionForUser(int $userId): ?array {
+    if ($userId <= 0) return null;
+    ensureContactMailSubscriptionColumn();
+    $st = db()->prepare("SELECT * FROM buddies_todo_email_subscriptions
+        WHERE user_id = ? AND status = 'active' AND COALESCE(contact_enabled, 0) = 1
+        LIMIT 1");
+    $st->execute([$userId]);
+    return $st->fetch() ?: null;
+}
+
+function latestAdminContactMessage(int $inquiryId): ?array {
+    $st = db()->prepare("SELECT id, body, created_at FROM buddies_contact_messages
+        WHERE inquiry_id = ? AND sender = 'admin'
+        ORDER BY id DESC LIMIT 1");
+    $st->execute([$inquiryId]);
+    return $st->fetch() ?: null;
+}
+
+function contactMailSystemUrl(string $route = 'contact-mail'): string {
+    $base = trim((string)(envv('MAIL_SYSTEM_BASE_URL', '') ?: ''));
+    if ($base === '') $base = '../mail-system/';
+    return rtrim($base, '/') . '/?' . rawurlencode($route);
+}
+
+function contactUserFormUrl(): string {
+    return (string)(envv('BUDDIES_CONTACT_URL', 'https://buddies46.stars.ne.jp/satellite/buddies/form/') ?: 'https://buddies46.stars.ne.jp/satellite/buddies/form/');
+}
+
+function actionContactAdminSendMail(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    $r = contactFetchJoined($id);
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if (empty($r['user_id'])) err('ログインなしのお問い合わせにはメール通知を送信できません。');
+    if (empty($r['need_reply']) || (string)($r['reply_channel'] ?? '') !== 'site') {
+        err('このサイトで返信を受け取るお問い合わせのみメール通知できます。');
+    }
+    $sub = contactMailSubscriptionForUser((int)$r['user_id']);
+    if (!$sub) {
+        err('送信先ユーザーは、Mail Systemでメール認証とお問い合わせ返信通知の有効化を完了していません。');
+    }
+    $message = latestAdminContactMessage($id);
+    if (!$message) err('通知できる管理者返信がまだありません。');
+    $template = __DIR__ . '/../mail-system/contact/mail.php';
+    if (!is_file($template)) err('お問い合わせメールテンプレートが見つかりません。', 500);
+    require_once $template;
+    if (!function_exists('contact_mail_reply_notification_message') || !function_exists('todo_mail_send')) {
+        err('お問い合わせメール送信機能を読み込めませんでした。', 500);
+    }
+    $code = (string)($r['contact_code'] ?? ('ID' . $id));
+    $payload = contact_mail_reply_notification_message($r, $message, contactUserFormUrl(), contactMailSystemUrl('contact-mail'));
+    $sent = todo_mail_send([(string)$sub['email']], $payload['subject'], $payload['text'], $payload['html']);
+    if (!$sent) err('メール送信に失敗しました。Mail SystemのSMTP設定を確認してください。', 500);
+    db()->prepare('UPDATE buddies_contact_inquiries SET email_notification=1, updated_at=NOW() WHERE id=?')->execute([$id]);
+    $fresh = contactFetchJoined($id);
+    ok([
+        'sent' => true,
+        'to' => (string)$sub['email'],
+        'contact_code' => $code,
+        'inquiry' => $fresh ? buildContactInquiryData($fresh, true) : null,
+    ]);
+}
+
+function actionContactAdminUpdateStatus(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $b = body();
+    $id = (int)($b['id'] ?? 0);
+    $status = contactClean($b['status'] ?? '', 20);
+    if ($id <= 0) err('id は必須です。');
+    if (!in_array($status, ['open','rejected','pending','accepted','replied'], true)) err('不正なステータスです。');
+    $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    db()->prepare("UPDATE buddies_contact_inquiries SET status=?, user_hidden_at=CASE WHEN ? IN ('open','pending','rejected') THEN NULL ELSE user_hidden_at END, updated_at=NOW() WHERE id=?")->execute([$status, $status, $id]);
+    $fresh = contactFetchJoined($id);
+    if (!$fresh) err('更新後のお問い合わせが見つかりません。', 404);
+    ok(buildContactInquiryData($fresh, true));
+}
+function contactAdminDeleteFiles(int $id): void {
+    try {
+        $st = db()->prepare('SELECT file_path FROM buddies_contact_images WHERE inquiry_id=?');
+        $st->execute([$id]);
+        $root = dirname(__DIR__);
+        foreach ($st->fetchAll() as $row) {
+            $rel = ltrim((string)($row['file_path'] ?? ''), '/');
+            if ($rel === '' || str_contains($rel, '..')) continue;
+            $candidates = [
+                $root . '/Form/' . $rel,
+                $root . '/form/' . $rel,
+                __DIR__ . '/../Form/' . $rel,
+                __DIR__ . '/../form/' . $rel,
+            ];
+            foreach ($candidates as $path) {
+                $real = realpath($path);
+                if ($real && is_file($real)) @unlink($real);
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('[contact] delete image files failed: ' . $e->getMessage());
+    }
+}
+function actionContactAdminDelete(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $b = body();
+    $id = (int)($b['id'] ?? ($_GET['id'] ?? 0));
+    if ($id <= 0) err('id は必須です。');
+    $st = db()->prepare('SELECT id, contact_code, status FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
+    $st->execute([$id]);
+    $r = $st->fetch();
+    if (!$r) err('お問い合わせが見つかりません。', 404);
+    if ((string)($r['status'] ?? 'open') === 'open') {
+        err('受付中のお問い合わせは削除できません。ステータスを変更してから削除してください。', 400);
+    }
+    contactAdminDeleteFiles($id);
+    db()->prepare('DELETE FROM buddies_contact_inquiries WHERE id=?')->execute([$id]);
+    ok(['deleted'=>true, 'id'=>$id, 'contact_code'=>(string)($r['contact_code'] ?? '')]);
 }

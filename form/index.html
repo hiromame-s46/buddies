@@ -2,503 +2,1389 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>お問い合わせフォーム - Buddies profile</title>
-<meta name="description" content="Buddies profile へのお問い合わせ、ご意見、不具合報告を送信できます。">
-<meta property="og:title" content="お問い合わせフォーム - Buddies profile">
-<meta property="og:description" content="Buddies profile へのお問い合わせ、ご意見、不具合報告を送信できます。">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/form/">
-<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
-<meta property="og:site_name" content="Buddies">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="お問い合わせフォーム - Buddies profile">
-<meta name="twitter:description" content="Buddies profile へのお問い合わせ、ご意見、不具合報告を送信できます。">
-<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/form/">
-<link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../icon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="../icon/favicon-16x16.png">
-<link rel="manifest" href="../icon/site.webmanifest">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>お問い合わせ</title>
+<script>
+(function(){
+  var ua=navigator.userAgent||"";
+  var root=document.documentElement;
+  root.classList.add(/Android/i.test(ua)?"is-android":"not-android");
+  root.classList.add(/iP(hone|ad|od)/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1)?"is-ios":"not-ios");
+})();
+</script>
 <style>
-    * {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-  }
-  a { color: inherit; text-decoration: none; }
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    background: #fff;
-    color: #111;
-    padding: 24px 16px 80px;
-    line-height: 1.6;
-  }
-  .wrap {
-    max-width: 480px;
-    margin: 0 auto;
-  }
-  h1 {
-    font-size: 24px;
-    font-weight: 700;
-    margin-bottom: 32px;
-    letter-spacing: -0.02em;
-  }
-  label {
-    display: block;
-    font-size: 16px;
-    font-weight: 500;
-    margin: 24px 0 10px;
-  }
-  .label-sub {
-    font-weight: 400;
-    font-size: 14px;
-    color: #666;
-  }
-  input[type="text"],
-  input[type="file"],
-  select,
-  textarea {
-    width: 100%;
-    font-size: 16px;
-    padding: 14px 20px;
-    border: 1px solid #ddd;
-    border-radius: 9999px;
-    background: #fff;
-    color: #111;
-    -webkit-text-fill-color: #111;
-    -webkit-appearance: none;
-    appearance: none;
-    transition: border 0.2s;
-  }
-  input[type="file"] {
-    padding: 11px 20px;
-    cursor: pointer;
-  }
-  input[type="file"]::file-selector-button {
-    border: none;
-    background: #111;
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 9999px;
-    font-size: 14px;
-    margin-right: 12px;
-    cursor: pointer;
-  }
-  input[type="text"]:focus,
-  select:focus,
-  textarea:focus,
-  input[type="file"]:focus {
-    outline: none;
-    border-color: #111;
-  }
-  select {
-    color: #111;
-    -webkit-text-fill-color: #111;
-    background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23111' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");
-    background-repeat: no-repeat;
-    background-position: right 20px center;
-    padding-right: 48px;
-  }
-  textarea {
-    border-radius: 24px;
-    resize: vertical;
-    min-height: 140px;
-    padding: 16px 20px;
-  }
-  .radio-group {
-    display: flex;
-    gap: 8px;
-    margin-top: 10px;
-  }
-  .radio-item {
-    flex: 1;
-  }
-  .radio-item input {
-    display: none;
-  }
-  .radio-item label {
-    display: block;
-    text-align: center;
-    margin: 0;
-    padding: 12px 16px;
-    font-size: 16px;
-    font-weight: 400;
-    border: 1px solid #ddd;
-    border-radius: 9999px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-  .radio-item input:checked + label {
-    background: #111;
-    color: #fff;
-    border-color: #111;
-  }
-  .hidden {
-    display: none;
-  }
-  .file-info {
-    font-size: 13px;
-    color: #666;
-    margin-top: 8px;
-  }
-  .preview-box {
-    display: flex;
-    gap: 8px;
-    margin-top: 12px;
-    flex-wrap: wrap;
-  }
-  .preview-box img {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 12px;
-    border: 1px solid #eee;
-  }
-  .checkbox-wrap {
-    margin: 32px 0 24px;
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-  }
-  .checkbox-wrap input {
-    width: 20px;
-    height: 20px;
-    margin-top: 1px;
-    flex-shrink: 0;
-    accent-color: #111;
-  }
-  .checkbox-wrap label {
-    margin: 0;
-    font-size: 15px;
-    font-weight: 400;
-    line-height: 1.5;
-  }
-  button {
-    width: 100%;
-    font-size: 16px;
-    font-weight: 600;
-    padding: 16px;
-    border: none;
-    border-radius: 9999px;
-    background: #111;
-    color: #fff;
-    -webkit-text-fill-color: #fff;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  button:active {
-    opacity: 0.8;
-  }
-  button:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-  }
-  button.secondary {
-    background: #fff;
-    color: #111;
-    -webkit-text-fill-color: #111;
-    border: 1px solid #ddd;
-    margin-bottom: 12px;
-  }
-  .confirm-list {
-    margin-bottom: 32px;
-  }
-  .confirm-item {
-    padding: 18px 0;
-    border-bottom: 1px solid #eee;
-  }
-  .confirm-item:last-child {
-    border-bottom: none;
-  }
-  .confirm-label {
-    font-size: 14px;
-    color: #666;
-    margin-bottom: 6px;
-  }
-  .confirm-value {
-    font-size: 16px;
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .confirm-images {
-    display: flex;
-    gap: 8px;
-    margin-top: 8px;
-    flex-wrap: wrap;
-  }
-  .confirm-images img {
-    width: 80px;
-    height: 80px;
-    object-fit: cover;
-    border-radius: 12px;
-    border: 1px solid #eee;
-  }
-  .complete {
-    text-align: center;
-    padding: 40px 0;
-  }
-  .complete h1 {
-    margin-bottom: 16px;
-  }
-  .complete p {
-    font-size: 16px;
-    color: #666;
-    margin-bottom: 32px;
-  }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{--app-height:100dvh;--bg:#f6f6f7;--card:#fff;--text:#111;--muted:#74747a;--line:#e8e8ec;--soft:#f4f4f6;--black:#111;--danger:#d33;--green:#047857;--blue:#2563eb}
+html,body{height:100%;overflow:hidden}body{background:linear-gradient(180deg,#fbfbfc,#f2f2f4);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN",Meiryo,sans-serif;color:var(--text);line-height:1.6}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer;border:none;background:none}.hidden{display:none!important}.app{height:var(--app-height);max-width:1180px;margin:0 auto;background:rgba(255,255,255,.9);display:grid;grid-template-rows:auto minmax(0,1fr);box-shadow:0 22px 70px rgba(0,0,0,.08)}
+header{min-height:62px;display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.92);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);z-index:5}.head-main{min-width:0;flex:1}.kicker{font-size:10px;color:#999;font-weight:900;letter-spacing:.12em}.title{font-size:19px;font-weight:900;letter-spacing:-.03em}.subtitle{font-size:12px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.head-actions{display:flex;gap:8px}.btn{min-height:38px;padding:0 14px;border-radius:999px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:850;color:#111;display:inline-flex;align-items:center;justify-content:center;gap:6px}.btn.black{background:#111;color:#fff;border-color:#111}.btn.danger{color:var(--danger);border-color:#ffd7d7;background:#fffafa}.btn:disabled{opacity:.45;cursor:not-allowed}.btn.small{min-height:32px;padding:0 11px;font-size:12px}.main{min-height:0;display:grid;grid-template-columns:360px minmax(0,1fr)}
+.list-pane{min-width:0;border-right:1px solid var(--line);background:rgba(250,250,251,.92);display:flex;flex-direction:column}.list-top{padding:14px;border-bottom:1px solid var(--line);display:grid;gap:10px}.list-headline{display:flex;align-items:center;justify-content:space-between;gap:10px}.list-title-main{font-size:16px;font-weight:950;letter-spacing:-.02em}.list-count{font-size:11px;color:#777;font-weight:800}.login-card{border:1px solid var(--line);background:#fff;border-radius:18px;padding:13px;display:grid;gap:8px}.login-title{font-size:12px;font-weight:900;color:#555}.login-note{font-size:12px;color:#777;line-height:1.65}.login-grid{display:grid;gap:8px}.input,select.input,textarea.input{width:100%;border:1px solid var(--line);background:#fff;border-radius:16px;padding:12px 14px;font-size:16px;outline:none;-webkit-appearance:none;appearance:none}.input:focus{border-color:#111;box-shadow:0 0 0 4px rgba(0,0,0,.055)}select.input{background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 6L11 1' stroke='%23111' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 14px center;padding-right:40px}.contact-list{padding:12px;overflow:auto;display:grid;gap:10px}.list-card{width:100%;text-align:left;border:1px solid var(--line);background:#fff;border-radius:20px;padding:13px;display:grid;gap:7px;transition:.15s;position:relative}.list-card.active{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}.list-card.unread{border-color:#111;background:linear-gradient(180deg,#fff,#fbfbfb)}.list-card.unread:before{content:"";position:absolute;left:10px;top:16px;width:8px;height:8px;border-radius:50%;background:#111}.list-card.unread{padding-left:24px}.list-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}.code{font-size:13px;font-weight:950}.list-category{font-size:12px;font-weight:850;color:#333}.list-meta{font-size:11px;color:#777;line-height:1.45}.list-preview{font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.badge{display:inline-flex;align-items:center;border-radius:999px;padding:3px 8px;font-size:10px;font-weight:950;background:#eef2ff;color:#3730a3;white-space:nowrap}.badge.open{background:#ecfdf5;color:#047857}.badge.cancelled{background:#fff1f2;color:#be123c}.badge.draft{background:#f3f3f3;color:#555}.badge.unread{background:#111;color:#fff}.empty{border:1px dashed var(--line);border-radius:18px;background:#fff;padding:18px;text-align:center;color:#888;font-size:13px;line-height:1.7}
+.mail-pane{min-width:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:linear-gradient(180deg,rgba(255,255,255,.76),rgba(247,247,248,.94))}.mail-head{min-height:58px;padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:rgba(255,255,255,.82);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}.mobile-list-btn{display:none}.icon-btn{width:38px;height:38px;padding:0;border-radius:50%;flex:0 0 auto}.icon-btn svg{width:18px;height:18px}.message-tools{display:flex;justify-content:flex-end;gap:6px;margin-top:8px}.message-edit-btn{border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.12);color:inherit;border-radius:999px;padding:6px 10px;font-size:11px;font-weight:900}.bot .message-edit-btn{border-color:var(--line);background:#fff;color:#111}.mail-title{min-width:0;flex:1}.mail-title-main{font-size:15px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mail-title-sub{font-size:11px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mail-actions{display:flex;gap:8px;flex-wrap:wrap}.chat{min-height:0;overflow:auto;padding:18px 16px 18px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}.row{display:flex;margin:0 0 12px}.row.bot{justify-content:flex-start}.row.user{justify-content:flex-end}.bubble{max-width:min(84%,640px);padding:12px 14px;border-radius:20px;font-size:14px;line-height:1.72;white-space:pre-wrap;word-break:break-word}.bot .bubble{background:#fff;border:1px solid var(--line);border-bottom-left-radius:7px;box-shadow:0 5px 18px rgba(0,0,0,.035)}.user .bubble{background:#111;color:#fff;border-bottom-right-radius:7px}.inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.mini{background:rgba(255,255,255,.13);color:inherit;border:1px solid rgba(255,255,255,.28);border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900}.bot .mini{background:#fff;color:#111;border-color:var(--line)}.bot-card{max-width:min(94%,680px);background:#fff;border:1px solid var(--line);border-radius:24px;padding:15px;margin:0 0 13px;box-shadow:0 8px 24px rgba(0,0,0,.045)}.card-title{font-size:13px;font-weight:950;margin-bottom:8px}.card-note{font-size:12px;color:#777;line-height:1.7;margin:6px 0 10px}.field{display:grid;gap:7px;margin:12px 0}.field label{font-size:12px;font-weight:900;color:#555}.segment{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seg input{display:none}.seg span{min-height:43px;border:1px solid var(--line);border-radius:999px;background:#fff;display:flex;align-items:center;justify-content:center;padding:8px 10px;font-size:13px;font-weight:850;text-align:center}.seg input:checked+span{background:#111;color:#fff;border-color:#111}.toggle-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);background:#fafafa;border-radius:18px;padding:12px 13px}.toggle-copy{min-width:0}.toggle-title{font-size:13px;font-weight:900}.toggle-note{font-size:12px;color:#777;line-height:1.55}.switch{position:relative;width:48px;height:28px;flex:0 0 auto}.switch input{display:none}.switch span{position:absolute;inset:0;border-radius:999px;background:#d9d9df;transition:.18s}.switch span:after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.22);transition:.18s}.switch input:checked+span{background:#111}.switch input:checked+span:after{transform:translateX(20px)}.dynamic-note{font-size:12px;color:#555;background:#f7f7f8;border:1px solid #efeff2;border-radius:14px;padding:10px 12px;line-height:1.65}.card-actions{display:flex;gap:8px;margin-top:12px}.card-actions .btn{flex:1;min-height:44px}.image-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}.image-grid a{display:block;width:76px;height:76px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#eee}.image-grid img{width:100%;height:100%;object-fit:cover}.composer{border-top:1px solid var(--line);background:rgba(255,255,255,.94);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);padding:9px 12px max(9px,env(safe-area-inset-bottom));display:grid;gap:7px}.attach-strip{display:flex;gap:8px;overflow:auto}.attach{position:relative;width:58px;height:58px;border-radius:16px;overflow:hidden;border:1px solid var(--line);background:#fafafa;flex:0 0 auto}.attach img{width:100%;height:100%;object-fit:cover}.attach button{position:absolute;right:3px;top:3px;width:22px;height:22px;border-radius:50%;background:rgba(0,0,0,.78);color:#fff;font-weight:900;line-height:1}.compose-row{display:flex;align-items:flex-end;gap:8px}.plus{width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:#fff;font-size:25px;font-weight:400;line-height:1;display:grid;place-items:center;flex:0 0 auto}.plus:disabled{opacity:.4}.composer textarea{flex:1;min-height:40px;max-height:132px;resize:none;border:1px solid var(--line);border-radius:20px;padding:9px 13px;font-size:16px;line-height:1.55;outline:none;overflow:auto}.send{width:40px;height:40px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;flex:0 0 auto}.send svg{width:18px;height:18px}.send:disabled{opacity:.42}.composer-note{font-size:11px;color:#777;padding:0 4px}.toast{position:fixed;left:50%;bottom:84px;transform:translateX(-50%);max-width:calc(100% - 30px);background:#111;color:#fff;border-radius:999px;padding:10px 15px;font-size:13px;font-weight:850;z-index:30;opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1}.sheet-bg{display:none}
+@media(max-width:800px){.app{box-shadow:none}.main{grid-template-columns:1fr}.list-pane{position:fixed;inset:62px 0 0;z-index:12;transform:translateX(-100%);transition:.24s;box-shadow:20px 0 60px rgba(0,0,0,.12);max-width:380px}.list-pane.open{transform:translateX(0)}.sheet-bg{display:block;position:fixed;inset:62px 0 0;background:rgba(0,0,0,.25);z-index:11;opacity:0;pointer-events:none;transition:.2s}.sheet-bg.open{opacity:1;pointer-events:auto}.mobile-list-btn{display:inline-flex}.chat{padding:14px 12px}.bubble{max-width:91%}.bot-card{max-width:100%}.segment{grid-template-columns:1fr}.head-actions .btn{padding:0 11px}.subtitle{max-width:190px}.mail-actions .btn{min-height:32px;padding:0 10px;font-size:12px}}
+
+/* v5: ホームは一覧、個別チャットは全画面で開く */
+.app.view-list .main{display:flex;justify-content:center;background:#fff;min-height:0;}
+.app.view-list .list-pane{width:100%;max-width:720px;border-right:0;background:#fff;position:static!important;transform:none!important;inset:auto!important;box-shadow:none!important;}
+.app.view-list .mail-pane{display:none!important;}
+.app.view-mail .main{display:grid;grid-template-columns:minmax(0,1fr);min-height:0;}
+.app.view-mail .list-pane{display:none!important;}
+.app.view-mail .mail-pane{display:grid;min-height:0;height:100%;}
+.app.view-mail .mobile-list-btn{display:inline-flex!important;}
+.app.view-mail .chat{padding-bottom:18px;}
+.app.view-mail .composer{display:grid;position:relative;z-index:3;}
+.app.view-mail .composer.hidden{display:none!important;}
+.sheet-bg{display:none!important;}
+.list-top{position:sticky;top:0;z-index:2;background:rgba(250,250,251,.96);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
+.list-headline .btn.black.small{min-width:82px;}
+.send,.plus{width:36px;height:36px;}
+.plus{font-size:23px;}
+.send svg{width:16px;height:16px;}
+.composer textarea{min-height:38px;max-height:152px;overscroll-behavior:contain;}
+@media(max-width:800px){
+  .app.view-list .list-pane{max-width:none;}
+  .app.view-mail .mail-head{min-height:54px;padding:8px 10px;}
+  .app.view-mail .chat{padding:12px 10px 14px;}
+  .app.view-mail .composer{padding:8px 10px max(8px,env(safe-area-inset-bottom));}
+}
+
+
+/* v6: composer stability and cancelled visibility */
+.composer{position:relative;z-index:3;flex-shrink:0;}
+.compose-row{min-height:40px;}
+.composer textarea:disabled{background:#f6f6f6;color:#999;-webkit-text-fill-color:#999;}
+@media(max-width:800px){
+  .app.view-mail{height:var(--app-height);overflow:hidden;}
+  .app.view-mail .main{height:calc(var(--app-height) - 62px);min-height:0;}
+  .app.view-mail .mail-pane{height:100%;min-height:0;}
+  .mail-head{flex-wrap:wrap;align-content:center;}
+  .mail-actions{margin-left:48px;}
+  .composer textarea{max-height:min(132px,28dvh);}
+}
+
+
+
+/* v7: strict layout / rendering stability */
+html,body{width:100%;height:100%;position:fixed;inset:0;overflow:hidden;overscroll-behavior:none;}
+.app{width:100%;height:var(--app-height);min-height:0;overflow:hidden;contain:layout style;}
+.main{height:100%;min-height:0;overflow:hidden;}
+.list-pane,.mail-pane{height:100%;min-height:0;overflow:hidden;}
+.contact-list{min-height:0;flex:1 1 auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;}
+.chat{min-height:0;overscroll-behavior:contain;overflow-anchor:none;}
+.mail-pane{isolation:isolate;}
+.composer{transform:translateZ(0);will-change:transform;}
+.compose-row{align-items:flex-end;}
+.composer textarea{touch-action:manipulation;scrollbar-width:none;}
+.composer textarea::-webkit-scrollbar{display:none;}
+.app.view-list .main{height:calc(var(--app-height) - 62px);overflow:hidden;}
+.app.view-list .list-pane{height:100%;min-height:0;}
+.app.view-mail .main{height:calc(var(--app-height) - 62px);overflow:hidden;}
+.app.view-mail .mail-pane{grid-template-rows:auto minmax(0,1fr) auto;}
+.app.view-mail .composer.hidden{display:none!important;}
+.list-card{min-height:92px;}
+.bot-card{overflow:hidden;}
+.dynamic-note{transition:background .15s,border-color .15s;}
+.segment .seg span,.switch span,.btn,.send,.plus{touch-action:manipulation;}
+@media(max-width:800px){
+  header{min-height:58px;padding:9px 12px;}
+  .title{font-size:17px;}
+  .subtitle{font-size:11px;max-width:210px;}
+  .app.view-list .main,.app.view-mail .main{height:calc(var(--app-height) - 58px);}
+  .app.view-mail .mail-pane{height:100%;}
+  .app.view-mail .mail-head{position:relative;z-index:4;background:rgba(255,255,255,.94);}
+  .app.view-mail .chat{padding-bottom:12px;}
+  .app.view-mail .composer{position:relative;z-index:5;box-shadow:0 -10px 28px rgba(0,0,0,.055);}
+  .composer-note{font-size:10.5px;line-height:1.45;}
+  .bubble{font-size:13.5px;line-height:1.68;}
+  .list-top{padding:11px;}
+  .contact-list{padding:10px;}
+}
+@media(min-width:801px){.app.view-list .list-pane{border:1px solid var(--line);border-radius:28px;margin:18px;box-shadow:0 10px 38px rgba(0,0,0,.045);}.app.view-list .main{background:linear-gradient(180deg,#fff,#f7f7f8);}.app.view-mail .mail-pane{max-width:900px;margin:0 auto;width:100%;border-left:1px solid var(--line);border-right:1px solid var(--line);}}
+
+
+/* v8: stable list/cards/settings/composer */
+.app{overflow:hidden;contain:layout size;}
+.main{height:100%;min-height:0;overflow:hidden;}
+.list-pane,.mail-pane{height:100%;min-height:0;overflow:hidden;}
+.contact-list{flex:1 1 auto;min-height:0;align-content:start;grid-auto-rows:min-content;overscroll-behavior:contain;}
+.list-card{min-height:112px;max-height:154px;overflow:hidden;contain:layout paint;}
+.list-card-head>div:first-child{min-width:0;}
+.list-card .code,.list-category,.list-meta,.list-preview{min-width:0;}
+.list-meta{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mail-pane{height:100%;}
+.chat{overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;padding-bottom:18px;}
+.composer{flex-shrink:0;position:relative;z-index:8;}
+.composer textarea{overscroll-behavior:contain;}
+.bot-card{width:min(94%,680px);}
+.settings-summary{display:grid;gap:8px;}
+.summary-line{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:9px 11px;border:1px solid #f0f0f2;border-radius:14px;background:#fafafa;font-size:13px;}
+.summary-line b{font-size:12px;color:#666;white-space:nowrap;}
+.summary-line span{text-align:right;font-weight:850;line-height:1.45;}
+.setting-choice{border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px;display:grid;gap:8px;}
+.setting-choice.is-disabled{opacity:.56;}
+.setting-choice-head{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.setting-choice-title{font-size:13px;font-weight:950;}
+.setting-choice-note{font-size:12px;color:#777;line-height:1.6;}
+.edit-only-card .field textarea{min-height:150px;}
+@media(min-width:801px){
+  .app.view-list .mail-pane{display:grid;}
+  .list-pane{position:relative;}
+}
+@media(max-width:800px){
+  html,body{height:var(--app-height);}
+  .app{height:var(--app-height);width:100%;max-width:none;}
+  .main{display:block;position:relative;}
+  .list-pane{position:absolute;inset:0;transform:none!important;transition:none;border-right:0;z-index:1;}
+  .mail-pane{position:absolute;inset:0;z-index:2;transform:translateX(100%);transition:transform .22s ease;background:#fff;}
+  .app.view-mail .mail-pane{transform:translateX(0);}
+  .app.view-mail .list-pane{pointer-events:none;}
+  .app.view-list .mail-pane{pointer-events:none;}
+  .mobile-list-btn{display:inline-flex;}
+  .list-top{padding:12px;}
+  .contact-list{padding:10px 10px max(18px,env(safe-area-inset-bottom));}
+  .list-card{min-height:104px;max-height:none;border-radius:18px;}
+  .mail-head{min-height:56px;padding:8px 10px;}
+  .mail-actions .btn{min-height:32px;padding:0 10px;font-size:12px;}
+  .bubble{max-width:91%;font-size:14px;}
+  .bot-card{max-width:100%;width:100%;border-radius:20px;}
+  .composer{padding:8px 9px max(8px,env(safe-area-inset-bottom));}
+  .plus,.send{width:38px;height:38px;}
+  .composer textarea{min-height:38px;max-height:min(128px,26dvh);}
+}
+
+
+/* v9: clearer inquiry settings UI */
+.settings-card{width:min(96%,700px);}
+.settings-card .card-title{font-size:15px;margin-bottom:4px;}
+.settings-card .card-note{margin-bottom:14px;}
+.setting-section{border:1px solid #efeff2;background:#fbfbfc;border-radius:18px;padding:12px;margin:10px 0;display:grid;gap:10px;}
+.setting-section-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;}
+.setting-section-title{font-size:13px;font-weight:950;letter-spacing:-.01em;}
+.setting-section-sub{font-size:11px;color:#777;line-height:1.55;margin-top:2px;}
+.settings-card .segment{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:8px;}
+.settings-card .seg span{border-radius:16px;min-height:48px;flex-direction:column;gap:2px;line-height:1.25;font-size:13px;}
+.settings-card .seg small{display:block;font-size:10.5px;font-weight:750;opacity:.72;}
+.settings-card .seg input:checked+span{box-shadow:0 6px 18px rgba(0,0,0,.12);}
+.settings-card .toggle-row{background:#fff;border-radius:16px;}
+.dm-card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:12px;display:grid;gap:10px;}
+.dm-card .field{margin:0;}
+.dm-grid{display:grid;grid-template-columns:130px minmax(0,1fr);gap:8px;}
+.settings-dynamic-note{background:#f2f7ff;border-color:#dceaff;color:#1f3b68;}
+.confirmed-settings{color:#111;background:#fff;border-radius:18px;padding:12px;display:grid;gap:10px;box-shadow:0 4px 14px rgba(0,0,0,.08);}
+.confirmed-settings-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding-bottom:8px;border-bottom:1px solid #eee;}
+.confirmed-settings-title{font-size:12px;font-weight:950;color:#111;}
+.confirmed-settings-status{font-size:10px;font-weight:950;color:#047857;background:#ecfdf5;border-radius:999px;padding:3px 8px;white-space:nowrap;}
+.settings-summary{color:#111;display:grid;gap:8px;}
+.summary-line{color:#111;background:#fafafa;}
+.summary-line span{color:#111;}
+.summary-highlight{border-color:#111;background:#fff;}
+.summary-highlight span{font-size:14px;font-weight:950;}
+.summary-note{font-size:11px;color:#777;line-height:1.6;background:#f7f7f8;border-radius:12px;padding:8px 10px;}
+@media(max-width:520px){
+  .settings-card{width:100%;}
+  .settings-card .segment{grid-template-columns:repeat(2,minmax(0,1fr))!important;}
+  .settings-card .seg span{min-height:46px;padding:8px 6px;font-size:12.5px;}
+  .settings-card .seg small{font-size:10px;}
+  .dm-grid{grid-template-columns:1fr;}
+  .setting-section{padding:11px;border-radius:17px;}
+}
+
+
+
+/* v10: initial top display + safer keyboard handling */
+.chat{scroll-behavior:auto;}
+.app.keyboard-active{height:var(--app-height);}
+.app.keyboard-active .mail-pane{height:100%;}
+.app.keyboard-active .composer{transform:none!important;}
+.composer{scroll-margin:0!important;}
+@media(max-width:800px){
+  .mail-pane{overflow:hidden;}
+  .app.view-mail .chat{min-height:0;}
+  .app.view-mail .composer{bottom:auto;}
+}
+
+
+/* v11: half modal settings, typing indicator, cleaner summary */
+.typing-bubble{display:inline-flex;align-items:center;gap:5px;min-width:54px;padding:13px 16px;}
+.typing-dot{width:6px;height:6px;border-radius:50%;background:#999;display:inline-block;animation:typingPulse .9s infinite ease-in-out;}
+.typing-dot:nth-child(2){animation-delay:.12s}.typing-dot:nth-child(3){animation-delay:.24s}
+@keyframes typingPulse{0%,80%,100%{opacity:.32;transform:translateY(0)}40%{opacity:1;transform:translateY(-3px)}}
+.summary-line{display:grid;grid-template-columns:116px minmax(0,1fr);align-items:start;gap:8px;border:1px solid #efefef;border-radius:12px;padding:9px 10px;font-size:12px;}
+.summary-line b{color:#666;font-size:11px;font-weight:950;white-space:nowrap;}
+.summary-line span{min-width:0;word-break:break-word;}
+.summary-line.is-empty{opacity:.58;}
+.confirmed-settings .inline-actions{margin-top:2px;}
+.half-modal{position:fixed;inset:0;z-index:80;display:flex;align-items:flex-end;justify-content:center;background:rgba(0,0,0,.32);opacity:0;pointer-events:none;transition:opacity .2s ease;}
+.half-modal.open{opacity:1;pointer-events:auto;}
+.half-sheet{width:100%;max-width:720px;max-height:min(86dvh,760px);background:#fff;border-radius:28px 28px 0 0;box-shadow:0 -22px 60px rgba(0,0,0,.18);display:grid;grid-template-rows:auto minmax(0,1fr);transform:translateY(18px);transition:transform .24s cubic-bezier(.2,.8,.2,1);overflow:hidden;}
+.half-modal.open .half-sheet{transform:translateY(0);}
+.half-handle{width:44px;height:4px;border-radius:999px;background:#ddd;margin:10px auto 2px;}
+.half-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 16px 12px;border-bottom:1px solid var(--line);}
+.half-title{font-size:15px;font-weight:950;}
+.half-body{min-height:0;overflow:auto;padding:14px 14px max(18px,env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;}
+.half-body .bot-card{max-width:100%;width:100%;box-shadow:none;margin:0;border-radius:22px;}
+.half-body .settings-card{width:100%;}
+.half-body .edit-only-card textarea{width:100%;min-height:170px;max-height:42dvh;resize:vertical;line-height:1.7;font-size:16px;}
+@media(min-width:801px){.half-modal{align-items:center;padding:24px}.half-sheet{border-radius:28px;max-height:min(82vh,760px)}}
+@media(max-width:520px){.summary-line{grid-template-columns:96px minmax(0,1fr);padding:8px 9px}.half-sheet{max-height:88dvh;border-radius:24px 24px 0 0}.half-body{padding:12px 10px max(16px,env(safe-area-inset-bottom));}}
+
+
+/* v14: iOS/Safari keyboard jump stabilization */
+:root{--header-real-height:62px;}
+@media(max-width:800px){:root{--header-real-height:58px;}}
+html,body{max-width:100%;touch-action:manipulation;}
+.app{top:0;}
+@media(max-width:800px){
+  html,body{left:0;right:0;top:0;bottom:0;min-height:100%;}
+  body{position:fixed;width:100%;overflow:hidden;}
+  .app{position:fixed;left:0;right:0;top:0;bottom:auto;width:100%;max-width:none;height:var(--app-height);min-height:var(--app-height);transform:none;margin:0;}
+  .app.view-list .main,.app.view-mail .main{height:calc(var(--app-height) - var(--header-real-height));}
+  .app.view-mail .mail-pane{height:100%;grid-template-rows:auto minmax(0,1fr) auto;}
+  .app.view-mail .composer{position:relative;bottom:auto;translate:none;transform:none!important;}
+  .composer textarea{font-size:16px;-webkit-user-select:text;user-select:text;}
+}
+@media(max-width:800px) and (display-mode:standalone){
+  :root{--header-real-height:calc(58px + env(safe-area-inset-top));}
+  header{min-height:var(--header-real-height);padding-top:max(9px,env(safe-area-inset-top));}
+}
+
+
+/* v15: Android Chrome keyboard compatibility */
+@media(max-width:800px){
+  html.is-android,html.is-android body{height:100%;min-height:100%;overflow:hidden;}
+  html.is-android body{position:static;width:100%;overscroll-behavior:none;}
+  html.is-android .app{position:fixed;inset:0;width:100%;height:var(--app-height);min-height:var(--app-height);max-height:var(--app-height);}
+  html.is-android .app.view-list .main,html.is-android .app.view-mail .main{height:calc(var(--app-height) - var(--header-real-height));}
+  html.is-android .mail-pane{contain:layout size;}
+  html.is-android .composer{padding-bottom:max(8px,env(safe-area-inset-bottom));}
+  html.is-android .composer textarea{font-size:16px;}
+}
+
+
+/* v16: single chat header + keyboard bottom anchoring */
+.app.view-mail>header{display:none!important;}
+.app.view-mail .main{height:var(--app-height)!important;}
+.app.view-mail .mail-pane{height:var(--app-height)!important;grid-template-rows:auto minmax(0,1fr) auto;}
+.app.view-mail .mail-head{position:relative;z-index:7;min-height:56px;}
+.app.view-mail .chat{scroll-padding-bottom:96px;}
+.app.view-mail.keyboard-active .chat{padding-bottom:10px;}
+.app.view-mail.keyboard-active .composer{box-shadow:0 -12px 34px rgba(0,0,0,.07);}
+@media(max-width:800px){
+  .app.view-mail .main{height:var(--app-height)!important;}
+  .app.view-mail .mail-pane{height:var(--app-height)!important;max-height:var(--app-height)!important;}
+  .app.view-mail .mail-head{padding-top:max(8px,env(safe-area-inset-top));}
+  .app.view-list>header{display:flex!important;}
+  .app.view-list .main{height:calc(var(--app-height) - var(--header-real-height))!important;}
+}
+
+
+
+/* mail-ui: chat view abolished */
+.app{background:#fff;box-shadow:none;}
+.main{grid-template-columns:340px minmax(0,1fr);background:#f6f6f7;}
+.list-pane{background:#fff;border-right:1px solid var(--line);}
+.list-top{padding:10px 12px;background:#fff;border-bottom:1px solid var(--line);}
+.list-headline{align-items:center;}
+.list-title-main{font-size:15px;letter-spacing:-.02em;}
+.list-count{font-size:11px;color:#777;}
+.login-card{border-radius:14px;padding:10px;gap:6px;}
+.login-title{font-size:11px;}
+.login-note{font-size:11px;line-height:1.5;}
+.contact-list{padding:8px;gap:6px;background:#fff;}
+.list-card{min-height:auto!important;max-height:none!important;border-radius:14px;padding:10px 11px;gap:5px;box-shadow:none;background:#fff;border-color:#ececf0;}
+.list-card:hover{transform:none;box-shadow:none;border-color:#d8d8de;}
+.list-card.active{border-color:#111;box-shadow:inset 3px 0 0 #111;background:#fafafa;}
+.list-card.unread{padding-left:18px;background:#fff;border-color:#111;}
+.list-card.unread:before{left:7px;top:15px;width:6px;height:6px;}
+.mail-list-row{display:grid;gap:3px;min-width:0;}
+.mail-list-top{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;}
+.mail-list-subject{font-size:13px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;}
+.mail-list-date{font-size:10.5px;color:#888;white-space:nowrap;}
+.mail-list-meta{font-size:11px;color:#666;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.mail-list-preview{font-size:12px;color:#333;line-height:1.45;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.mail-list-tags{display:flex;gap:5px;flex-wrap:wrap;margin-top:2px;}
+.badge{font-size:10px;padding:2px 7px;border-radius:999px;}
+.badge.action{background:#fff7ed;color:#9a3412;border:1px solid #fed7aa;}
+.mail-pane{background:#f7f7f8;grid-template-rows:auto minmax(0,1fr) auto;}
+.mail-head{min-height:50px;padding:8px 12px;background:#fff;border-bottom:1px solid var(--line);box-shadow:none;}
+.mail-title-main{font-size:14px;}
+.mail-title-sub{font-size:11px;color:#777;}
+.mail-actions{gap:6px;}
+.mail-actions .btn{min-height:30px;padding:0 10px;font-size:11px;}
+.chat{padding:0;overflow:auto;background:#f7f7f8;}
+.mail-detail{max-width:820px;margin:0 auto;padding:14px 14px 18px;display:grid;gap:10px;}
+.mail-empty{height:100%;display:grid;place-items:center;text-align:center;color:#777;padding:24px;}
+.mail-empty-card{width:min(420px,100%);border:1px solid var(--line);background:#fff;border-radius:18px;padding:18px;display:grid;gap:10px;box-shadow:0 8px 22px rgba(0,0,0,.035);}
+.mail-empty-title{font-size:16px;font-weight:950;color:#111;}
+.mail-empty-copy{font-size:12px;line-height:1.6;color:#666;}
+.mail-paper{border:1px solid var(--line);background:#fff;border-radius:18px;overflow:hidden;box-shadow:0 8px 22px rgba(0,0,0,.035);}
+.mail-paper-head{padding:14px 15px 12px;border-bottom:1px solid var(--line);display:grid;gap:8px;}
+.mail-subject{font-size:18px;font-weight:950;line-height:1.35;letter-spacing:-.025em;}
+.mail-chip-row{display:flex;gap:6px;flex-wrap:wrap;}
+.mail-chip{display:inline-flex;align-items:center;border:1px solid #ececf0;background:#fafafa;border-radius:999px;padding:3px 8px;font-size:10.5px;font-weight:900;color:#444;}
+.mail-chip.strong{background:#111;color:#fff;border-color:#111;}
+.mail-meta-grid{display:grid;grid-template-columns:94px minmax(0,1fr);gap:5px 10px;padding:11px 15px;border-bottom:1px solid #f0f0f2;font-size:12px;}
+.mail-meta-grid b{font-size:11px;color:#777;font-weight:950;white-space:nowrap;}
+.mail-meta-grid span{min-width:0;word-break:break-word;color:#222;}
+.mail-body{padding:12px 15px 15px;display:grid;gap:10px;}
+.mail-section{border:1px solid #eeeeF2;background:#fff;border-radius:14px;padding:12px;display:grid;gap:9px;}
+.mail-section-title{font-size:12px;font-weight:950;color:#555;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.mail-section-copy{font-size:12px;line-height:1.6;color:#666;}
+.mail-message{border:1px solid #ececf0;background:#fff;border-radius:15px;overflow:hidden;}
+.mail-message.admin{border-color:#d7d7dd;background:#fcfcfc;}
+.mail-message-head{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:9px 12px;border-bottom:1px solid #f0f0f2;background:#fbfbfb;}
+.mail-message-from{font-size:12px;font-weight:950;color:#222;}
+.mail-message-date{font-size:10.5px;color:#888;white-space:nowrap;}
+.mail-message-body{padding:12px;font-size:13.5px;line-height:1.75;white-space:pre-wrap;word-break:break-word;color:#111;}
+.mail-confirm{border:1px solid #d1fae5;background:#ecfdf5;color:#065f46;border-radius:14px;padding:11px 12px;font-size:12.5px;line-height:1.65;font-weight:750;}
+.mail-warning{border:1px solid #fee2e2;background:#fff1f2;color:#9f1239;border-radius:14px;padding:10px 12px;font-size:12.5px;line-height:1.6;font-weight:800;}
+.bot-card{max-width:none;width:100%;border-radius:14px;box-shadow:none;margin:0;padding:12px;}
+.card-title{font-size:13px;margin-bottom:5px;}
+.card-note,.setting-section-sub,.setting-choice-note,.dynamic-note{font-size:11.5px;line-height:1.55;}
+.setting-section{margin:8px 0;padding:10px;border-radius:14px;gap:8px;}
+.segment{gap:7px;}
+.seg span{min-height:38px;border-radius:13px;font-size:12px;padding:7px 8px;}
+.card-actions .btn{min-height:38px;}
+.confirmed-settings{box-shadow:none;border:1px solid var(--line);border-radius:14px;padding:10px;}
+.confirmed-settings-head{padding-bottom:6px;}
+.summary-line{grid-template-columns:88px minmax(0,1fr);padding:7px 8px;border-radius:10px;font-size:12px;}
+.summary-note{display:none;}
+.composer{background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 18px rgba(0,0,0,.035);padding:8px 12px max(8px,env(safe-area-inset-bottom));gap:6px;}
+.compose-row{gap:7px;}
+.plus,.send{width:36px;height:36px;}
+.plus{font-size:22px;}
+.composer textarea{min-height:38px;max-height:118px;border-radius:14px;padding:9px 12px;background:#fafafa;}
+.composer-note{font-size:10.5px;line-height:1.35;color:#777;padding:0 2px;}
+@media(min-width:801px){
+  .app.view-list .mail-pane{display:grid!important;}
+  .app.view-list .main{display:grid;grid-template-columns:340px minmax(0,1fr);height:calc(var(--app-height) - 62px)!important;}
+  .app.view-list .list-pane{width:auto;max-width:none;border:0;border-right:1px solid var(--line);border-radius:0;margin:0;box-shadow:none;}
+  .app.view-list .mail-pane{pointer-events:auto;position:relative;transform:none;}
+  .app.view-mail>header{display:flex!important;}
+  .app.view-mail .main{height:calc(var(--app-height) - 62px)!important;display:grid;grid-template-columns:340px minmax(0,1fr);}
+  .app.view-mail .list-pane{display:flex!important;}
+  .app.view-mail .mail-pane{height:100%!important;max-width:none;border:0;margin:0;width:auto;}
+  .mobile-list-btn{display:none!important;}
+}
+@media(max-width:800px){
+  .main{display:block;}
+  .app.view-mail>header{display:none!important;}
+  .mail-head{min-height:48px;padding:7px 10px;}
+  .mail-detail{padding:10px;gap:8px;}
+  .mail-paper{border-radius:15px;box-shadow:none;}
+  .mail-paper-head{padding:12px;gap:7px;}
+  .mail-subject{font-size:16px;}
+  .mail-meta-grid{grid-template-columns:76px minmax(0,1fr);padding:9px 12px;font-size:11.5px;}
+  .mail-body{padding:10px 12px 12px;gap:8px;}
+  .mail-section{padding:10px;border-radius:13px;}
+  .mail-message-head{padding:8px 10px;}
+  .mail-message-body{padding:10px;font-size:13px;line-height:1.65;}
+  .login-card{display:none;}
+  .login-card:not(.hidden){display:grid;}
+  .contact-list{padding:7px 8px max(14px,env(safe-area-inset-bottom));}
+  .list-card{padding:9px 10px;border-radius:13px;}
+  .composer{padding:7px 9px max(7px,env(safe-area-inset-bottom));}
+  .composer-note{display:none;}
+}
+
+
+
+/* status-user-ui: flat mail, status, hide, collapsible settings */
+:root{--admin-reply-bg:#eef9ff;--admin-reply-line:#cfeefa;}
+.list-top{padding:10px 14px!important;gap:6px!important;background:#fff!important;}
+.list-title-main{font-size:19px!important;}
+.contact-list{padding:0!important;gap:0!important;background:#fff!important;}
+.list-card{border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;box-shadow:none!important;min-height:0!important;max-height:none!important;padding:13px 16px!important;background:#fff!important;gap:5px!important;}
+.list-card:hover{transform:none!important;box-shadow:none!important;}
+.list-card.active{box-shadow:inset 4px 0 0 #111!important;background:#fafafa!important;}
+.list-card.unread{background:#f7fbff!important;border-color:var(--line)!important;padding-left:16px!important;}
+.list-card.unread:before{display:none!important;}
+.card-topline{display:flex!important;align-items:flex-start!important;justify-content:space-between!important;gap:12px!important;}
+.card-main-info{min-width:0!important;display:grid!important;gap:2px!important;}
+.code{font-size:15px!important;font-weight:950!important;line-height:1.25!important;}
+.list-category{font-size:12px!important;color:#555!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important;}
+.list-preview{font-size:13px!important;line-height:1.5!important;color:#111!important;display:-webkit-box!important;-webkit-line-clamp:1!important;-webkit-box-orient:vertical!important;white-space:normal!important;min-height:0!important;}
+.list-meta{font-size:11px!important;color:#777!important;display:flex!important;gap:8px!important;flex-wrap:wrap!important;}
+.list-mini-progress{display:none!important;}
+.card-next{font-size:12px!important;color:#333!important;font-weight:850!important;}
+.badge{border-radius:999px!important;padding:3px 8px!important;font-size:10.5px!important;}
+.badge.rejected,.badge.cancelled{background:#fff1f2!important;color:#be123c!important;}
+.badge.pending{background:#fffbeb!important;color:#92400e!important;}
+.badge.accepted,.badge.closed{background:#eff6ff!important;color:#1d4ed8!important;}
+.badge.replied{background:#f0fdf4!important;color:#047857!important;}
+.mail-detail{padding:0!important;background:#fff!important;}
+.mail-paper{border:0!important;border-radius:0!important;box-shadow:none!important;max-width:960px!important;width:100%!important;margin:0 auto!important;padding:18px 18px calc(80px + env(safe-area-inset-bottom))!important;background:#fff!important;}
+.mail-paper-head{padding-bottom:10px!important;border-bottom:1px solid var(--line)!important;}
+.mail-subject{font-size:22px!important;line-height:1.35!important;font-weight:950!important;}
+.mail-chip-row{display:flex!important;gap:7px!important;flex-wrap:wrap!important;margin-top:8px!important;}
+.mail-chip{border:1px solid #e8e8ec!important;background:#fff!important;border-radius:999px!important;padding:4px 8px!important;font-size:11px!important;font-weight:850!important;}
+.mail-chip.strong{background:#111!important;color:#fff!important;border-color:#111!important;}
+.mail-meta-grid{display:grid!important;grid-template-columns:96px minmax(0,1fr)!important;gap:8px 12px!important;padding:14px 0!important;border-bottom:1px solid var(--line)!important;font-size:13px!important;}
+.mail-meta-grid b{color:#666!important;font-size:12px!important;}
+.mail-meta-grid span{font-weight:700!important;word-break:break-word!important;}
+.mail-body{padding-top:14px!important;}
+.mail-message{border:0!important;border-radius:0!important;background:transparent!important;padding:14px 0!important;border-bottom:1px solid #f0f0f2!important;}
+.mail-message.admin{background:linear-gradient(90deg,var(--admin-reply-bg),rgba(238,249,255,0))!important;margin-left:-10px!important;margin-right:-10px!important;padding-left:10px!important;padding-right:10px!important;border-left:3px solid var(--admin-reply-line)!important;}
+.mail-message-head{display:flex!important;align-items:baseline!important;justify-content:space-between!important;gap:12px!important;margin-bottom:5px!important;}
+.mail-message-from{font-size:13px!important;font-weight:950!important;}
+.mail-message-date{font-size:11px!important;color:#777!important;}
+.mail-message-body{font-size:15px!important;line-height:1.8!important;white-space:pre-wrap!important;word-break:break-word!important;}
+.mail-message-tools{display:flex!important;justify-content:flex-end!important;margin-top:8px!important;}
+.mail-link-btn{font-size:12px!important;font-weight:900!important;border:1px solid var(--line)!important;border-radius:999px!important;padding:5px 10px!important;background:#fff!important;}
+.contact-settings-toggle{border:0!important;border-top:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important;padding:0!important;margin:0!important;background:#fff!important;}
+.contact-settings-toggle>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 0;font-weight:950;font-size:15px;}
+.contact-settings-toggle>summary::-webkit-details-marker{display:none;}
+.contact-settings-toggle>summary:after{content:'開閉';font-size:11px;color:#777;border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-weight:850;}
+.contact-settings-body{display:grid;gap:12px;padding:0 0 14px;}
+.setting-line{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:12px;padding:10px 0;border-top:1px solid #f3f3f5;}
+.setting-line-title{font-size:13px;font-weight:900;}
+.setting-line-note{font-size:11px;color:#777;line-height:1.5;margin-top:2px;}
+.settings-card,.bot-card,.category-flat,.site-flat{border:0!important;border-radius:0!important;box-shadow:none!important;background:transparent!important;padding:0!important;margin:0!important;max-width:none!important;}
+.category-flat,.site-flat{display:grid;gap:12px;border-top:1px solid var(--line)!important;border-bottom:1px solid var(--line)!important;padding:14px 0!important;}
+.card-actions .btn,.contact-settings-body .btn{min-height:42px!important;}
+.hide-done-note{border-top:1px solid var(--line);margin-top:12px;padding-top:12px;font-size:12px;color:#666;line-height:1.7;}
+@media(max-width:800px){.mail-paper{padding:14px 14px calc(82px + env(safe-area-inset-bottom))!important}.mail-subject{font-size:20px!important}.mail-meta-grid{grid-template-columns:84px minmax(0,1fr)!important}.mail-head{min-height:54px!important}.list-top{padding:9px 12px!important}.list-card{padding:12px 13px!important}.composer-note{font-size:10.5px!important}}
+
+
+/* no-chat-guard: residual old chat classes are rendered as flat mail content */
+.row,.row.bot,.row.user{display:block!important;margin:0!important;}
+.bubble,.bot .bubble,.user .bubble{max-width:100%!important;background:transparent!important;color:inherit!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;}
+.bot-card{max-width:100%!important;background:transparent!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important;margin:0!important;}
+.mail-pane{min-width:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#fff;}
+.mail-head{min-height:56px;padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#fff;z-index:5;}
+.mail-title{min-width:0;flex:1}.mail-title-main{font-size:17px;font-weight:950;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mail-title-sub{font-size:12px;color:#777;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.mail-actions{display:flex;gap:8px;flex-wrap:wrap}
+
+/* final_compact_contact_settings_20260616 */
+.app.view-mail .chat{background:#fff!important;padding:0!important}.draft-flow{width:100%;max-width:980px;margin:0 auto;background:#fff;padding:10px 12px calc(84px + env(safe-area-inset-bottom))}.draft-flow .mail-body{padding-top:9px!important}.draft-progress-compact{display:grid;gap:6px;margin:0 0 9px;padding:0 0 9px;border-bottom:1px solid var(--line)}.draft-progress-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:#777;font-weight:900}.draft-progress-current{color:#111;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.draft-progress-track{height:4px;border-radius:999px;background:#ececef;overflow:hidden}.draft-progress-fill{height:100%;border-radius:999px;background:#111}.settings-page{display:grid!important;gap:9px!important;background:#fff!important;border:0!important;padding:0!important;margin:0!important}.settings-page-hero{display:flex!important;align-items:flex-start!important;gap:9px!important;border:0!important;padding:0 0 6px!important;margin:0!important}.settings-page-icon{width:34px!important;height:34px!important;border-radius:12px!important;background:#111!important;color:#fff!important;display:grid!important;place-items:center!important;flex:0 0 auto}.settings-page-icon svg,.settings-block-icon svg,.settings-option-emoji svg{width:18px!important;height:18px!important;stroke-width:2.4!important}.settings-page-title{font-size:17px!important;font-weight:950!important;letter-spacing:-.04em!important;line-height:1.18!important}.settings-page-copy{font-size:11px!important;color:#777!important;line-height:1.4!important;margin-top:2px!important}.settings-page-list{display:grid!important;gap:8px!important}.settings-block{display:grid!important;gap:6px!important;border:0!important;border-top:1px solid #f0f0f2!important;padding:8px 0 0!important;margin:0!important}.settings-block:first-child{border-top:0!important;padding-top:0!important}.settings-block-head{display:flex!important;align-items:center!important;gap:8px!important;min-height:26px!important}.settings-block-icon{width:26px!important;height:26px!important;border-radius:10px!important;background:#f5f5f6!important;color:#111!important;display:grid!important;place-items:center!important;flex:0 0 auto}.settings-block-title{font-size:14px!important;font-weight:950!important;line-height:1.2!important}.settings-block-note{display:none!important}.settings-option-grid{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:6px!important}.settings-option{position:relative!important;min-width:0!important}.settings-option input{position:absolute!important;opacity:0!important;pointer-events:none!important}.settings-option-card{min-height:50px!important;border:1px solid var(--line)!important;border-radius:15px!important;background:#fff!important;padding:8px!important;display:grid!important;grid-template-columns:auto minmax(0,1fr)!important;gap:7px!important;align-items:center!important;box-shadow:none!important}.settings-option input:checked+.settings-option-card{border-color:#111!important;box-shadow:inset 0 0 0 1.5px #111!important;background:#fff!important}.settings-option-emoji{width:27px!important;height:27px!important;border-radius:10px!important;background:#f6f6f7!important;color:#111!important;display:grid!important;place-items:center!important}.settings-option-title{font-size:12.5px!important;font-weight:950!important;line-height:1.25!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.settings-option-sub{font-size:10px!important;color:#777!important;line-height:1.3!important;margin-top:1px!important;white-space:nowrap!important;overflow:hidden!important;text-overflow:ellipsis!important}.settings-inline-panel{border:1px solid #eeeef2!important;border-radius:14px!important;background:#fff!important;padding:9px!important;display:grid!important;gap:8px!important}.settings-page .toggle-row{min-height:50px!important;border:1px solid var(--line)!important;background:#fff!important;border-radius:15px!important;padding:8px 9px!important}.settings-page .toggle-title{font-size:13px!important;line-height:1.25!important}.settings-page .toggle-note{font-size:10.5px!important;line-height:1.35!important}.settings-page .switch{width:44px!important;height:26px!important}.settings-page .switch span:after{width:20px!important;height:20px!important}.settings-page .switch input:checked+span:after{transform:translateX(18px)!important}.settings-page .dm-grid{display:grid!important;grid-template-columns:94px minmax(0,1fr)!important;gap:7px!important}.settings-page .field{margin:0!important;gap:4px!important}.settings-page .field label{font-size:10.5px!important}.settings-page .input{border-radius:13px!important;padding:8px 10px!important;font-size:16px!important;min-height:40px!important}.settings-page .card-actions{margin-top:0!important;display:block!important}.settings-page .card-actions .btn{width:100%!important;min-height:44px!important;font-size:14px!important}.settings-reply-none{font-size:12px!important;color:#666!important;line-height:1.5!important;padding:7px 0!important}.composer-note b{display:none!important}@media(max-height:740px) and (max-width:800px){.settings-page-copy{display:none!important}.settings-page-hero{padding-bottom:4px!important}.settings-block{gap:5px!important;padding-top:7px!important}.settings-option-card{min-height:46px!important;padding:7px 8px!important}.settings-option-emoji{width:25px!important;height:25px!important}.settings-option-sub{display:none!important}.settings-page .toggle-row{min-height:46px!important}.settings-page .card-actions .btn{min-height:42px!important}}
+
+
+
+/* recurrence compact layout guard */
+.draft-progress-line{height:4px;background:#eee;border-radius:999px;overflow:hidden;margin:0 0 10px;}
+.draft-progress-line-fill{height:100%;background:#111;border-radius:999px;transition:width .18s ease;}
+.draft-flow{background:#fff;max-width:880px;width:100%;margin:0 auto;padding:14px 14px 18px;}
+.draft-flow .mail-body{padding:0!important;}
+.draft-next-page{border:0!important;box-shadow:none!important;background:#fff!important;padding:8px 0 0!important;margin:0!important;}
+.draft-next-title{display:flex;align-items:center;gap:8px;font-size:22px;font-weight:950;letter-spacing:-.03em;}
+.draft-next-title svg,.settings-page svg{width:20px;height:20px;stroke-width:2.4;}
+.draft-next-copy{font-size:13px;color:#777;line-height:1.55;margin:5px 0 12px;}
+.settings-page{padding:0!important;border:0!important;box-shadow:none!important;background:#fff!important;}
+.settings-page-hero{display:flex;align-items:center;gap:10px;margin:0 0 10px;}
+.settings-page-icon,.settings-block-icon{width:34px;height:34px;border-radius:12px;background:#111;color:#fff;display:grid;place-items:center;flex:0 0 auto;}
+.settings-page-title{font-size:22px;font-weight:950;letter-spacing:-.03em;line-height:1.25;}
+.settings-page-copy,.settings-block-note,.settings-option-sub{font-size:12px;color:#777;line-height:1.45;}
+.settings-page-list{display:grid;gap:9px;}
+.settings-block{border-top:1px solid #eee;padding-top:9px;display:grid;gap:8px;}
+.settings-block-head{display:flex;align-items:center;gap:9px;}
+.settings-block-title{font-size:15px;font-weight:950;line-height:1.25;}
+.settings-option-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.settings-option input{display:none;}
+.settings-option-card{min-height:58px;border:1px solid #e5e5e8;border-radius:18px;padding:9px 10px;display:flex;align-items:center;gap:9px;background:#fff;}
+.settings-option input:checked+.settings-option-card{border-color:#111;box-shadow:inset 0 0 0 1px #111;}
+.settings-option-emoji{width:32px;height:32px;border-radius:12px;background:#f4f4f5;display:grid;place-items:center;flex:0 0 auto;}
+.settings-option-title{font-size:14px;font-weight:950;line-height:1.2;}
+.settings-inline-panel,.settings-reply-none{border:1px solid #eee;border-radius:16px;background:#fafafa;padding:10px;font-size:12px;color:#666;line-height:1.5;}
+.settings-block .toggle-row{min-height:54px;padding:9px 10px;border-radius:18px;}
+.settings-block .toggle-title{font-size:14px;}
+.settings-block .toggle-note{font-size:12px;}
+.settings-page .card-actions{margin-top:8px;}
+.settings-page .card-actions .btn{min-height:46px;}
+.mail-message-tools{margin-top:8px;}
+@media(max-width:520px){.draft-flow{padding:12px 10px 14px;}.settings-page-title,.draft-next-title{font-size:20px}.settings-option-card{min-height:54px;padding:8px}.settings-page-list{gap:8px}.settings-block{padding-top:8px;gap:7px}.settings-block-icon,.settings-page-icon{width:32px;height:32px}.settings-option-emoji{width:30px;height:30px}.dm-grid{grid-template-columns:1fr 1fr;gap:8px}.settings-inline-panel{padding:8px}.settings-page .input{padding:9px 10px}.settings-page .field{gap:5px;margin:0}.settings-page .field label{font-size:11px}.settings-page .card-actions .btn{min-height:44px}}
+@media(max-height:760px) and (max-width:520px){.settings-page-copy,.settings-block-note,.settings-option-sub{font-size:11px;line-height:1.35}.settings-option-card{min-height:48px;border-radius:16px}.settings-block .toggle-row{min-height:48px}.settings-page .card-actions .btn{min-height:42px}.draft-flow{padding-top:8px}.settings-page-list{gap:6px}.settings-block{gap:6px}.settings-page-hero{margin-bottom:6px}.draft-progress-line{margin-bottom:7px}}
+
 </style>
+<script id="lucide-static" src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-<div class="wrap">
-  <form id="inputForm" enctype="multipart/form-data">
-    <h1>お問い合わせ</h1>
-    
-    <label for="category">カテゴリ</label>
-    <select id="category" name="category" required>
-      <option value="">選択してください</option>
-      <option value="お問い合わせ">お問い合わせ</option>
-      <option value="サイトの感想や意見">サイトの感想や意見</option>
-      <option value="情報の提供">情報の提供</option>
-      <option value="不具合の報告">不具合の報告</option>
-      <option value="誤情報の報告">誤情報の報告</option>
-      <option value="機能のリクエスト">機能のリクエスト</option>
-      <option value="サイトのリクエストや提案">サイトのリクエストや提案</option>
-      <option value="情報請求">情報請求</option>
-      <option value="その他">その他</option>
-    </select>
-
-    <label>返信の希望</label>
-    <div class="radio-group">
-      <div class="radio-item">
-        <input type="radio" id="replyNo" name="need_reply" value="希望しない" checked>
-        <label for="replyNo">希望しない</label>
+<div class="app view-list" id="app">
+  <header>
+    <div class="head-main">
+      <div class="kicker">CONTACT</div>
+      <div class="title">お問い合わせ</div>
+      <div class="subtitle" id="loginStatus">ログインなしでも送信できます</div>
+    </div>
+    <div class="head-actions"><button class="btn" id="loginToggleBtn" type="button">ログイン</button></div>
+  </header>
+  <div class="main">
+    <aside class="list-pane" id="listPane">
+      <div class="list-top">
+        <div class="list-headline"><div><div class="list-title-main">お問い合わせ一覧</div><div class="list-count" id="listCount">0件</div></div><button class="btn black small" id="newBtn" type="button">新規</button></div>
+        <div class="login-card hidden" id="loginBox">
+          <div class="login-title">Buddies profile ログイン</div>
+          <div class="login-note">ログインすると、過去のお問い合わせ・サイト内返信・取りやめ・返信前の変更が使えます。</div>
+          <div class="login-grid"><input class="input" id="loginUsername" placeholder="ユーザー名" autocomplete="username"><input class="input" id="loginPassword" type="password" placeholder="パスワード" autocomplete="current-password"><button class="btn black" id="loginBtn" type="button">ログイン</button></div>
+        </div>
+        <div class="login-card" id="loginPrompt"><div class="login-title">ログインするともっと便利です</div><div class="login-note">返信確認、取りやめ、返信前の内容変更が使えるようになります。</div><button class="btn" id="loginPromptBtn" type="button">ログインする</button></div>
       </div>
-      <div class="radio-item">
-        <input type="radio" id="replyYes" name="need_reply" value="希望する">
-        <label for="replyYes">希望する</label>
+      <div class="contact-list" id="inquiryList"></div>
+    </aside>
+    <div class="sheet-bg" id="sheetBg"></div>
+    <section class="mail-pane">
+      <div class="mail-head">
+        <button class="btn mobile-list-btn icon-btn" id="mobileListBtn" type="button" aria-label="お問い合わせ一覧へ戻る"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"></path></svg></button>
+        <div class="mail-title"><div class="mail-title-main" id="chatTitle">お問い合わせ</div><div class="mail-title-sub" id="chatSub">一覧から選択してください</div></div>
+        <div class="mail-actions" id="chatActions"></div>
       </div>
-    </div>
-
-    <div id="snsBox" class="hidden">
-      <label for="sns_service">SNSサービス名</label>
-      <input type="text" id="sns_service" name="sns_service" placeholder="X, Instagram など">
-      
-      <label for="sns_account">アカウント名</label>
-      <input type="text" id="sns_account" name="sns_account" placeholder="@yourname">
-    </div>
-
-    <label for="title">タイトル <span class="label-sub">(任意)</span></label>
-    <input type="text" id="title" name="title">
-
-    <!-- 不具合・誤情報時のサイト名 -->
-    <div id="siteBox" class="hidden">
-      <label for="site_name">対象サイト名</label>
-      <input type="text" id="site_name" name="site_name" placeholder="不具合/誤情報があるサイト名">
-    </div>
-
-    <label for="message">本文</label>
-    <textarea id="message" name="message" required></textarea>
-
-    <!-- 不具合報告時の画像添付 -->
-    <div id="imageBox" class="hidden">
-      <label for="images">画像添付 <span class="label-sub">(最大3枚)</span></label>
-      <input type="file" id="images" name="images[]" accept="image/*" multiple>
-      <div class="file-info">JPG, PNG, GIF, WEBP対応 / 1枚5MBまで</div>
-      <div class="preview-box" id="previewBox"></div>
-    </div>
-
-    <div class="checkbox-wrap">
-      <input type="checkbox" id="agree" name="agree" required>
-      <label for="agree">利用規約とプライバシーポリシーに同意する</label>
-    </div>
-
-    <button type="button" id="confirmBtn">確認する</button>
-  </form>
-
-  <div id="confirmForm" class="hidden">
-    <h1>内容の確認</h1>
-    <div class="confirm-list" id="confirmList"></div>
-    <button type="button" id="backBtn" class="secondary">修正する</button>
-    <button type="button" id="submitBtn">送信する</button>
+      <div class="chat" id="mailContent"></div>
+      <div class="composer" id="composer">
+        <div class="attach-strip" id="attachStrip"></div>
+        <div class="compose-row">
+          <button class="plus" id="plusBtn" type="button">＋</button>
+          <textarea id="messageInput" placeholder="本文を入力" rows="1"></textarea>
+          <button class="send" id="sendBtn" type="button" aria-label="送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button>
+          <input type="file" id="imagePicker" accept="image/*" multiple hidden>
+        </div>
+        <div class="composer-note" id="composerNote"></div>
+      </div>
+    </section>
   </div>
-
-  <div id="completeForm" class="hidden complete">
-    <h1>送信完了</h1>
-    <p>お問い合わせありがとうございました。</p>
-    <button type="button" onclick="location.reload()">トップへ戻る</button>
+</div>
+<div class="toast" id="toast"></div>
+<div class="half-modal" id="settingsModal" aria-hidden="true">
+  <div class="half-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
+    <div>
+      <div class="half-handle"></div>
+      <div class="half-head">
+        <div class="half-title" id="settingsModalTitle">お問い合わせ設定を編集</div>
+        <button class="btn small" id="settingsModalClose" type="button">閉じる</button>
+      </div>
+    </div>
+    <div class="half-body" id="settingsModalBody"></div>
+  </div>
+</div>
+<div class="half-modal" id="editModal" aria-hidden="true">
+  <div class="half-sheet" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+    <div>
+      <div class="half-handle"></div>
+      <div class="half-head">
+        <div class="half-title" id="editModalTitle">編集</div>
+        <button class="btn small" id="editModalClose" type="button">閉じる</button>
+      </div>
+    </div>
+    <div class="half-body" id="editModalBody"></div>
   </div>
 </div>
 
 <script>
-const inputForm = document.getElementById('inputForm');
-const confirmForm = document.getElementById('confirmForm');
-const completeForm = document.getElementById('completeForm');
-const snsBox = document.getElementById('snsBox');
-const siteBox = document.getElementById('siteBox');
-const imageBox = document.getElementById('imageBox');
-const confirmBtn = document.getElementById('confirmBtn');
-const backBtn = document.getElementById('backBtn');
-const submitBtn = document.getElementById('submitBtn');
-const categorySelect = document.getElementById('category');
-const imagesInput = document.getElementById('images');
-const previewBox = document.getElementById('previewBox');
 
-let selectedFiles = [];
+const API_CANDIDATES=['../buddies/api.php','../api.php','./api.php'];let API=API_CANDIDATES[0];let me=null,inquiries=[],drafts=[],activeKey='',apiReady=false,existingEdit=null,editModalKind='';let lastRenderedKey='',recentlySubmitted=new Set();let forceNextScrollBottom=false;let sendLockUntil=0,sendLockTimer=null,settingsModalKey='',draftStepTimers={};const SEND_COOLDOWN_MS=3500;
+const cats=['お問い合わせ','サイトの感想や意見','情報の提供','不具合の報告','誤情報の報告','機能のリクエスト','サイトのリクエストや提案','情報請求','その他'];
+const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const UA=navigator.userAgent||'';const IS_ANDROID=/Android/i.test(UA);const IS_IOS=/iP(hone|ad|od)/i.test(UA)||(/Macintosh/i.test(UA)&&navigator.maxTouchPoints>1);
+let stableAppHeight=Math.round(window.innerHeight||document.documentElement.clientHeight||667);
+let lastKeyboardAppHeight=stableAppHeight;
+let viewportTimer=null;
+let keyboardBottomTimers=[];
+function composerFocused(){return document.activeElement===$('messageInput')}
+function resetWindowScrollSoon(){
+  if(IS_ANDROID&&composerFocused())return;
+  requestAnimationFrame(()=>{try{window.scrollTo(0,0)}catch(e){}});
+}
+function setAppHeight(reason=''){
+  const vv=window.visualViewport;
+  const layoutH=Math.round(window.innerHeight||document.documentElement.clientHeight||stableAppHeight||667);
+  const focused=composerFocused();
+  let h=vv?Math.round(vv.height):layoutH;
 
-// 返信希望でSNS欄表示
-document.querySelectorAll('input[name="need_reply"]').forEach(radio => {
-  radio.addEventListener('change', e => {
-    if (e.target.value === '希望する') {
-      snsBox.classList.remove('hidden');
-      document.getElementById('sns_service').required = true;
-      document.getElementById('sns_account').required = true;
-    } else {
-      snsBox.classList.add('hidden');
-      document.getElementById('sns_service').required = false;
-      document.getElementById('sns_account').required = false;
-    }
-  });
-});
-
-// カテゴリ変更で条件分岐
-categorySelect.addEventListener('change', e => {
-  const val = e.target.value;
-  // 不具合の報告
-  if (val === '不具合の報告') {
-    siteBox.classList.remove('hidden');
-    imageBox.classList.remove('hidden');
-    document.getElementById('site_name').required = true;
-  } 
-  // 誤情報の報告
-  else if (val === '誤情報の報告') {
-    siteBox.classList.remove('hidden');
-    imageBox.classList.add('hidden');
-    document.getElementById('site_name').required = true;
-    imagesInput.value = '';
-    selectedFiles = [];
-    previewBox.innerHTML = '';
-  } 
-  // その他
-  else {
-    siteBox.classList.add('hidden');
-    imageBox.classList.add('hidden');
-    document.getElementById('site_name').required = false;
-    imagesInput.value = '';
-    selectedFiles = [];
-    previewBox.innerHTML = '';
-  }
-});
-
-// 画像プレビュー
-imagesInput.addEventListener('change', e => {
-  const files = Array.from(e.target.files).slice(0, 3);
-  selectedFiles = files;
-  previewBox.innerHTML = '';
-  
-  files.forEach(file => {
-    if (file.size > 5 * 1024 * 1024) {
-      alert(`${file.name} は5MBを超えています`);
+  if(IS_ANDROID){
+    // Android Chrome usually resizes the visual viewport correctly when the keyboard opens.
+    // Use that usable area directly and avoid the iOS-specific clamping that can leave the composer hidden.
+    if(focused){
+      const androidH=(h&&h>=320)?h:layoutH;
+      document.documentElement.style.setProperty('--app-height',Math.max(320,androidH)+'px');
+      lastKeyboardAppHeight=Math.max(320,androidH);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = e => {
-      const img = document.createElement('img');
-      img.src = e.target.result;
-      previewBox.appendChild(img);
-    };
-    reader.readAsDataURL(file);
-  });
-});
+  }
 
-// 確認画面へ
-confirmBtn.addEventListener('click', () => {
-  if (!inputForm.checkValidity()) {
-    inputForm.reportValidity();
+  if(!focused){
+    h=layoutH;
+    stableAppHeight=layoutH;
+    lastKeyboardAppHeight=layoutH;
+  }else{
+    const minUsable=Math.max(360,Math.round(layoutH*0.5));
+    // iOS Safari sometimes reports an extremely small visualViewport while the IME is opening.
+    // Using that transient value shrinks the whole app and moves the input area near the status bar.
+    if(!h||h<minUsable){
+      h=(lastKeyboardAppHeight&&lastKeyboardAppHeight>=minUsable)?lastKeyboardAppHeight:stableAppHeight;
+    }else{
+      lastKeyboardAppHeight=h;
+    }
+  }
+
+  document.documentElement.style.setProperty('--app-height',Math.max(360,h)+'px');
+}
+function scheduleViewportUpdate(reason=''){
+  clearTimeout(viewportTimer);
+  setAppHeight(reason);
+  viewportTimer=setTimeout(()=>{setAppHeight(reason+'-late');resetWindowScrollSoon();},120);
+}
+function adjustViewportAfterKeyboard(){
+  scheduleViewportUpdate('viewport');
+  const app=$('app');
+  if(app)app.classList.toggle('keyboard-active',composerFocused());
+  if(composerFocused())keepBottomDuringKeyboard();
+}
+setAppHeight('init');
+window.visualViewport?.addEventListener('resize',()=>{adjustViewportAfterKeyboard();});
+window.visualViewport?.addEventListener('scroll',()=>{if(!IS_ANDROID)resetWindowScrollSoon();});
+window.addEventListener('resize',()=>{adjustViewportAfterKeyboard();});
+window.addEventListener('orientationchange',()=>setTimeout(()=>{setAppHeight('orientation');resetWindowScrollSoon();},250));
+async function discoverAPI(){for(const u of API_CANDIDATES){try{const r=await fetch(u+'?action=auth_me',{credentials:'include'});if(r.ok){API=u;apiReady=true;return await r.json()}}catch(e){}}return null}
+async function apiFetch(action,opt={}){const res=await fetch(API+'?action='+encodeURIComponent(action),{credentials:'include',...opt});let json=null;try{json=await res.json()}catch(e){}if(!res.ok&&!json)throw new Error('network');return json}
+function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),2300)}
+function defaultSettings(){return{anonymous:!!me,account_mode:me?'anonymous':'guest',need_reply:true,reply_channel:me?'site':'dm',dm_service:'X',dm_account:''}}
+function newDraft(open=true){const d={key:'draft-'+Date.now()+'-'+Math.random().toString(16).slice(2),draft:true,created_at:new Date().toISOString(),settings:defaultSettings(),settings_done:false,category:'',category_done:false,site_name:'',site_done:false,showSettingsEditor:true,showCategoryEditor:false,showSiteEditor:false,pendingStep:'',files:[],body_draft:'',sent:false,contact_code:'',contact_id:0};drafts.unshift(d);if(open)activeKey=d.key;renderAll();closeList()}
+function hasDraftContent(d){return !!(d.settings_done||d.category_done||d.site_done||d.files?.length||String(d.body_draft||'').trim())}
+function hasBodyDraft(d){return !!((d.files||[]).length||String(d.body_draft||'').trim())}
+function ensureFirst(){if(!activeKey)return;const exists=allItems().some(i=>i.key===activeKey);if(!exists)activeKey=''}
+function allItems(){return[...drafts,...inquiries.filter(i=>i.status!=='cancelled').map(i=>({...i,key:'id-'+i.id,draft:false}))]}
+function activeItem(){if(activeKey.startsWith('draft-'))return drafts.find(d=>d.key===activeKey)||null;if(activeKey.startsWith('id-')){const id=+activeKey.slice(3);return inquiries.find(i=>+i.id===id)||null}return null}
+function statusLabel(s){return s==='cancelled'?'取りやめ':s==='closed'?'完了':'受付中'}
+function replyLabel(o){if(!o.need_reply)return'返信不要';if(o.reply_channel==='site')return'このサイトで返信';if(o.reply_channel==='dm')return'DM返信 '+(o.dm_service||'')+' '+(o.dm_account||'');return'返信なし'}
+function settingsSummary(o){const mode=o.account_mode==='anonymous'||o.anonymous?'匿名':(o.account_mode==='profile'?'Buddies profile':'ログインなし');return`アカウント：${mode}\n返信：${replyLabel(o)}`}
+function settingsSummaryHtml(o){const mode=o.account_mode==='anonymous'||o.anonymous?'匿名で送信':(o.account_mode==='profile'?'Buddies profileを表示':'ログインなし');const reply=o.need_reply?'返信あり':'返信不要';const channel=!o.need_reply?'返信なし':(o.reply_channel==='site'?'このサイトで受け取り':(o.reply_channel==='dm'?'DMで受け取り':'返信なし'));const dm=o.reply_channel==='dm'&&o.need_reply?`${o.dm_service||'X'} ${o.dm_account||''}`:'';const category=o.category||'';const site=o.site_name||'';return `<div class="confirmed-settings"><div class="confirmed-settings-head"><div class="confirmed-settings-title">お問い合わせ設定</div><div class="confirmed-settings-status">確定済み</div></div><div class="settings-summary"><div class="summary-line"><b>アカウント表示</b><span>${esc(mode)}</span></div><div class="summary-line summary-highlight"><b>返信の希望</b><span>${esc(reply)}</span></div><div class="summary-line"><b>受け取り方</b><span>${esc(channel)}</span></div>${dm?`<div class="summary-line"><b>DM先</b><span>${esc(dm)}</span></div>`:''}<div class="summary-line ${category?'':'is-empty'}"><b>カテゴリ</b><span>${esc(category||'未選択')}</span></div>${site||needsSite(category)?`<div class="summary-line ${site?'':'is-empty'}"><b>対象サイト</b><span>${esc(site||'未入力')}</span></div>`:''}</div><div class="summary-note">設定・カテゴリ・対象サイト名は、送信後に変更できません。本文のみ条件内で編集できます。</div></div>`}
+function needsSite(c){return c==='不具合の報告'||c==='誤情報の報告'}
+function categoryPrompt(c){if(c==='不具合の報告')return'不具合の内容を入力してください。起きた画面・操作手順・端末名なども書いてもらえると助かります。画像があれば左の＋から添付できます。追加メッセージは1回1枚、お問い合わせ全体で10枚までです。';if(c==='誤情報の報告')return'誤情報の内容を入力してください。対象サイト名・該当箇所・正しい情報が分かるようにお願いします。';if(c==='情報の提供')return'提供したい情報を入力してください。出典や確認できる情報があれば一緒にお願いします。';if(c==='機能のリクエスト')return'ほしい機能の内容を入力してください。どんな場面で使いたいかも書くと伝わりやすいです。';if(c==='サイトの感想や意見')return'サイトの感想や意見を入力してください。良かった点・気になった点どちらでも大丈夫です。';if(c==='情報請求')return'知りたい情報や確認したい内容を入力してください。';return'お問い合わせ内容を入力してください。画像がある場合は左の＋から添付できます。初回は2枚まで、追加メッセージは1回1枚・合計10枚までです。'}
+function latestPreview(item){if(item.draft){if(item.body_draft)return item.body_draft; if(item.category_done)return'本文入力待ち'; if(item.settings_done)return'カテゴリ選択待ち'; return'初期設定中'}const msgs=item.messages||[];if(msgs.length)return msgs[msgs.length-1].body;return item.latest_message||item.message||''}
+function renderList(){const items=allItems();$('listCount').textContent=`${items.length}件`;$('inquiryList').innerHTML=items.length?items.map(item=>{const isDraft=!!item.draft,active=item.key===activeKey,unread=!isDraft&&+item.unread_admin_count>0;const code=isDraft?(item.sent&&item.contact_code?'#'+item.contact_code:'作成中'):'#'+(item.contact_code||item.id);const cat=isDraft?(item.category||'カテゴリ未選択'):(item.category||'お問い合わせ');const badge=isDraft?(item.sent?'送信済み':'下書き'):statusLabel(item.status);const cls=isDraft?(item.sent?'open':'draft'):(item.status||'open');const preview=latestPreview(item);return`<button class="list-card ${active?'active':''} ${unread?'unread':''}" data-key="${esc(item.key)}"><div class="list-card-head"><div><div class="code">${esc(code)}</div><div class="list-category">${esc(cat)}</div></div><div style="display:grid;gap:5px;justify-items:end"><span class="badge ${esc(cls)}">${esc(badge)}</span>${unread?`<span class="badge unread">未読返信 ${+item.unread_admin_count}</span>`:''}</div></div><div class="list-meta">${esc(isDraft?replyLabel(item.settings):replyLabel(item))}${item.latest_at?'<br>'+esc(item.latest_at):''}</div><div class="list-preview">${esc(preview||'')}</div></button>`}).join(''):'<div class="empty">お問い合わせはまだありません。<br>右上の「新規」から作成できます。</div>'}
+function renderAll(){ensureFirst();const app=$('app');if(app){app.classList.toggle('view-mail',!!activeKey);app.classList.toggle('view-list',!activeKey)}renderHeader();renderList();renderMailView();updateComposer();}
+function renderHeader(){if(me){$('loginStatus').textContent=(me.display_name||me.username)+'でログイン中';$('loginToggleBtn').textContent='ログアウト';$('loginPrompt').classList.add('hidden');$('loginBox').classList.add('hidden')}else{$('loginStatus').textContent='ログインなしでも送信できます';$('loginToggleBtn').textContent='ログイン';$('loginPrompt').classList.remove('hidden')}}
+function row(body,type='bot'){return`<div class="row ${type}"><div class="bubble">${body}</div></div>`}
+function completionMessage(needReply){return needReply?'お問い合わせありがとうございます。送信が完了しました。確認後、指定した方法で返信させていただきます。通常3日以内に返信しております。':'お問い合わせありがとうございます。送信が完了しました。'}
+function userMessageBodyHtml(c,m,index){let body=esc(m.body)+messageImages(c,m,index);if(m.can_edit){body+=`<div class="message-tools"><button class="message-edit-btn" data-act="edit-message" data-message-id="${+m.id}" type="button">本文を修正</button></div>`}return body}
+function draftSummaryObject(d){return{...(d.settings||defaultSettings()),category:d.category_done?d.category:'',site_name:d.site_done?d.site_name:''}}
+function draftSummaryActions(d){if(d.sent)return'';const a=[];if(d.settings_done)a.push('<button class="mini" data-act="edit-settings" type="button">設定を編集</button>');if(d.category_done)a.push('<button class="mini" data-act="edit-category" type="button">カテゴリを変更</button>');if(needsSite(d.category)&&d.site_done)a.push('<button class="mini" data-act="edit-site" type="button">対象サイトを変更</button>');return a.length?`<div class="inline-actions">${a.join('')}</div>`:''}
+function typingRow(){return '<div class="row bot"><div class="bubble typing-bubble" aria-label="入力中"><span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span></div></div>'}
+function scheduleDraftStep(key,step){clearTimeout(draftStepTimers[key]);draftStepTimers[key]=setTimeout(()=>{const d=drafts.find(x=>x.key===key);if(!d||d.pendingStep!==step)return;d.pendingStep='';if(step==='category')d.showCategoryEditor=true;if(step==='site')d.showSiteEditor=true;forceNextScrollBottom=true;renderAll();},300)}
+function openSettingsModal(d){if(!d||!d.draft||d.sent)return;settingsModalKey=d.key;const m=$('settingsModal');$('settingsModalBody').innerHTML=settingsCard(d,true);m.classList.add('open');m.setAttribute('aria-hidden','false');setTimeout(bindSettingsDynamic,0)}
+function closeSettingsModal(){const m=$('settingsModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');settingsModalKey='';$('settingsModalBody').innerHTML=''}
+function settingsModalOpen(){return $('settingsModal')?.classList.contains('open')}
+function openEditModal(title,body,kind=''){editModalKind=kind;const m=$('editModal');$('editModalTitle').textContent=title||'編集';$('editModalBody').innerHTML=body||'';m.classList.add('open');m.setAttribute('aria-hidden','false');setTimeout(()=>{const ta=$('edit_message');if(ta)autoGrow(ta)},80)}
+function closeEditModal(){const m=$('editModal');if(!m)return;m.classList.remove('open');m.setAttribute('aria-hidden','true');$('editModalBody').innerHTML='';editModalKind='';existingEdit=null}
+function renderDraft(d,initialOpen=false){$('chatTitle').textContent=d.sent&&d.contact_code?`お問い合わせ #${d.contact_code}`:'新しいお問い合わせ';$('chatSub').textContent=d.sent?'送信済み':(d.settings_done?'チャット形式で入力中':'初期設定');$('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書きを削除</button>':'';let html='';html+=row('こんにちは。まずはこのお問い合わせの設定を選んでください。');if(!me)html+=row('ログインすると、送信後にこのサイトで返信確認・取りやめ・24時間以内の本文編集ができます。','bot');if(!d.settings_done){html+=settingsCard(d,false)}else{html+=row(`${settingsSummaryHtml(draftSummaryObject(d))}${draftSummaryActions(d)}`,'user');if(d.pendingStep){html+=typingRow()}else if(!d.category_done||d.showCategoryEditor){html+=row('ありがとうございます。次にカテゴリの選択をお願いします。');html+=categoryCard(d)}else if(needsSite(d.category)&&(!d.site_done||d.showSiteEditor)){html+=row('このカテゴリでは、対象サイト名も分かるようにお願いします。まず対象サイト名を入力してください。');html+=siteCard(d)}else{html+=row(categoryPrompt(d.category))}}if(d.sent){const guestNote=!me?'\n\nログインなしで送信したため、この画面で履歴や返信は確認できません。次回からはログインして送信すると便利です。':'';html+=row(`${completionMessage(!!d.settings?.need_reply)}\n\n管理番号：${esc(d.contact_code||'')}\n設定とカテゴリは送信後に変更できません。本文は管理者返信前かつ24時間以内のみ変更できます。${guestNote}`)}$('mailContent').innerHTML=html;afterMailRender(initialOpen)}
+function settingsCard(d,modal=false){const s=d.settings;const guest=!me;return`<div class="bot-card settings-card" id="settingsCard"><div class="card-title">お問い合わせ設定</div><div class="card-note">このお問い合わせごとの設定です。送信後は変更できないため、返信が必要かどうかを先に選んでください。</div>${me?`<div class="setting-section"><div class="setting-section-head"><div><div class="setting-section-title">アカウント表示</div><div class="setting-section-sub">匿名にする場合はオン。オフにするとBuddies profile名を管理者に表示します。</div></div></div><div class="toggle-row"><div class="toggle-copy"><div class="toggle-title">匿名で送信する</div><div class="toggle-note" id="anonNote">${s.anonymous?'管理者には匿名として表示されます。':'Buddies profileの表示名を管理者に表示します。'}</div></div><label class="switch"><input type="checkbox" id="set_anonymous" ${s.anonymous?'checked':''}><span></span></label></div></div>`:`<div class="setting-section"><div class="setting-section-title">アカウント表示</div><div class="dynamic-note">ログインしていないため、今回は「ログインなし」として送信されます。サイト内返信は使えないため、返信希望時はDMアカウントが必要です。</div></div>`}<div class="setting-section"><div class="setting-section-head"><div><div class="setting-section-title">返信の希望</div><div class="setting-section-sub">返信が必要かどうかを選択してください。標準は返信ありです。</div></div></div><div class="segment"><label class="seg"><input type="radio" name="set_need" value="1" ${s.need_reply?'checked':''}><span>返信あり<small>回答を受け取る</small></span></label><label class="seg"><input type="radio" name="set_need" value="0" ${!s.need_reply?'checked':''}><span>返信不要<small>送信のみ</small></span></label></div></div><div id="replyDetail">${replyDetailHtml(s,guest)}</div><div class="dynamic-note settings-dynamic-note" id="settingsDynamicNote">${settingsDynamicText(s,guest)}</div><div class="card-actions"><button class="btn black" type="button" data-act="save-settings">${modal?'設定を保存':'この設定で次へ'}</button></div></div>`}
+function replyDetailHtml(s,guest){if(!s.need_reply)return'<div class="setting-section"><div class="setting-section-title">返信の受け取り方</div><div class="dynamic-note">返信不要が選択されているため、受け取り方の設定は不要です。</div></div>';const channel=guest?'dm':(s.reply_channel||'site');return`<div class="setting-section"><div class="setting-section-head"><div><div class="setting-section-title">返信の受け取り方</div><div class="setting-section-sub">サイト内返信は一覧に未読表示されます。DMの場合はアカウント名が必須です。</div></div></div>${!guest?`<div class="segment"><label class="seg"><input type="radio" name="set_channel" value="site" ${channel==='site'?'checked':''}><span>このサイト<small>未読表示あり</small></span></label><label class="seg"><input type="radio" name="set_channel" value="dm" ${channel==='dm'?'checked':''}><span>DM<small>X / Instagram</small></span></label></div>`:`<div class="dynamic-note">ログインなしの場合は、このサイト内返信が使えないためDM返信になります。</div>`}<div id="dmFields" class="${channel==='dm'?'':'hidden'}"><div class="dm-card"><div class="setting-choice-title">DM返信先</div><div class="setting-choice-note">XまたはInstagramのアカウント名を入力してください。</div><div class="dm-grid"><div class="field"><label>サービス</label><select class="input" id="set_dm_service"><option value="X" ${s.dm_service==='X'?'selected':''}>X</option><option value="Instagram" ${s.dm_service==='Instagram'?'selected':''}>Instagram</option></select></div><div class="field"><label>アカウント名</label><input class="input" id="set_dm_account" value="${esc(s.dm_account||'')}" placeholder="@yourname"></div></div></div></div></div>`}
+function settingsDynamicText(s,guest){if(!s.need_reply)return'現在の設定：返信不要です。送信後に返信ありへ変更することはできません。';if(guest)return'現在の設定：ログインなし + DM返信です。送信後の履歴確認はできないため、DMアカウントを正確に入力してください。';if((s.reply_channel||'site')==='site')return'現在の設定：このサイトで返信を受け取ります。返信があるとお問い合わせ一覧に未読として表示されます。';return'現在の設定：DMで返信を受け取ります。XまたはInstagramのアカウント名が必須です。'}
+function bindSettingsDynamic(){
+  const card=$('settingsCard'); if(!card)return;
+  const update=()=>{
+    const need=document.querySelector('input[name="set_need"]:checked')?.value==='1';
+    let channel=me?(document.querySelector('input[name="set_channel"]:checked')?.value||'site'):'dm';
+    if(!need)channel='none';
+    const current={need_reply:need,reply_channel:channel,dm_service:$('set_dm_service')?.value||'X',dm_account:$('set_dm_account')?.value||'',anonymous:$('set_anonymous')?.checked??true};
+    const detail=$('replyDetail'); if(detail)detail.innerHTML=replyDetailHtml(current,!me);
+    const note=$('settingsDynamicNote'); if(note)note.textContent=settingsDynamicText(current,!me);
+    const anon=$('anonNote'); if(anon)anon.textContent=current.anonymous?'管理者には匿名として表示されます。':'Buddies profileの表示名を管理者に表示します。';
+    bindSettingsDynamic();
+  };
+  card.querySelectorAll('input[name="set_need"],input[name="set_channel"],#set_anonymous,#set_dm_service,#set_dm_account').forEach(el=>{el.onchange=update;if(el.id==='set_dm_account')el.oninput=update;});
+}
+function categoryCard(d){return`<div class="bot-card"><div class="card-title">カテゴリを選択</div><div class="card-note">内容に近いカテゴリを選んでください。送信後は変更できません。</div><div class="field"><label>カテゴリ</label><select class="input" id="draft_category">${cats.map(c=>`<option value="${esc(c)}" ${d.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="card-actions"><button class="btn black" data-act="save-category" type="button">次へ</button></div></div>`}
+function siteCard(d){return`<div class="bot-card"><div class="card-title">対象サイト名</div><div class="card-note">不具合・誤情報の場所が分かるように入力してください。</div><div class="field"><label>対象サイト名</label><input class="input" id="draft_site" value="${esc(d.site_name||'')}" placeholder="例：Buddies profile"></div><div class="card-actions"><button class="btn black" data-act="save-site" type="button">次へ</button></div></div>`}
+function messageImages(c,m,index){const imgs=(c.images||[]).filter(img=>{if(img.message_id)return +img.message_id===+m.id;return index===0;});return imgs.length?`<div class="image-grid">${imgs.map(img=>`<a href="${esc(img.url)}" target="_blank" rel="noopener"><img src="${esc(img.url)}" alt="添付画像"></a>`).join('')}</div>`:''}
+function renderExisting(c,initialOpen=false){$('chatTitle').textContent=`お問い合わせ #${c.contact_code||c.id}`;$('chatSub').textContent=`${c.category} / ${statusLabel(c.status)}`;$('chatActions').innerHTML=`${c.can_cancel?'<button class="btn danger small" id="cancelExistingBtn" type="button">取りやめ</button>':''}`;let html='';html+=row(`${settingsSummaryHtml(c)}<div class="card-note" style="color:inherit;opacity:.72;margin-top:8px;">送信後の設定・カテゴリ変更はできません。</div>`,'user');(c.messages||[]).forEach((m,i)=>{const body=userMessageBodyHtml(c,m,i);html+=row(`${body}<div style="font-size:11px;opacity:.68;margin-top:5px;">${esc(m.created_at||'')}</div>`,m.sender==='admin'?'bot':'user');});if(recentlySubmitted.has(+c.id))html+=row(`${completionMessage(!!c.need_reply)}\n\n管理番号：${esc(c.contact_code||'')}\n返信が来ると、この一覧に未読返信として表示されます。`);if(c.status==='cancelled')html+=row('このお問い合わせは取りやめ済みです。');$('mailContent').innerHTML=html;afterMailRender(initialOpen);markReadIfNeeded(c)}
+function existingEditCard(c,m){const e=existingEdit;return`<div class="bot-card edit-only-card"><div class="card-title">本文を編集</div><div class="card-note">この吹き出しの本文を修正します。管理者からの返信前、かつ送信から24時間以内だけ保存できます。保存すると管理者にメール通知されます。</div><div class="field"><label>本文</label><textarea class="input" id="edit_message" style="min-height:150px;resize:vertical;line-height:1.7;">${esc(e.message||'')}</textarea></div><div class="card-actions"><button class="btn" data-act="cancel-existing-edit" type="button">キャンセル</button><button class="btn black" data-act="save-existing-edit" type="button">本文を保存</button></div></div>`}
+function renderMailView(){
+  const item=activeItem();
+  if(!item){
+    $('chatTitle').textContent='お問い合わせ';
+    $('chatSub').textContent='一覧から選択してください';
+    $('chatActions').innerHTML='';
+    $('mailContent').innerHTML='<div class="empty">お問い合わせ一覧からチャットを開いてください。<br>新しく送る場合は一覧の「新規」を押してください。</div>';
     return;
   }
-  
-  const formData = new FormData(inputForm);
-  let html = '';
-  const items = [
-    ['category', 'カテゴリ'],
-    ['need_reply', '返信の希望'],
-    ['sns_service', 'SNSサービス名'],
-    ['sns_account', 'アカウント名'],
-    ['title', 'タイトル'],
-    ['site_name', '対象サイト名'],
-    ['message', '本文']
-  ];
-  
-  items.forEach(([key, label]) => {
-    let val = formData.get(key) || '';
-    if ((key === 'sns_service' || key === 'sns_account') && formData.get('need_reply') !== '希望する') return;
-    if (key === 'site_name' && !['不具合の報告', '誤情報の報告'].includes(formData.get('category'))) return;
-    if (key === 'title' && !val) val = '未入力';
-    html += `<div class="confirm-item">
-      <div class="confirm-label">${label}</div>
-      <div class="confirm-value">${val}</div>
-    </div>`;
+  const initialOpen=item.key!==lastRenderedKey&&!forceNextScrollBottom;
+  if(item.key!==lastRenderedKey){lastRenderedKey=item.key;syncComposerFromItem(item)}
+  if(item.draft)renderDraft(item,initialOpen);else renderExisting(item,initialOpen);
+  forceNextScrollBottom=false;
+  setTimeout(bindSettingsDynamic,0);
+}
+function syncComposerFromItem(item){$('messageInput').value=item&&item.draft?(item.body_draft||''):'';autoGrow($('messageInput'))}
+function isSendLocked(){return Date.now()<sendLockUntil}
+function setSendCooldown(ms=SEND_COOLDOWN_MS){sendLockUntil=Date.now()+ms;clearTimeout(sendLockTimer);updateComposer();sendLockTimer=setTimeout(()=>updateComposer(),ms+80)}
+function updateComposer(){const item=activeItem();const input=$('messageInput'),send=$('sendBtn'),plus=$('plusBtn'),note=$('composerNote'),composer=$('composer');if(!item){composer.classList.add('hidden');return}else composer.classList.remove('hidden');let enabled=false,attach=false,placeholder='本文を入力';if(item&&item.draft&&!item.sent){enabled=item.settings_done&&item.category_done&&(!needsSite(item.category)||item.site_done);attach=enabled&&((item.files||[]).length<2);placeholder=enabled?'本文を入力':'設定とカテゴリを選択してください'}else if(item&&!item.draft&&me&&item.status==='open'){enabled=true;attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);placeholder='追加メッセージを入力'}const locked=isSendLocked();input.disabled=!enabled;send.disabled=!enabled||locked;plus.disabled=!attach||locked;input.placeholder=placeholder;let base=item&&item.draft?'初回画像は左の＋から2枚まで添付できます。本文の改行はそのまま保存されます。':(enabled?'追加メッセージには画像を1枚添付できます。お問い合わせ全体で画像は10枚までです。':'このお問い合わせには送信できません。');if(locked)base+=' 送信直後の重複送信を防ぐため、数秒後に再送できます。';note.textContent=base;renderAttachStrip()}
+const previewUrls=new WeakMap();
+function filePreviewUrl(f){if(!f)return'';let u=previewUrls.get(f);if(!u){u=URL.createObjectURL(f);previewUrls.set(f,u)}return u}
+function revokeFileUrl(f){const u=previewUrls.get(f);if(u){URL.revokeObjectURL(u);previewUrls.delete(f)}}
+function renderAttachStrip(){const item=activeItem();const files=item?(item.files||[]):[];$('attachStrip').innerHTML=files.map((f,i)=>`<div class="attach"><img src="${filePreviewUrl(f)}" alt="添付画像"><button type="button" data-remove-image="${i}" aria-label="画像を削除">×</button></div>`).join('')}
+function selectItem(key){activeKey=key;closeEditModal();renderAll();closeList()}
+function saveSettings(){const d=settingsModalOpen()?(drafts.find(x=>x.key===settingsModalKey)||activeItem()):activeItem();if(!d||!d.draft)return;const need=document.querySelector('input[name="set_need"]:checked')?.value==='1';let channel=me?(document.querySelector('input[name="set_channel"]:checked')?.value||'site'):'dm';if(!need)channel='none';const anonymous=$('set_anonymous')?$('set_anonymous').checked:false;const dm_service=$('set_dm_service')?.value||'X';const dm_account=($('set_dm_account')?.value||'').trim();if(need&&channel==='dm'&&!dm_account){toast('DMアカウント名を入力してください');return}const wasDone=!!d.settings_done;d.settings={anonymous,account_mode:me?(anonymous?'anonymous':'profile'):'guest',need_reply:need,reply_channel:channel,dm_service,dm_account};d.settings_done=true;d.showSettingsEditor=false;closeSettingsModal();if(!wasDone&&!d.category_done){d.showCategoryEditor=false;d.pendingStep='category';renderAll();scheduleDraftStep(d.key,'category')}else{renderAll();toast('設定を保存しました')}}
+function editSettings(){const d=activeItem();if(d&&d.draft&&!d.sent){openSettingsModal(d)}}
+function saveCategory(){const d=activeItem();if(!d||!d.draft)return;d.category=$('draft_category').value;d.category_done=true;d.showCategoryEditor=false;if(needsSite(d.category)){d.site_done=!!d.site_name;d.showSiteEditor=false;d.pendingStep=d.site_done?'body':'site'}else{d.site_done=false;d.showSiteEditor=false;d.site_name='';d.pendingStep='body'}if(editModalKind==='category')closeEditModal();renderAll();scheduleDraftStep(d.key,d.pendingStep)}
+function editCategory(){const d=activeItem();if(d&&d.draft&&!d.sent){d.pendingStep='';openEditModal('カテゴリを変更',categoryCard(d),'category')}}
+function saveSite(){const d=activeItem();if(!d||!d.draft)return;const val=$('draft_site').value.trim();if(!val){toast('対象サイト名を入力してください');return}d.site_name=val;d.site_done=true;d.showSiteEditor=false;d.pendingStep='body';if(editModalKind==='site')closeEditModal();renderAll();scheduleDraftStep(d.key,'body')}
+function editSite(){const d=activeItem();if(d&&d.draft&&!d.sent){d.pendingStep='';openEditModal('対象サイト名を変更',siteCard(d),'site')}}
+function discardDraft(){const d=activeItem();if(!d||!d.draft)return;if(!confirm('この下書きを削除しますか？'))return;(d.files||[]).forEach(revokeFileUrl);drafts=drafts.filter(x=>x.key!==d.key);activeKey='';lastRenderedKey='';renderAll();toast('下書きを削除しました')}
+function startExistingEdit(messageId){const c=activeItem();if(!c||c.draft)return;const m=(c.messages||[]).find(x=>+x.id===+messageId);if(!m||!m.can_edit){toast('この本文は編集できません');return}existingEdit={id:c.id,message_id:+m.id,message:m.body||''};openEditModal('本文を修正',existingEditCard(c,m),'message')}
+async function saveExistingEdit(){const c=activeItem();if(!c||!existingEdit)return;const message=$('edit_message').value;if(!message.trim()){toast('本文を入力してください');return}const json=await apiFetch('contact_update_message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id,message_id:existingEdit.message_id,message})}).catch(()=>null);if(!json||!json.ok){toast(json?.error||'変更に失敗しました');return}const keepId=c.id;closeEditModal();await loadMine();activeKey='id-'+keepId;forceNextScrollBottom=true;renderAll();toast('本文を変更しました')}
+async function cancelCurrentInquiry(){const c=activeItem();if(!c||c.draft)return;if(!c.can_cancel&&!['open','pending'].includes(String(c.status||''))){toast('このお問い合わせは取りやめできません');return;}if(!confirm('このお問い合わせを取りやめますか？'))return;const json=await apiFetch('contact_cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);if(!json||!json.ok||json.data?.cancelled===false){toast(json?.error||'取りやめに失敗しました');return}await loadMine();activeKey='';closeEditModal();renderAll();goHome();toast('取りやめました。一覧から非表示にしました')}
+async function markReadIfNeeded(c){if(!me||!c||c.draft||!+c.unread_admin_count)return;apiFetch('contact_mark_read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).then(j=>{if(j&&j.ok){const row=inquiries.find(x=>+x.id===+c.id);if(row)row.unread_admin_count=0;renderList()}}).catch(()=>{})}
+function pickImages(){const item=activeItem();if(!item)return;if(item.draft&&item.sent)return;if(!item.draft&&(!me||item.status!=='open'))return;const picker=$('imagePicker');picker.multiple=!!item.draft;picker.click()}
+function handlePickedImages(e){const item=activeItem();if(!item)return;const add=Array.from(e.target.files||[]).filter(f=>f.type.startsWith('image/'));if(item.draft){const before=(item.files||[]).length;item.files=[...(item.files||[]),...add].slice(0,2);if(before+add.length>2)toast('初回画像は2枚までです')}else{const current=+(item.image_count||((item.images||[]).length)||0);const remain=Math.max(0,10-current);if(remain<=0){toast('画像はお問い合わせごとに合計10枚までです')}else{item.files=add.slice(0,1);if(add.length>1)toast('追加メッセージの画像は1枚までです')}}e.target.value='';renderAll()}
+function removeImage(i){const item=activeItem();if(!item||!item.files)return;const removed=item.files.splice(i,1)[0];revokeFileUrl(removed);renderAll()}
+function autoGrow(t){if(!t)return;const atBottom=isNearBottom()||composerFocused();requestAnimationFrame(()=>{t.style.height='auto';const max=Math.min(152,Math.max(96,window.innerHeight*0.28));const h=Math.min(Math.max(t.scrollHeight,38),max);t.style.height=h+'px';t.style.overflowY=t.scrollHeight>max?'auto':'hidden';if(atBottom)keepBottomSoon();if(composerFocused())keepBottomDuringKeyboard()})}
+function isNearBottom(){const c=$('mailContent');if(!c)return true;return c.scrollHeight-c.scrollTop-c.clientHeight<120}
+function scrollTopSoon(){setTimeout(()=>{const c=$('mailContent');if(c)c.scrollTop=0},0)}
+function scrollBottomSoon(){setTimeout(()=>{const c=$('mailContent');if(c)c.scrollTop=c.scrollHeight},0)}
+function keepBottomSoon(){setTimeout(()=>{const c=$('mailContent');if(activeItem()&&c)c.scrollTop=c.scrollHeight},0)}
+function afterMailRender(initialOpen=false){if(initialOpen)scrollTopSoon();else scrollBottomSoon()}
+function scrollMailBottomNow(){const c=$('mailContent');if(activeItem()&&c)c.scrollTop=c.scrollHeight}
+function keepBottomDuringKeyboard(){
+  if(!activeItem()||!composerFocused())return;
+  keyboardBottomTimers.forEach(clearTimeout);
+  keyboardBottomTimers=[0,80,180,320,520].map(ms=>setTimeout(()=>{if(composerFocused())scrollMailBottomNow()},ms));
+}
+function focusComposerSoon(){
+  const app=$('app');
+  if(app)app.classList.add('keyboard-active');
+  if(!IS_ANDROID)resetWindowScrollSoon();
+  scrollMailBottomNow();
+  setTimeout(()=>{setAppHeight('focus');if(!IS_ANDROID)resetWindowScrollSoon();keepBottomDuringKeyboard();},60);
+  setTimeout(()=>{setAppHeight('focus-late');if(!IS_ANDROID)resetWindowScrollSoon();keepBottomDuringKeyboard();},260);
+}
+async function sendComposer(){if(isSendLocked()){toast('連続送信を防止しています。数秒後にもう一度お試しください');return}const item=activeItem();if(!item)return;const text=$('messageInput').value;if(!text.trim()){toast('本文を入力してください');return}setSendCooldown();if(item.draft)await submitDraft(item,text);else await submitFollowup(item,text)}
+async function submitDraft(d,text){if(!d.settings_done||!d.category_done||d.sent)return;if(needsSite(d.category)&&!d.site_done){toast('対象サイト名を入力してください');return}const fd=new FormData();fd.append('account_mode',d.settings.account_mode);fd.append('need_reply',d.settings.need_reply?'希望する':'希望しない');fd.append('reply_channel',d.settings.reply_channel);fd.append('sns_service',d.settings.dm_service||'');fd.append('sns_account',d.settings.dm_account||'');fd.append('category',d.category);fd.append('site_name',d.site_name||'');fd.append('title','');fd.append('message',text);fd.append('agree','1');(d.files||[]).forEach(f=>fd.append('images[]',f));$('sendBtn').disabled=true;const res=await fetch('send.php',{method:'POST',credentials:'include',body:fd}).catch(()=>null);let json=null;try{json=res?await res.json():null}catch(e){}if(!json||!json.success){updateComposer();toast(json?.message||'送信に失敗しました');return}d.sent=true;d.contact_code=json.contact_code||'';d.contact_id=json.contact_id||0;d.body_draft='';$('messageInput').value='';autoGrow($('messageInput'));recentlySubmitted.add(+json.contact_id);if(me){await loadMine();if(json.contact_id)activeKey='id-'+json.contact_id;drafts=drafts.filter(x=>x.key!==d.key)}forceNextScrollBottom=true;renderAll();toast('送信しました')}
+async function submitFollowup(c,text){const fd=new FormData();fd.append('id',c.id);fd.append('message',text);(c.files||[]).slice(0,1).forEach(f=>fd.append('images[]',f));$('sendBtn').disabled=true;const res=await fetch(API+'?action=contact_user_reply',{method:'POST',credentials:'include',body:fd}).catch(()=>null);let json=null;try{json=res?await res.json():null}catch(e){}if(!json||!json.ok){updateComposer();toast(json?.error||'送信に失敗しました');return}$('messageInput').value='';(c.files||[]).forEach(revokeFileUrl);c.files=[];autoGrow($('messageInput'));await loadMine();activeKey='id-'+c.id;forceNextScrollBottom=true;renderAll();toast('送信しました')}
+async function loadMine(){if(!me){inquiries=[];return}const json=await apiFetch('contact_mine_list').catch(()=>null);inquiries=json&&json.ok?(json.data||[]).filter(c=>c.status!=='cancelled'):[]}
+async function login(){const username=$('loginUsername').value.trim(),password=$('loginPassword').value;if(!username||!password){toast('ユーザー名とパスワードを入力してください');return}const json=await apiFetch('auth_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})}).catch(()=>null);if(!json||!json.ok){toast(json?.error||'ログインに失敗しました');return}me=json.user||json.data||json;drafts.forEach(d=>{d.settings=defaultSettings()});await loadMine();renderAll();toast('ログインしました')}
+async function logout(){await apiFetch('auth_logout',{method:'POST'}).catch(()=>{});me=null;inquiries=[];drafts.forEach(d=>{d.settings=defaultSettings();d.settings_done=false;d.showSettingsEditor=true});activeKey='';renderAll();toast('ログアウトしました')}
+function toggleLogin(){if(me){logout();return}$('loginBox').classList.toggle('hidden');openList()}
+function goHome(){activeKey='';closeEditModal();lastRenderedKey='';renderAll()}function openList(){goHome()}function closeList(){}
+function onMailClick(e){const act=e.target.closest('[data-act]')?.dataset.act;if(!act)return;if(act==='save-settings')saveSettings();
+  if(act==='draft-back')goDraftBack(e.target.closest('[data-target]')?.dataset.target||'');if(act==='edit-settings')editSettings();if(act==='save-category')saveCategory();if(act==='edit-category')editCategory();if(act==='save-site')saveSite();if(act==='edit-site')editSite();if(act==='edit-message')startExistingEdit(e.target.closest('[data-message-id]')?.dataset.messageId);if(act==='cancel-existing-edit'){closeEditModal()}if(act==='save-existing-edit')saveExistingEdit()}
+function bind(){document.addEventListener('click',e=>{const card=e.target.closest('.list-card');if(card){selectItem(card.dataset.key);return}const rem=e.target.closest('[data-remove-image]');if(rem){removeImage(+rem.dataset.removeImage);return}});$('newBtn').onclick=()=>newDraft(true);$('loginToggleBtn').onclick=toggleLogin;$('loginPromptBtn').onclick=()=>{$('loginBox').classList.remove('hidden');goHome()};$('loginBtn').onclick=login;$('mobileListBtn').onclick=goHome;$('sheetBg').onclick=closeList;$('settingsModalClose').onclick=closeSettingsModal;$('settingsModal').onclick=e=>{if(e.target===$('settingsModal'))closeSettingsModal();const act=e.target.closest('[data-act]')?.dataset.act;if(act==='save-settings')saveSettings();
+  if(act==='draft-back')goDraftBack(e.target.closest('[data-target]')?.dataset.target||'');};$('editModalClose').onclick=closeEditModal;$('editModal').onclick=e=>{if(e.target===$('editModal'))closeEditModal();const act=e.target.closest('[data-act]')?.dataset.act;if(act==='save-category')saveCategory();if(act==='save-site')saveSite();if(act==='cancel-existing-edit')closeEditModal();if(act==='save-existing-edit')saveExistingEdit();};$('plusBtn').onclick=pickImages;$('imagePicker').onchange=handlePickedImages;$('sendBtn').onclick=sendComposer;$('mailContent').onclick=onMailClick;$('chatActions').onclick=e=>{const b=e.target.closest('button');if(!b)return;if(b.id==='discardDraftBtn')discardDraft();if(b.id==='cancelExistingBtn')cancelCurrentInquiry()};$('messageInput').addEventListener('input',e=>{const item=activeItem();if(item&&item.draft)item.body_draft=e.target.value;autoGrow(e.target);if(item&&item.draft)renderList();const d=activeItem();if(d&&d.draft){$('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書きを削除</button>':''}});$('messageInput').addEventListener('focus',focusComposerSoon);$('messageInput').addEventListener('blur',()=>{keyboardBottomTimers.forEach(clearTimeout);keyboardBottomTimers=[];const app=$('app');if(app)app.classList.remove('keyboard-active');setTimeout(()=>{setAppHeight('blur');resetWindowScrollSoon();},80)});$('messageInput').addEventListener('keydown',e=>{if(e.key==='Enter'){/* 改行キーでは送信しない。送信は右側の送信ボタンのみ */}})}
+
+
+/* mail-ui overrides */
+function mailSubject(item){
+  if(!item)return 'お問い合わせ';
+  if(item.draft)return item.sent&&item.contact_code?`お問い合わせ #${item.contact_code}`:'新規お問い合わせ';
+  return `#${item.contact_code||item.id} ${item.category||'お問い合わせ'}`;
+}
+function mailStatus(item){return item.draft?(item.sent?'送信済み':'下書き'):statusLabel(item.status)}
+function mailDate(item){return item.latest_at||item.created_at||''}
+function mailChips(item){
+  if(!item)return '';
+  const chips=[];
+  chips.push(`<span class="mail-chip strong">${esc(mailStatus(item))}</span>`);
+  chips.push(`<span class="mail-chip">${esc(item.draft?(item.category||'カテゴリ未選択'):(item.category||'お問い合わせ'))}</span>`);
+  chips.push(`<span class="mail-chip">${esc(item.draft?replyLabel(item.settings):replyLabel(item))}</span>`);
+  if(!item.draft&&+item.unread_admin_count>0)chips.push(`<span class="mail-chip strong">未読返信 ${+item.unread_admin_count}</span>`);
+  return `<div class="mail-chip-row">${chips.join('')}</div>`;
+}
+function mailMetaRows(item){
+  if(!item)return '';
+  const rows=[];
+  rows.push(['状態',mailStatus(item)]);
+  rows.push(['カテゴリ',item.draft?(item.category||'未選択'):(item.category||'お問い合わせ')]);
+  const reply=item.draft?replyLabel(item.settings):replyLabel(item); rows.push(['返信',reply]);
+  const code=item.draft?(item.contact_code?('#'+item.contact_code):'未発行'):('#'+(item.contact_code||item.id)); rows.push(['管理番号',code]);
+  const site=item.draft?item.site_name:item.site_name; if(site||needsSite(item.category))rows.push(['対象サイト',site||'未入力']);
+  const date=mailDate(item); if(date)rows.push(['日時',date]);
+  return `<div class="mail-meta-grid">${rows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>`;
+}
+function draftStepsHtml(d){
+  const steps=[['設定',!!d.settings_done],['カテゴリ',!!d.category_done],['対象',!needsSite(d.category)||!!d.site_done],['本文',!!(String(d.body_draft||'').trim()||d.sent)]];
+  return `<div class="mail-chip-row">${steps.map(([label,ok])=>`<span class="mail-chip ${ok?'strong':''}">${ok?'✓ ':''}${esc(label)}</span>`).join('')}</div>`;
+}
+function renderList(){
+  const items=allItems();
+  const unread=items.filter(i=>!i.draft&&+i.unread_admin_count>0).length;
+  $('listCount').textContent=`${items.length}件${unread?` / 未読${unread}`:''}`;
+  if(!items.length){
+    $('inquiryList').innerHTML='<div class="empty">まだありません。<br>「新規」から作成できます。</div>';
+    return;
+  }
+  $('inquiryList').innerHTML=items.map(item=>{
+    const isDraft=!!item.draft,active=item.key===activeKey,unread=!isDraft&&+item.unread_admin_count>0;
+    const subject=isDraft?(item.sent&&item.contact_code?`#${item.contact_code}`:'新規お問い合わせ'):`#${item.contact_code||item.id} ${item.category||'お問い合わせ'}`;
+    const meta=isDraft?(item.category||'カテゴリ未選択'):(item.latest_sender==='admin'?'管理者から返信':'ユーザー送信');
+    const preview=latestPreview(item)||nextActionLabel(item);
+    const status=unread?`未読 ${+item.unread_admin_count}`:mailStatus(item);
+    const date=mailDate(item);
+    return `<button class="list-card ${active?'active':''} ${unread?'unread':''}" data-key="${esc(item.key)}"><div class="mail-list-row"><div class="mail-list-top"><div class="mail-list-subject">${esc(subject)}</div><div class="mail-list-date">${esc(date)}</div></div><div class="mail-list-meta">${esc(meta)} / ${esc(isDraft?replyLabel(item.settings):replyLabel(item))}</div><div class="mail-list-preview">${esc(preview)}</div><div class="mail-list-tags"><span class="badge ${unread?'unread':(isDraft?'draft':esc(item.status||'open'))}">${esc(status)}</span>${isDraft&&!item.sent?'<span class="badge action">作成中</span>':''}</div></div></button>`;
+  }).join('');
+}
+function renderMailView(){
+  const item=activeItem();
+  if(!item){
+    $('chatTitle').textContent='お問い合わせ詳細';
+    $('chatSub').textContent='一覧から選択';
+    $('chatActions').innerHTML='';
+    $('mailContent').innerHTML='<div class="mail-empty"><div class="mail-empty-card"><div class="mail-empty-title">お問い合わせを選択</div><div class="mail-empty-copy">左の一覧から開くか、新規作成してください。</div><button class="btn black" type="button" onclick="newDraft(true)">新規作成</button></div></div>';
+    return;
+  }
+  const initialOpen=item.key!==lastRenderedKey&&!forceNextScrollBottom;
+  if(item.key!==lastRenderedKey){lastRenderedKey=item.key;syncComposerFromItem(item)}
+  if(item.draft)renderDraft(item,initialOpen);else renderExisting(item,initialOpen);
+  forceNextScrollBottom=false;
+  setTimeout(bindSettingsDynamic,0);
+}
+function renderDraft(d,initialOpen=false){
+  $('chatTitle').textContent=d.sent&&d.contact_code?`#${d.contact_code}`:'新規お問い合わせ';
+  $('chatSub').textContent=d.sent?'送信済み':nextActionLabel(d);
+  $('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書き削除</button>':'';
+  let body='';
+  if(d.sent){
+    const guestNote=!me?'<div class="mail-warning">ログインなし送信のため、この画面で履歴確認はできません。</div>':'';
+    body+=`<div class="mail-confirm">${esc(completionMessage(!!d.settings?.need_reply))}<br>管理番号：${esc(d.contact_code||'')}</div>${guestNote}`;
+  }else if(!d.settings_done){
+    body+=`<div class="mail-section"><div class="mail-section-title">1. 返信設定</div>${settingsCard(d,false)}</div>`;
+  }else{
+    body+=`<div class="mail-section"><div class="mail-section-title">設定 ${draftSummaryActions(d)}</div>${settingsSummaryHtml(draftSummaryObject(d))}</div>`;
+    if(d.pendingStep){body+=`<div class="mail-section"><div class="mail-section-title">次の項目を準備中</div><div class="mail-section-copy">少し待つと入力欄が表示されます。</div></div>`;}
+    else if(!d.category_done||d.showCategoryEditor){body+=`<div class="mail-section"><div class="mail-section-title">2. カテゴリ</div>${categoryCard(d)}</div>`;}
+    else if(needsSite(d.category)&&(!d.site_done||d.showSiteEditor)){body+=`<div class="mail-section"><div class="mail-section-title">3. 対象サイト</div>${siteCard(d)}</div>`;}
+    else{body+=`<div class="mail-section"><div class="mail-section-title">本文</div><div class="mail-section-copy">下の入力欄に内容を書いて送信してください。${esc(categoryPrompt(d.category))}</div></div>`;}
+  }
+  $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(d))}</div>${mailChips(d)}${draftStepsHtml(d)}</div>${mailMetaRows(d)}<div class="mail-body">${body}</div></article></div>`;
+  afterMailRender(initialOpen);
+}
+function mailMessageHtml(c,m,i){
+  const isAdmin=m.sender==='admin';
+  const from=isAdmin?'管理者':'あなた';
+  const body=userMessageBodyHtml(c,m,i);
+  return `<section class="mail-message ${isAdmin?'admin':'user'}"><div class="mail-message-head"><div class="mail-message-from">${esc(from)}</div><div class="mail-message-date">${esc(m.created_at||'')}</div></div><div class="mail-message-body">${body}</div></section>`;
+}
+function renderExisting(c,initialOpen=false){
+  $('chatTitle').textContent=`#${c.contact_code||c.id}`;
+  $('chatSub').textContent=`${c.category||'お問い合わせ'} / ${statusLabel(c.status)}`;
+  $('chatActions').innerHTML=`${c.can_cancel?'<button class="btn danger small" id="cancelExistingBtn" type="button">取りやめ</button>':''}`;
+  const messages=(c.messages||[]).map((m,i)=>mailMessageHtml(c,m,i)).join('')||'<div class="mail-section-copy">本文がありません。</div>';
+  const submitted=recentlySubmitted.has(+c.id)?`<div class="mail-confirm">${esc(completionMessage(!!c.need_reply))}<br>管理番号：${esc(c.contact_code||'')}</div>`:'';
+  const cancelled=c.status==='cancelled'?'<div class="mail-warning">このお問い合わせは取りやめ済みです。</div>':'';
+  $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(c))}</div>${mailChips(c)}</div>${mailMetaRows(c)}<div class="mail-body">${submitted}${messages}${cancelled}</div></article></div>`;
+  afterMailRender(initialOpen);markReadIfNeeded(c);
+}
+function settingsSummaryHtml(o){
+  const mode=o.account_mode==='anonymous'||o.anonymous?'匿名':(o.account_mode==='profile'?'プロフィール表示':'ログインなし');
+  const reply=o.need_reply?'返信あり':'返信不要';
+  const channel=!o.need_reply?'なし':(o.reply_channel==='site'?'サイト内':(o.reply_channel==='dm'?'DM':'なし'));
+  const dm=o.reply_channel==='dm'&&o.need_reply?`${o.dm_service||'X'} ${o.dm_account||''}`:'';
+  const rows=[['表示',mode],['返信',reply],['受取',channel]];
+  if(dm)rows.push(['DM',dm]);
+  if(o.category)rows.push(['カテゴリ',o.category]);
+  if(o.site_name||needsSite(o.category||''))rows.push(['対象',o.site_name||'未入力']);
+  return `<div class="confirmed-settings"><div class="settings-summary">${rows.map(([k,v])=>`<div class="summary-line"><b>${esc(k)}</b><span>${esc(v)}</span></div>`).join('')}</div></div>`;
+}
+function settingsCard(d,modal=false){
+  const s=d.settings,guest=!me;
+  return `<div class="bot-card settings-card" id="settingsCard"><div class="card-title">返信設定</div>${me?`<div class="toggle-row"><div class="toggle-copy"><div class="toggle-title">匿名で送信</div><div class="toggle-note" id="anonNote">${s.anonymous?'匿名表示':'プロフィール表示'}</div></div><label class="switch"><input type="checkbox" id="set_anonymous" ${s.anonymous?'checked':''}><span></span></label></div>`:`<div class="dynamic-note">ログインなしで送信します。返信希望時はDM先が必要です。</div>`}<div class="field"><label>返信</label><div class="segment"><label class="seg"><input type="radio" name="set_need" value="1" ${s.need_reply?'checked':''}><span>必要</span></label><label class="seg"><input type="radio" name="set_need" value="0" ${!s.need_reply?'checked':''}><span>不要</span></label></div></div><div id="replyDetail">${replyDetailHtml(s,guest)}</div><div class="card-actions"><button class="btn black" type="button" data-act="save-settings">${modal?'保存':'次へ'}</button></div></div>`;
+}
+function replyDetailHtml(s,guest){
+  if(!s.need_reply)return '<div class="dynamic-note">返信不要です。</div>';
+  const channel=guest?'dm':(s.reply_channel||'site');
+  return `${!guest?`<div class="field"><label>受け取り方</label><div class="segment"><label class="seg"><input type="radio" name="set_channel" value="site" ${channel==='site'?'checked':''}><span>サイト内</span></label><label class="seg"><input type="radio" name="set_channel" value="dm" ${channel==='dm'?'checked':''}><span>DM</span></label></div></div>`:`<div class="dynamic-note">ログインなしはDM返信です。</div>`}<div id="dmFields" class="${channel==='dm'?'':'hidden'}"><div class="dm-grid"><div class="field"><label>サービス</label><select class="input" id="set_dm_service"><option value="X" ${s.dm_service==='X'?'selected':''}>X</option><option value="Instagram" ${s.dm_service==='Instagram'?'selected':''}>Instagram</option></select></div><div class="field"><label>アカウント</label><input class="input" id="set_dm_account" value="${esc(s.dm_account||'')}" placeholder="@yourname"></div></div></div>`;
+}
+function settingsDynamicText(s,guest){return ''}
+function categoryCard(d){return `<div class="bot-card"><div class="field"><label>カテゴリ</label><select class="input" id="draft_category">${cats.map(c=>`<option value="${esc(c)}" ${d.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="card-actions"><button class="btn black" data-act="save-category" type="button">決定</button></div></div>`;}
+function siteCard(d){return `<div class="bot-card"><div class="field"><label>対象サイト名</label><input class="input" id="draft_site" value="${esc(d.site_name||'')}" placeholder="例：Buddies profile"></div><div class="card-actions"><button class="btn black" data-act="save-site" type="button">決定</button></div></div>`;}
+function categoryPrompt(c){if(c==='不具合の報告')return '起きた画面、操作手順、端末名を書くと確認しやすいです。';if(c==='誤情報の報告')return '対象箇所と正しい情報を書いてください。';if(c==='情報の提供')return '出典があれば一緒に書いてください。';if(c==='機能のリクエスト')return '使いたい場面も書くと伝わりやすいです。';return '必要な内容を具体的に書いてください。';}
+function mailComposerLabel(item){
+  if(!item)return '';
+  if(item.draft&&!item.sent&&!item.settings_done)return '';
+  return '';
+}
+
+function updateComposer(){
+  const item=activeItem();const input=$('messageInput'),send=$('sendBtn'),plus=$('plusBtn'),note=$('composerNote'),composer=$('composer');
+  if(!item){composer.classList.add('hidden');return}else composer.classList.remove('hidden');
+  let enabled=false,attach=false,placeholder='本文を入力';
+  if(item.draft&&!item.sent){enabled=item.settings_done&&item.category_done&&(!needsSite(item.category)||item.site_done);attach=enabled&&((item.files||[]).length<2);placeholder=enabled?'本文を入力':'上の項目を先に設定'}
+  else if(!item.draft&&me&&item.status==='open'){enabled=true;attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);placeholder='返信を入力'}
+  const locked=isSendLocked();input.disabled=!enabled;send.disabled=!enabled||locked;plus.disabled=!attach||locked;input.placeholder=placeholder;
+  note.textContent=locked?'少し待ってから再送できます。':(item.draft?(enabled?'本文を入力して送信':'必要項目を設定してください'):(enabled?'返信できます':'送信できません'));
+  renderAttachStrip();
+}
+function afterMailRender(initialOpen=false){scrollTopSoon();}
+
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(settingsModalOpen())closeSettingsModal();if($('editModal')?.classList.contains('open'))closeEditModal();}});
+window.addEventListener('pagehide',()=>{drafts.forEach(d=>(d.files||[]).forEach(revokeFileUrl));});
+async function init(){bind();const auth=await discoverAPI();me=auth&&auth.ok?(auth.user||auth.data||null):null;await loadMine();renderAll();}
+init();
+
+
+
+/* status-user-ui overrides */
+function statusLabel(status){
+  return ({open:'受付中',rejected:'棄却',cancelled:'棄却',pending:'保留中',accepted:'受付済',closed:'受付済',replied:'返信済'})[status]||'受付中';
+}
+function statusClass(status){return status||'open'}
+function canUserHideInquiry(c){return !!c && !c.draft && ['accepted','closed','replied'].includes(String(c.status||'')) && !c.is_user_hidden;}
+function isInquiryWritable(c){return !!c && !c.draft && me && ['open','pending'].includes(String(c.status||''));}
+function renderList(){
+  const items=allItems();
+  $('listCount').textContent=`${items.length}件`;
+  $('inquiryList').innerHTML=items.length?items.map(item=>{
+    const isDraft=!!item.draft,active=item.key===activeKey,unread=!isDraft&&+item.unread_admin_count>0;
+    const code=isDraft?(item.sent&&item.contact_code?'#'+item.contact_code:'作成中'):'#'+(item.contact_code||item.id);
+    const cat=isDraft?(item.category||'カテゴリ未選択'):(item.category||'お問い合わせ');
+    const badge=isDraft?(item.sent?'送信済み':'下書き'):statusLabel(item.status);
+    const cls=isDraft?(item.sent?'accepted':'draft'):statusClass(item.status);
+    const preview=latestPreview(item)||nextActionLabel(item);
+    const date=item.latest_at||item.updated_at||item.created_at||'';
+    const meta=isDraft?replyLabel(item.settings||{}):replyLabel(item);
+    return `<button class="list-card ${active?'active':''} ${unread?'unread':''}" data-key="${esc(item.key)}"><div class="card-topline"><div class="card-main-info"><div class="code">${esc(code)}</div><div class="list-category">${esc(cat)}</div></div><div style="display:grid;gap:5px;justify-items:end"><span class="badge ${unread?'priority':esc(cls)}">${unread?'未読返信':esc(badge)}</span>${isDraft&&!item.sent?'<span class="badge action">入力中</span>':''}</div></div><div class="list-preview">${esc(preview)}</div><div class="list-meta"><span>${esc(meta)}</span>${date?`<span>${esc(date)}</span>`:''}</div></button>`;
+  }).join(''):'<div class="empty">お問い合わせはまだありません。<br>「新規」から作成できます。</div>';
+}
+function settingsCard(d,modal=false){
+  const s=d.settings,guest=!me;
+  return `<details class="contact-settings-toggle" id="settingsCard" open><summary>お問い合わせ設定</summary><div class="contact-settings-body">${me?`<div class="setting-line"><div><div class="setting-line-title">アカウント表示</div><div class="setting-line-note" id="anonNote">${s.anonymous?'匿名表示':'プロフィール表示'}</div></div><label class="switch"><input type="checkbox" id="set_anonymous" ${s.anonymous?'checked':''}><span></span></label></div>`:`<div class="dynamic-note">ログインなしで送信します。返信希望時はDM先が必要です。</div>`}<div class="field"><label>返信</label><div class="segment"><label class="seg"><input type="radio" name="set_need" value="1" ${s.need_reply?'checked':''}><span>必要</span></label><label class="seg"><input type="radio" name="set_need" value="0" ${!s.need_reply?'checked':''}><span>不要</span></label></div></div><div id="replyDetail">${replyDetailHtml(s,guest)}</div><div class="card-actions"><button class="btn black" type="button" data-act="save-settings">${modal?'保存':'次へ'}</button></div></div></details>`;
+}
+function replyDetailHtml(s,guest){
+  if(!s.need_reply)return '<div class="dynamic-note">返信不要です。</div>';
+  const channel=guest?'dm':(s.reply_channel||'site');
+  return `${!guest?`<div class="field"><label>受け取り方</label><div class="segment"><label class="seg"><input type="radio" name="set_channel" value="site" ${channel==='site'?'checked':''}><span>サイト内</span></label><label class="seg"><input type="radio" name="set_channel" value="dm" ${channel==='dm'?'checked':''}><span>DM</span></label></div></div>`:`<div class="dynamic-note">ログインなしはDM返信です。</div>`}<div id="dmFields" class="${channel==='dm'?'':'hidden'}"><div class="dm-grid"><div class="field"><label>サービス</label><select class="input" id="set_dm_service"><option value="X" ${s.dm_service==='X'?'selected':''}>X</option><option value="Instagram" ${s.dm_service==='Instagram'?'selected':''}>Instagram</option></select></div><div class="field"><label>アカウント</label><input class="input" id="set_dm_account" value="${esc(s.dm_account||'')}" placeholder="@yourname"></div></div></div>`;
+}
+function categoryCard(d){return `<div class="category-flat"><div class="field"><label>カテゴリ</label><select class="input" id="draft_category">${cats.map(c=>`<option value="${esc(c)}" ${d.category===c?'selected':''}>${esc(c)}</option>`).join('')}</select></div><div class="card-actions"><button class="btn black" data-act="save-category" type="button">決定</button></div></div>`;}
+function siteCard(d){return `<div class="site-flat"><div class="field"><label>対象サイト名</label><input class="input" id="draft_site" value="${esc(d.site_name||'')}" placeholder="例：Buddies profile"></div><div class="card-actions"><button class="btn black" data-act="save-site" type="button">決定</button></div></div>`;}
+function mailChips(o){const status=o.draft?(o.sent?'送信済み':'下書き'):statusLabel(o.status);const category=o.category||'未選択';const reply=o.draft?replyLabel(o.settings||{}):replyLabel(o);return `<div class="mail-chip-row"><span class="mail-chip strong">${esc(status)}</span><span class="mail-chip">${esc(category)}</span><span class="mail-chip">${esc(reply)}</span></div>`;}
+function mailMetaRows(o){const rows=[];if(o.contact_code||o.id)rows.push(['管理番号',o.contact_code?`#${o.contact_code}`:(o.id?`#${o.id}`:'未発行')]);rows.push(['ステータス',o.draft?(o.sent?'送信済み':'下書き'):statusLabel(o.status)]);rows.push(['カテゴリ',o.category||'未選択']);if(o.site_name||needsSite(o.category||''))rows.push(['対象サイト',o.site_name||'未入力']);if(o.created_at)rows.push(['作成',o.created_at]);if(o.latest_at)rows.push(['更新',o.latest_at]);return `<div class="mail-meta-grid">${rows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>`;}
+function mailMessageHtml(c,m,i){
+  const isAdmin=m.sender==='admin';const from=isAdmin?'管理者':'あなた';const body=userMessageBodyHtml(c,m,i);
+  const tools=(!isAdmin&&m.can_edit)?`<div class="mail-message-tools"><button class="mail-link-btn" data-act="edit-message" data-message-id="${m.id}" type="button">本文を修正</button></div>`:'';
+  return `<section class="mail-message ${isAdmin?'admin':'user'}"><div class="mail-message-head"><div class="mail-message-from">${esc(from)}</div><div class="mail-message-date">${esc(m.created_at||'')}</div></div><div class="mail-message-body">${body}</div>${tools}</section>`;
+}
+function renderExisting(c,initialOpen=false){
+  $('chatTitle').textContent=`#${c.contact_code||c.id}`;
+  $('chatSub').textContent=`${c.category||'お問い合わせ'} / ${statusLabel(c.status)}`;
+  const hideBtn=canUserHideInquiry(c)?'<button class="btn small" id="hideExistingBtn" data-act="hide-inquiry" type="button">非表示</button>':'';
+  $('chatActions').innerHTML=`${hideBtn}${c.can_cancel?'<button class="btn danger small" id="cancelExistingBtn" type="button">取りやめ</button>':''}`;
+  const messages=(c.messages||[]).map((m,i)=>mailMessageHtml(c,m,i)).join('')||'<div class="mail-section-copy">本文がありません。</div>';
+  const submitted=recentlySubmitted.has(+c.id)?`<div class="mail-confirm">${esc(completionMessage(!!c.need_reply))}<br>管理番号：${esc(c.contact_code||'')}</div>`:'';
+  const cancelled=['cancelled','rejected'].includes(String(c.status||''))?'<div class="mail-warning">このお問い合わせは棄却または取りやめ済みです。</div>':'';
+  const hideNote=canUserHideInquiry(c)?'<div class="hide-done-note">対応済みのため、必要なければ右上の「非表示」で一覧から消せます。</div>':'';
+  $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(c))}</div>${mailChips(c)}</div>${mailMetaRows(c)}<div class="mail-body">${submitted}${messages}${cancelled}${hideNote}</div></article></div>`;
+  afterMailRender(initialOpen);markReadIfNeeded(c);
+}
+function updateComposer(){
+  const item=activeItem();const input=$('messageInput'),send=$('sendBtn'),plus=$('plusBtn'),note=$('composerNote'),composer=$('composer');
+  if(!item){composer.classList.add('hidden');return}else composer.classList.remove('hidden');
+  let enabled=false,attach=false,placeholder='本文を入力';
+  if(item.draft&&!item.sent){enabled=item.settings_done&&item.category_done&&(!needsSite(item.category)||item.site_done);attach=enabled&&((item.files||[]).length<2);placeholder=enabled?'お問い合わせ本文を入力':'上の項目を先に設定';}
+  else if(!item.draft&&isInquiryWritable(item)){enabled=true;attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);placeholder='追加メッセージを入力';}
+  const locked=isSendLocked();input.disabled=!enabled;send.disabled=!enabled||locked;plus.disabled=!attach||locked;input.placeholder=placeholder;
+  let base=item.draft?(enabled?'本文を入力して送信できます。':'必要項目を設定してください。'):(enabled?'追加メッセージを送信できます。':'対応済みまたは棄却済みのため送信できません。');
+  if(locked)base='少し待ってから再送できます。';note.innerHTML=(mailComposerLabel(item)||'')+base;renderAttachStrip();
+}
+async function hideCurrentInquiry(){
+  const c=activeItem();if(!c||c.draft)return;
+  if(!confirm(`#${c.contact_code||c.id} を一覧から非表示にしますか？`))return;
+  const json=await apiFetch('contact_user_hide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);
+  if(!json||!json.ok){toast(json?.error||'非表示にできませんでした');return;}
+  inquiries=inquiries.filter(x=>+x.id!==+c.id);activeKey='';renderAll();goHome();toast('非表示にしました');
+}
+function onMailClick(e){const act=e.target.closest('[data-act]')?.dataset.act;if(!act)return;if(act==='save-settings')saveSettings();
+  if(act==='draft-back')goDraftBack(e.target.closest('[data-target]')?.dataset.target||'');if(act==='edit-settings')editSettings();if(act==='save-category')saveCategory();if(act==='edit-category')editCategory();if(act==='save-site')saveSite();if(act==='edit-site')editSite();if(act==='edit-message')startExistingEdit(e.target.closest('[data-message-id]')?.dataset.messageId);if(act==='cancel-existing-edit')closeEditModal();if(act==='save-existing-edit')saveExistingEdit();if(act==='hide-inquiry')hideCurrentInquiry();
+  if(act==='cancel-inquiry')cancelCurrentInquiry();}
+function afterMailRender(initialOpen=false){scrollTopSoon();}
+
+/* bugfix-20260615: inquiry creation/input stability */
+function scopedSettingRoot(){
+  if(settingsModalOpen&&settingsModalOpen()) return $('settingsModalBody') || document;
+  return $('mailContent') || document;
+}
+function scopedQuery(root, selector){ return (root&&root.querySelector(selector)) || document.querySelector(selector); }
+function activeItem(){
+  if(activeKey&&activeKey.startsWith('draft-')) return drafts.find(d=>d.key===activeKey)||null;
+  if(activeKey&&activeKey.startsWith('id-')){
+    const id=+activeKey.slice(3);
+    const item=inquiries.find(i=>+i.id===id)||null;
+    if(item){ item.key='id-'+item.id; item.draft=false; if(!Array.isArray(item.files)) item.files=[]; }
+    return item;
+  }
+  return null;
+}
+function scheduleDraftStep(key,step){
+  clearTimeout(draftStepTimers[key]);
+  if(!step||step==='body'){
+    const d=drafts.find(x=>x.key===key);
+    if(d&&d.pendingStep==='body') d.pendingStep='';
+    return;
+  }
+  draftStepTimers[key]=setTimeout(()=>{
+    const d=drafts.find(x=>x.key===key);
+    if(!d||d.pendingStep!==step)return;
+    d.pendingStep='';
+    if(step==='category')d.showCategoryEditor=true;
+    if(step==='site')d.showSiteEditor=true;
+    forceNextScrollBottom=true;
+    renderAll();
+  },120);
+}
+function bindSettingsDynamic(){
+  document.querySelectorAll('#settingsCard').forEach(card=>{
+    const q=sel=>card.querySelector(sel);
+    const readCurrent=()=>{
+      const need=(q('input[name="set_need"]:checked')?.value||'1')==='1';
+      let channel=me?(q('input[name="set_channel"]:checked')?.value||'site'):'dm';
+      if(!need)channel='none';
+      return {
+        need_reply:need,
+        reply_channel:channel,
+        dm_service:q('#set_dm_service')?.value||'X',
+        dm_account:q('#set_dm_account')?.value||'',
+        anonymous:q('#set_anonymous')?.checked??true
+      };
+    };
+    const refreshNote=()=>{
+      const current=readCurrent();
+      const note=q('#settingsDynamicNote');
+      if(note) note.textContent=settingsDynamicText(current,!me);
+      const anon=q('#anonNote');
+      if(anon) anon.textContent=current.anonymous?'匿名表示':'プロフィール表示';
+    };
+    const refreshDetail=()=>{
+      const current=readCurrent();
+      const detail=q('#replyDetail');
+      if(detail) detail.innerHTML=replyDetailHtml(current,!me);
+      refreshNote();
+      bindSettingsDynamic();
+    };
+    card.querySelectorAll('input[name="set_need"],input[name="set_channel"]').forEach(el=>{el.onchange=refreshDetail;});
+    card.querySelectorAll('#set_anonymous,#set_dm_service').forEach(el=>{el.onchange=refreshNote;});
+    const dm=q('#set_dm_account');
+    if(dm) dm.oninput=refreshNote;
   });
-  
-  // 画像プレビュー
-  if (selectedFiles.length > 0 && formData.get('category') === '不具合の報告') {
-    html += `<div class="confirm-item">
-      <div class="confirm-label">添付画像</div>
-      <div class="confirm-images">`;
-    selectedFiles.forEach(file => {
-      const url = URL.createObjectURL(file);
-      html += `<img src="${url}">`;
-    });
-    html += `</div></div>`;
+}
+function saveSettings(){
+  const modalOpen=settingsModalOpen&&settingsModalOpen();
+  const root=modalOpen?$('settingsModalBody'):$('mailContent');
+  const d=modalOpen?(drafts.find(x=>x.key===settingsModalKey)||activeItem()):activeItem();
+  if(!d||!d.draft||d.sent)return;
+  const q=sel=>scopedQuery(root,sel);
+  const need=(q('input[name="set_need"]:checked')?.value||'1')==='1';
+  let channel=me?(q('input[name="set_channel"]:checked')?.value||'site'):'dm';
+  if(!need)channel='none';
+  const anonymous=q('#set_anonymous')?q('#set_anonymous').checked:false;
+  const dm_service=q('#set_dm_service')?.value||'X';
+  const dm_account=(q('#set_dm_account')?.value||'').trim();
+  if(need&&channel==='dm'&&!dm_account){toast('DMアカウント名を入力してください');return;}
+  d.settings={anonymous,account_mode:me?(anonymous?'anonymous':'profile'):'guest',need_reply:need,reply_channel:channel,dm_service,dm_account};
+  d.settings_done=true;
+  d.showSettingsEditor=false;
+  d.pendingStep='';
+  closeSettingsModal();
+  if(!d.category_done)d.showCategoryEditor=true;
+  forceNextScrollBottom=true;
+  renderAll();
+  if(d.category_done)toast('設定を保存しました');
+}
+function saveCategory(){
+  const d=activeItem();
+  if(!d||!d.draft||d.sent)return;
+  const root=editModalKind==='category'?$('editModalBody'):$('mailContent');
+  const input=scopedQuery(root,'#draft_category');
+  d.category=input?input.value:d.category;
+  d.category_done=true;
+  d.showCategoryEditor=false;
+  d.pendingStep='';
+  if(needsSite(d.category)){
+    d.site_done=!!String(d.site_name||'').trim();
+    d.showSiteEditor=!d.site_done;
+  }else{
+    d.site_done=false;
+    d.showSiteEditor=false;
+    d.site_name='';
   }
-  
-  document.getElementById('confirmList').innerHTML = html;
-  inputForm.classList.add('hidden');
-  confirmForm.classList.remove('hidden');
-  window.scrollTo(0, 0);
-});
-
-backBtn.addEventListener('click', () => {
-  confirmForm.classList.add('hidden');
-  inputForm.classList.remove('hidden');
-});
-
-// 送信
-submitBtn.addEventListener('click', async () => {
-  submitBtn.disabled = true;
-  submitBtn.textContent = '送信中...';
-  
-  const formData = new FormData(inputForm);
-  // 3枚までに制限
-  const dt = new DataTransfer();
-  selectedFiles.slice(0, 3).forEach(f => dt.items.add(f));
-  formData.delete('images[]');
-  Array.from(dt.files).forEach(f => formData.append('images[]', f));
-  
-  try {
-    const res = await fetch('send.php', {
-      method: 'POST',
-      body: formData
-    });
-    const result = await res.json();
-    
-    if (result.success) {
-      confirmForm.classList.add('hidden');
-      completeForm.classList.remove('hidden');
-      window.scrollTo(0, 0);
-    } else {
-      alert('送信に失敗しました: ' + result.message);
-      submitBtn.disabled = false;
-      submitBtn.textContent = '送信する';
-    }
-  } catch (e) {
-    alert('通信エラーが発生しました');
-    submitBtn.disabled = false;
-    submitBtn.textContent = '送信する';
+  if(editModalKind==='category')closeEditModal();
+  forceNextScrollBottom=true;
+  renderAll();
+}
+function saveSite(){
+  const d=activeItem();
+  if(!d||!d.draft||d.sent)return;
+  const root=editModalKind==='site'?$('editModalBody'):$('mailContent');
+  const input=scopedQuery(root,'#draft_site');
+  const val=(input?.value||'').trim();
+  if(!val){toast('対象サイト名を入力してください');return;}
+  d.site_name=val;
+  d.site_done=true;
+  d.showSiteEditor=false;
+  d.pendingStep='';
+  if(editModalKind==='site')closeEditModal();
+  forceNextScrollBottom=true;
+  renderAll();
+}
+function updateComposer(){
+  const item=activeItem();const input=$('messageInput'),send=$('sendBtn'),plus=$('plusBtn'),note=$('composerNote'),composer=$('composer');
+  if(!composer||!input||!send||!plus||!note)return;
+  if(!item){composer.classList.add('hidden');return;}else composer.classList.remove('hidden');
+  let enabled=false,attach=false,placeholder='本文を入力';
+  if(item.draft&&!item.sent){
+    const ready=item.settings_done&&item.category_done&&(!needsSite(item.category)||item.site_done);
+    enabled=ready;
+    attach=ready&&((item.files||[]).length<2);
+    placeholder=ready?'お問い合わせ本文を入力':'上の項目を先に設定';
+  }else if(!item.draft&&isInquiryWritable(item)){
+    enabled=true;
+    attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);
+    placeholder='追加メッセージを入力';
   }
-});
+  const locked=isSendLocked();
+  input.disabled=!enabled;
+  send.disabled=!enabled||locked;
+  plus.disabled=!attach||locked;
+  input.placeholder=placeholder;
+  let base=item.draft?(enabled?'本文を入力して送信できます。':'必要項目を設定してください。'):(enabled?'追加メッセージを送信できます。':'対応済みまたは棄却済みのため送信できません。');
+  if(locked)base='少し待ってから再送できます。';
+  note.innerHTML=(mailComposerLabel(item)||'')+base;
+  renderAttachStrip();
+}
+function pickImages(){
+  const item=activeItem();if(!item)return;
+  if(item.draft&&item.sent)return;
+  if(!item.draft&&!isInquiryWritable(item))return;
+  const picker=$('imagePicker');picker.multiple=!!item.draft;picker.click();
+}
+function afterMailRender(initialOpen=false){
+  if(forceNextScrollBottom) scrollBottomSoon();
+  else if(initialOpen) scrollTopSoon();
+  else scrollBottomSoon();
+}
+
+/* final_compact_contact_settings_20260616 */
+function icon(n){return `<i data-lucide="${esc(n)}" aria-hidden="true"></i>`}function renderLucideSoon(){setTimeout(()=>{try{window.lucide&&window.lucide.createIcons&&window.lucide.createIcons()}catch(e){}},0)}
+function draftProgressState(d){const ss=needsSite(d.category);const a=[{label:'設定',done:!!d.settings_done},{label:'カテゴリ',done:!!d.category_done},...(ss?[{label:'対象サイト',done:!!d.site_done}]:[]),{label:'本文',done:!!(String(d.body_draft||'').trim()||d.sent)}];const done=a.filter(x=>x.done).length;return{done,total:a.length,current:(a.find(x=>!x.done)||{label:'送信準備完了'}).label,pct:Math.max(8,Math.round(done/a.length*100))}}
+function draftProgressHtml(d){const p=draftProgressState(d);return `<div class="draft-progress-compact"><div class="draft-progress-top"><span>進捗 ${p.done}/${p.total}</span><span class="draft-progress-current">次：${esc(p.current)}</span></div><div class="draft-progress-track"><div class="draft-progress-fill" style="width:${p.pct}%"></div></div></div>`}function draftStepsHtml(d){return draftProgressHtml(d)}
+function mailChips(o){if(!o||o.draft)return '';let c=[`<span class="mail-chip strong">${esc(statusLabel(o.status))}</span>`,`<span class="mail-chip">${esc(o.category||'お問い合わせ')}</span>`];if(+o.unread_admin_count>0)c.push(`<span class="mail-chip strong">未読返信 ${+o.unread_admin_count}</span>`);return `<div class="mail-chip-row">${c.join('')}</div>`}
+function mailMetaRows(item){if(!item)return '';if(item.draft&&!item.sent)return '';const rows=[['ステータス',mailStatus(item)],['カテゴリ',item.draft?(item.category||'未選択'):(item.category||'お問い合わせ')],['返信',item.draft?replyLabel(item.settings):replyLabel(item)]];const code=item.draft?(item.contact_code?('#'+item.contact_code):'未発行'):('#'+(item.contact_code||item.id));rows.push(['管理番号',code]);const site=item.draft?item.site_name:item.site_name;if(site||needsSite(item.category))rows.push(['対象サイト',site||'未入力']);const date=mailDate(item);if(date)rows.push(['日時',date]);return `<div class="mail-meta-grid">${rows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>`}
+function settingsCard(d,modal=false){const s=d.settings||defaultSettings(),g=!me;return `<section class="settings-page" id="settingsCard"><div class="settings-page-hero"><div class="settings-page-icon">${icon('settings-2')}</div><div><div class="settings-page-title">返信設定</div><div class="settings-page-copy">返信が必要か、受け取り先を選びます。</div></div></div><div class="settings-page-list">${me?`<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('user-round')}</div><div><div class="settings-block-title">送信者</div><div class="settings-block-note">管理者側の表示名を選びます。</div></div></div><div class="toggle-row"><div class="toggle-copy"><div class="toggle-title">匿名で送信</div><div class="toggle-note" id="anonNote">${s.anonymous?'管理者には匿名で表示':'プロフィール名を表示'}</div></div><label class="switch"><input type="checkbox" id="set_anonymous" ${s.anonymous?'checked':''}><span></span></label></div></div>`:`<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('user-round')}</div><div><div class="settings-block-title">ログインなし送信</div><div class="settings-block-note">返信希望時はDM先が必要です。</div></div></div></div>`}<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('message-circle-reply')}</div><div><div class="settings-block-title">返信</div><div class="settings-block-note">回答が必要かを選びます。</div></div></div><div class="settings-option-grid"><label class="settings-option"><input type="radio" name="set_need" value="1" ${s.need_reply?'checked':''}><div class="settings-option-card"><div class="settings-option-emoji">${icon('mail-check')}</div><div><div class="settings-option-title">返信あり</div><div class="settings-option-sub">回答を受け取る</div></div></div></label><label class="settings-option"><input type="radio" name="set_need" value="0" ${!s.need_reply?'checked':''}><div class="settings-option-card"><div class="settings-option-emoji">${icon('check-circle-2')}</div><div><div class="settings-option-title">返信不要</div><div class="settings-option-sub">送信のみで完了</div></div></div></label></div></div><div id="replyDetail">${replyDetailHtml(s,g)}</div></div><div class="card-actions"><button class="btn black" type="button" data-act="save-settings">${modal?'保存':'次へ'}</button></div></section>`}
+function replyDetailHtml(s,g){if(!s.need_reply)return `<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('send')}</div><div><div class="settings-block-title">返信先なし</div><div class="settings-block-note">返信不要です。</div></div></div><div class="settings-reply-none">管理者からの返信はありません。</div></div>`;const ch=g?'dm':(s.reply_channel||'site');const picker=!g?`<div class="settings-option-grid"><label class="settings-option"><input type="radio" name="set_channel" value="site" ${ch==='site'?'checked':''}><div class="settings-option-card"><div class="settings-option-emoji">${icon('inbox')}</div><div><div class="settings-option-title">サイト内</div><div class="settings-option-sub">ログイン後に確認</div></div></div></label><label class="settings-option"><input type="radio" name="set_channel" value="dm" ${ch==='dm'?'checked':''}><div class="settings-option-card"><div class="settings-option-emoji">${icon('send')}</div><div><div class="settings-option-title">DM</div><div class="settings-option-sub">指定先へ返信</div></div></div></label></div>`:`<div class="settings-inline-panel">ログインなしの場合、DM返信のみ利用できます。</div>`;const mailNote=!g&&ch==='site'?`<div class="settings-inline-panel">返信メール通知は <a href="../../mail-system/?contact-mail" target="_blank" rel="noopener">Mail System</a> でメールアドレス認証後にオンにできます。</div>`:'';return `<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('inbox')}</div><div><div class="settings-block-title">受け取り方</div><div class="settings-block-note">返信先を選びます。</div></div></div>${picker}${mailNote}<div id="dmFields" class="${ch==='dm'?'':'hidden'}"><div class="settings-inline-panel"><div class="dm-grid"><div class="field"><label>サービス</label><select class="input" id="set_dm_service"><option value="X" ${s.dm_service==='X'?'selected':''}>X</option><option value="Instagram" ${s.dm_service==='Instagram'?'selected':''}>Instagram</option></select></div><div class="field"><label>アカウント</label><input class="input" id="set_dm_account" value="${esc(s.dm_account||'')}" placeholder="@yourname"></div></div></div></div></div>`}
+function bindSettingsDynamic(){document.querySelectorAll('#settingsCard').forEach(card=>{const q=s=>card.querySelector(s);const read=()=>{const need=(q('input[name="set_need"]:checked')?.value||'1')==='1';let ch=me?(q('input[name="set_channel"]:checked')?.value||'site'):'dm';if(!need)ch='none';return{need_reply:need,reply_channel:ch,dm_service:q('#set_dm_service')?.value||'X',dm_account:q('#set_dm_account')?.value||'',anonymous:q('#set_anonymous')?.checked??true}};const note=()=>{const a=q('#anonNote');if(a)a.textContent=read().anonymous?'管理者には匿名で表示':'プロフィール名を表示'};const ref=()=>{const cur=read(),det=q('#replyDetail');if(det)det.innerHTML=replyDetailHtml(cur,!me);note();renderLucideSoon();bindSettingsDynamic()};card.querySelectorAll('input[name="set_need"],input[name="set_channel"]').forEach(e=>e.onchange=ref);card.querySelectorAll('#set_anonymous,#set_dm_service').forEach(e=>e.onchange=note);const dm=q('#set_dm_account');if(dm)dm.oninput=note});renderLucideSoon()}
+function renderDraft(d,initialOpen=false){$('chatTitle').textContent=d.sent&&d.contact_code?`#${d.contact_code}`:'新規お問い合わせ';$('chatSub').textContent=d.sent?'送信済み':nextActionLabel(d);$('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書き削除</button>':'';let body='';if(d.sent){const gn=!me?'<div class="mail-warning">ログインなし送信のため、この画面で履歴確認はできません。</div>':'';body=`<div class="mail-confirm">${esc(completionMessage(!!d.settings?.need_reply))}<br>管理番号：${esc(d.contact_code||'')}</div>${gn}`;$('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(d))}</div>${mailChips(d)}</div>${mailMetaRows(d)}<div class="mail-body">${body}</div></article></div>`}else{if(!d.settings_done)body=settingsCard(d,false);else if(!d.category_done||d.showCategoryEditor)body=`<div class="draft-next-page"><div class="draft-next-title">${icon('tags')}カテゴリを選択</div><div class="draft-next-copy">内容に近い種類を選んでください。</div>${categoryCard(d)}</div>`;else if(needsSite(d.category)&&(!d.site_done||d.showSiteEditor))body=`<div class="draft-next-page"><div class="draft-next-title">${icon('globe-2')}対象サイト名</div><div class="draft-next-copy">対象のページや機能名を入力してください。</div>${siteCard(d)}</div>`;else body=`<div class="draft-next-page"><div class="draft-next-title">${icon('pen-line')}本文を入力</div><div class="draft-next-copy">下の入力欄に内容を書いて送信してください。${esc(categoryPrompt(d.category))}</div></div>`;$('mailContent').innerHTML=`<div class="draft-flow">${draftProgressHtml(d)}<div class="mail-body">${body}</div></div>`}afterMailRender(initialOpen);setTimeout(bindSettingsDynamic,0);renderLucideSoon()}
+function updateComposer(){const item=activeItem(),input=$('messageInput'),send=$('sendBtn'),plus=$('plusBtn'),note=$('composerNote'),composer=$('composer');if(!composer||!input||!send||!plus||!note)return;if(!item){composer.classList.add('hidden');return}else composer.classList.remove('hidden');let enabled=false,attach=false,placeholder='本文を入力';if(item.draft&&!item.sent){enabled=isDraftReadyForBody(item);attach=enabled&&((item.files||[]).length<2);placeholder=enabled?'お問い合わせ本文を入力':'設定を完了してください'}else if(!item.draft&&isInquiryWritable(item)){enabled=true;attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);placeholder='追加メッセージを入力'}const locked=isSendLocked();input.disabled=!enabled;send.disabled=!enabled||locked;plus.disabled=!attach||locked;input.placeholder=placeholder;note.textContent=locked?'少し待ってから再送できます。':(item.draft?(enabled?'本文を入力して送信できます。':'上の進捗に沿って項目を設定してください。'):(enabled?'追加メッセージを送信できます。':'このステータスでは送信できません。'));renderAttachStrip()}
+
+
+
+/* final_recurrence_guard_20260616
+   Keep the new inquiry flow stable after the compact UI overrides. */
+function isDraftReadyForBody(item){
+  return !!item && !!item.draft && !item.sent && !!item.settings_done && !!item.category_done && (!needsSite(item.category)||!!item.site_done);
+}
+function nextActionLabel(item){
+  if(!item)return 'お問い合わせ';
+  if(!item.draft){
+    if(+item.unread_admin_count>0)return '未読返信があります';
+    return statusLabel(item.status);
+  }
+  if(item.sent)return '送信済み';
+  if(!item.settings_done)return '返信設定を選択';
+  if(!item.category_done||item.showCategoryEditor)return 'カテゴリを選択';
+  if(needsSite(item.category)&&(!item.site_done||item.showSiteEditor))return '対象サイトを入力';
+  return '本文を入力';
+}
+function mailComposerLabel(item){ return ''; }
+function statusLabel(status){
+  return ({open:'受付中',rejected:'棄却',cancelled:'取りやめ',pending:'保留中',accepted:'受付済',closed:'受付済',replied:'返信済'})[String(status||'open')]||'受付中';
+}
+function statusClass(status){ return String(status||'open'); }
+function canUserHideInquiry(c){
+  return !!c && !c.draft && ['rejected','cancelled','accepted','closed','replied'].includes(String(c.status||'')) && !c.is_user_hidden && !c.user_hidden_at;
+}
+function isInquiryWritable(c){
+  return !!c && !c.draft && !!me && ['open','pending'].includes(String(c.status||''));
+}
+function allItems(){
+  return [...drafts,...inquiries.filter(i=>!i.is_user_hidden&&!i.user_hidden_at).map(i=>({...i,key:'id-'+i.id,draft:false,files:Array.isArray(i.files)?i.files:[]}))];
+}
+async function loadMine(){
+  if(!me){inquiries=[];return;}
+  const json=await apiFetch('contact_mine_list').catch(()=>null);
+  inquiries=json&&json.ok?(json.data||[]).filter(c=>!c.is_user_hidden&&!c.user_hidden_at):[];
+}
+function newDraft(open=true){
+  const d={key:'draft-'+Date.now()+'-'+Math.random().toString(16).slice(2),draft:true,created_at:new Date().toISOString(),settings:defaultSettings(),settings_done:false,category:'',category_done:false,site_name:'',site_done:false,showSettingsEditor:true,showCategoryEditor:false,showSiteEditor:false,pendingStep:'',files:[],body_draft:'',sent:false,contact_code:'',contact_id:0};
+  drafts.unshift(d);
+  if(open)activeKey=d.key;
+  forceNextScrollBottom=false;
+  renderAll();
+  closeList();
+}
+function draftProgressState(d){
+  const steps=[!!d.settings_done,!!d.category_done,(!needsSite(d.category)||!!d.site_done),!!(String(d.body_draft||'').trim()||d.sent)];
+  const done=steps.filter(Boolean).length;
+  return {done,total:4,pct:Math.max(4,Math.min(100,Math.round(done/4*100))),current:nextActionLabel(d)};
+}
+function draftProgressHtml(d){
+  const p=draftProgressState(d);
+  return `<div class="draft-progress-line" aria-label="進捗 ${p.done}/${p.total}"><div class="draft-progress-line-fill" style="width:${p.pct}%"></div></div>`;
+}
+function mailMessageHtml(c,m,i){
+  const isAdmin=m.sender==='admin';
+  const from=isAdmin?'管理者':'あなた';
+  const body=esc(m.body)+messageImages(c,m,i);
+  const tools=(!isAdmin&&m.can_edit)?`<div class="mail-message-tools"><button class="mail-link-btn" data-act="edit-message" data-message-id="${+m.id}" type="button">本文を修正</button></div>`:'';
+  return `<section class="mail-message ${isAdmin?'admin':'user'}"><div class="mail-message-head"><div class="mail-message-from">${esc(from)}</div><div class="mail-message-date">${esc(m.created_at||'')}</div></div><div class="mail-message-body">${body}</div>${tools}</section>`;
+}
+function renderList(){
+  const items=allItems();
+  const unread=items.filter(i=>!i.draft&&+i.unread_admin_count>0).length;
+  $('listCount').textContent=`${items.length}件${unread?` / 未読${unread}`:''}`;
+  if(!items.length){
+    $('inquiryList').innerHTML='<div class="empty">お問い合わせはまだありません。<br>上の「＋ 新規お問い合わせ」から作成できます。</div>';
+    return;
+  }
+  $('inquiryList').innerHTML=items.map(item=>{
+    const isDraft=!!item.draft,active=item.key===activeKey,unread=!isDraft&&+item.unread_admin_count>0;
+    const subject=isDraft?(item.sent&&item.contact_code?`#${item.contact_code}`:'新規お問い合わせ'):`#${item.contact_code||item.id} ${item.category||'お問い合わせ'}`;
+    const meta=isDraft?(item.category||nextActionLabel(item)):(item.latest_sender==='admin'?'管理者から返信':'ユーザー送信');
+    const preview=latestPreview(item)||nextActionLabel(item);
+    const status=unread?`未読 ${+item.unread_admin_count}`:mailStatus(item);
+    const date=mailDate(item);
+    return `<button class="list-card ${active?'active':''} ${unread?'unread':''}" data-key="${esc(item.key)}"><div class="mail-list-row"><div class="mail-list-top"><div class="mail-list-subject">${esc(subject)}</div><div class="mail-list-date">${esc(date)}</div></div><div class="mail-list-meta">${esc(meta)}${!isDraft?' / '+esc(replyLabel(item)):''}</div><div class="mail-list-preview">${esc(preview)}</div><div class="mail-list-tags"><span class="badge ${unread?'unread':(isDraft?'draft':esc(statusClass(item.status)))}">${esc(status)}</span>${isDraft&&!item.sent?'<span class="badge action">作成中</span>':''}</div></div></button>`;
+  }).join('');
+}
+function renderMailView(){
+  const item=activeItem();
+  if(!item){
+    const c=$('mailContent');
+    if(c)c.innerHTML='';
+    const composer=$('composer');
+    if(composer)composer.classList.add('hidden');
+    return;
+  }
+  const initial=item.key!==lastRenderedKey;
+  lastRenderedKey=item.key;
+  if(item.draft)renderDraft(item,initial);else renderExisting(item,initial);
+}
+function draftBackButton(target){return `<button class="btn small" data-act="draft-back" data-target="${esc(target)}" type="button">前の項目へ戻る</button>`}
+function goDraftBack(target){
+  const d=activeItem();if(!d||!d.draft||d.sent)return;
+  d.pendingStep='';
+  if(target==='settings'){d.settings_done=false;d.showSettingsEditor=true;d.showCategoryEditor=false;d.showSiteEditor=false;}
+  else if(target==='category'){d.category_done=false;d.showCategoryEditor=true;d.showSiteEditor=false;}
+  else if(target==='site'){d.site_done=false;d.showSiteEditor=true;}
+  else if(needsSite(d.category)&&d.site_done){d.site_done=false;d.showSiteEditor=true;}
+  else if(d.category_done){d.category_done=false;d.showCategoryEditor=true;}
+  else {d.settings_done=false;d.showSettingsEditor=true;}
+  forceNextScrollBottom=false;
+  renderAll();
+}
+function renderDraft(d,initialOpen=false){
+  $('chatTitle').textContent=d.sent&&d.contact_code?`#${d.contact_code}`:'新規お問い合わせ';
+  $('chatSub').textContent=d.sent?'送信済み':nextActionLabel(d);
+  $('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書き削除</button>':'';
+  let body='';
+  if(d.sent){
+    const gn=!me?'<div class="mail-warning">ログインなし送信のため、この画面で履歴確認はできません。</div>':'';
+    body=`<div class="mail-confirm">${esc(completionMessage(!!d.settings?.need_reply))}<br>管理番号：${esc(d.contact_code||'')}</div>${gn}`;
+    $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(d))}</div></div><div class="mail-body">${body}</div></article></div>`;
+  }else{
+    if(!d.settings_done)body=settingsCard(d,false);
+    else if(!d.category_done||d.showCategoryEditor)body=`<section class="draft-next-page"><div class="draft-next-title">${icon('tags')}カテゴリを選択</div><div class="draft-next-copy">内容に近い種類を選んでください。</div>${categoryCard(d)}<div class="card-actions">${draftBackButton('settings')}</div></section>`;
+    else if(needsSite(d.category)&&(!d.site_done||d.showSiteEditor))body=`<section class="draft-next-page"><div class="draft-next-title">${icon('globe-2')}対象サイト名</div><div class="draft-next-copy">対象のページや機能名を入力してください。</div>${siteCard(d)}<div class="card-actions">${draftBackButton('category')}</div></section>`;
+    else body=`<section class="draft-next-page body-ready"><div class="draft-next-title">${icon('pen-line')}本文を入力</div><div class="draft-next-copy">下の入力欄に内容を書いて送信してください。</div><div class="card-actions">${draftBackButton(needsSite(d.category)?'site':'category')}</div></section>`;
+    $('mailContent').innerHTML=`<div class="draft-flow">${draftProgressHtml(d)}<div class="mail-body">${body}</div></div>`;
+  }
+  afterMailRender(initialOpen);
+  setTimeout(bindSettingsDynamic,0);
+  renderLucideSoon();
+}
+function renderExisting(c,initialOpen=false){
+  $('chatTitle').textContent=`#${c.contact_code||c.id}`;
+  $('chatSub').textContent=`${c.category||'お問い合わせ'} / ${statusLabel(c.status)}`;
+  const hideBtn=canUserHideInquiry(c)?'<button class="btn small" id="hideExistingBtn" data-act="hide-inquiry" type="button">一覧から非表示</button>':'';
+  const cancelBtn=c.can_cancel?'<button class="btn danger small" id="cancelExistingBtn" data-act="cancel-inquiry" type="button">取りやめ</button>':'';
+  $('chatActions').innerHTML=`${hideBtn}${cancelBtn}`;
+  const messages=(c.messages||[]).map((m,i)=>mailMessageHtml(c,m,i)).join('')||'<div class="mail-section-copy">本文がありません。</div>';
+  const submitted=recentlySubmitted.has(+c.id)?`<div class="mail-confirm">${esc(completionMessage(!!c.need_reply))}<br>管理番号：${esc(c.contact_code||'')}</div>`:'';
+  const closed=['rejected','cancelled'].includes(String(c.status||''))?`<div class="mail-warning">このお問い合わせは${statusLabel(c.status)}済みです。</div>`:'';
+  const hideNote=canUserHideInquiry(c)?'<div class="hide-done-note">このお問い合わせは必要なければ「一覧から非表示」で消せます。削除は管理者側のみ可能です。</div>':'';
+  $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(c))}</div>${mailChips(c)}</div>${mailMetaRows(c)}<div class="mail-body">${submitted}${messages}${closed}${hideNote}</div></article></div>`;
+  afterMailRender(initialOpen);
+  markReadIfNeeded(c);
+  renderLucideSoon();
+}
+function updateComposer(){
+  const item=activeItem(),input=$('messageInput'),send=$('sendBtn'),plus=$('plusBtn'),note=$('composerNote'),composer=$('composer');
+  if(!composer||!input||!send||!plus||!note)return;
+  if(!item){composer.classList.add('hidden');return;} else composer.classList.remove('hidden');
+  let enabled=false,attach=false,placeholder='本文を入力';
+  if(item.draft&&!item.sent){
+    enabled=isDraftReadyForBody(item);
+    attach=enabled&&((item.files||[]).length<2);
+    placeholder=enabled?'お問い合わせ本文を入力':'設定を完了してください';
+  }else if(!item.draft&&isInquiryWritable(item)){
+    enabled=true;
+    attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);
+    placeholder='追加メッセージを入力';
+  }
+  const locked=isSendLocked();
+  input.disabled=!enabled;
+  send.disabled=!enabled||locked;
+  plus.disabled=!attach||locked;
+  input.placeholder=placeholder;
+  note.textContent=locked?'少し待ってから再送できます。':(item.draft?(enabled?'本文を入力して送信できます。':'上の項目を設定してください。'):(enabled?'追加メッセージを送信できます。':'このステータスでは送信できません。'));
+  renderAttachStrip();
+}
+async function hideCurrentInquiry(){
+  const c=activeItem();if(!c||c.draft)return;
+  if(!confirm(`#${c.contact_code||c.id} を一覧から非表示にしますか？`))return;
+  const json=await apiFetch('contact_user_hide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);
+  if(!json||!json.ok){toast(json?.error||'非表示にできませんでした');return;}
+  inquiries=inquiries.filter(x=>+x.id!==+c.id);
+  activeKey='';
+  renderAll();
+  goHome();
+  toast('非表示にしました');
+}
+function onMailClick(e){
+  const act=e.target.closest('[data-act]')?.dataset.act;if(!act)return;
+  if(act==='save-settings')saveSettings();
+  if(act==='draft-back')goDraftBack(e.target.closest('[data-target]')?.dataset.target||'');
+  if(act==='edit-settings')editSettings();
+  if(act==='save-category')saveCategory();
+  if(act==='edit-category')editCategory();
+  if(act==='save-site')saveSite();
+  if(act==='edit-site')editSite();
+  if(act==='edit-message')startExistingEdit(e.target.closest('[data-message-id]')?.dataset.messageId);
+  if(act==='cancel-existing-edit')closeEditModal();
+  if(act==='save-existing-edit')saveExistingEdit();
+  if(act==='hide-inquiry')hideCurrentInquiry();
+  if(act==='cancel-inquiry')cancelCurrentInquiry();
+}
+function bind(){
+  document.addEventListener('click',e=>{
+    const card=e.target.closest('.list-card');
+    if(card){selectItem(card.dataset.key);return;}
+    const rem=e.target.closest('[data-remove-image]');
+    if(rem){removeImage(+rem.dataset.removeImage);return;}
+  });
+  const on=(id,ev,fn)=>{const el=$(id);if(el)el.addEventListener(ev,fn)};
+  on('newBtn','click',()=>newDraft(true));
+  on('loginToggleBtn','click',toggleLogin);
+  on('loginPromptBtn','click',()=>{const b=$('loginBox');if(b)b.classList.remove('hidden');goHome();});
+  on('loginBtn','click',login);
+  on('mobileListBtn','click',goHome);
+  on('sheetBg','click',closeList);
+  on('settingsModalClose','click',closeSettingsModal);
+  const sm=$('settingsModal');if(sm)sm.onclick=e=>{if(e.target===sm)closeSettingsModal();const act=e.target.closest('[data-act]')?.dataset.act;if(act==='save-settings')saveSettings();
+  if(act==='draft-back')goDraftBack(e.target.closest('[data-target]')?.dataset.target||'');};
+  on('editModalClose','click',closeEditModal);
+  const em=$('editModal');if(em)em.onclick=e=>{if(e.target===em)closeEditModal();const act=e.target.closest('[data-act]')?.dataset.act;if(act==='save-category')saveCategory();if(act==='save-site')saveSite();if(act==='cancel-existing-edit')closeEditModal();if(act==='save-existing-edit')saveExistingEdit();};
+  on('plusBtn','click',pickImages);
+  const picker=$('imagePicker');if(picker)picker.onchange=handlePickedImages;
+  on('sendBtn','click',sendComposer);
+  const content=$('mailContent');if(content)content.onclick=onMailClick;
+  const actions=$('chatActions');if(actions)actions.onclick=e=>{const b=e.target.closest('button');if(!b)return;const act=b.dataset.act;if(act==='hide-inquiry')hideCurrentInquiry();
+  if(act==='cancel-inquiry')cancelCurrentInquiry();if(b.id==='hideExistingBtn')hideCurrentInquiry();if(b.id==='discardDraftBtn')discardDraft();if(b.id==='cancelExistingBtn')cancelCurrentInquiry();};
+  const input=$('messageInput');
+  if(input){
+    input.addEventListener('input',e=>{const item=activeItem();if(item&&item.draft)item.body_draft=e.target.value;autoGrow(e.target);if(item&&item.draft)renderList();const d=activeItem();if(d&&d.draft){$('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書き削除</button>':'';}});
+    input.addEventListener('focus',focusComposerSoon);
+    input.addEventListener('blur',()=>{keyboardBottomTimers.forEach(clearTimeout);keyboardBottomTimers=[];const app=$('app');if(app)app.classList.remove('keyboard-active');setTimeout(()=>{setAppHeight('blur');resetWindowScrollSoon();},80)});
+    input.addEventListener('keydown',e=>{if(e.key==='Enter'){}});
+  }
+}
+function afterMailRender(initialOpen=false){
+  if(forceNextScrollBottom){scrollBottomSoon();forceNextScrollBottom=false;}
+  else if(initialOpen||!isDraftReadyForBody(activeItem()))scrollTopSoon();
+  else scrollBottomSoon();
+}
+
 </script>
 </body>
 </html>

@@ -23,11 +23,20 @@
 <link rel="icon" type="image/png" sizes="32x32" href="icon/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="icon/favicon-16x16.png">
 <link rel="manifest" href="icon/site.webmanifest">
+<script>
+(function(){
+  var ua=navigator.userAgent||"";
+  var root=document.documentElement;
+  root.classList.add(/Android/i.test(ua)?"is-android":"not-android");
+  root.classList.add(/iP(hone|ad|od)/i.test(ua)||(/Macintosh/i.test(ua)&&navigator.maxTouchPoints>1)?"is-ios":"not-ios");
+})();
+
+</script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box;}
 :root{--line:#e5e5e5;--danger:#e53e3e;}
 body{font-family:-apple-system,BlinkMacSystemFont,"Hiragino Kaku Gothic ProN",sans-serif;background:#f6f6f6;color:#111;min-height:100vh;}
-.app{max-width:720px;margin:0 auto;min-height:100vh;background:#fff;display:flex;flex-direction:column;}
+.app{max-width:1180px;margin:0 auto;min-height:100vh;background:#fff;display:flex;flex-direction:column;}
 header{position:sticky;top:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 20px;display:flex;align-items:center;gap:12px;z-index:10;}
 header h1{font-size:18px;font-weight:800;flex:1;}
 .btn{height:38px;padding:0 16px;border-radius:9999px;border:1px solid var(--line);background:#fff;font-weight:600;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:6px;color:#111;font-family:inherit;}
@@ -124,7 +133,599 @@ header h1{font-size:18px;font-weight:800;flex:1;}
     .user-link-icon img{width:100%;height:100%;object-fit:cover}
     .user-link-name{font-size:14px;font-weight:800}
     .user-link-meta{font-size:12px;color:#777}
+    .contact-list{display:grid;gap:10px}
+    .contact-row{border:1px solid var(--line);border-radius:16px;background:#fff;padding:13px;display:grid;gap:9px}
+    .contact-row-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .contact-title{font-size:15px;font-weight:900;line-height:1.45}
+    .contact-meta{font-size:12px;color:#777;line-height:1.6}
+    .contact-preview{font-size:13px;color:#333;line-height:1.65;white-space:pre-wrap;background:#fafafa;border:1px solid #f1f1f1;border-radius:12px;padding:10px}
+    .contact-status{font-size:11px;font-weight:900;border-radius:999px;padding:4px 8px;background:#ecfdf5;color:#047857;white-space:nowrap}
+    .contact-status.cancelled{background:#fff1f2;color:#be123c}
+    .contact-status.closed{background:#f1f5f9;color:#475569}
+    .contact-detail-grid{display:grid;grid-template-columns:110px 1fr;gap:8px;font-size:13px;margin-bottom:14px}
+    .contact-detail-grid b{color:#666;font-size:12px}
+    .contact-message-list{display:grid;gap:8px;margin:12px 0}
+    .contact-message{border-radius:16px;padding:11px 13px;background:#f4f4f4;font-size:13px;white-space:pre-wrap;line-height:1.7}
+    .contact-message.admin{background:#111;color:#fff}
+    .contact-reply-box{margin-top:14px;display:grid;gap:8px}
+    .contact-image-grid{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 14px}
+    .contact-image-grid a{display:block;width:92px;height:92px;border-radius:14px;overflow:hidden;border:1px solid var(--line);background:#fafafa}
+    .contact-image-grid img{width:100%;height:100%;object-fit:cover;display:block}
     @media(max-width:640px){.sns-admin-row{grid-template-columns:1fr 40px}.sns-admin-row input{grid-column:1/-1}.sns-admin-row .sns-label-input{grid-row:3}}
+
+    /* お問い合わせチャット管理 */
+    .contact-admin-shell{flex:1;min-height:0;display:grid;grid-template-columns:300px minmax(0,1fr);border-top:1px solid var(--line)}
+    .contact-admin-listpane{min-width:0;border-right:1px solid var(--line);background:#fafafa;display:flex;flex-direction:column;min-height:0}
+    .contact-admin-listhead{padding:14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .contact-admin-list{padding:10px;overflow:auto;display:grid;gap:9px;min-height:0}
+    .contact-admin-card{width:100%;text-align:left;border:1px solid var(--line);border-radius:16px;background:#fff;padding:12px;display:grid;gap:6px;cursor:pointer;position:relative;font-family:inherit;color:#111}
+    .contact-admin-card.active{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.06)}
+    .contact-admin-card.unread{padding-left:22px;border-color:#111}
+    .contact-admin-card.unread:before{content:"";position:absolute;left:9px;top:16px;width:8px;height:8px;border-radius:50%;background:#111}
+    .contact-admin-card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+    .contact-admin-code{font-size:13px;font-weight:900;line-height:1.4}
+    .contact-admin-cat{font-size:12px;font-weight:800;color:#333;line-height:1.35}
+    .contact-admin-meta{font-size:11px;color:#777;line-height:1.45}
+    .contact-admin-preview{font-size:12px;color:#444;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .contact-admin-mail{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:linear-gradient(180deg,#fff,#f8f8f8)}
+    .contact-admin-mailhead{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px;background:#fff}
+    .contact-admin-mail-title{font-size:16px;font-weight:900;line-height:1.3}
+    .contact-admin-mail-sub{font-size:12px;color:#777;line-height:1.5;margin-top:2px}
+    .contact-admin-body{min-height:0;overflow:auto;padding:16px;display:flex;flex-direction:column;gap:10px}
+    .admin-mail-row{display:flex}.admin-mail-row.user{justify-content:flex-start}.admin-mail-row.admin{justify-content:flex-end}.admin-mail-body{max-width:min(82%,620px);border-radius:18px;padding:11px 13px;font-size:13px;line-height:1.7;white-space:pre-wrap;word-break:break-word}.admin-mail-row.user .admin-mail-body{background:#fff;border:1px solid var(--line);border-bottom-left-radius:6px}.admin-mail-row.admin .admin-mail-body{background:#111;color:#fff;border-bottom-right-radius:6px}.admin-mail-time{font-size:11px;opacity:.68;margin-top:4px}.contact-admin-reply{border-top:1px solid var(--line);background:#fff;padding:10px 12px;display:flex;align-items:flex-end;gap:8px}.contact-admin-reply textarea{flex:1;min-height:42px;max-height:130px;resize:none;border:1px solid var(--line);border-radius:18px;padding:10px 12px;font-size:14px;line-height:1.55;font-family:inherit;outline:none}.contact-admin-send{width:42px;height:42px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;flex:0 0 auto}.contact-admin-send svg{width:18px;height:18px}.contact-admin-empty{display:grid;place-items:center;color:#888;font-size:13px;line-height:1.7;text-align:center;padding:30px}.contact-status.unread{background:#111;color:#fff}
+    @media(max-width:760px){.contact-admin-shell{grid-template-columns:1fr}.contact-admin-listpane{max-height:40dvh;border-right:0;border-bottom:1px solid var(--line)}.contact-admin-mail{min-height:60dvh}.contact-admin-body{padding:12px}.admin-mail-body{max-width:92%}}
+
+
+/* v5 contact admin layout */
+#main-screen.app{height:100dvh;overflow:hidden;}
+#tab-content{overflow:hidden;}
+.contact-admin-shell{height:calc(100dvh - 154px);min-height:420px;grid-template-columns:340px minmax(0,1fr);}
+.contact-admin-listhead{padding:12px 14px;}
+.contact-admin-list{align-content:start;}
+.contact-admin-mailhead{min-height:62px;}
+.contact-admin-body{overscroll-behavior:contain;}
+.contact-admin-reply{padding:9px 12px max(9px,env(safe-area-inset-bottom));}
+.contact-admin-reply textarea{font-size:16px;min-height:40px;max-height:150px;}
+.contact-admin-send{width:38px;height:38px;}
+.contact-admin-send svg{width:16px;height:16px;}
+.contact-admin-send:disabled{opacity:.45;cursor:not-allowed;}
+@media(max-width:760px){
+  #main-screen.app{height:100dvh;}
+  .contact-admin-shell{height:calc(100dvh - 150px);min-height:0;grid-template-rows:minmax(150px,34dvh) minmax(0,1fr);}
+  .contact-admin-listpane{max-height:none;min-height:0;}
+  .contact-admin-list{padding:8px;}
+  .contact-admin-mail{min-height:0;}
+  .contact-admin-mailhead{padding:10px 12px;}
+  .contact-admin-reply{padding:8px 10px max(8px,env(safe-area-inset-bottom));}
+}
+
+
+/* v6: mobile-first contact admin polish */
+.contact-admin-actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex-wrap:wrap;flex-shrink:0}
+.contact-admin-mailhead>div{min-width:0;flex:1}
+.contact-admin-delete{border-color:#fed7d7!important;color:#e53e3e!important;background:#fff!important}
+.contact-admin-delete:hover{background:#fff5f5!important}
+@media(max-width:760px){
+  body{overflow:hidden;}
+  header{padding:10px 12px;}
+  header h1{font-size:16px;}
+  .tabs{padding:0 10px;overflow-x:auto;flex-shrink:0;-webkit-overflow-scrolling:touch;}
+  .tab{padding:11px 12px;white-space:nowrap;}
+  .section.fill-section{min-height:0;}
+  .contact-admin-shell{height:calc(100dvh - 136px);grid-template-rows:minmax(130px,32dvh) minmax(0,1fr);}
+  .contact-admin-listhead{padding:9px 10px;}
+  .contact-admin-card{padding:10px;border-radius:14px;gap:5px;}
+  .contact-admin-meta{font-size:10.5px;}
+  .contact-admin-preview{font-size:11.5px;}
+  .contact-admin-mailhead{min-height:auto;align-items:flex-start;flex-wrap:wrap;gap:8px;}
+  .contact-admin-mail-title{font-size:14px;}
+  .contact-admin-mail-sub{font-size:11px;}
+  .contact-admin-actions{width:100%;justify-content:flex-start;}
+  .contact-admin-actions .btn{height:34px;padding:0 12px;font-size:12px;}
+  .contact-admin-body{padding:10px;gap:8px;}
+  .admin-mail-body{font-size:13px;max-width:94%;}
+  .contact-image-grid a{width:72px;height:72px;border-radius:12px;}
+  .contact-admin-reply{padding:8px 9px max(8px,env(safe-area-inset-bottom));gap:7px;}
+  .contact-admin-reply textarea{min-height:38px;max-height:min(118px,24dvh);border-radius:18px;}
+  .contact-admin-send{width:38px;height:38px;}
+}
+@media(max-width:380px){.contact-admin-shell{grid-template-rows:minmax(112px,29dvh) minmax(0,1fr)}.contact-admin-list{padding:6px}.admin-mail-body{max-width:96%;}}
+
+
+
+/* v7: contact admin full-height/mobile polish */
+:root{--admin-vh:100dvh;}
+body.contacts-mode{overflow:hidden;}
+body.contacts-mode .app{height:var(--admin-vh);min-height:0;max-width:1280px;overflow:hidden;}
+body.contacts-mode #tab-content{flex:1 1 auto;min-height:0;overflow:hidden;}
+body.contacts-mode .section.fill-section{height:100%;min-height:0;padding:12px;overflow:hidden;}
+body.contacts-mode .contact-admin-shell{height:calc(var(--admin-vh) - 138px);min-height:0;border-radius:18px;overflow:hidden;background:#fff;box-shadow:0 8px 26px rgba(0,0,0,.035);}
+.contact-admin-card{touch-action:manipulation;}
+.contact-admin-mailhead{position:relative;z-index:2;}
+.contact-admin-body{overflow-anchor:none;-webkit-overflow-scrolling:touch;}
+.contact-admin-reply{position:relative;z-index:3;box-shadow:0 -10px 24px rgba(0,0,0,.045);}
+.contact-admin-reply textarea:disabled{background:#f5f5f5;color:#999;-webkit-text-fill-color:#999;}
+@media(max-width:760px){
+  body.contacts-mode header{padding:10px 12px;min-height:56px;}
+  body.contacts-mode header h1{font-size:16px;}
+  body.contacts-mode .tabs{padding:0 8px;overflow-x:auto;flex-shrink:0;}
+  body.contacts-mode .tab{padding:10px 12px;font-size:13px;white-space:nowrap;}
+  body.contacts-mode .section.fill-section{padding:0;}
+  body.contacts-mode .contact-admin-shell{height:calc(var(--admin-vh) - 100px);border-radius:0;border-left:0;border-right:0;box-shadow:none;grid-template-rows:minmax(126px,30dvh) minmax(0,1fr);}
+  body.contacts-mode .contact-admin-listpane{min-height:0;overflow:hidden;background:#fbfbfb;}
+  body.contacts-mode .contact-admin-list{min-height:0;overflow:auto;grid-auto-rows:min-content;}
+  body.contacts-mode .contact-admin-mail{min-height:0;height:100%;grid-template-rows:auto minmax(0,1fr) auto;}
+  body.contacts-mode .contact-admin-mailhead{background:rgba(255,255,255,.96);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);}
+  body.contacts-mode .contact-admin-reply{padding:8px 9px max(8px,env(safe-area-inset-bottom));}
+  body.contacts-mode .admin-mail-body{font-size:13px;line-height:1.65;}
+}
+@media(max-width:420px){body.contacts-mode .contact-admin-shell{grid-template-rows:minmax(108px,27dvh) minmax(0,1fr);}body.contacts-mode .contact-admin-actions{gap:6px;}body.contacts-mode .contact-admin-actions .btn{height:32px;padding:0 10px;font-size:11.5px;}}
+
+
+/* v8: stable contact admin layout */
+body.contacts-mode{height:var(--admin-vh);overflow:hidden;}
+body.contacts-mode .app{height:var(--admin-vh);min-height:0;max-width:1320px;overflow:hidden;}
+body.contacts-mode #main-screen{height:var(--admin-vh);overflow:hidden;}
+body.contacts-mode #tab-content{flex:1 1 auto;min-height:0;overflow:hidden;}
+body.contacts-mode .section.fill-section{height:100%;min-height:0;padding:12px;overflow:hidden;display:flex;flex-direction:column;}
+body.contacts-mode .contact-admin-shell{flex:1 1 auto;height:auto!important;min-height:0!important;display:grid;grid-template-columns:minmax(280px,360px) minmax(0,1fr);border:1px solid var(--line);border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 8px 28px rgba(0,0,0,.04);}
+body.contacts-mode .contact-admin-listpane{height:100%;min-height:0;overflow:hidden;}
+body.contacts-mode .contact-admin-list{flex:1 1 auto;min-height:0;overflow:auto;align-content:start;grid-auto-rows:min-content;overscroll-behavior:contain;}
+body.contacts-mode .contact-admin-card{min-height:104px;max-height:156px;overflow:hidden;contain:layout paint;}
+body.contacts-mode .contact-admin-meta{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;}
+body.contacts-mode .contact-admin-mail{height:100%;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;}
+body.contacts-mode .contact-admin-mailhead{min-height:64px;align-items:flex-start;}
+body.contacts-mode .contact-admin-body{min-height:0;overflow:auto;overscroll-behavior:contain;}
+body.contacts-mode .contact-admin-reply{flex-shrink:0;position:relative;z-index:3;}
+@media(max-width:760px){
+  body.contacts-mode header{min-height:52px;padding:9px 10px;}
+  body.contacts-mode .tabs{padding:0 6px;overflow-x:auto;flex-shrink:0;}
+  body.contacts-mode .tab{padding:9px 10px;font-size:12px;white-space:nowrap;}
+  body.contacts-mode .section.fill-section{padding:0;}
+  body.contacts-mode .section.fill-section>div:first-child{padding:10px 12px!important;min-height:50px;}
+  body.contacts-mode .contact-admin-shell{border-left:0;border-right:0;border-radius:0;grid-template-columns:1fr;grid-template-rows:minmax(150px,34dvh) minmax(0,1fr);box-shadow:none;}
+  body.contacts-mode .contact-admin-listpane{border-right:0;border-bottom:1px solid var(--line);}
+  body.contacts-mode .contact-admin-listhead{padding:8px 10px;min-height:38px;}
+  body.contacts-mode .contact-admin-list{padding:7px;display:grid;grid-auto-flow:column;grid-auto-columns:minmax(238px,78vw);overflow-x:auto;overflow-y:hidden;}
+  body.contacts-mode .contact-admin-card{min-height:112px;max-height:128px;}
+  body.contacts-mode .contact-admin-mailhead{padding:9px 10px;min-height:auto;gap:8px;flex-wrap:wrap;}
+  body.contacts-mode .contact-admin-actions{width:100%;justify-content:flex-start;}
+  body.contacts-mode .contact-admin-actions .btn{min-height:32px;padding:0 11px;font-size:12px;}
+  body.contacts-mode .contact-admin-body{padding:10px;gap:8px;}
+  body.contacts-mode .admin-mail-body{max-width:94%;font-size:13px;}
+  body.contacts-mode .contact-admin-reply{padding:8px 9px max(8px,env(safe-area-inset-bottom));}
+  body.contacts-mode .contact-admin-reply textarea{font-size:16px;min-height:38px;max-height:min(126px,26dvh);}
+  body.contacts-mode .contact-admin-send{width:38px;height:38px;}
+}
+@media(max-width:380px){body.contacts-mode .contact-admin-shell{grid-template-rows:minmax(132px,32dvh) minmax(0,1fr);}body.contacts-mode .contact-admin-list{grid-auto-columns:minmax(218px,82vw);}}
+
+/* v15: Android Chrome keyboard compatibility for contact admin */
+@media(max-width:760px){
+  html.is-android,html.is-android body{height:100%;min-height:100%;overflow:hidden;}
+  html.is-android body.contacts-mode{overscroll-behavior:none;}
+  html.is-android body.contacts-mode .app{height:var(--admin-vh);min-height:0;max-height:var(--admin-vh);}
+  html.is-android body.contacts-mode .contact-admin-shell{height:calc(var(--admin-vh) - 100px);}
+  html.is-android body.contacts-mode .contact-admin-mail{contain:layout size;}
+  html.is-android body.contacts-mode .contact-admin-reply textarea{font-size:16px;}
+}
+
+
+
+/* admin-status-home-ui */
+.admin-home{padding:18px;display:grid;gap:14px;max-width:860px;width:100%;}
+.admin-home-title{font-size:22px;font-weight:950;letter-spacing:-.03em;}
+.admin-home-note{font-size:12px;color:#777;line-height:1.6;}
+.admin-menu-list{border-top:1px solid var(--line);display:grid;background:#fff;}
+.admin-menu-row{width:100%;text-align:left;border:0;border-bottom:1px solid var(--line);background:#fff;padding:16px 4px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;font-family:inherit;color:#111;cursor:pointer;}
+.admin-menu-main{min-width:0;}
+.admin-menu-title{font-size:16px;font-weight:950;line-height:1.4;}
+.admin-menu-sub{font-size:12px;color:#777;line-height:1.5;margin-top:3px;}
+.admin-menu-arrow{font-size:22px;color:#999;}
+.contact-status.rejected,.contact-status.cancelled{background:#fff1f2;color:#be123c}.contact-status.pending{background:#fffbeb;color:#92400e}.contact-status.accepted,.contact-status.closed{background:#eff6ff;color:#1d4ed8}.contact-status.replied{background:#f0fdf4;color:#047857}.contact-status.open{background:#ecfdf5;color:#047857}
+.contact-admin-statusbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px;}
+.contact-admin-statusbar select{height:34px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 12px;font-size:13px;font-weight:850;}
+.contact-user-state{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.contact-user-state span{font-size:11px;font-weight:850;border-radius:999px;border:1px solid var(--line);padding:4px 8px;background:#fff;color:#555;}
+.contact-user-state span.on{background:#eef9ff;border-color:#cfeefa;color:#0f5d7a;}
+body.contacts-mode .contact-admin-shell{grid-template-columns:minmax(310px,380px) minmax(0,1fr)!important;}
+body.contacts-mode .contact-admin-card{border:0!important;border-bottom:1px solid var(--line)!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;padding:13px 14px!important;min-height:0!important;max-height:none!important;}
+body.contacts-mode .contact-admin-card.active{box-shadow:inset 4px 0 0 #111!important;background:#fafafa!important;}
+body.contacts-mode .contact-admin-card.unread{background:#f7fbff!important;padding-left:14px!important;}
+body.contacts-mode .contact-admin-card.unread:before{display:none!important;}
+body.contacts-mode .contact-admin-list{gap:0!important;padding:0!important;}
+.contact-admin-mail,.contact-admin-body{background:#fff!important;}
+.contact-mail-paper{border:0!important;border-radius:0!important;box-shadow:none!important;background:#fff!important;max-width:980px!important;width:100%!important;margin:0 auto!important;padding:18px!important;}
+.contact-mail-message{border:0!important;border-bottom:1px solid #f0f0f2!important;border-radius:0!important;background:transparent!important;padding:14px 0!important;}
+.contact-mail-message.admin{background:linear-gradient(90deg,#eef9ff,rgba(238,249,255,0))!important;border-left:3px solid #cfeefa!important;margin-left:-10px!important;margin-right:-10px!important;padding-left:10px!important;padding-right:10px!important;}
+.contact-mail-body{font-size:14px!important;line-height:1.8!important;white-space:pre-wrap!important;}
+.contact-mail-detail-grid{grid-template-columns:96px minmax(0,1fr)!important;border-bottom:1px solid var(--line)!important;padding-bottom:14px!important;}
+.contact-admin-reply-wrap{border-top:1px solid var(--line);background:#fff;}
+.contact-admin-mailhead{border-bottom:1px solid var(--line)!important;background:#fff!important;}
+.contact-admin-delete{border-color:#fed7d7!important;color:#e53e3e!important;background:#fff!important;}
+@media(max-width:760px){.admin-home{padding:14px}.admin-menu-row{padding:14px 0}body.contacts-mode .contact-admin-shell{grid-template-columns:1fr!important}.contact-mail-paper{padding:14px!important}.contact-admin-statusbar{width:100%;}.contact-admin-statusbar select{flex:1;min-width:150px}.contact-admin-listpane{max-height:32dvh!important}}
+
+
+/* no-chat-admin-guard: residual conversation classes are displayed as flat mail rows */
+.contact-admin-mail{min-width:0;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#fff;}
+.contact-admin-mailhead{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:flex-start;justify-content:space-between;gap:12px;background:#fff;}
+.contact-admin-mail-title{font-size:16px;font-weight:900;line-height:1.35}.contact-admin-mail-sub{font-size:12px;color:#777;line-height:1.5;margin-top:2px}
+.contact-admin-body{min-height:0;overflow:auto;padding:16px;background:#fff;display:block;}
+.admin-mail-row{display:block!important;margin:0!important}.admin-mail-body{max-width:100%!important;background:transparent!important;color:inherit!important;border:0!important;border-radius:0!important;box-shadow:none!important;padding:0!important}.admin-mail-time{font-size:11px;color:#777;margin-top:4px}
+.contact-admin-reply-wrap{border-top:1px solid var(--line);background:#fff}.contact-admin-reply{background:#fff;padding:10px 12px;display:flex;align-items:flex-end;gap:8px}.contact-admin-reply textarea{flex:1;min-height:42px;max-height:130px;resize:none;border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:16px;line-height:1.55;font-family:inherit;outline:none}.contact-admin-reply-note{font-size:11px;color:#777;padding:0 12px 8px}
+
+
+
+/* admin-v2-page-ui: operation list + per-inquiry mail pages */
+:root{--admin-bg:#f7f7f8;--admin-card:#fff;--admin-text:#111;--admin-muted:#71717a;--admin-blue-bg:#eef9ff;--admin-blue-line:#caeefe;--admin-green:#047857;--admin-red:#dc2626;--admin-orange:#b45309;}
+body{background:var(--admin-bg)!important;}
+#main-screen.app{max-width:1280px!important;background:var(--admin-bg)!important;}
+#main-screen header{background:rgba(255,255,255,.96)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.tabs{background:#fff!important;gap:4px!important;padding:0 14px!important;overflow-x:auto!important;scrollbar-width:none;}
+.tabs::-webkit-scrollbar{display:none;}
+.tab{border-bottom-width:3px!important;font-size:13px!important;padding:12px 12px!important;}
+#tab-content{background:var(--admin-bg)!important;}
+.admin-home{max-width:880px!important;margin:0 auto!important;padding:22px 16px!important;display:grid!important;gap:14px!important;}
+.admin-home-title{font-size:22px!important;font-weight:950!important;letter-spacing:-.04em!important;}
+.admin-home-note{font-size:13px!important;color:var(--admin-muted)!important;margin-top:2px!important;}
+.admin-menu-list{border:1px solid var(--line)!important;border-radius:22px!important;background:#fff!important;overflow:hidden!important;display:grid!important;gap:0!important;box-shadow:0 10px 30px rgba(0,0,0,.035)!important;}
+.admin-menu-row{width:100%!important;border:0!important;border-bottom:1px solid #eee!important;border-radius:0!important;background:#fff!important;padding:16px 18px!important;text-align:left!important;display:flex!important;align-items:center!important;justify-content:space-between!important;gap:14px!important;color:#111!important;font-family:inherit!important;cursor:pointer!important;}
+.admin-menu-row:last-child{border-bottom:0!important;}
+.admin-menu-row:hover{background:#fafafa!important;}
+.admin-menu-title{font-size:15px!important;font-weight:900!important;}
+.admin-menu-sub{font-size:12px!important;color:#777!important;margin-top:3px!important;line-height:1.55!important;}
+.admin-menu-arrow{font-size:24px!important;color:#aaa!important;line-height:1!important;}
+body.contacts-mode{overflow:hidden!important;height:var(--admin-vh)!important;}
+body.contacts-mode #main-screen.app{height:var(--admin-vh)!important;min-height:0!important;overflow:hidden!important;}
+body.contacts-mode #tab-content{min-height:0!important;overflow:hidden!important;}
+.admin-page{height:100%;min-height:0;display:flex;flex-direction:column;background:var(--admin-bg);}
+.admin-page-head{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.admin-page-title{font-size:18px;font-weight:950;letter-spacing:-.03em;line-height:1.3;}
+.admin-page-sub{font-size:12px;color:#777;line-height:1.45;margin-top:2px;}
+.admin-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.contact-list-page{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;}
+.contact-toolbar{flex-shrink:0;background:#fff;border-bottom:1px solid var(--line);padding:10px 14px;display:grid;gap:9px;}
+.contact-search-row{display:flex;align-items:center;gap:8px;}
+.contact-admin-search{height:40px!important;border:1px solid var(--line)!important;border-radius:999px!important;background:#fafafa!important;padding:0 14px!important;font-size:14px!important;outline:none!important;width:100%!important;min-width:0!important;}
+.contact-admin-search:focus{background:#fff!important;border-color:#111!important;box-shadow:0 0 0 4px rgba(0,0,0,.055)!important;}
+.contact-filter-tabs{display:flex!important;gap:6px!important;overflow-x:auto!important;scrollbar-width:none!important;padding-bottom:1px!important;}
+.contact-filter-tabs::-webkit-scrollbar{display:none!important;}
+.contact-filter-btn{flex:0 0 auto;height:32px;border:1px solid var(--line);border-radius:999px;background:#fff;padding:0 11px;font-size:12px;font-weight:850;color:#444;}
+.contact-filter-btn.active{background:#111;color:#fff;border-color:#111;}
+.contact-mail-list{flex:1 1 auto;min-height:0;overflow:auto;background:#fff;border-top:0;}
+.contact-mail-list-inner{max-width:1100px;margin:0 auto;border-left:1px solid #f0f0f2;border-right:1px solid #f0f0f2;background:#fff;min-height:100%;}
+.contact-mail-row{width:100%;text-decoration:none;color:#111;border:0;border-bottom:1px solid #eee;background:#fff;padding:14px 16px;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px 12px;text-align:left;font-family:inherit;cursor:pointer;}
+.contact-mail-row:hover{background:#fafafa;}
+.contact-mail-row.unread{background:#f7fbff;}
+.contact-mail-row-main{min-width:0;display:grid;gap:4px;}
+.contact-mail-row-subject{font-size:15px;font-weight:950;line-height:1.35;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.contact-mail-row-meta{font-size:12px;color:#777;line-height:1.45;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.contact-mail-row-preview{font-size:13px;color:#333;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.contact-mail-row-side{display:grid;justify-items:end;align-content:start;gap:6px;min-width:92px;}
+.contact-mail-row-date{font-size:11px;color:#888;white-space:nowrap;}
+.contact-mail-badges{display:flex;justify-content:flex-end;gap:5px;flex-wrap:wrap;}
+.contact-status{display:inline-flex;align-items:center;justify-content:center;min-height:24px;border-radius:999px;padding:3px 8px;font-size:11px;font-weight:900;background:#f4f4f5;color:#52525b;white-space:nowrap;}
+.contact-status.open{background:#ecfdf5;color:#047857;}
+.contact-status.pending{background:#fff7ed;color:#b45309;}
+.contact-status.accepted,.contact-status.closed{background:#eef2ff;color:#3730a3;}
+.contact-status.replied{background:#eff6ff;color:#1d4ed8;}
+.contact-status.rejected,.contact-status.cancelled{background:#fff1f2;color:#be123c;}
+.contact-status.unread{background:#111;color:#fff;}
+.contact-status.hidden{background:#f3f4f6;color:#6b7280;}
+.contact-detail-page{flex:1 1 auto;min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr) auto;background:#fff;}
+.contact-detail-head{border-bottom:1px solid var(--line);background:#fff;padding:12px 16px;display:grid;gap:10px;}
+.contact-detail-head-top{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;}
+.contact-back-btn{width:38px;height:38px;border-radius:50%;border:1px solid var(--line);background:#fff;display:grid;place-items:center;font-size:22px;line-height:1;flex:0 0 auto;color:#111;}
+.contact-detail-title-wrap{min-width:0;flex:1;}
+.contact-detail-title{font-size:20px;font-weight:950;letter-spacing:-.04em;line-height:1.28;word-break:break-word;}
+.contact-detail-sub{font-size:12px;color:#777;margin-top:3px;line-height:1.45;}
+.contact-detail-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+.contact-detail-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-left:50px;}
+.contact-admin-statusbar{display:flex!important;align-items:center!important;gap:8px!important;border:1px solid var(--line)!important;background:#fafafa!important;border-radius:14px!important;padding:7px 10px!important;min-height:38px!important;}
+.contact-admin-statusbar label{font-size:12px!important;font-weight:900!important;color:#666!important;}
+.contact-admin-statusbar select{border:0!important;background:transparent!important;font-size:14px!important;font-weight:900!important;outline:none!important;color:#111!important;}
+.contact-user-state{display:flex!important;gap:6px!important;flex-wrap:wrap!important;}
+.contact-user-state span{display:inline-flex;align-items:center;min-height:28px;border:1px solid #eee;border-radius:999px;padding:4px 9px;font-size:11px;font-weight:850;color:#777;background:#fff;}
+.contact-user-state span.on{background:#ecfdf5;border-color:#d1fae5;color:#047857;}
+.contact-detail-scroll{min-height:0;overflow:auto;background:#fff;}
+.contact-detail-paper{max-width:980px;margin:0 auto;padding:18px 18px 96px;background:#fff;}
+.contact-detail-grid{display:grid;grid-template-columns:104px minmax(0,1fr);gap:9px 14px;border-bottom:1px solid var(--line);padding-bottom:16px;margin-bottom:4px;font-size:13px;}
+.contact-detail-grid b{font-size:12px;color:#666;font-weight:950;}
+.contact-detail-grid span{min-width:0;word-break:break-word;font-weight:650;color:#222;}
+.contact-mail-message{border:0!important;border-bottom:1px solid #ececef!important;border-radius:0!important;background:transparent!important;margin:0!important;padding:18px 0!important;}
+.contact-mail-message.admin{background:linear-gradient(90deg,var(--admin-blue-bg),rgba(238,249,255,0) 78%)!important;border-left:3px solid var(--admin-blue-line)!important;padding-left:13px!important;margin-left:-13px!important;}
+.contact-mail-message-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;}
+.contact-mail-from{font-size:13px;font-weight:950;color:#111;}
+.contact-mail-time{font-size:12px;color:#888;white-space:nowrap;}
+.contact-mail-body{font-size:15px!important;line-height:1.85!important;white-space:pre-wrap!important;word-break:break-word!important;color:#111!important;}
+.contact-image-grid{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;}
+.contact-image-grid a{display:block;width:94px;height:94px;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#fafafa;}
+.contact-image-grid img{width:100%;height:100%;object-fit:cover;display:block;}
+.contact-reply-panel{border-top:1px solid var(--line);background:rgba(255,255,255,.97);padding:10px 14px max(10px,env(safe-area-inset-bottom));display:grid;gap:7px;box-shadow:0 -10px 26px rgba(0,0,0,.045);}
+.contact-admin-reply-hint{font-size:11px;color:#777;line-height:1.5;}
+.contact-admin-reply{display:flex!important;align-items:flex-end!important;gap:8px!important;background:transparent!important;padding:0!important;box-shadow:none!important;}
+.contact-admin-reply textarea{flex:1;min-height:42px;max-height:132px;resize:none;border:1px solid var(--line);border-radius:16px;padding:10px 12px;font-size:16px;line-height:1.55;font-family:inherit;outline:none;background:#fff;}
+.contact-admin-reply textarea:focus{border-color:#111;box-shadow:0 0 0 4px rgba(0,0,0,.055);}
+.contact-admin-send{width:42px!important;height:42px!important;border-radius:50%!important;background:#111!important;color:#fff!important;display:grid!important;place-items:center!important;flex:0 0 auto!important;border:0!important;}
+.contact-admin-send:disabled{opacity:.4!important;cursor:not-allowed!important;}
+.contact-admin-delete{border-color:#fed7d7!important;color:#dc2626!important;background:#fff!important;}
+.contact-empty-state{max-width:540px;margin:60px auto;text-align:center;color:#777;font-size:13px;line-height:1.8;}
+@media(max-width:760px){
+  #main-screen header{min-height:52px!important;padding:9px 12px!important;}
+  #main-screen header h1{font-size:16px!important;}
+  .tabs{padding:0 8px!important;}
+  .tab{font-size:12px!important;padding:9px 10px!important;white-space:nowrap!important;}
+  .admin-page-head{padding:11px 12px!important;}
+  .admin-page-title{font-size:17px!important;}
+  .contact-toolbar{padding:8px 9px!important;}
+  .contact-mail-list-inner{border-left:0!important;border-right:0!important;}
+  .contact-mail-row{grid-template-columns:minmax(0,1fr)!important;padding:13px 12px!important;}
+  .contact-mail-row-side{display:flex!important;justify-content:space-between!important;align-items:center!important;min-width:0!important;width:100%!important;}
+  .contact-detail-head{padding:9px 10px!important;}
+  .contact-detail-title{font-size:18px!important;}
+  .contact-detail-actions .btn{height:34px!important;padding:0 11px!important;font-size:12px!important;}
+  .contact-detail-tools{padding-left:0!important;}
+  .contact-admin-statusbar{width:100%!important;justify-content:space-between!important;}
+  .contact-detail-paper{padding:14px 12px 90px!important;}
+  .contact-detail-grid{grid-template-columns:88px minmax(0,1fr)!important;gap:8px 10px!important;font-size:12px!important;}
+  .contact-mail-body{font-size:14px!important;line-height:1.8!important;}
+  .contact-reply-panel{padding:8px 9px max(8px,env(safe-area-inset-bottom))!important;}
+  .contact-admin-reply textarea{min-height:40px!important;max-height:min(120px,26dvh)!important;}
+}
+
+
+
+
+/* admin-mail-unified-20260617: Admin問い合わせはチャットではなくメール表示に統一 */
+:root{
+  --admin-fixed-vh:100dvh;
+  --admin-mail-bg:#f5f5f7;
+  --admin-mail-paper:#ffffff;
+  --admin-mail-line:#e8e8ee;
+  --admin-mail-muted:#71717a;
+  --admin-mail-soft:#fafafa;
+  --admin-mail-admin-bg:#f7fbff;
+  --admin-mail-admin-line:#bde7ff;
+}
+html.admin-input-active,
+html.admin-input-active body{overflow:hidden!important;overscroll-behavior:none!important;}
+body.contacts-mode{height:var(--admin-fixed-vh)!important;overflow:hidden!important;background:var(--admin-mail-bg)!important;}
+body.contacts-mode #main-screen.app{height:var(--admin-fixed-vh)!important;min-height:0!important;max-height:var(--admin-fixed-vh)!important;overflow:hidden!important;transform:none!important;background:var(--admin-mail-bg)!important;}
+body.contacts-mode #tab-content{height:calc(var(--admin-fixed-vh) - 101px)!important;min-height:0!important;overflow:hidden!important;background:var(--admin-mail-bg)!important;}
+body.contacts-mode .admin-page{height:100%!important;min-height:0!important;overflow:hidden!important;background:var(--admin-mail-bg)!important;}
+.contact-detail-page{display:grid!important;grid-template-rows:auto minmax(0,1fr) auto!important;background:var(--admin-mail-bg)!important;overflow:hidden!important;}
+.contact-detail-head{background:rgba(255,255,255,.98)!important;border-bottom:1px solid var(--admin-mail-line)!important;box-shadow:0 1px 0 rgba(0,0,0,.025)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);}
+.contact-detail-head-top{align-items:flex-start!important;}
+.contact-detail-title{max-width:100%;font-weight:950!important;letter-spacing:-.04em!important;}
+.contact-detail-sub{color:var(--admin-mail-muted)!important;}
+.contact-detail-actions .btn,
+.contact-back-btn,
+.contact-admin-send{touch-action:manipulation!important;}
+.contact-admin-delete{position:relative!important;z-index:5!important;pointer-events:auto!important;border-color:#fecaca!important;background:#fff!important;color:#dc2626!important;}
+.contact-admin-delete:active{transform:scale(.98);}
+.contact-admin-delete.is-loading,
+.contact-admin-send.is-loading{opacity:.58!important;pointer-events:none!important;}
+.contact-detail-scroll{min-height:0!important;overflow:auto!important;overscroll-behavior:contain!important;-webkit-overflow-scrolling:touch!important;overflow-anchor:none!important;background:var(--admin-mail-bg)!important;}
+.contact-detail-paper{width:100%!important;max-width:920px!important;min-height:100%!important;margin:0 auto!important;padding:18px 16px 104px!important;background:transparent!important;display:block!important;}
+.contact-detail-grid{display:grid!important;grid-template-columns:108px minmax(0,1fr)!important;gap:9px 14px!important;background:var(--admin-mail-paper)!important;border:1px solid var(--admin-mail-line)!important;border-radius:18px!important;padding:14px 16px!important;margin:0 0 12px!important;box-shadow:0 8px 24px rgba(0,0,0,.03)!important;font-size:13px!important;}
+.contact-detail-grid b{font-size:12px!important;color:#666!important;font-weight:950!important;}
+.contact-detail-grid span{min-width:0!important;word-break:break-word!important;font-weight:650!important;color:#222!important;}
+.contact-mail-thread{background:var(--admin-mail-paper)!important;border:1px solid var(--admin-mail-line)!important;border-radius:18px!important;overflow:hidden!important;box-shadow:0 10px 28px rgba(0,0,0,.035)!important;}
+.contact-mail-thread-title{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:13px 16px;border-bottom:1px solid var(--admin-mail-line);background:#fff;}
+.contact-mail-thread-title-main{font-size:13px;font-weight:950;color:#111;}
+.contact-mail-thread-title-sub{font-size:11px;color:var(--admin-mail-muted);white-space:nowrap;}
+.contact-mail-message{width:100%!important;max-width:none!important;display:block!important;align-self:auto!important;border:0!important;border-bottom:1px solid #ececf0!important;border-radius:0!important;margin:0!important;padding:16px!important;background:#fff!important;color:#111!important;box-shadow:none!important;}
+.contact-mail-message:last-child{border-bottom:0!important;}
+.contact-mail-message.user{border-bottom-left-radius:0!important;}
+.contact-mail-message.admin{width:100%!important;max-width:none!important;align-self:auto!important;background:linear-gradient(90deg,var(--admin-mail-admin-bg),#fff 86%)!important;color:#111!important;border-left:4px solid var(--admin-mail-admin-line)!important;border-bottom-right-radius:0!important;margin:0!important;padding:16px 16px 16px 14px!important;}
+.contact-mail-message-head{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:start!important;gap:10px!important;margin:0 0 9px!important;}
+.contact-mail-from{font-size:13px!important;font-weight:950!important;color:#111!important;line-height:1.35!important;}
+.contact-mail-to{font-size:11px!important;color:var(--admin-mail-muted)!important;line-height:1.45!important;margin-top:2px!important;}
+.contact-mail-time{font-size:11.5px!important;color:#888!important;opacity:1!important;white-space:nowrap!important;text-align:right!important;line-height:1.45!important;}
+.contact-mail-message.admin .contact-mail-from,
+.contact-mail-message.admin .contact-mail-time,
+.contact-mail-message.admin .contact-mail-body{color:#111!important;}
+.contact-mail-body{font-size:14.5px!important;line-height:1.86!important;letter-spacing:.01em!important;white-space:pre-wrap!important;word-break:break-word!important;color:#111!important;background:transparent!important;}
+.contact-image-grid{display:flex!important;gap:8px!important;flex-wrap:wrap!important;margin-top:12px!important;}
+.contact-image-grid a{width:86px!important;height:86px!important;border-radius:12px!important;border:1px solid var(--admin-mail-line)!important;background:#fafafa!important;}
+.contact-reply-panel{background:rgba(255,255,255,.98)!important;backdrop-filter:blur(16px)!important;-webkit-backdrop-filter:blur(16px)!important;box-shadow:0 -12px 34px rgba(0,0,0,.07)!important;border-top:1px solid rgba(0,0,0,.08)!important;flex-shrink:0!important;padding:10px 14px max(10px,env(safe-area-inset-bottom))!important;display:grid!important;gap:7px!important;}
+.contact-admin-reply-hint{font-size:11px!important;color:#777!important;line-height:1.5!important;}
+.contact-admin-reply{display:flex!important;align-items:flex-end!important;gap:8px!important;background:transparent!important;padding:0!important;box-shadow:none!important;}
+.contact-admin-reply textarea{flex:1!important;min-height:42px!important;max-height:min(132px,24dvh)!important;resize:none!important;border:1px solid var(--admin-mail-line)!important;border-radius:16px!important;padding:10px 12px!important;font-size:16px!important;line-height:1.55!important;font-family:inherit!important;outline:none!important;background:#fff!important;transform:none!important;-webkit-user-select:text!important;user-select:text!important;}
+.contact-admin-reply textarea:focus{border-color:#111!important;box-shadow:0 0 0 4px rgba(0,0,0,.055)!important;}
+.contact-admin-reply textarea:disabled{background:#f6f6f7!important;color:#999!important;-webkit-text-fill-color:#999!important;}
+.contact-admin-send{width:42px!important;height:42px!important;border-radius:50%!important;background:#111!important;color:#fff!important;display:grid!important;place-items:center!important;flex:0 0 auto!important;border:0!important;}
+.contact-admin-send:disabled{opacity:.4!important;cursor:not-allowed!important;}
+.contact-admin-reply-note{min-height:16px!important;font-size:11px!important;color:#777!important;}
+.contact-mail-list-inner{min-height:100%!important;}
+.contact-admin-search{-webkit-user-select:text!important;user-select:text!important;}
+.contact-empty-state{padding:20px!important;}
+body.contacts-mode.admin-keyboard-active .contact-detail-page,
+body.contacts-mode.admin-keyboard-active .admin-page{min-height:0!important;overflow:hidden!important;}
+body.contacts-mode.admin-keyboard-active .contact-detail-head{flex-shrink:0!important;}
+body.contacts-mode.admin-keyboard-active .contact-reply-panel{position:relative!important;transform:none!important;translate:none!important;z-index:20!important;}
+@media(max-width:760px){
+  body.contacts-mode #main-screen.app{max-width:none!important;}
+  body.contacts-mode #tab-content{height:calc(var(--admin-fixed-vh) - 86px)!important;}
+  .contact-detail-head{padding:9px 10px!important;}
+  .contact-detail-head-top{gap:8px!important;flex-wrap:wrap!important;}
+  .contact-back-btn{width:36px!important;height:36px!important;}
+  .contact-detail-title{font-size:17px!important;}
+  .contact-detail-actions{gap:6px!important;}
+  .contact-detail-actions .btn{height:32px!important;padding:0 10px!important;font-size:11.5px!important;}
+  .contact-detail-tools{gap:6px!important;padding-left:0!important;}
+  .contact-detail-paper{padding:12px 10px 98px!important;}
+  .contact-detail-grid{grid-template-columns:82px minmax(0,1fr)!important;border-radius:16px!important;padding:11px!important;font-size:12px!important;}
+  .contact-mail-thread{border-radius:16px!important;}
+  .contact-mail-thread-title{padding:11px 12px!important;}
+  .contact-mail-thread-title-sub{white-space:normal!important;text-align:right!important;}
+  .contact-mail-message{padding:14px 12px!important;}
+  .contact-mail-message.admin{padding:14px 12px 14px 10px!important;}
+  .contact-mail-message-head{grid-template-columns:minmax(0,1fr)!important;gap:4px!important;}
+  .contact-mail-time{text-align:left!important;white-space:normal!important;}
+  .contact-mail-body{font-size:14px!important;line-height:1.8!important;}
+  .contact-image-grid a{width:78px!important;height:78px!important;}
+  .contact-reply-panel{padding:8px 9px max(8px,env(safe-area-inset-bottom))!important;}
+  .contact-admin-reply{gap:7px!important;}
+  .contact-admin-reply textarea{min-height:40px!important;max-height:min(116px,24dvh)!important;font-size:16px!important;}
+  .contact-admin-send{width:40px!important;height:40px!important;}
+  .contact-admin-reply-hint{font-size:10.5px!important;}
+}
+@media(max-width:420px){
+  .contact-detail-title{font-size:16px!important;}
+  .contact-detail-sub{font-size:11px!important;}
+  .contact-detail-actions{width:100%;padding-left:44px;justify-content:flex-start!important;}
+  .contact-mail-thread-title{display:grid!important;grid-template-columns:1fr!important;gap:3px!important;}
+}
+
+
+/* admin-compact-mail-view-20260617: header/reply spacing and open-status delete guard */
+body.contacts-mode .contact-detail-head{
+  padding:6px 10px!important;
+  gap:5px!important;
+}
+body.contacts-mode .contact-detail-head-top{
+  align-items:center!important;
+  gap:8px!important;
+  min-height:0!important;
+}
+body.contacts-mode .contact-back-btn{
+  width:32px!important;
+  height:32px!important;
+  min-width:32px!important;
+}
+body.contacts-mode .contact-detail-title{
+  font-size:14.5px!important;
+  line-height:1.28!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+body.contacts-mode .contact-detail-sub{
+  font-size:10.5px!important;
+  line-height:1.35!important;
+  margin-top:0!important;
+}
+body.contacts-mode .contact-detail-actions{
+  gap:5px!important;
+  flex-shrink:0!important;
+}
+body.contacts-mode .contact-detail-actions .btn{
+  height:30px!important;
+  min-height:30px!important;
+  padding:0 9px!important;
+  font-size:11px!important;
+}
+body.contacts-mode .contact-detail-tools{
+  padding-left:40px!important;
+  gap:5px!important;
+}
+body.contacts-mode .contact-admin-statusbar{
+  min-height:30px!important;
+  padding:3px 8px!important;
+  border-radius:11px!important;
+  gap:5px!important;
+}
+body.contacts-mode .contact-admin-statusbar label{
+  font-size:10.5px!important;
+}
+body.contacts-mode .contact-admin-statusbar select{
+  font-size:12px!important;
+  min-height:24px!important;
+}
+body.contacts-mode .contact-user-state{
+  gap:4px!important;
+}
+body.contacts-mode .contact-user-state span{
+  min-height:24px!important;
+  padding:2px 7px!important;
+  font-size:10.5px!important;
+}
+body.contacts-mode .contact-detail-paper{
+  padding:10px 12px 12px!important;
+}
+body.contacts-mode .contact-detail-grid{
+  margin-bottom:8px!important;
+  padding:10px 12px!important;
+  border-radius:14px!important;
+  gap:6px 10px!important;
+  font-size:12px!important;
+}
+body.contacts-mode .contact-mail-thread{
+  border-radius:14px!important;
+}
+body.contacts-mode .contact-mail-thread-title{
+  padding:8px 12px!important;
+}
+body.contacts-mode .contact-mail-message{
+  padding:12px!important;
+}
+body.contacts-mode .contact-mail-message.admin{
+  padding:12px 12px 12px 10px!important;
+}
+body.contacts-mode .contact-mail-body{
+  font-size:14px!important;
+  line-height:1.72!important;
+}
+body.contacts-mode .contact-reply-panel{
+  padding:6px 10px max(6px,env(safe-area-inset-bottom))!important;
+  gap:3px!important;
+  box-shadow:0 -6px 18px rgba(0,0,0,.045)!important;
+}
+body.contacts-mode .contact-admin-reply-hint{
+  font-size:10.5px!important;
+  line-height:1.35!important;
+}
+body.contacts-mode .contact-admin-reply textarea{
+  min-height:38px!important;
+  max-height:min(104px,22dvh)!important;
+  padding:8px 11px!important;
+  border-radius:14px!important;
+}
+body.contacts-mode .contact-admin-send{
+  width:38px!important;
+  height:38px!important;
+}
+body.contacts-mode .contact-admin-reply-note{
+  min-height:0!important;
+  height:auto!important;
+  padding:0!important;
+  line-height:1.25!important;
+}
+body.contacts-mode .contact-admin-reply-note:empty{
+  display:none!important;
+}
+body.contacts-mode .contact-admin-delete:disabled,
+body.contacts-mode .contact-admin-delete.is-disabled{
+  opacity:.38!important;
+  cursor:not-allowed!important;
+  color:#999!important;
+  border-color:#e5e5e5!important;
+  background:#f6f6f6!important;
+  pointer-events:none!important;
+}
+@media(max-width:760px){
+  body.contacts-mode #tab-content{height:calc(var(--admin-fixed-vh) - 78px)!important;}
+  body.contacts-mode .contact-detail-head{padding:6px 8px!important;gap:4px!important;}
+  body.contacts-mode .contact-detail-head-top{flex-wrap:nowrap!important;gap:6px!important;}
+  body.contacts-mode .contact-back-btn{width:30px!important;height:30px!important;min-width:30px!important;}
+  body.contacts-mode .contact-detail-title{font-size:13.5px!important;}
+  body.contacts-mode .contact-detail-sub{font-size:10px!important;}
+  body.contacts-mode .contact-detail-actions{width:auto!important;padding-left:0!important;justify-content:flex-end!important;}
+  body.contacts-mode .contact-detail-actions .btn{height:28px!important;min-height:28px!important;padding:0 8px!important;font-size:10.5px!important;}
+  body.contacts-mode .contact-detail-tools{padding-left:36px!important;gap:4px!important;}
+  body.contacts-mode .contact-admin-statusbar{min-height:28px!important;padding:2px 7px!important;}
+  body.contacts-mode .contact-user-state span{min-height:22px!important;font-size:10px!important;}
+  body.contacts-mode .contact-detail-paper{padding:8px 8px 8px!important;}
+  body.contacts-mode .contact-detail-grid{grid-template-columns:76px minmax(0,1fr)!important;padding:9px!important;margin-bottom:7px!important;}
+  body.contacts-mode .contact-mail-thread-title{padding:7px 10px!important;}
+  body.contacts-mode .contact-mail-message{padding:10px!important;}
+  body.contacts-mode .contact-mail-message.admin{padding:10px 10px 10px 8px!important;}
+  body.contacts-mode .contact-mail-body{font-size:13.5px!important;line-height:1.68!important;}
+  body.contacts-mode .contact-reply-panel{padding:5px 8px max(5px,env(safe-area-inset-bottom))!important;gap:2px!important;}
+  body.contacts-mode .contact-admin-reply textarea{min-height:36px!important;max-height:min(94px,21dvh)!important;padding:7px 10px!important;}
+  body.contacts-mode .contact-admin-send{width:36px!important;height:36px!important;}
+}
+
 </style>
 </head>
 <body>
@@ -150,10 +751,13 @@ header h1{font-size:18px;font-weight:800;flex:1;}
   </header>
 
 	  <div class="tabs">
-	    <button class="tab active" onclick="switchTab('tags')">興味タグ</button>
+	    <button class="tab active" onclick="switchTab('home')">ホーム</button>
+	    <button class="tab" onclick="switchTab('tags')">興味タグ</button>
 	    <button class="tab" onclick="switchTab('songs')">楽曲タグ</button>
+	    <button class="tab" onclick="switchTab('live_ids')">ライブID</button>
 	    <button class="tab" onclick="switchTab('profile_links')">ユーザーリンク</button>
 	    <button class="tab" onclick="switchTab('verified')">コミュニティアカウント</button>
+	    <button class="tab" onclick="switchTab('contacts')">お問い合わせ</button>
 	  </div>
 
   <div id="tab-content">
@@ -178,12 +782,32 @@ header h1{font-size:18px;font-weight:800;flex:1;}
 
 <script>
 const API = 'api.php';
+const ADMIN_UA=navigator.userAgent||'';
+const ADMIN_IS_ANDROID=/Android/i.test(ADMIN_UA);
+function adminTextareaFocused(){const el=document.activeElement;return !!el&&el.tagName==='TEXTAREA'}
+function setAdminVh(){
+  const vv=window.visualViewport;
+  const layoutH=Math.round(window.innerHeight||document.documentElement.clientHeight||667);
+  let h=vv?Math.round(vv.height):layoutH;
+  if(ADMIN_IS_ANDROID&&adminTextareaFocused()){
+    h=(h&&h>=320)?h:layoutH;
+  }else if(!adminTextareaFocused()){
+    h=layoutH;
+  }else if(!h||h<320){
+    h=layoutH;
+  }
+  document.documentElement.style.setProperty('--admin-vh',Math.max(320,Math.round(h))+'px');
+}
+setAdminVh();window.visualViewport?.addEventListener('resize',setAdminVh);window.visualViewport?.addEventListener('scroll',()=>{if(!ADMIN_IS_ANDROID)setAdminVh();});window.addEventListener('resize',setAdminVh);
 let currentType = 'tags';
 let allItems = [];
 let filtered = [];
 let selectedNames = new Set();
 let verifiedAccounts = [];
 let profileLinkUsers = [];
+let contactInquiries = [];
+let currentContact = null;
+let contactReplyLockUntil = 0, contactReplyLockTimer = null;
 let editingProfileLinkUser = null;
 
 document.getElementById('admin-password-input').addEventListener('keydown', e => {
@@ -201,14 +825,18 @@ function showLoginError(message) {
   err.style.display = 'block';
 }
 
+function preferredInitialTab() {
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  return ['tags','songs','profile_links','verified','contacts'].includes(tab) ? tab : 'tags';
+}
+
 function enterAdmin(data) {
   allItems = data || [];
   filtered = allItems;
   document.getElementById('login-screen').style.display = 'none';
-  document.getElementById('main-screen').style.display = 'block';
-  currentType = 'tags';
-  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.textContent.includes('興味')));
-  renderTab();
+  document.getElementById('main-screen').style.display = 'flex';
+  switchTab(preferredInitialTab());
 }
 
 async function tryDeveloperSession() {
@@ -256,21 +884,25 @@ async function doLogout() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('main-screen').style.display = 'none';
   document.getElementById('admin-password-input').value = '';
+  document.body.classList.remove('contacts-mode');
 }
 
 // ── タブ切替 ─────────────────────────────────────────────
 function switchTab(type) {
   currentType = type;
+  document.body.classList.toggle('contacts-mode', type === 'contacts');
   selectedNames.clear();
   document.querySelectorAll('.tab').forEach(t => {
     const active = (type === 'tags' && t.textContent.includes('興味'))
       || (type === 'songs' && t.textContent.includes('楽曲'))
       || (type === 'profile_links' && t.textContent.includes('ユーザーリンク'))
-      || (type === 'verified' && t.textContent.includes('コミュニティ'));
+      || (type === 'verified' && t.textContent.includes('コミュニティ'))
+      || (type === 'contacts' && t.textContent.includes('お問い合わせ'));
     t.classList.toggle('active', active);
   });
   if (type === 'verified') loadVerifiedAccounts();
   else if (type === 'profile_links') loadProfileLinks();
+  else if (type === 'contacts') loadContactInquiries();
   else loadTagList();
 }
 
@@ -418,6 +1050,7 @@ function renderAdminSns(prefix){
 function renderTab() {
   if (currentType === 'profile_links') { renderProfileLinksTab(); return; }
   if (currentType === 'verified') { renderVerifiedTab(); return; }
+  if (currentType === 'contacts') { renderContactTab(); return; }
   const label = currentType === 'tags' ? '興味タグ' : '楽曲タグ';
   const suggestions = buildMergeSuggestions(allItems);
   document.getElementById('tab-content').innerHTML = `
@@ -528,6 +1161,93 @@ function applySuggestion(index) {
   renderList();
   updateMergePanel();
   document.getElementById('merge-panel')?.scrollIntoView({ behavior:'smooth', block:'nearest' });
+}
+
+let liveIdMergeItems = [];
+
+async function loadLiveIdMerge() {
+  const el = document.getElementById('tab-content');
+  if (el) el.innerHTML = '<div class="loading">読み込み中…</div>';
+  try {
+    const data = await adminApi('admin_live_id_list');
+    liveIdMergeItems = Array.isArray(data?.items) ? data.items : [];
+    renderLiveIdMerge(data || {});
+  } catch (e) {
+    adminRenderError(e.message || 'ライブID候補を読み込めませんでした', 'loadLiveIdMerge()');
+  }
+}
+
+function liveIdMergeRow(item, index) {
+  const detail = [
+    item.next_lives ? `参加予定 ${item.next_lives}` : '',
+    item.next_live_seats ? `座席 ${item.next_live_seats}` : '',
+    item.history ? `履歴 ${item.history}` : '',
+  ].filter(Boolean).join(' / ');
+  return `<div class="user-link-row">
+    <div class="user-link-head">
+      <div style="min-width:0;flex:1;">
+        <div class="user-link-name">${esc(item.date || '')}</div>
+        <div class="user-link-meta">旧: ${esc(item.from)}</div>
+        <div class="user-link-meta">新: ${esc(item.to)} / ${esc(detail || '対象なし')}</div>
+      </div>
+      <button class="btn btn-primary" type="button" onclick="mergeOneLiveId(${index})">統合</button>
+    </div>
+  </div>`;
+}
+
+function renderLiveIdMerge(data = {}) {
+  const ambiguous = Array.isArray(data.ambiguous_dates) ? data.ambiguous_dates : [];
+  const rows = liveIdMergeItems.length
+    ? liveIdMergeItems.map(liveIdMergeRow).join('')
+    : '<div class="empty">統合候補はありません。旧形式のライブIDは残っていません。</div>';
+  document.getElementById('tab-content').innerHTML = `
+    <div class="section fill-section">
+      <div class="section-title">NEXT LIVE ID 統合</div>
+      <div class="admin-form">
+        <div style="font-size:14px;font-weight:800;">名称変更で分かれた保存IDを完全に書き換えます</div>
+        <div style="font-size:12px;color:#777;line-height:1.7;">通常日は <b>YYYY-MM-DD</b> に統合します。同日複数公演として検出された日付は自動統合から除外しています。</div>
+        <div style="font-size:12px;color:#777;line-height:1.7;">除外日: ${ambiguous.length ? ambiguous.map(esc).join(' / ') : 'なし'}</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn" type="button" onclick="loadLiveIdMerge()">再読み込み</button>
+          <button class="btn btn-danger" type="button" onclick="mergeAllLiveIds()" ${liveIdMergeItems.length ? '' : 'disabled'}>全候補を統合</button>
+        </div>
+        <div class="result-msg" id="live-id-result"></div>
+      </div>
+      <div class="user-link-list">${rows}</div>
+    </div>`;
+}
+
+function showLiveIdResult(message, ok = true) {
+  const el = document.getElementById('live-id-result');
+  if (!el) return;
+  el.textContent = message;
+  el.className = `result-msg ${ok ? 'ok' : 'err'}`;
+  el.style.display = 'block';
+}
+
+async function mergeOneLiveId(index) {
+  const item = liveIdMergeItems[index];
+  if (!item) return;
+  if (!confirm(`${item.from}\n↓\n${item.to}\n\nこのライブIDを完全に統合しますか？`)) return;
+  try {
+    const result = await adminApi('admin_live_id_merge', { body: { from:item.from, to:item.to } });
+    await loadLiveIdMerge();
+    showLiveIdResult(`統合しました: プロフィール ${result.updated_profiles || 0} / 座席 ${result.updated_seats || 0} / 履歴 ${result.updated_history || 0}`);
+  } catch (e) {
+    showLiveIdResult(e.message || '統合に失敗しました', false);
+  }
+}
+
+async function mergeAllLiveIds() {
+  if (!liveIdMergeItems.length) return;
+  if (!confirm(`${liveIdMergeItems.length}件の旧ライブIDをすべて統合します。実行しますか？`)) return;
+  try {
+    const result = await adminApi('admin_live_id_merge', { body: { all:true } });
+    await loadLiveIdMerge();
+    showLiveIdResult(`一括統合しました: プロフィール ${result.updated_profiles || 0} / 座席 ${result.updated_seats || 0} / 履歴 ${result.updated_history || 0}`);
+  } catch (e) {
+    showLiveIdResult(e.message || '一括統合に失敗しました', false);
+  }
 }
 
 async function loadVerifiedAccounts() {
@@ -728,7 +1448,9 @@ function closeEditVerified(){
   document.getElementById('edit-verified-modal').classList.remove('open');
   document.querySelector('#edit-verified-modal .modal-head h3').textContent = 'コミュニティアカウントを編集';
   document.querySelector('#edit-verified-modal .modal-foot .btn-primary').setAttribute('onclick', 'saveEditVerified()');
+  document.querySelector('#edit-verified-modal .modal-foot .btn-primary').textContent = '保存';
 }
+
 async function saveEditVerified(){
   const id = Number(document.getElementById('ev-id').value);
   const payload = {
@@ -822,6 +1544,1077 @@ async function disableVerifiedAccount(id) {
   if (!json.ok) alert(json.error || '停止に失敗しました');
   await loadVerifiedAccounts();
 }
+
+
+// ── お問い合わせ管理 ─────────────────────────────────────
+function getInitialContactKey() {
+  const raw = location.search.replace(/^\?/, '').trim();
+  const params = new URLSearchParams(location.search);
+  const direct = params.get('contact') || params.get('code') || params.get('contact_code') || params.get('contact_id') || params.get('id');
+  if (direct) return direct;
+  if (raw && !raw.includes('&')) {
+    if (raw.includes('=')) {
+      const parts = raw.split('=');
+      if (parts[0] === '' && parts[1]) return decodeURIComponent(parts[1]);
+    } else if (!raw.includes('=')) return decodeURIComponent(raw);
+  }
+  return '';
+}
+async function loadContactInquiries(keepCurrent=false) {
+  if (!keepCurrent) document.getElementById('tab-content').innerHTML = '<div class="loading">読み込み中…</div>';
+  const res = await fetch(`${API}?action=contact_admin_list`, { credentials:'include' });
+  const json = await res.json();
+  if (!json.ok) { document.getElementById('tab-content').innerHTML = `<div class="empty">${esc(json.error || '読み込みに失敗しました')}</div>`; return; }
+  contactInquiries = json.data || [];
+  if (!currentContact && contactInquiries.length) currentContact = contactInquiries[0];
+  renderContactTab();
+  const initial = getInitialContactKey();
+  if (initial && !keepCurrent) {
+    history.replaceState(null, '', location.pathname + '?tab=contacts');
+    setTimeout(() => openContactInquiry(initial), 80);
+  } else if (currentContact && currentContact.id) {
+    const found = contactInquiries.find(c => +c.id === +currentContact.id);
+    if (found && (!currentContact.messages || keepCurrent === false)) openContactInquiry(found.id, true);
+  }
+}
+function contactStatusLabel(status) { return status === 'cancelled' ? '取りやめ' : (status === 'closed' ? '完了' : '受付中'); }
+function contactReplyLabel(c) {
+  if (!c.need_reply) return '返信不要';
+  if (c.reply_channel === 'site') return 'このサイトで返信';
+  if (c.reply_channel === 'dm') return `DM返信 / ${c.dm_service || ''} ${c.dm_account || ''}`;
+  return '返信なし';
+}
+function contactAccountLabel(c) {
+  return c.account_mode === 'anonymous' ? `匿名（内部ID: ${esc(c.raw_user_id || '')}）` : esc(c.display_name || 'ログインなし');
+}
+function renderContactTab() {
+  document.body.classList.add('contacts-mode');
+  setAdminVh();
+  const unreadTotal = contactInquiries.reduce((n,c)=>n+(+c.unread_user_count||0),0);
+  document.getElementById('tab-content').innerHTML = `
+    <div class="section fill-section" style="padding:0;">
+      <div style="padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid var(--line);">
+        <div><div class="section-title" style="margin:0;">お問い合わせ</div><div style="font-size:12px;color:#777;margin-top:3px;">${contactInquiries.length}件${unreadTotal?` / 未読 ${unreadTotal}件`:''}</div></div>
+        <button class="btn" onclick="loadContactInquiries(true)">再読み込み</button>
+      </div>
+      <div class="contact-admin-shell">
+        <div class="contact-admin-listpane">
+          <div class="contact-admin-listhead"><b style="font-size:13px;">一覧</b>${unreadTotal?`<span class="contact-status unread">未読 ${unreadTotal}</span>`:''}</div>
+          <div class="contact-admin-list">${contactInquiries.length ? contactInquiries.map(contactAdminCard).join('') : '<div class="empty">まだお問い合わせはありません</div>'}</div>
+        </div>
+        <div class="contact-admin-mail" id="contact-admin-mail">${renderContactMailShell()}</div>
+      </div>
+    </div>`;
+}
+function contactAdminCard(c) {
+  const active = currentContact && +currentContact.id === +c.id;
+  const unread = +c.unread_user_count > 0;
+  const code = c.contact_code || c.id;
+  const previewRaw = c.latest_message || c.message || '';
+  const preview = previewRaw.length > 90 ? previewRaw.slice(0, 90) + '…' : previewRaw;
+  return `<button class="contact-admin-card ${active?'active':''} ${unread?'unread':''}" onclick="openContactInquiry(${c.id})">
+    <div class="contact-admin-card-head">
+      <div><div class="contact-admin-code">#${esc(code)}</div><div class="contact-admin-cat">${esc(c.category || 'お問い合わせ')}</div></div>
+      <div style="display:grid;gap:5px;justify-items:end;"><span class="contact-status ${esc(c.status)}">${contactStatusLabel(c.status)}</span>${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}</div>
+    </div>
+    <div class="contact-admin-meta">${contactAccountLabel(c)}<br>${esc(contactReplyLabel(c))}${c.latest_at?'<br>'+esc(c.latest_at):''}</div>
+    <div class="contact-admin-preview">${esc(preview)}</div>
+  </button>`;
+}
+function renderContactMailShell() {
+  if (!currentContact) return '<div class="contact-admin-empty">左の一覧からお問い合わせを選択してください。</div>';
+  const c = currentContact;
+  const code = c.contact_code || c.id;
+  const info = `${esc(c.category || '')}${c.site_name?' / '+esc(c.site_name):''} / ${contactStatusLabel(c.status)} / ${contactReplyLabel(c)}`;
+  const delBtn = c.status === 'cancelled' ? `<button class="btn contact-admin-delete" onclick="deleteContactInquiry(${c.id})">削除</button>` : '';
+  const detail = `<div class="contact-admin-mailhead"><div><div class="contact-admin-mail-title">#${esc(code)} ${esc(c.category || 'お問い合わせ')}</div><div class="contact-admin-mail-sub">${info}<br>${contactAccountLabel(c)}${c.username ? ' / @' + esc(c.username) : ''}</div></div><div class="contact-admin-actions"><button class="btn" onclick="openContactInquiry(${c.id})">更新</button>${delBtn}</div></div>`;
+  if (!c.messages) return detail + '<div class="contact-admin-empty">読み込み中…</div><div></div>';
+  const imagesForMessage = (m,i) => {
+    const imgs = (c.images || []).filter(img => img.message_id ? +img.message_id === +m.id : i === 0);
+    return imgs.length ? `<div class="contact-image-grid">${imgs.map(img => `<a href="${esc(img.url)}" target="_blank" rel="noopener"><img src="${esc(img.url)}" alt="添付画像"></a>`).join('')}</div>` : '';
+  };
+  const thread = (c.messages || []).map((m,i)=>{
+    let body = esc(m.body) + imagesForMessage(m,i);
+    return `<div class="admin-mail-row ${m.sender === 'admin' ? 'admin' : 'user'}"><div class="admin-mail-body">${body}<div class="admin-mail-time">${m.sender === 'admin' ? '管理者' : 'ユーザー'} / ${esc(m.created_at || '')}</div></div></div>`;
+  }).join('') || '<div class="empty">メッセージがありません</div>';
+  const disabled = c.status === 'cancelled' ? 'disabled' : '';
+  const composer = `<div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信内容を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div>`;
+  return detail + `<div class="contact-admin-body" id="contact-admin-body">${thread}</div>` + composer;
+}
+async function openContactInquiry(key, silent=false) {
+  const isId = /^\d+$/.test(String(key));
+  const query = isId ? `id=${encodeURIComponent(key)}` : `code=${encodeURIComponent(String(key).toUpperCase())}`;
+  if (!silent) {
+    const base = contactInquiries.find(c => (isId ? +c.id === +key : String(c.contact_code).toUpperCase() === String(key).toUpperCase()));
+    if (base) { currentContact = base; renderContactTab(); }
+  }
+  const res = await fetch(`${API}?action=contact_admin_get&${query}`, { credentials:'include' });
+  const json = await res.json();
+  if (!json.ok) { alert(json.error || '読み込みに失敗しました'); return; }
+  currentContact = json.data;
+  const listItem = contactInquiries.find(c => +c.id === +currentContact.id);
+  if (listItem) listItem.unread_user_count = 0;
+  renderContactTab();
+  setTimeout(()=>{const t=document.getElementById('contact-admin-body');if(t)t.scrollTop=t.scrollHeight;const ta=document.getElementById('contact-reply-text');if(ta){const grow=()=>{ta.style.height='auto';const max=Math.min(150,Math.max(96,window.innerHeight*0.24));ta.style.height=Math.min(Math.max(ta.scrollHeight,40),max)+'px';ta.style.overflowY=ta.scrollHeight>max?'auto':'hidden';if(t&&t.scrollHeight-t.scrollTop-t.clientHeight<120)t.scrollTop=t.scrollHeight};ta.addEventListener('input',grow);ta.addEventListener('focus',()=>setTimeout(()=>{ta.scrollIntoView({block:'end',behavior:'smooth'});if(t)t.scrollTop=t.scrollHeight},120));grow();refreshContactReplyLock();}},0);
+}
+
+function isContactReplyLocked(){return Date.now()<contactReplyLockUntil;}
+function setContactReplyCooldown(ms=3500){contactReplyLockUntil=Date.now()+ms;clearTimeout(contactReplyLockTimer);refreshContactReplyLock();contactReplyLockTimer=setTimeout(refreshContactReplyLock,ms+80);}
+function refreshContactReplyLock(){const btn=document.getElementById('contact-admin-send');if(!btn)return;const locked=isContactReplyLocked();if(currentContact && currentContact.status!=='cancelled')btn.disabled=locked;}
+async function deleteContactInquiry(id) {
+  const target = contactInquiries.find(c => +c.id === +id) || currentContact;
+  const label = target ? `#${esc(target.contact_code || target.id)}` : 'このお問い合わせ';
+  if (!confirm(`${label} を完全に削除しますか？
+取りやめ済みのお問い合わせだけ削除できます。`)) return;
+  const res = await fetch(`${API}?action=contact_admin_delete`, {
+    method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ id })
+  });
+  const json = await res.json().catch(()=>null);
+  if (!json || !json.ok) { alert(json?.error || '削除に失敗しました'); return; }
+  contactInquiries = contactInquiries.filter(c => +c.id !== +id);
+  if (currentContact && +currentContact.id === +id) currentContact = contactInquiries[0] || null;
+  renderContactTab();
+  if (currentContact && currentContact.id) openContactInquiry(currentContact.id, true);
+}
+
+async function sendContactReply() {
+  if (!currentContact) return;
+  if (isContactReplyLocked()) { alert('連続送信を防止しています。数秒後にもう一度お試しください'); return; }
+  const ta = document.getElementById('contact-reply-text');
+  const text = ta?.value.trim() || '';
+  if (!text) { alert('返信内容を入力してください'); return; }
+  setContactReplyCooldown();
+  const res = await fetch(`${API}?action=contact_admin_reply`, { method:'POST', credentials:'include', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ id: currentContact.id, reply: text }) });
+  const json = await res.json();
+  if (!json.ok) { alert(json.error || '返信に失敗しました'); return; }
+  ta.value = '';
+  await openContactInquiry(currentContact.id, true);
+  await loadContactInquiries(true);
+}
+
+
+
+/* admin-status-home-ui overrides */
+var contactSearch = window.contactSearch || '';
+var contactFilter = window.contactFilter || 'all';
+function statusOptionsHtml(current){
+  const opts=[['open','受付中'],['rejected','棄却'],['pending','保留中'],['accepted','受付済'],['replied','返信済']];
+  return opts.map(([v,l])=>`<option value="${v}" ${String(current||'open')===v?'selected':''}>${l}</option>`).join('');
+}
+function contactStatusLabel(status){return ({open:'受付中',rejected:'棄却',cancelled:'棄却',pending:'保留中',accepted:'受付済',closed:'受付済',replied:'返信済'})[status]||'受付中';}
+function contactStatusClass(status){return status||'open';}
+function preferredInitialTab(){const params=new URLSearchParams(location.search);const tab=params.get('tab');if(params.get('contact')||params.get('code')||params.get('contact_code')||params.get('id'))return 'contacts';return ['home','tags','songs','live_ids','profile_links','verified','contacts'].includes(tab)?tab:'home';}
+function switchTab(type){
+  currentType=type;document.body.classList.toggle('contacts-mode',type==='contacts');selectedNames.clear();
+  document.querySelectorAll('.tab').forEach(t=>{const txt=t.textContent;const active=(type==='home'&&txt.includes('ホーム'))||(type==='tags'&&txt.includes('興味'))||(type==='songs'&&txt.includes('楽曲'))||(type==='live_ids'&&txt.includes('ライブID'))||(type==='profile_links'&&txt.includes('ユーザーリンク'))||(type==='verified'&&txt.includes('コミュニティ'))||(type==='contacts'&&txt.includes('お問い合わせ'));t.classList.toggle('active',active);});
+  if(type==='home')renderAdminHome();else if(type==='verified')loadVerifiedAccounts();else if(type==='profile_links')loadProfileLinks();else if(type==='live_ids')loadLiveIdMerge();else if(type==='contacts')loadContactInquiries();else loadTagList();
+}
+function renderAdminHome(){
+  document.body.classList.remove('contacts-mode');
+  const rows=[
+    ['contacts','お問い合わせ','受付・返信・ステータス変更・削除'],
+    ['profile_links','ユーザーリンク','プロフィールのSNS入力状態を確認'],
+    ['verified','コミュニティアカウント','公式/コミュニティ表示の管理'],
+    ['live_ids','ライブID統合','NEXT LIVEの旧保存IDを完全統合'],
+    ['tags','興味タグ','興味タグの整理・統合'],
+    ['songs','楽曲タグ','楽曲タグの整理・統合']
+  ];
+  document.getElementById('tab-content').innerHTML=`<div class="admin-home"><div><div class="admin-home-title">管理メニュー</div><div class="admin-home-note">操作したい項目を選択してください。</div></div><div class="admin-menu-list">${rows.map(([key,title,sub])=>`<button class="admin-menu-row" type="button" onclick="switchTab('${key}')"><div class="admin-menu-main"><div class="admin-menu-title">${esc(title)}</div><div class="admin-menu-sub">${esc(sub)}</div></div><div class="admin-menu-arrow">›</div></button>`).join('')}</div></div>`;
+}
+function contactMetrics(){const total=contactInquiries.length;const unread=contactInquiries.reduce((n,c)=>n+(+c.unread_user_count||0),0);const open=contactInquiries.filter(c=>c.status==='open').length;const pending=contactInquiries.filter(c=>c.status==='pending').length;return {total,unread,open,pending};}
+function contactMatchesFilter(c){
+  if(contactFilter==='unread')return +c.unread_user_count>0;
+  if(contactFilter==='open')return c.status==='open';
+  if(contactFilter==='pending')return c.status==='pending';
+  if(contactFilter==='accepted')return c.status==='accepted'||c.status==='closed';
+  if(contactFilter==='replied')return c.status==='replied';
+  if(contactFilter==='rejected')return c.status==='rejected'||c.status==='cancelled';
+  if(contactFilter==='hidden')return !!c.is_user_hidden||!!c.user_hidden_at;
+  if(contactFilter==='dm')return c.reply_channel==='dm';
+  return true;
+}
+function contactMatchesSearch(c){const q=String(contactSearch||'').trim().toLowerCase();if(!q)return true;const hay=[c.contact_code,c.id,c.category,c.site_name,c.latest_message,c.message,c.display_name,c.username,c.dm_service,c.dm_account,contactReplyLabel(c),contactAccountLabel(c),contactStatusLabel(c.status)].join(' ').toLowerCase();return hay.includes(q);}
+function filteredContacts(){return contactInquiries.filter(c=>contactMatchesFilter(c)&&contactMatchesSearch(c));}
+function setContactSearch(v){contactSearch=v||'';renderContactTab();}
+function setContactFilter(v){contactFilter=v||'all';renderContactTab();}
+function renderContactTab(){
+  document.body.classList.add('contacts-mode');setAdminVh();const m=contactMetrics();const visible=filteredContacts();
+  const filterButtons=[['all','すべて'],['unread','未読'],['open','受付中'],['pending','保留中'],['accepted','受付済'],['replied','返信済'],['rejected','棄却'],['dm','DM'],['hidden','非表示済']].map(([key,label])=>`<button class="contact-filter-btn ${contactFilter===key?'active':''}" type="button" onclick="setContactFilter('${key}')">${label}</button>`).join('');
+  document.getElementById('tab-content').innerHTML=`<div class="section fill-section"><div class="contact-mail-top"><div><div class="contact-mail-title">お問い合わせ</div><div class="contact-mail-count">${visible.length}件 / 全${m.total}件${m.unread?` / 未読${m.unread}`:''}</div></div><button class="btn" onclick="loadContactInquiries(true)">更新</button></div><div class="contact-admin-toolbar"><input class="contact-admin-search" value="${esc(contactSearch||'')}" placeholder="検索" oninput="setContactSearch(this.value)"><div class="contact-filter-tabs">${filterButtons}</div></div><div class="contact-admin-shell"><div class="contact-admin-listpane"><div class="contact-admin-listhead"><b style="font-size:12px;">一覧</b>${m.unread?`<span class="contact-status unread">未読 ${m.unread}</span>`:''}</div><div class="contact-admin-list">${visible.length?visible.map(contactAdminCard).join(''):'<div class="empty">該当なし</div>'}</div></div><div class="contact-admin-mail" id="contact-admin-mail">${renderContactMailShell()}</div></div></div>`;
+}
+function contactAdminCard(c){
+  const active=currentContact&&+currentContact.id===+c.id;const unread=+c.unread_user_count>0;const code=c.contact_code||c.id;const subject=`#${code} ${c.category||'お問い合わせ'}`;const previewRaw=c.latest_message||c.message||'';const preview=previewRaw.length>72?previewRaw.slice(0,72)+'…':previewRaw;const who=c.latest_sender==='admin'?'管理者返信':'ユーザー送信';
+  return `<button class="contact-admin-card ${active?'active':''} ${unread?'unread':''}" onclick="openContactInquiry(${c.id})"><div class="contact-mail-card-top"><div class="contact-mail-subject">${esc(subject)}</div><div class="contact-mail-date">${esc(c.latest_at||'')}</div></div><div class="contact-mail-meta">${esc(who)} / ${contactAccountLabel(c)}</div><div class="contact-mail-preview">${esc(preview)}</div><div class="contact-mail-badges"><span class="contact-status ${esc(contactStatusClass(c.status))}">${contactStatusLabel(c.status)}</span>${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}${c.is_user_hidden||c.user_hidden_at?'<span class="contact-status">ユーザー非表示</span>':''}</div></button>`;
+}
+function contactUserStateHtml(c){
+  const read=c.user_read_at?`既読 ${c.user_read_at}`:'ユーザー未読';
+  const hidden=c.user_hidden_at?`非表示 ${c.user_hidden_at}`:'非表示なし';
+  return `<div class="contact-user-state"><span class="${c.user_read_at?'on':''}">${esc(read)}</span><span class="${c.user_hidden_at?'on':''}">${esc(hidden)}</span></div>`;
+}
+function renderContactMailShell(){
+  if(!currentContact)return '<div class="contact-admin-empty">一覧から選択してください。</div>';
+  const c=currentContact,code=c.contact_code||c.id;
+  const delBtn=`<button class="btn contact-admin-delete" onclick="deleteContactInquiry(${c.id})">削除</button>`;
+  const statusCtl=`<div class="contact-admin-statusbar"><label style="font-size:12px;font-weight:900;color:#666;">ステータス</label><select id="contact-status-select" onchange="updateContactStatus(${c.id},this.value)">${statusOptionsHtml(c.status)}</select></div>`;
+  const head=`<div class="contact-admin-mailhead"><div><div class="contact-admin-mail-title">#${esc(code)} ${esc(c.category||'お問い合わせ')}</div><div class="contact-admin-mail-sub">${esc(contactStatusLabel(c.status))} / ${esc(contactReplyLabel(c))}</div>${statusCtl}${contactUserStateHtml(c)}</div><div class="contact-admin-actions"><button class="btn" onclick="openContactInquiry(${c.id})">更新</button>${delBtn}</div></div>`;
+  if(!c.messages)return head+'<div class="contact-admin-empty">読み込み中…</div><div></div>';
+  const detailRows=[['ステータス',contactStatusLabel(c.status)],['カテゴリ',c.category||'お問い合わせ'],['返信',contactReplyLabel(c)],['送信者',contactAccountLabel(c)+(c.username?' / @'+c.username:'')],['既読',c.user_read_at||'未読'],['非表示',c.user_hidden_at||'なし']];
+  if(c.site_name)detailRows.push(['対象',c.site_name]);if(c.latest_at)detailRows.push(['更新',c.latest_at]);
+  const imagesForMessage=(m,i)=>{const imgs=(c.images||[]).filter(img=>img.message_id?+img.message_id===+m.id:i===0);return imgs.length?`<div class="contact-image-grid">${imgs.map(img=>`<a href="${esc(img.url)}" target="_blank" rel="noopener"><img src="${esc(img.url)}" alt="添付画像"></a>`).join('')}</div>`:''};
+  const messages=(c.messages||[]).map((m,i)=>`<section class="contact-mail-message ${m.sender==='admin'?'admin':'user'}"><div class="contact-mail-message-head"><div class="contact-mail-from">${m.sender==='admin'?'管理者':'ユーザー'}</div><div class="contact-mail-time">${esc(m.created_at||'')}</div></div><div class="contact-mail-body">${esc(m.body)}${imagesForMessage(m,i)}</div></section>`).join('')||'<div class="empty">メッセージなし</div>';
+  const disabled=['rejected','cancelled','accepted','replied','closed'].includes(String(c.status||''))?'disabled':'';
+  const hint=disabled?'このステータスではサイト内返信を追加できません。':(c.need_reply?`返信方法: ${contactReplyLabel(c)}`:'返信不要です。必要な場合だけ返信できます。');
+  const composer=`<div class="contact-admin-reply-wrap"><div class="contact-admin-reply-hint">${esc(hint)}</div><div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div><div class="contact-admin-reply-note" id="contact-admin-reply-note"></div></div>`;
+  return head+`<div class="contact-admin-body" id="contact-admin-body"><div class="contact-mail-paper"><div class="contact-mail-detail-grid">${detailRows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>${messages}</div></div>`+composer;
+}
+async function updateContactStatus(id,status){
+  const res=await fetch(`${API}?action=contact_admin_update_status`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});
+  const json=await res.json().catch(()=>null);
+  if(!json||!json.ok){alert(json?.error||'ステータス変更に失敗しました');await openContactInquiry(id,true);return;}
+  currentContact=json.data;const idx=contactInquiries.findIndex(c=>+c.id===+id);if(idx>=0)contactInquiries[idx]={...contactInquiries[idx],...json.data,messages:undefined};renderContactTab();
+}
+async function deleteContactInquiry(id){
+  const target=contactInquiries.find(c=>+c.id===+id)||currentContact;const label=target?`#${target.contact_code||target.id}`:'このお問い合わせ';
+  if(!confirm(`${label} を完全に削除しますか？\nこの操作は管理者のみ可能です。`))return;
+  const res=await fetch(`${API}?action=contact_admin_delete`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+  const json=await res.json().catch(()=>null);if(!json||!json.ok){alert(json?.error||'削除に失敗しました');return;}
+  contactInquiries=contactInquiries.filter(c=>+c.id!==+id);if(currentContact&&+currentContact.id===+id)currentContact=contactInquiries[0]||null;renderContactTab();if(currentContact&&currentContact.id)openContactInquiry(currentContact.id,true);
+}
+function refreshContactReplyLock(){const btn=document.getElementById('contact-admin-send');if(!btn)return;const locked=isContactReplyLocked();if(currentContact && !['rejected','cancelled','accepted','replied','closed'].includes(String(currentContact.status||'')))btn.disabled=locked;}
+
+
+/* admin-v2-page-ui logic: stable home, list page, detail page */
+var contactSearch = window.contactSearch || '';
+var contactFilter = window.contactFilter || 'all';
+var contactLoading = false;
+function contactSetUrl(params, replace){
+  const qs = new URLSearchParams();
+  if (params.tab) qs.set('tab', params.tab);
+  if (params.contact) qs.set('contact', params.contact);
+  const url = location.pathname + (qs.toString() ? '?' + qs.toString() : '');
+  try { (replace ? history.replaceState : history.pushState).call(history, null, '', url); } catch(e) {}
+}
+function getInitialContactKey(){
+  const params = new URLSearchParams(location.search);
+  const direct = params.get('contact') || params.get('code') || params.get('contact_code') || params.get('contact_id') || params.get('id');
+  if (direct) return String(direct).trim();
+  const hash = String(location.hash || '').replace(/^#/, '');
+  if (hash) {
+    const hp = new URLSearchParams(hash.includes('=') ? hash : 'contact=' + hash);
+    const hv = hp.get('contact') || hp.get('code') || hp.get('id');
+    if (hv) return String(hv).trim();
+  }
+  const raw = location.search.replace(/^\?/, '').trim();
+  if (raw && !raw.includes('&') && !raw.includes('=')) return decodeURIComponent(raw);
+  return '';
+}
+function preferredInitialTab(){
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  if (getInitialContactKey()) return 'contacts';
+  return ['home','tags','songs','live_ids','profile_links','verified','contacts'].includes(tab) ? tab : 'home';
+}
+function switchTab(type){
+  currentType = type;
+  selectedNames.clear();
+  document.body.classList.toggle('contacts-mode', type === 'contacts');
+  document.querySelectorAll('.tab').forEach(t=>{
+    const txt=t.textContent;
+    const active=(type==='home'&&txt.includes('ホーム'))||(type==='tags'&&txt.includes('興味'))||(type==='songs'&&txt.includes('楽曲'))||(type==='live_ids'&&txt.includes('ライブID'))||(type==='profile_links'&&txt.includes('ユーザーリンク'))||(type==='verified'&&txt.includes('コミュニティ'))||(type==='contacts'&&txt.includes('お問い合わせ'));
+    t.classList.toggle('active', active);
+  });
+  if(type==='home'){ contactSetUrl({tab:'home'}, true); renderAdminHome(); }
+  else if(type==='verified'){ contactSetUrl({tab:'verified'}, true); loadVerifiedAccounts(); }
+  else if(type==='profile_links'){ contactSetUrl({tab:'profile_links'}, true); loadProfileLinks(); }
+  else if(type==='live_ids'){ contactSetUrl({tab:'live_ids'}, true); loadLiveIdMerge(); }
+  else if(type==='contacts'){ loadContactInquiries(false); }
+  else { contactSetUrl({tab:type}, true); loadTagList(); }
+}
+function renderAdminHome(){
+  document.body.classList.remove('contacts-mode');
+  const rows=[
+    ['contacts','お問い合わせ','問い合わせの確認・個別返信・ステータス変更・削除'],
+    ['verified','コミュニティアカウント','公式/コミュニティ表示アカウントの管理'],
+    ['profile_links','ユーザーリンク','ユーザーのSNS・外部リンク設定を確認'],
+    ['live_ids','ライブID統合','名称変更で分かれたNEXT LIVEの保存IDを完全統合'],
+    ['tags','興味タグ','プロフィールで使う興味タグの整理・統合'],
+    ['songs','楽曲タグ','楽曲タグの整理・統合']
+  ];
+  document.getElementById('tab-content').innerHTML=`<div class="admin-home"><div><div class="admin-home-title">管理メニュー</div><div class="admin-home-note">操作したい項目を選択してください。</div></div><div class="admin-menu-list">${rows.map(([key,title,sub])=>`<button class="admin-menu-row" type="button" onclick="switchTab('${key}')"><div class="admin-menu-main"><div class="admin-menu-title">${esc(title)}</div><div class="admin-menu-sub">${esc(sub)}</div></div><div class="admin-menu-arrow">›</div></button>`).join('')}</div></div>`;
+}
+function statusOptionsHtml(current){
+  const opts=[['open','受付中'],['rejected','棄却'],['pending','保留中'],['accepted','受付済'],['replied','返信済']];
+  return opts.map(([v,l])=>`<option value="${v}" ${String(current||'open')===v?'selected':''}>${l}</option>`).join('');
+}
+function contactStatusLabel(status){return ({open:'受付中',rejected:'棄却',cancelled:'棄却',pending:'保留中',accepted:'受付済',closed:'受付済',replied:'返信済'})[status]||'受付中';}
+function contactStatusClass(status){return ({closed:'accepted',cancelled:'rejected'})[status] || (status || 'open');}
+function contactMetrics(){
+  const total=contactInquiries.length;
+  const unread=contactInquiries.reduce((n,c)=>n+(+c.unread_user_count||0),0);
+  const open=contactInquiries.filter(c=>String(c.status||'open')==='open').length;
+  const pending=contactInquiries.filter(c=>String(c.status||'')==='pending').length;
+  return {total,unread,open,pending};
+}
+function contactMatchesFilter(c){
+  const st=String(c.status||'open');
+  if(contactFilter==='unread')return +c.unread_user_count>0;
+  if(contactFilter==='open')return st==='open';
+  if(contactFilter==='pending')return st==='pending';
+  if(contactFilter==='accepted')return st==='accepted'||st==='closed';
+  if(contactFilter==='replied')return st==='replied';
+  if(contactFilter==='rejected')return st==='rejected'||st==='cancelled';
+  if(contactFilter==='hidden')return !!c.is_user_hidden||!!c.user_hidden_at;
+  if(contactFilter==='dm')return c.reply_channel==='dm';
+  return true;
+}
+function contactMatchesSearch(c){
+  const q=String(contactSearch||'').trim().toLowerCase();
+  if(!q)return true;
+  const hay=[c.contact_code,c.id,c.category,c.site_name,c.latest_message,c.message,c.display_name,c.username,c.dm_service,c.dm_account,contactReplyLabel(c),contactAccountLabel(c),contactStatusLabel(c.status),c.title].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+function filteredContacts(){return contactInquiries.filter(c=>contactMatchesFilter(c)&&contactMatchesSearch(c));}
+function setContactSearch(v){contactSearch=v||'';renderContactListPage();}
+function setContactFilter(v){contactFilter=v||'all';renderContactListPage();}
+async function loadContactInquiries(keepCurrent=false){
+  if(contactLoading) return;
+  contactLoading = true;
+  document.body.classList.add('contacts-mode');
+  setAdminVh();
+  if(!keepCurrent) document.getElementById('tab-content').innerHTML='<div class="loading">読み込み中…</div>';
+  try{
+    const res=await fetch(`${API}?action=contact_admin_list`,{credentials:'include'});
+    const json=await res.json();
+    if(!json.ok){document.getElementById('tab-content').innerHTML=`<div class="empty">${esc(json.error||'読み込みに失敗しました')}</div>`;return;}
+    contactInquiries=json.data||[];
+    const initial=getInitialContactKey();
+    if(initial && !keepCurrent){ await openContactInquiry(initial,true,true); return; }
+    if(keepCurrent && currentContact && currentContact.id){
+      const found=contactInquiries.find(c=>+c.id===+currentContact.id);
+      if(found) Object.assign(found,{messages:currentContact.messages,images:currentContact.images});
+      renderContactDetailPage();
+    } else {
+      currentContact=null;
+      renderContactListPage();
+      contactSetUrl({tab:'contacts'}, true);
+    }
+  }catch(e){
+    document.getElementById('tab-content').innerHTML='<div class="empty">通信に失敗しました</div>';
+  }finally{contactLoading=false;}
+}
+function renderContactTab(){renderContactListPage();}
+function renderContactListPage(){
+  document.body.classList.add('contacts-mode');setAdminVh();currentContact=null;
+  const m=contactMetrics();
+  const visible=filteredContacts();
+  const filterButtons=[['all','すべて'],['unread','未読'],['open','受付中'],['pending','保留中'],['accepted','受付済'],['replied','返信済'],['rejected','棄却'],['dm','DM'],['hidden','非表示済']].map(([key,label])=>`<button class="contact-filter-btn ${contactFilter===key?'active':''}" type="button" onclick="setContactFilter('${key}')">${label}</button>`).join('');
+  const rows=visible.length?visible.map(contactAdminRow).join(''):'<div class="contact-empty-state">該当するお問い合わせはありません。</div>';
+  document.getElementById('tab-content').innerHTML=`<div class="admin-page contact-list-page"><div class="admin-page-head"><div><div class="admin-page-title">お問い合わせ</div><div class="admin-page-sub">${visible.length}件 / 全${m.total}件${m.unread?` / 未読${m.unread}件`:''}</div></div><div class="admin-head-actions"><button class="btn" onclick="loadContactInquiries(true)">更新</button></div></div><div class="contact-toolbar"><div class="contact-search-row"><input class="contact-admin-search" value="${esc(contactSearch||'')}" placeholder="管理番号・カテゴリ・本文で検索" oninput="setContactSearch(this.value)"></div><div class="contact-filter-tabs">${filterButtons}</div></div><div class="contact-mail-list"><div class="contact-mail-list-inner">${rows}</div></div></div>`;
+}
+function contactAdminRow(c){
+  const unread=+c.unread_user_count>0;
+  const code=c.contact_code||c.id;
+  const subject=`#${code} ${c.category||'お問い合わせ'}`;
+  const previewRaw=c.latest_message||c.message||'';
+  const preview=previewRaw.length>110?previewRaw.slice(0,110)+'…':previewRaw;
+  const who=c.latest_sender==='admin'?'管理者返信':'ユーザー送信';
+  const href=`?tab=contacts&contact=${encodeURIComponent(code)}`;
+  return `<a class="contact-mail-row ${unread?'unread':''}" href="${href}" onclick="event.preventDefault();openContactInquiry('${esc(String(code))}')"><div class="contact-mail-row-main"><div class="contact-mail-row-subject">${esc(subject)}</div><div class="contact-mail-row-meta">${esc(who)} / ${contactAccountLabel(c)} / ${esc(contactReplyLabel(c))}</div><div class="contact-mail-row-preview">${esc(preview||'本文なし')}</div></div><div class="contact-mail-row-side"><div class="contact-mail-row-date">${esc(c.latest_at||c.created_at||'')}</div><div class="contact-mail-badges"><span class="contact-status ${esc(contactStatusClass(c.status))}">${contactStatusLabel(c.status)}</span>${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}${c.is_user_hidden||c.user_hidden_at?'<span class="contact-status hidden">非表示</span>':''}</div></div></a>`;
+}
+function contactUserStateHtml(c){
+  const read=c.user_read_at?`既読 ${c.user_read_at}`:'ユーザー未読';
+  const hidden=c.user_hidden_at?`非表示 ${c.user_hidden_at}`:'非表示なし';
+  return `<div class="contact-user-state"><span class="${c.user_read_at?'on':''}">${esc(read)}</span><span class="${c.user_hidden_at?'on':''}">${esc(hidden)}</span></div>`;
+}
+function contactImagesForMessage(c,m,i){
+  const imgs=(c.images||[]).filter(img=>img.message_id?+img.message_id===+m.id:i===0);
+  return imgs.length?`<div class="contact-image-grid">${imgs.map(img=>`<a href="${esc(img.url)}" target="_blank" rel="noopener"><img src="${esc(img.url)}" alt="添付画像"></a>`).join('')}</div>`:'';
+}
+function contactMessagesHtml(c){
+  return (c.messages||[]).map((m,i)=>`<section class="contact-mail-message ${m.sender==='admin'?'admin':'user'}"><div class="contact-mail-message-head"><div class="contact-mail-from">${m.sender==='admin'?'管理者':'ユーザー'}</div><div class="contact-mail-time">${esc(m.created_at||'')}</div></div><div class="contact-mail-body">${esc(m.body)}${contactImagesForMessage(c,m,i)}</div></section>`).join('')||'<div class="empty">メッセージなし</div>';
+}
+function renderContactDetailPage(){
+  document.body.classList.add('contacts-mode');setAdminVh();
+  if(!currentContact){renderContactListPage();return;}
+  const c=currentContact, code=c.contact_code||c.id;
+  const disabled=['rejected','cancelled','accepted','replied','closed'].includes(String(c.status||''))?'disabled':'';
+  const hint=disabled?'このステータスではサイト内返信を追加できません。':(c.need_reply?`返信方法: ${contactReplyLabel(c)}`:'返信不要です。必要な場合だけ返信できます。');
+  const detailRows=[['ステータス',contactStatusLabel(c.status)],['カテゴリ',c.category||'お問い合わせ'],['返信',contactReplyLabel(c)],['送信者',contactAccountLabel(c)+(c.username?' / @'+c.username:'')],['既読',c.user_read_at||'未読'],['非表示',c.user_hidden_at||'なし']];
+  if(c.site_name) detailRows.push(['対象',c.site_name]);
+  if(c.latest_at||c.updated_at) detailRows.push(['更新',c.latest_at||c.updated_at]);
+  const statusCtl=`<div class="contact-admin-statusbar"><label>ステータス</label><select id="contact-status-select" onchange="updateContactStatus(${c.id},this.value)">${statusOptionsHtml(c.status)}</select></div>`;
+  const replyBox=`<div class="contact-reply-panel"><div class="contact-admin-reply-hint">${esc(hint)}</div><div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div><div class="contact-admin-reply-note" id="contact-admin-reply-note"></div></div>`;
+  document.getElementById('tab-content').innerHTML=`<div class="admin-page contact-detail-page"><div class="contact-detail-head"><div class="contact-detail-head-top"><button class="contact-back-btn" type="button" onclick="backContactList()" aria-label="一覧に戻る">‹</button><div class="contact-detail-title-wrap"><div class="contact-detail-title">#${esc(code)} ${esc(c.category||'お問い合わせ')}</div><div class="contact-detail-sub">${esc(contactStatusLabel(c.status))} / ${esc(contactReplyLabel(c))}</div></div><div class="contact-detail-actions"><button class="btn" onclick="openContactInquiry('${esc(String(code))}',true,true)">更新</button><button class="btn contact-admin-delete" onclick="deleteContactInquiry(${c.id})">削除</button></div></div><div class="contact-detail-tools">${statusCtl}${contactUserStateHtml(c)}</div></div><div class="contact-detail-scroll" id="contact-admin-body"><div class="contact-detail-paper"><div class="contact-detail-grid">${detailRows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>${contactMessagesHtml(c)}</div></div>${replyBox}</div>`;
+  setupContactReplyInput();
+}
+async function openContactInquiry(key, silent=false, replace=false){
+  const keyStr=String(key||'').trim();
+  if(!keyStr) return;
+  const isId=/^\d+$/.test(keyStr);
+  const query=isId?`id=${encodeURIComponent(keyStr)}`:`code=${encodeURIComponent(keyStr.toUpperCase())}`;
+  if(!silent){
+    const base=contactInquiries.find(c=>isId?+c.id===+keyStr:String(c.contact_code).toUpperCase()===keyStr.toUpperCase());
+    if(base){currentContact=base; renderContactDetailPage();}
+  }
+  try{
+    const res=await fetch(`${API}?action=contact_admin_get&${query}`,{credentials:'include'});
+    const json=await res.json();
+    if(!json.ok){alert(json.error||'読み込みに失敗しました');return;}
+    currentContact=json.data;
+    const idx=contactInquiries.findIndex(c=>+c.id===+currentContact.id);
+    if(idx>=0) contactInquiries[idx]={...contactInquiries[idx],...currentContact,unread_user_count:0};
+    contactSetUrl({tab:'contacts',contact:currentContact.contact_code||currentContact.id}, replace);
+    renderContactDetailPage();
+  }catch(e){alert('通信に失敗しました');}
+}
+function setupContactReplyInput(){
+  setTimeout(()=>{const ta=document.getElementById('contact-reply-text');if(!ta)return;const grow=()=>{ta.style.height='auto';const max=Math.min(132,Math.max(88,window.innerHeight*0.24));ta.style.height=Math.min(Math.max(ta.scrollHeight,42),max)+'px';ta.style.overflowY=ta.scrollHeight>max?'auto':'hidden';};ta.addEventListener('input',grow);ta.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();sendContactReply();}});grow();refreshContactReplyLock();},0);
+}
+function backContactList(){currentContact=null;contactSetUrl({tab:'contacts'},false);renderContactListPage();}
+async function updateContactStatus(id,status){
+  const old=currentContact?currentContact.status:null;
+  if(currentContact) { currentContact.status=status; renderContactDetailPage(); }
+  try{
+    const res=await fetch(`${API}?action=contact_admin_update_status`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,status})});
+    const json=await res.json().catch(()=>null);
+    if(!json||!json.ok){alert(json?.error||'ステータス変更に失敗しました'); if(currentContact) currentContact.status=old; await openContactInquiry(id,true,true); return;}
+    currentContact=json.data;
+    const idx=contactInquiries.findIndex(c=>+c.id===+id); if(idx>=0) contactInquiries[idx]={...contactInquiries[idx],...json.data,messages:undefined};
+    await openContactInquiry(id,true,true);
+  }catch(e){alert('通信に失敗しました'); if(currentContact) currentContact.status=old; renderContactDetailPage();}
+}
+async function deleteContactInquiry(id){
+  const target=contactInquiries.find(c=>+c.id===+id)||currentContact;
+  const label=target?`#${target.contact_code||target.id}`:'このお問い合わせ';
+  if(!confirm(`${label} を完全に削除しますか？\nこの操作は管理者のみ可能です。`))return;
+  try{
+    const res=await fetch(`${API}?action=contact_admin_delete`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id})});
+    const json=await res.json().catch(()=>null);
+    if(!json||!json.ok){alert(json?.error||'削除に失敗しました');return;}
+    contactInquiries=contactInquiries.filter(c=>+c.id!==+id);currentContact=null;contactSetUrl({tab:'contacts'},true);renderContactListPage();
+  }catch(e){alert('通信に失敗しました');}
+}
+function refreshContactReplyLock(){const btn=document.getElementById('contact-admin-send');if(!btn)return;const locked=isContactReplyLocked();if(currentContact && !['rejected','cancelled','accepted','replied','closed'].includes(String(currentContact.status||'')))btn.disabled=locked;}
+async function sendContactReply(){
+  if(!currentContact)return;
+  if(isContactReplyLocked()){alert('連続送信を防止しています。数秒後にもう一度お試しください');return;}
+  const ta=document.getElementById('contact-reply-text');
+  const text=ta?.value.trim()||'';
+  if(!text){alert('返信内容を入力してください');return;}
+  setContactReplyCooldown();
+  try{
+    const res=await fetch(`${API}?action=contact_admin_reply`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:currentContact.id,reply:text})});
+    const json=await res.json().catch(()=>null);
+    if(!json||!json.ok){alert(json?.error||'返信に失敗しました');return;}
+    ta.value='';
+    await openContactInquiry(currentContact.id,true,true);
+    const listRes=await fetch(`${API}?action=contact_admin_list`,{credentials:'include'}).then(r=>r.json()).catch(()=>null);
+    if(listRes&&listRes.ok) contactInquiries=listRes.data||contactInquiries;
+  }catch(e){alert('通信に失敗しました');}
+}
+window.addEventListener('popstate',()=>{const tab=preferredInitialTab(); if(tab==='contacts') loadContactInquiries(false); else switchTab(tab);});
+
+
+
+/* admin-stable-final-patch: 管理者ページの問い合わせ管理を最終定義で安定化 */
+function adminShowMain(){
+  const login=document.getElementById('login-screen');
+  const main=document.getElementById('main-screen');
+  if(login) login.style.display='none';
+  if(main){ main.style.display='flex'; main.style.flexDirection='column'; }
+}
+function enterAdmin(data){
+  allItems = Array.isArray(data) ? data : [];
+  filtered = allItems;
+  adminShowMain();
+  switchTab(preferredInitialTab());
+}
+function adminJsonErrorMessage(json, fallback){
+  return (json && (json.error || json.message)) || fallback || '処理に失敗しました';
+}
+async function adminApi(action, options){
+  options = options || {};
+  const query = options.query ? '&' + new URLSearchParams(options.query).toString() : '';
+  const init = { credentials:'include' };
+  if (options.body !== undefined) {
+    init.method = options.method || 'POST';
+    init.headers = {'Content-Type':'application/json'};
+    init.body = JSON.stringify(options.body || {});
+  } else if (options.method) {
+    init.method = options.method;
+  }
+  const res = await fetch(`${API}?action=${encodeURIComponent(action)}${query}`, init);
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch(e) {}
+  if (!res.ok || !json || !json.ok) {
+    throw new Error(adminJsonErrorMessage(json, text || `HTTP ${res.status}`));
+  }
+  return json.data;
+}
+function adminRenderError(message, retry){
+  const retryBtn = retry ? `<button class="btn" type="button" onclick="${retry}">再読み込み</button>` : '';
+  const el=document.getElementById('tab-content');
+  if(el) el.innerHTML=`<div class="empty" style="margin:20px;display:grid;gap:12px;justify-items:center;">${esc(message||'読み込みに失敗しました')}${retryBtn}</div>`;
+}
+function jsArg(value){ return JSON.stringify(String(value ?? '')); }
+function contactSetUrl(params, replace){
+  const qs = new URLSearchParams();
+  if (params && params.tab) qs.set('tab', params.tab);
+  if (params && params.contact) qs.set('contact', params.contact);
+  const base = location.pathname || 'admin.html';
+  const url = base + (qs.toString() ? '?' + qs.toString() : '');
+  try { (replace ? history.replaceState : history.pushState).call(history, null, '', url); } catch(e) {}
+}
+function preferredInitialTab(){
+  const params = new URLSearchParams(location.search);
+  const tab = params.get('tab');
+  if (getInitialContactKey()) return 'contacts';
+  return ['home','tags','songs','profile_links','verified','contacts'].includes(tab) ? tab : 'home';
+}
+function switchTab(type){
+  type = type || 'home';
+  currentType = type;
+  selectedNames.clear();
+  document.body.classList.toggle('contacts-mode', type === 'contacts');
+  document.querySelectorAll('.tab').forEach(t=>{
+    const txt=t.textContent || '';
+    const active=(type==='home'&&txt.includes('ホーム'))||(type==='tags'&&txt.includes('興味'))||(type==='songs'&&txt.includes('楽曲'))||(type==='profile_links'&&txt.includes('ユーザーリンク'))||(type==='verified'&&txt.includes('コミュニティ'))||(type==='contacts'&&txt.includes('お問い合わせ'));
+    t.classList.toggle('active', active);
+  });
+  if(type==='home'){ contactSetUrl({tab:'home'}, true); renderAdminHome(); return; }
+  if(type==='verified'){ contactSetUrl({tab:'verified'}, true); loadVerifiedAccounts(); return; }
+  if(type==='profile_links'){ contactSetUrl({tab:'profile_links'}, true); loadProfileLinks(); return; }
+  if(type==='live_ids'){ contactSetUrl({tab:'live_ids'}, true); loadLiveIdMerge(); return; }
+  if(type==='contacts'){ loadContactInquiries(false); return; }
+  contactSetUrl({tab:type}, true); loadTagList();
+}
+function renderAdminHome(){
+  document.body.classList.remove('contacts-mode');
+  const rows=[
+    ['contacts','お問い合わせ','問い合わせの確認・返信・ステータス変更・削除'],
+    ['verified','コミュニティアカウント','公式/コミュニティ表示アカウントの管理'],
+    ['profile_links','ユーザーリンク','ユーザーのSNS・外部リンク設定を確認'],
+    ['live_ids','ライブID統合','名称変更で分かれたNEXT LIVEの保存IDを完全統合'],
+    ['tags','興味タグ','プロフィールで使う興味タグの整理・統合'],
+    ['songs','楽曲タグ','楽曲タグの整理・統合']
+  ];
+  const el=document.getElementById('tab-content');
+  if(!el) return;
+  el.innerHTML=`<div class="admin-home"><div><div class="admin-home-title">管理メニュー</div><div class="admin-home-note">操作したい項目を選択してください。</div></div><div class="admin-menu-list">${rows.map(([key,title,sub])=>`<button class="admin-menu-row" type="button" onclick="switchTab('${key}')"><div class="admin-menu-main"><div class="admin-menu-title">${esc(title)}</div><div class="admin-menu-sub">${esc(sub)}</div></div><div class="admin-menu-arrow">›</div></button>`).join('')}</div></div>`;
+}
+function statusOptionsHtml(current){
+  const currentStatus=String(current || 'open');
+  const opts=[['open','受付中'],['pending','保留中'],['accepted','受付済'],['replied','返信済'],['rejected','棄却']];
+  if(currentStatus==='cancelled') opts.push(['cancelled','取りやめ']);
+  if(currentStatus==='closed') opts.push(['closed','完了']);
+  return opts.map(([v,l])=>`<option value="${v}" ${currentStatus===v?'selected':''}>${l}</option>`).join('');
+}
+function contactStatusLabel(status){return ({open:'受付中',pending:'保留中',accepted:'受付済',replied:'返信済',rejected:'棄却',cancelled:'取りやめ',closed:'完了'})[String(status||'open')]||'受付中';}
+function contactStatusClass(status){return ({closed:'accepted',cancelled:'cancelled'})[String(status||'')] || (status || 'open');}
+function contactReplyLabel(c){
+  c = c || {};
+  if(!c.need_reply) return '返信不要';
+  if(c.reply_channel === 'site') return 'このサイトで返信';
+  if(c.reply_channel === 'dm') return `DM返信${c.dm_service ? ' / ' + c.dm_service : ''}${c.dm_account ? ' ' + c.dm_account : ''}`;
+  return '返信なし';
+}
+function contactAccountLabel(c){
+  c = c || {};
+  if(c.account_mode === 'anonymous') return `匿名（内部ID: ${c.raw_user_id || ''}）`;
+  if(c.display_name) return String(c.display_name);
+  if(c.username) return '@' + String(c.username);
+  return 'ログインなし';
+}
+function contactMetrics(){
+  const total=contactInquiries.length;
+  const unread=contactInquiries.reduce((n,c)=>n+(+c.unread_user_count||0),0);
+  const open=contactInquiries.filter(c=>String(c.status||'open')==='open').length;
+  const pending=contactInquiries.filter(c=>String(c.status||'')==='pending').length;
+  return {total,unread,open,pending};
+}
+function contactMatchesFilter(c){
+  const st=String(c.status||'open');
+  if(contactFilter==='unread')return +c.unread_user_count>0;
+  if(contactFilter==='open')return st==='open';
+  if(contactFilter==='pending')return st==='pending';
+  if(contactFilter==='accepted')return st==='accepted'||st==='closed';
+  if(contactFilter==='replied')return st==='replied';
+  if(contactFilter==='rejected')return st==='rejected'||st==='cancelled';
+  if(contactFilter==='hidden')return !!c.is_user_hidden||!!c.user_hidden_at;
+  if(contactFilter==='dm')return c.reply_channel==='dm';
+  return true;
+}
+function contactMatchesSearch(c){
+  const q=String(contactSearch||'').trim().toLowerCase();
+  if(!q)return true;
+  const hay=[c.contact_code,c.id,c.category,c.site_name,c.latest_message,c.message,c.display_name,c.username,c.dm_service,c.dm_account,contactReplyLabel(c),contactAccountLabel(c),contactStatusLabel(c.status),c.title].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+function filteredContacts(){return contactInquiries.filter(c=>contactMatchesFilter(c)&&contactMatchesSearch(c));}
+function setContactSearch(v){contactSearch=v||'';renderContactListPage();}
+function setContactFilter(v){contactFilter=v||'all';renderContactListPage();}
+async function loadContactInquiries(keepCurrent){
+  keepCurrent = !!keepCurrent;
+  if(contactLoading) return;
+  contactLoading = true;
+  document.body.classList.add('contacts-mode');
+  setAdminVh();
+  if(!keepCurrent){
+    const el=document.getElementById('tab-content');
+    if(el) el.innerHTML='<div class="loading">読み込み中…</div>';
+  }
+  try{
+    contactInquiries = await adminApi('contact_admin_list') || [];
+    const initial=getInitialContactKey();
+    if(initial && !keepCurrent){ await openContactInquiry(initial,true,true); return; }
+    if(keepCurrent && currentContact && currentContact.id){
+      const found=contactInquiries.find(c=>+c.id===+currentContact.id);
+      if(found){ currentContact={...found, messages:currentContact.messages, images:currentContact.images}; renderContactDetailPage(); }
+      else { currentContact=null; renderContactListPage(); contactSetUrl({tab:'contacts'}, true); }
+    } else {
+      currentContact=null;
+      renderContactListPage();
+      contactSetUrl({tab:'contacts'}, true);
+    }
+  }catch(e){
+    adminRenderError(e.message || '通信に失敗しました', 'loadContactInquiries(false)');
+  }finally{ contactLoading=false; }
+}
+function renderContactTab(){renderContactListPage();}
+function renderContactListPage(){
+  document.body.classList.add('contacts-mode');setAdminVh();currentContact=null;
+  const m=contactMetrics();
+  const visible=filteredContacts();
+  const filterButtons=[['all','すべて'],['unread','未読'],['open','受付中'],['pending','保留中'],['accepted','受付済'],['replied','返信済'],['rejected','棄却'],['dm','DM'],['hidden','非表示済']].map(([key,label])=>`<button class="contact-filter-btn ${contactFilter===key?'active':''}" type="button" onclick="setContactFilter('${key}')">${label}</button>`).join('');
+  const rows=visible.length?visible.map(contactAdminRow).join(''):'<div class="contact-empty-state">該当するお問い合わせはありません。</div>';
+  const el=document.getElementById('tab-content');
+  if(!el) return;
+  el.innerHTML=`<div class="admin-page contact-list-page"><div class="admin-page-head"><div><div class="admin-page-title">お問い合わせ</div><div class="admin-page-sub">${visible.length}件 / 全${m.total}件${m.unread?` / 未読${m.unread}件`:''}</div></div><div class="admin-head-actions"><button class="btn" type="button" onclick="loadContactInquiries(true)">更新</button></div></div><div class="contact-toolbar"><div class="contact-search-row"><input class="contact-admin-search" value="${esc(contactSearch||'')}" placeholder="管理番号・カテゴリ・本文で検索" oninput="setContactSearch(this.value)"></div><div class="contact-filter-tabs">${filterButtons}</div></div><div class="contact-mail-list"><div class="contact-mail-list-inner">${rows}</div></div></div>`;
+}
+function contactAdminRow(c){
+  const unread=+c.unread_user_count>0;
+  const code=c.contact_code||c.id;
+  const subject=`#${code} ${c.category||'お問い合わせ'}`;
+  const previewRaw=c.latest_message||c.message||'';
+  const preview=previewRaw.length>110?previewRaw.slice(0,110)+'…':previewRaw;
+  const who=c.latest_sender==='admin'?'管理者返信':'ユーザー送信';
+  const href=`?tab=contacts&contact=${encodeURIComponent(code)}`;
+  return `<a class="contact-mail-row ${unread?'unread':''}" href="${esc(href)}" data-contact="${esc(code)}" onclick="event.preventDefault();openContactInquiry(this.dataset.contact)"><div class="contact-mail-row-main"><div class="contact-mail-row-subject">${esc(subject)}</div><div class="contact-mail-row-meta">${esc(who)} / ${esc(contactAccountLabel(c))} / ${esc(contactReplyLabel(c))}</div><div class="contact-mail-row-preview">${esc(preview||'本文なし')}</div></div><div class="contact-mail-row-side"><div class="contact-mail-row-date">${esc(c.latest_at||c.created_at||'')}</div><div class="contact-mail-badges"><span class="contact-status ${esc(contactStatusClass(c.status))}">${esc(contactStatusLabel(c.status))}</span>${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}${c.is_user_hidden||c.user_hidden_at?'<span class="contact-status hidden">非表示</span>':''}</div></div></a>`;
+}
+function contactUserStateHtml(c){
+  const read=c.user_read_at?`既読 ${c.user_read_at}`:'ユーザー未読';
+  const hidden=c.user_hidden_at?`非表示 ${c.user_hidden_at}`:'非表示なし';
+  return `<div class="contact-user-state"><span class="${c.user_read_at?'on':''}">${esc(read)}</span><span class="${c.user_hidden_at?'on':''}">${esc(hidden)}</span></div>`;
+}
+function contactImagesForMessage(c,m,i){
+  const imgs=(c.images||[]).filter(img=>img.message_id?+img.message_id===+m.id:i===0);
+  return imgs.length?`<div class="contact-image-grid">${imgs.map(img=>`<a href="${esc(img.url)}" target="_blank" rel="noopener"><img src="${esc(img.url)}" alt="添付画像"></a>`).join('')}</div>`:'';
+}
+function contactMessagesHtml(c){
+  return (c.messages||[]).map((m,i)=>`<section class="contact-mail-message ${m.sender==='admin'?'admin':'user'}"><div class="contact-mail-message-head"><div class="contact-mail-from">${m.sender==='admin'?'管理者':'ユーザー'}</div><div class="contact-mail-time">${esc(m.created_at||'')}</div></div><div class="contact-mail-body">${esc(m.body)}${contactImagesForMessage(c,m,i)}</div></section>`).join('')||'<div class="empty">メッセージなし</div>';
+}
+function renderContactDetailPage(){
+  document.body.classList.add('contacts-mode');setAdminVh();
+  if(!currentContact){renderContactListPage();return;}
+  const c=currentContact, code=c.contact_code||c.id;
+  const lockedStatus=['rejected','cancelled','accepted','replied','closed'].includes(String(c.status||''));
+  const disabled=lockedStatus?'disabled':'';
+  const hint=lockedStatus?'このステータスではサイト内返信を追加できません。':(c.need_reply?`返信方法: ${contactReplyLabel(c)}`:'返信不要です。必要な場合だけ返信できます。');
+  const detailRows=[['ステータス',contactStatusLabel(c.status)],['カテゴリ',c.category||'お問い合わせ'],['返信',contactReplyLabel(c)],['送信者',contactAccountLabel(c)+(c.username?' / @'+c.username:'')],['既読',c.user_read_at||'未読'],['非表示',c.user_hidden_at||'なし']];
+  if(c.site_name) detailRows.push(['対象',c.site_name]);
+  if(c.latest_at||c.updated_at) detailRows.push(['更新',c.latest_at||c.updated_at]);
+  const statusCtl=`<div class="contact-admin-statusbar"><label>ステータス</label><select id="contact-status-select" onchange="updateContactStatus(${Number(c.id)},this.value)">${statusOptionsHtml(c.status)}</select></div>`;
+  const replyBox=`<div class="contact-reply-panel"><div class="contact-admin-reply-hint">${esc(hint)}</div><div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div><div class="contact-admin-reply-note" id="contact-admin-reply-note"></div></div>`;
+  const el=document.getElementById('tab-content');
+  if(!el) return;
+  el.innerHTML=`<div class="admin-page contact-detail-page"><div class="contact-detail-head"><div class="contact-detail-head-top"><button class="contact-back-btn" type="button" onclick="backContactList()" aria-label="一覧に戻る">‹</button><div class="contact-detail-title-wrap"><div class="contact-detail-title">#${esc(code)} ${esc(c.category||'お問い合わせ')}</div><div class="contact-detail-sub">${esc(contactStatusLabel(c.status))} / ${esc(contactReplyLabel(c))}</div></div><div class="contact-detail-actions"><button class="btn" type="button" data-contact="${esc(code)}" onclick="openContactInquiry(this.dataset.contact,true,true)">更新</button><button class="btn contact-admin-delete" type="button" onclick="deleteContactInquiry(${Number(c.id)})">削除</button></div></div><div class="contact-detail-tools">${statusCtl}${contactUserStateHtml(c)}</div></div><div class="contact-detail-scroll" id="contact-admin-body"><div class="contact-detail-paper"><div class="contact-detail-grid">${detailRows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>${contactMessagesHtml(c)}</div></div>${replyBox}</div>`;
+  setupContactReplyInput();
+}
+async function openContactInquiry(key, silent, replace){
+  const keyStr=String(key||'').trim();
+  if(!keyStr) return;
+  const isId=/^\d+$/.test(keyStr);
+  const query=isId?{id:keyStr}:{code:keyStr.toUpperCase()};
+  if(!silent){
+    const base=contactInquiries.find(c=>isId?+c.id===+keyStr:String(c.contact_code||'').toUpperCase()===keyStr.toUpperCase());
+    if(base){ currentContact=base; renderContactDetailPage(); }
+  }
+  try{
+    currentContact = await adminApi('contact_admin_get', {query});
+    const idx=contactInquiries.findIndex(c=>+c.id===+currentContact.id);
+    if(idx>=0) contactInquiries[idx]={...contactInquiries[idx],...currentContact,unread_user_count:0};
+    contactSetUrl({tab:'contacts',contact:currentContact.contact_code||currentContact.id}, !!replace);
+    renderContactDetailPage();
+  }catch(e){ alert(e.message || '読み込みに失敗しました'); }
+}
+function setupContactReplyInput(){
+  setTimeout(()=>{
+    const ta=document.getElementById('contact-reply-text');
+    if(!ta)return;
+    const grow=()=>{ta.style.height='auto';const max=Math.min(132,Math.max(88,window.innerHeight*0.24));ta.style.height=Math.min(Math.max(ta.scrollHeight,42),max)+'px';ta.style.overflowY=ta.scrollHeight>max?'auto':'hidden';};
+    ta.addEventListener('input',grow);
+    ta.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key==='Enter'){e.preventDefault();sendContactReply();}});
+    grow();refreshContactReplyLock();
+  },0);
+}
+function backContactList(){ currentContact=null; contactSetUrl({tab:'contacts'},false); renderContactListPage(); }
+async function updateContactStatus(id,status){
+  const old=currentContact?currentContact.status:null;
+  if(currentContact){ currentContact.status=status; renderContactDetailPage(); }
+  try{
+    currentContact = await adminApi('contact_admin_update_status', {body:{id,status}});
+    const idx=contactInquiries.findIndex(c=>+c.id===+id);
+    if(idx>=0) contactInquiries[idx]={...contactInquiries[idx],...currentContact,messages:undefined};
+    await openContactInquiry(id,true,true);
+  }catch(e){
+    alert(e.message || 'ステータス変更に失敗しました');
+    if(currentContact) currentContact.status=old;
+    if(id) await openContactInquiry(id,true,true); else renderContactDetailPage();
+  }
+}
+async function deleteContactInquiry(id){
+  const target=contactInquiries.find(c=>+c.id===+id)||currentContact;
+  const label=target?`#${target.contact_code||target.id}`:'このお問い合わせ';
+  if(!confirm(`${label} を完全に削除しますか？\nこの操作は管理者のみ可能です。`))return;
+  try{
+    await adminApi('contact_admin_delete', {body:{id}});
+    contactInquiries=contactInquiries.filter(c=>+c.id!==+id);
+    currentContact=null;
+    contactSetUrl({tab:'contacts'},true);
+    renderContactListPage();
+  }catch(e){ alert(e.message || '削除に失敗しました'); }
+}
+function refreshContactReplyLock(){
+  const btn=document.getElementById('contact-admin-send');
+  if(!btn)return;
+  const locked=isContactReplyLocked();
+  if(currentContact && !['rejected','cancelled','accepted','replied','closed'].includes(String(currentContact.status||''))) btn.disabled=locked;
+}
+async function sendContactReply(){
+  if(!currentContact)return;
+  if(isContactReplyLocked()){alert('連続送信を防止しています。数秒後にもう一度お試しください');return;}
+  const ta=document.getElementById('contact-reply-text');
+  const text=ta?.value.trim()||'';
+  if(!text){alert('返信内容を入力してください');return;}
+  setContactReplyCooldown();
+  try{
+    await adminApi('contact_admin_reply', {body:{id:currentContact.id,reply:text}});
+    if(ta) ta.value='';
+    await openContactInquiry(currentContact.id,true,true);
+    try{ contactInquiries = await adminApi('contact_admin_list') || contactInquiries; }catch(e){}
+  }catch(e){ alert(e.message || '返信に失敗しました'); }
+}
+
+
+
+/* admin-mail-unified-20260617: final Admin overrides */
+(function(){
+  const root = document.documentElement;
+  let stableHeight = Math.max(320, Math.round(window.innerHeight || document.documentElement.clientHeight || 667));
+  let inputActive = false;
+  function activeField(){
+    const el = document.activeElement;
+    return !!el && /^(TEXTAREA|INPUT|SELECT)$/.test(el.tagName || '') && !!el.closest('#main-screen');
+  }
+  window.setAdminVh = function(force){
+    const layout = Math.max(320, Math.round(window.innerHeight || document.documentElement.clientHeight || stableHeight));
+    if (force || (!inputActive && !activeField())) stableHeight = layout;
+    root.style.setProperty('--admin-fixed-vh', stableHeight + 'px');
+    if (!inputActive && !activeField()) root.style.setProperty('--admin-vh', stableHeight + 'px');
+  };
+  window.setAdminKeyboardActive = function(on){
+    inputActive = !!on;
+    document.body.classList.toggle('admin-keyboard-active', inputActive);
+    root.classList.toggle('admin-input-active', inputActive);
+    window.setAdminVh(false);
+    if (inputActive) {
+      setTimeout(()=>{
+        const scroller = document.getElementById('contact-admin-body') || document.querySelector('.contact-detail-scroll');
+        if (scroller) scroller.scrollTop = scroller.scrollHeight;
+      }, 90);
+    }
+  };
+  window.addEventListener('resize',()=>{ if(!inputActive && !activeField()) window.setAdminVh(true); }, {passive:true});
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize',()=>{ if(!inputActive && !activeField()) window.setAdminVh(true); }, {passive:true});
+    window.visualViewport.addEventListener('scroll',()=>{ if(!inputActive && !activeField()) window.setAdminVh(false); }, {passive:true});
+  }
+  document.addEventListener('focusin', e=>{
+    if (e.target && e.target.closest && e.target.closest('.contact-reply-panel')) window.setAdminKeyboardActive(true);
+  });
+  document.addEventListener('focusout', e=>{
+    if (e.target && e.target.closest && e.target.closest('.contact-reply-panel')) setTimeout(()=>window.setAdminKeyboardActive(false), 160);
+  });
+  window.setAdminVh(true);
+})();
+
+function safeText(value){ return String(value ?? '').replace(/\s+/g,' ').trim(); }
+function compactText(value, max){
+  const s = safeText(value);
+  return s.length > max ? s.slice(0, max) + '…' : s;
+}
+function updateContactListOnly(){
+  const visible = filteredContacts();
+  const rows = visible.length ? visible.map(contactAdminRow).join('') : '<div class="contact-empty-state">該当するお問い合わせはありません。</div>';
+  const inner = document.getElementById('contact-mail-list-inner');
+  if (inner) inner.innerHTML = rows;
+  const sub = document.getElementById('contact-list-sub');
+  if (sub) {
+    const m = contactMetrics();
+    sub.textContent = `${visible.length}件 / 全${m.total}件${m.unread ? ' / 未読' + m.unread + '件' : ''}`;
+  }
+}
+function setContactSearch(v){
+  contactSearch = v || '';
+  updateContactListOnly();
+}
+function setContactFilter(v){
+  contactFilter = v || 'all';
+  renderContactListPage();
+}
+function contactAdminRow(c){
+  c = c || {};
+  const unread = +c.unread_user_count > 0;
+  const code = c.contact_code || c.id;
+  const subject = `#${code} ${c.category || 'お問い合わせ'}`;
+  const preview = compactText(c.latest_message || c.message || '本文なし', 120);
+  const who = c.latest_sender === 'admin' ? '管理者返信' : 'ユーザー送信';
+  const href = `?tab=contacts&contact=${encodeURIComponent(code)}`;
+  return `<a class="contact-mail-row ${unread?'unread':''}" href="${esc(href)}" data-contact="${esc(code)}" onclick="event.preventDefault();openContactInquiry(this.dataset.contact)"><div class="contact-mail-row-main"><div class="contact-mail-row-subject">${esc(subject)}</div><div class="contact-mail-row-meta">${esc(who)} / ${esc(contactAccountLabel(c))} / ${esc(contactReplyLabel(c))}</div><div class="contact-mail-row-preview">${esc(preview)}</div></div><div class="contact-mail-row-side"><div class="contact-mail-row-date">${esc(c.latest_at || c.updated_at || c.created_at || '')}</div><div class="contact-mail-badges"><span class="contact-status ${esc(contactStatusClass(c.status))}">${esc(contactStatusLabel(c.status))}</span>${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}${c.is_user_hidden||c.user_hidden_at?'<span class="contact-status hidden">非表示</span>':''}</div></div></a>`;
+}
+function renderContactListPage(){
+  document.body.classList.add('contacts-mode');
+  setAdminVh(false);
+  currentContact = null;
+  const m = contactMetrics();
+  const visible = filteredContacts();
+  const filterButtons = [['all','すべて'],['unread','未読'],['open','受付中'],['pending','保留中'],['accepted','受付済'],['replied','返信済'],['rejected','棄却'],['dm','DM'],['hidden','非表示済']]
+    .map(([key,label])=>`<button class="contact-filter-btn ${contactFilter===key?'active':''}" type="button" onclick="setContactFilter('${key}')">${label}</button>`).join('');
+  const rows = visible.length ? visible.map(contactAdminRow).join('') : '<div class="contact-empty-state">該当するお問い合わせはありません。</div>';
+  const el = document.getElementById('tab-content');
+  if (!el) return;
+  el.innerHTML = `<div class="admin-page contact-list-page"><div class="admin-page-head"><div><div class="admin-page-title">お問い合わせ</div><div class="admin-page-sub" id="contact-list-sub">${visible.length}件 / 全${m.total}件${m.unread?` / 未読${m.unread}件`:''}</div></div><div class="admin-head-actions"><button class="btn" type="button" onclick="loadContactInquiries(true)">更新</button></div></div><div class="contact-toolbar"><div class="contact-search-row"><input id="contact-admin-search" class="contact-admin-search" value="${esc(contactSearch||'')}" placeholder="管理番号・カテゴリ・本文で検索" autocomplete="off" inputmode="search"></div><div class="contact-filter-tabs">${filterButtons}</div></div><div class="contact-mail-list"><div class="contact-mail-list-inner" id="contact-mail-list-inner">${rows}</div></div></div>`;
+  const search = document.getElementById('contact-admin-search');
+  if (search) {
+    search.addEventListener('input', e => setContactSearch(e.target.value));
+    search.addEventListener('keydown', e => { if (e.key === 'Enter') e.preventDefault(); });
+  }
+}
+function contactMessageSenderLabel(c, sender){
+  if (sender === 'admin') return '管理者（ひろまめ）';
+  return contactAccountLabel(c) || 'ユーザー';
+}
+function contactMessageToLabel(c, sender){
+  return sender === 'admin' ? `宛先: ${contactAccountLabel(c) || 'ユーザー'}` : '宛先: 管理者';
+}
+function contactMessagesHtml(c){
+  c = c || {};
+  if (!Array.isArray(c.messages)) return '<div class="contact-empty-state">本文を読み込み中…</div>';
+  const messages = c.messages.length ? c.messages : (c.message ? [{sender:'user', body:c.message, created_at:c.created_at || ''}] : []);
+  const body = messages.map((m,i)=>{
+    const sender = m.sender === 'admin' ? 'admin' : 'user';
+    return `<section class="contact-mail-message ${sender}"><div class="contact-mail-message-head"><div><div class="contact-mail-from">${esc(contactMessageSenderLabel(c, sender))}</div><div class="contact-mail-to">${esc(contactMessageToLabel(c, sender))}</div></div><div class="contact-mail-time">${esc(m.created_at || '')}</div></div><div class="contact-mail-body">${esc(m.body || '')}${contactImagesForMessage(c,m,i)}</div></section>`;
+  }).join('') || '<div class="contact-empty-state">メッセージなし</div>';
+  return `<div class="contact-mail-thread"><div class="contact-mail-thread-title"><div class="contact-mail-thread-title-main">メール履歴</div><div class="contact-mail-thread-title-sub">${messages.length}件</div></div>${body}</div>`;
+}
+function canAdminReplyToContact(c){
+  const status = String((c && c.status) || 'open');
+  return !['rejected','cancelled','accepted','replied','closed'].includes(status);
+}
+function renderContactDetailPage(){
+  document.body.classList.add('contacts-mode');
+  setAdminVh(false);
+  if(!currentContact){ renderContactListPage(); return; }
+  const c = currentContact;
+  const code = c.contact_code || c.id;
+  const canReply = canAdminReplyToContact(c);
+  const disabled = canReply ? '' : 'disabled';
+  const hint = canReply ? (c.need_reply ? `返信方法: ${contactReplyLabel(c)}` : '返信不要です。必要な場合だけ返信できます。') : 'このステータスではサイト内返信を追加できません。';
+  const detailRows = [
+    ['ステータス', contactStatusLabel(c.status)],
+    ['カテゴリ', c.category || 'お問い合わせ'],
+    ['返信', contactReplyLabel(c)],
+    ['送信者', contactAccountLabel(c) + (c.username ? ' / @' + c.username : '')],
+    ['既読', c.user_read_at || '未読'],
+    ['非表示', c.user_hidden_at || 'なし']
+  ];
+  if(c.site_name) detailRows.push(['対象', c.site_name]);
+  if(c.latest_at || c.updated_at) detailRows.push(['更新', c.latest_at || c.updated_at]);
+  const statusCtl = `<div class="contact-admin-statusbar"><label>ステータス</label><select id="contact-status-select" onchange="updateContactStatus(${Number(c.id)},this.value)">${statusOptionsHtml(c.status)}</select></div>`;
+  const replyBox = `<div class="contact-reply-panel"><div class="contact-admin-reply-hint">${esc(hint)}</div><div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div><div class="contact-admin-reply-note" id="contact-admin-reply-note"></div></div>`;
+  const el = document.getElementById('tab-content');
+  if(!el) return;
+  el.innerHTML = `<div class="admin-page contact-detail-page"><div class="contact-detail-head"><div class="contact-detail-head-top"><button class="contact-back-btn" type="button" onclick="backContactList()" aria-label="一覧に戻る">‹</button><div class="contact-detail-title-wrap"><div class="contact-detail-title">#${esc(code)} ${esc(c.category || 'お問い合わせ')}</div><div class="contact-detail-sub">${esc(contactStatusLabel(c.status))} / ${esc(contactReplyLabel(c))}</div></div><div class="contact-detail-actions"><button class="btn" type="button" data-contact="${esc(code)}" onclick="openContactInquiry(this.dataset.contact,true,true)">更新</button><button class="btn contact-admin-delete" type="button" data-delete-contact-id="${Number(c.id)}">削除</button></div></div><div class="contact-detail-tools">${statusCtl}${contactUserStateHtml(c)}</div></div><div class="contact-detail-scroll" id="contact-admin-body"><div class="contact-detail-paper"><div class="contact-detail-grid">${detailRows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>${contactMessagesHtml(c)}</div></div>${replyBox}</div>`;
+  setupContactReplyInput();
+}
+function setupContactReplyInput(){
+  setTimeout(()=>{
+    const ta = document.getElementById('contact-reply-text');
+    if(!ta) return;
+    const grow = ()=>{
+      ta.style.height = 'auto';
+      const max = Math.min(132, Math.max(88, (window.innerHeight || 667) * 0.22));
+      ta.style.height = Math.min(Math.max(ta.scrollHeight, 42), max) + 'px';
+      ta.style.overflowY = ta.scrollHeight > max ? 'auto' : 'hidden';
+    };
+    ta.addEventListener('input', grow);
+    ta.addEventListener('focus', ()=>{
+      if (window.setAdminKeyboardActive) window.setAdminKeyboardActive(true);
+      setTimeout(()=>{ const sc = document.getElementById('contact-admin-body'); if(sc) sc.scrollTop = sc.scrollHeight; }, 80);
+    });
+    ta.addEventListener('blur', ()=>setTimeout(()=>{ if (window.setAdminKeyboardActive) window.setAdminKeyboardActive(false); }, 160));
+    ta.addEventListener('keydown', e=>{ if((e.metaKey||e.ctrlKey) && e.key === 'Enter'){ e.preventDefault(); sendContactReply(); } });
+    grow();
+    refreshContactReplyLock();
+  },0);
+}
+async function updateContactStatus(id,status){
+  const select = document.getElementById('contact-status-select');
+  const oldStatus = currentContact ? currentContact.status : null;
+  if(select) select.disabled = true;
+  try{
+    const fresh = await adminApi('contact_admin_update_status', {body:{id,status}});
+    currentContact = fresh;
+    const idx = contactInquiries.findIndex(c=>+c.id===+id);
+    if(idx>=0) contactInquiries[idx] = {...contactInquiries[idx], ...fresh, messages:undefined, images:undefined};
+    await openContactInquiry(id,true,true);
+  }catch(e){
+    alert((e && e.message) || 'ステータス変更に失敗しました');
+    if(currentContact) currentContact.status = oldStatus;
+    if(select) { select.value = oldStatus || 'open'; select.disabled = false; }
+  }
+}
+async function deleteContactInquiry(id){
+  const num = Number(id || (currentContact && currentContact.id) || 0);
+  if(!num){ alert('削除対象を取得できませんでした。画面を更新してからもう一度お試しください。'); return; }
+  const target = contactInquiries.find(c=>+c.id===num) || currentContact || null;
+  const label = target ? `#${target.contact_code || target.id}` : 'このお問い合わせ';
+  if(!confirm(`${label} を完全に削除しますか？\nこの操作は取り消せません。`)) return;
+  const btn = Array.from(document.querySelectorAll('[data-delete-contact-id]')).find(el => Number(el.dataset.deleteContactId) === num);
+  if(btn){ btn.classList.add('is-loading'); btn.disabled = true; }
+  try{
+    await adminApi('contact_admin_delete', {body:{id:num}});
+    contactInquiries = contactInquiries.filter(c=>+c.id!==num);
+    currentContact = null;
+    contactSetUrl({tab:'contacts'}, true);
+    renderContactListPage();
+  }catch(e){
+    if(btn){ btn.classList.remove('is-loading'); btn.disabled = false; }
+    alert((e && e.message) || '削除に失敗しました');
+  }
+}
+document.addEventListener('click', function(e){
+  const btn = e.target && e.target.closest ? e.target.closest('[data-delete-contact-id]') : null;
+  if(!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  deleteContactInquiry(btn.dataset.deleteContactId);
+}, true);
+async function sendContactReply(){
+  if(!currentContact) return;
+  if(!canAdminReplyToContact(currentContact)){ alert('このステータスではサイト内返信を追加できません。'); return; }
+  if(isContactReplyLocked()){ alert('連続送信を防止しています。数秒後にもう一度お試しください'); return; }
+  const ta = document.getElementById('contact-reply-text');
+  const text = ta?.value.trim() || '';
+  if(!text){ alert('返信内容を入力してください'); return; }
+  const btn = document.getElementById('contact-admin-send');
+  if(btn){ btn.classList.add('is-loading'); btn.disabled = true; }
+  setContactReplyCooldown();
+  try{
+    const data = await adminApi('contact_admin_reply', {body:{id:currentContact.id,reply:text}});
+    if(ta) ta.value = '';
+    if(data && data.inquiry) currentContact = data.inquiry;
+    try{ contactInquiries = await adminApi('contact_admin_list') || contactInquiries; }catch(e){}
+    await openContactInquiry(currentContact.id,true,true);
+  }catch(e){
+    if(btn){ btn.classList.remove('is-loading'); btn.disabled = false; }
+    alert((e && e.message) || '返信に失敗しました');
+  }
+}
+
+
+/* admin-compact-mail-view-20260617: final delete/open guard and compact controls */
+function canAdminDeleteContact(c){
+  const status = String((c && c.status) || 'open');
+  return status !== 'open';
+}
+function contactDeleteButtonHtml(c){
+  const id = Number(c && c.id || 0);
+  const canDelete = canAdminDeleteContact(c);
+  const title = canDelete ? '削除' : '受付中は削除できません。ステータスを変更してから削除してください。';
+  return `<button class="btn contact-admin-delete ${canDelete ? '' : 'is-disabled'}" type="button" data-delete-contact-id="${id}" ${canDelete ? '' : 'disabled aria-disabled="true"'} title="${esc(title)}">削除</button>`;
+}
+function canSendContactMailNotification(c){
+  return !!(c && c.raw_user_id && c.need_reply && c.reply_channel === 'site' && Array.isArray(c.messages) && c.messages.some(m => m.sender === 'admin'));
+}
+function contactMailButtonHtml(c){
+  const enabled = canSendContactMailNotification(c);
+  const sent = !!(c && c.email_notification);
+  const label = sent ? 'メール通知を再送' : 'メール通知を送信';
+  const title = enabled ? label : 'サイト内返信・ログインユーザー・管理者返信済みの場合に送信できます。';
+  return `<button class="btn ${sent ? '' : 'btn-primary'} ${enabled ? '' : 'is-disabled'}" type="button" data-contact-mail-id="${Number(c && c.id || 0)}" ${enabled ? '' : 'disabled aria-disabled="true"'} title="${esc(title)}">${esc(label)}</button>`;
+}
+async function sendContactMailNotification(id){
+  const num = Number(id || (currentContact && currentContact.id) || 0);
+  if(!num) return;
+  if(!confirm('このお問い合わせの最新返信をメールで通知しますか？')) return;
+  const btn = Array.from(document.querySelectorAll('[data-contact-mail-id]')).find(el => Number(el.dataset.contactMailId) === num);
+  if(btn){ btn.disabled = true; btn.textContent = '送信中…'; }
+  try{
+    const result = await adminApi('contact_admin_send_mail', {body:{id:num}});
+    if(result && result.inquiry) currentContact = result.inquiry;
+    try{ contactInquiries = await adminApi('contact_admin_list') || contactInquiries; }catch(e){}
+    await openContactInquiry(num,true,true);
+    alert(`メール通知を送信しました。${result && result.to ? '\\n送信先: ' + result.to : ''}`);
+  }catch(e){
+    if(btn){ btn.disabled = false; btn.textContent = 'メール通知を送信'; }
+    alert((e && e.message) || 'メール通知の送信に失敗しました');
+  }
+}
+function applyContactDeleteGuard(){
+  const btns = document.querySelectorAll('[data-delete-contact-id]');
+  if(!btns.length) return;
+  const canDelete = canAdminDeleteContact(currentContact);
+  btns.forEach(btn=>{
+    btn.disabled = !canDelete;
+    btn.classList.toggle('is-disabled', !canDelete);
+    btn.title = canDelete ? '削除' : '受付中は削除できません。ステータスを変更してから削除してください。';
+    btn.setAttribute('aria-disabled', canDelete ? 'false' : 'true');
+  });
+}
+const __renderContactDetailPageCompact = renderContactDetailPage;
+renderContactDetailPage = function(){
+  __renderContactDetailPageCompact();
+  const actions = document.querySelector('.contact-detail-actions');
+  const oldBtn = actions && actions.querySelector('[data-delete-contact-id]');
+  if(actions && currentContact && oldBtn){
+    if(!actions.querySelector('[data-contact-mail-id]')){
+      oldBtn.insertAdjacentHTML('beforebegin', contactMailButtonHtml(currentContact));
+    }
+    oldBtn.outerHTML = contactDeleteButtonHtml(currentContact);
+  }
+  applyContactDeleteGuard();
+};
+document.addEventListener('click', function(e){
+  const btn = e.target && e.target.closest ? e.target.closest('[data-contact-mail-id]') : null;
+  if(!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  sendContactMailNotification(btn.dataset.contactMailId);
+}, true);
+const __deleteContactInquiryCompact = deleteContactInquiry;
+deleteContactInquiry = async function(id){
+  const num = Number(id || (currentContact && currentContact.id) || 0);
+  const target = (Array.isArray(contactInquiries) ? contactInquiries.find(c=>+c.id===num) : null) || currentContact || null;
+  if(target && !canAdminDeleteContact(target)){
+    alert('受付中のお問い合わせは削除できません。ステータスを「保留中」「受付済」「返信済」「棄却」などに変更してから削除してください。');
+    applyContactDeleteGuard();
+    return;
+  }
+  return __deleteContactInquiryCompact(id);
+};
+
 </script>
 </body>
 </html>
