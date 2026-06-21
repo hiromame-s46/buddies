@@ -36,6 +36,7 @@
 .field input:focus,.field textarea:focus,.field select:focus{border-color:#111}
 .choice{padding:4px 0}
 .poll-results{margin-top:18px;border:1px solid #eee;border-radius:18px;background:#fff;padding:16px;display:grid;gap:12px}.poll-results h2{font-size:16px;margin:0;font-weight:900}.poll-question{display:grid;gap:8px}.poll-question-title{font-size:13px;font-weight:900}.poll-option{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center}.poll-bar{grid-column:1/3;height:8px;border-radius:999px;background:#eee;overflow:hidden}.poll-fill{height:100%;background:#111;border-radius:inherit}.poll-count{font-size:12px;color:#666;font-weight:900}
+.action-overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:none;align-items:center;justify-content:center;padding:20px}.action-overlay.open{display:flex}.action-sheet{width:100%;max-width:420px;background:#fff;border-radius:24px;padding:24px 20px 20px;display:grid;gap:14px;box-shadow:0 18px 50px rgba(0,0,0,.22);animation:actionPop .2s ease}@keyframes actionPop{from{transform:translateY(8px) scale(.96);opacity:0}to{transform:translateY(0) scale(1);opacity:1}}.action-mark{width:54px;height:54px;border-radius:50%;background:#111;color:#fff;display:grid;place-items:center;font-size:25px;font-weight:900;margin:0 auto}.action-title{text-align:center;font-size:18px;font-weight:900;margin:0}.action-body{text-align:center;color:#555;font-size:13px;line-height:1.75;white-space:pre-wrap;margin:0}.action-buttons{display:grid;gap:8px}
 @media(max-width:560px){.app{padding:16px}}
 </style>
 </head>
@@ -44,6 +45,17 @@
   <a id="back-link" class="back" href="../" data-nosnippet>← 戻る</a>
   <div id="root"><div class="notice" data-nosnippet>読み込み中…</div></div>
 </main>
+<div class="action-overlay" id="action-overlay" onclick="if(event.target===this)closeActionPopup()">
+  <div class="action-sheet">
+    <div class="action-mark">✓</div>
+    <h2 class="action-title" id="action-title"></h2>
+    <p class="action-body" id="action-body"></p>
+    <div class="action-buttons">
+      <a class="btn" id="action-link" href="#" target="_blank" rel="noopener" style="display:none"></a>
+      <button class="btn secondary" type="button" onclick="closeActionPopup()">閉じる</button>
+    </div>
+  </div>
+</div>
 <script>
 const API = '../api.php';
 const id = new URLSearchParams(location.search).get('id');
@@ -54,6 +66,43 @@ let pendingAnswers = null;
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 async function api(action,payload=null){const opt={credentials:'include'};if(payload){opt.method='POST';opt.headers={'Content-Type':'application/json'};opt.body=JSON.stringify(payload)}const r=await fetch(`${API}?action=${action}`,opt);return r.json();}
 function assetUrl(url){ if (!url) return ''; if (/^https?:\/\//.test(url) || url.startsWith('data:')) return url; return url.startsWith('/') ? url : '../' + url; }
+function getActionConfig(cfg){
+  if (!cfg || !cfg.enabled) return null;
+  return {
+    mode: ['popup','button'].includes(cfg.mode) ? cfg.mode : 'popup',
+    title: cfg.title || '送信が完了しました',
+    body: cfg.body || 'フォームへの回答を受け付けました。',
+    button_label: cfg.button_label || 'リンクを開く',
+    button_url: cfg.button_url || '',
+    show_button_after_popup: !!cfg.show_button_after_popup,
+  };
+}
+function actionButtonHtml(raw){
+  const cfg = getActionConfig(raw);
+  const shouldShow = cfg && cfg.button_url && (cfg.mode === 'button' || (cfg.mode === 'popup' && cfg.show_button_after_popup));
+  if (!shouldShow) return '';
+  return `<a class="btn" href="${esc(cfg.button_url)}" target="_blank" rel="noopener">${esc(cfg.button_label || cfg.title)}</a>`;
+}
+function showActionPopup(raw){
+  const cfg = getActionConfig(raw);
+  if (!cfg || cfg.mode !== 'popup') return;
+  document.getElementById('action-title').textContent = cfg.title;
+  document.getElementById('action-body').textContent = cfg.body;
+  const link = document.getElementById('action-link');
+  if (cfg.button_url) {
+    link.href = cfg.button_url;
+    link.textContent = cfg.button_label || 'リンクを開く';
+    link.style.display = '';
+  } else {
+    link.style.display = 'none';
+  }
+  document.getElementById('action-overlay').classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+function closeActionPopup(){
+  document.getElementById('action-overlay').classList.remove('open');
+  document.body.style.overflow = '';
+}
 function syncBackLink(){
   const link = document.getElementById('back-link');
   if (!link || !form || !form.account_id) return;
@@ -170,15 +219,18 @@ async function submitConfirmedForm(){
     msg.textContent=json.error||'送信できませんでした';
     return;
   }
-  renderDone();
+  const actionConfig = json.data?.action_config || form.action_config || null;
+  renderDone(actionConfig);
+  showActionPopup(actionConfig);
 }
-function renderDone(){
+function renderDone(actionConfig = null){
   document.getElementById('root').innerHTML = `
     <div class="done">
       <div class="done-mark">✓</div>
       <h2>回答を送信しました</h2>
       <p>${esc(form.title)} への回答を受け付けました。</p>
       <div class="done-actions">
+        ${actionButtonHtml(actionConfig || form.action_config)}
         <a class="btn" href="./view.html?id=${encodeURIComponent(form.account_id)}">主催者ページへ戻る</a>
         <a class="btn secondary" href="../">ホームへ戻る</a>
       </div>

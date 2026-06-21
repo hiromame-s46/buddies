@@ -150,6 +150,8 @@ textarea{min-height:96px;resize:vertical;line-height:1.7}
 .modal-section .field{margin-bottom:0}
 .modal-section .event-options{margin:0}
 .inline-help{font-size:11px;color:var(--muted);line-height:1.6;margin-top:-4px}
+.action-editor{display:grid;gap:12px;border:1px solid var(--line);border-radius:16px;background:#fafafa;padding:14px}
+.action-editor textarea{min-height:120px}
 .event-option-card:has(input:disabled){opacity:.52;cursor:not-allowed;box-shadow:none}
 @media(max-width:560px){.modal-body{padding:14px}.modal-body .field-row{grid-template-columns:minmax(0,1fr)}.modal-section{padding:16px 0 2px}}
 
@@ -444,6 +446,83 @@ function assetUrl(url){
 }
 function tagsText(a){return (a.hashtags||[]).join(', ')}
 function val(id){const el=document.getElementById(id);return el?el.value.trim():'';}
+function defaultActionConfig(kind = 'form'){
+  return {
+    enabled:false,
+    mode:'popup',
+    title:kind === 'event' ? '参加登録が完了しました' : '送信が完了しました',
+    body:kind === 'event' ? 'イベントへの参加登録を受け付けました。' : 'フォームへの回答を受け付けました。',
+    button_label:'',
+    button_url:'',
+    show_button_after_popup:false,
+  };
+}
+function actionConfigFrom(item, kind = 'form'){
+  const base = defaultActionConfig(kind);
+  const cfg = item && item.action_config && typeof item.action_config === 'object' ? item.action_config : {};
+  return {...base, ...cfg, enabled:!!cfg.enabled, mode:['popup','button'].includes(cfg.mode) ? cfg.mode : 'popup'};
+}
+function actionConfigEditorHtml(prefix, cfg, labels){
+  const title = labels.title || '完了後アクション';
+  const note = labels.note || '完了後に表示する案内を設定できます。';
+  return `
+    <div class="modal-section-head"><div class="modal-section-title">${esc(title)}</div><div class="modal-section-note">${esc(note)}</div></div>
+    <div class="event-options">
+      <label class="event-option-card">
+        <input id="${prefix}-action-enabled" type="checkbox" ${cfg.enabled ? 'checked' : ''} onchange="syncActionEditor('${prefix}')">
+        <span class="event-option-body">
+          <span class="event-option-title">カスタム表示を使う</span>
+          <span class="event-option-desc">参加や回答が完了した人に、次の案内・リンク・注意事項を表示できます。</span>
+        </span>
+      </label>
+    </div>
+    <div class="action-editor" id="${prefix}-action-fields">
+      <div class="field">
+        <label>表示モード</label>
+        <select id="${prefix}-action-mode" onchange="syncActionEditor('${prefix}')">
+          <option value="popup" ${cfg.mode === 'popup' ? 'selected' : ''}>ポップアップモード</option>
+          <option value="button" ${cfg.mode === 'button' ? 'selected' : ''}>ボタン表示モード</option>
+        </select>
+        <div class="inline-help" id="${prefix}-action-mode-help"></div>
+      </div>
+      <label class="event-option-card" id="${prefix}-action-popup-button-option">
+        <input id="${prefix}-action-after-popup-button" type="checkbox" ${cfg.show_button_after_popup ? 'checked' : ''}>
+        <span class="event-option-body">
+          <span class="event-option-title">ポップアップ後もボタンを表示する</span>
+          <span class="event-option-desc">オフの場合は完了直後のポップアップだけ表示します。参加を取り消して再参加した場合は再度ポップアップします。</span>
+        </span>
+      </label>
+      <div class="field-row">
+        <div class="field"><label>タイトル</label><input id="${prefix}-action-title" maxlength="80" value="${esc(cfg.title || '')}" placeholder="${esc(defaultActionConfig(prefix === 'ev' ? 'event' : 'form').title)}"></div>
+        <div class="field"><label>ボタン文言（任意）</label><input id="${prefix}-action-button-label" maxlength="80" value="${esc(cfg.button_label || '')}" placeholder="例: 詳細を見る"></div>
+      </div>
+      <div class="field"><label>本文</label><textarea id="${prefix}-action-body" maxlength="500" placeholder="完了した人に伝えたい案内を入力">${esc(cfg.body || '')}</textarea></div>
+      <div class="field"><label>ボタンURL（任意）</label><input id="${prefix}-action-button-url" value="${esc(cfg.button_url || '')}" placeholder="https://..."></div>
+    </div>`;
+}
+function syncActionEditor(prefix){
+  const enabled = document.getElementById(`${prefix}-action-enabled`)?.checked;
+  const fields = document.getElementById(`${prefix}-action-fields`);
+  if (fields) fields.style.display = enabled ? 'grid' : 'none';
+  const mode = val(`${prefix}-action-mode`) || 'popup';
+  const help = document.getElementById(`${prefix}-action-mode-help`);
+  const popupButtonOption = document.getElementById(`${prefix}-action-popup-button-option`);
+  if (popupButtonOption) popupButtonOption.style.display = enabled && mode === 'popup' ? 'flex' : 'none';
+  if (help) help.textContent = mode === 'button'
+    ? '完了後の画面や参加中のイベントページに、設定したリンクボタンを表示します。'
+    : '完了直後に中央ポップアップでタイトル・本文・任意ボタンを表示します。';
+}
+function collectActionConfig(prefix, kind = 'form'){
+  const cfg = defaultActionConfig(kind);
+  cfg.enabled = document.getElementById(`${prefix}-action-enabled`)?.checked || false;
+  cfg.mode = ['popup','button'].includes(val(`${prefix}-action-mode`)) ? val(`${prefix}-action-mode`) : 'popup';
+  cfg.title = val(`${prefix}-action-title`);
+  cfg.body = val(`${prefix}-action-body`);
+  cfg.button_label = val(`${prefix}-action-button-label`);
+  cfg.button_url = val(`${prefix}-action-button-url`);
+  cfg.show_button_after_popup = document.getElementById(`${prefix}-action-after-popup-button`)?.checked || false;
+  return cfg;
+}
 function snsLabel(type){return ({x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',line:'LINE',note:'note',ameba:'Ameba',link:'その他リンク'})[type] || 'その他リンク';}
 function accountSnsLinks(a){
   const links = Array.isArray(a.sns_links) ? a.sns_links.filter(s => s && s.url) : [];
@@ -1304,6 +1383,7 @@ function openEventForm(id = null){
   pendingEventAttachments = [];
   pendingExistingAttachment = null;
   const e = id ? myEvents.find(x => x.id === id) : null;
+  const actionCfg = actionConfigFrom(e, 'event');
   editingFeeItems = Array.isArray(e?.fee_items) ? JSON.parse(JSON.stringify(e.fee_items)) : [];
   document.getElementById('event-modal-title').textContent = id ? 'イベントを編集' : '新しいイベント';
   document.getElementById('event-save-btn').textContent = id ? '更新' : '作成';
@@ -1314,6 +1394,7 @@ function openEventForm(id = null){
         <button type="button" onclick="scrollModalSection('event-basic')">基本情報</button>
         <button type="button" onclick="scrollModalSection('event-place')">日時・会場</button>
         <button type="button" onclick="scrollModalSection('event-entry')">参加受付</button>
+        <button type="button" onclick="scrollModalSection('event-action')">参加後アクション</button>
         <button type="button" onclick="scrollModalSection('event-link')">公開・リンク</button>
         <button type="button" onclick="scrollModalSection('event-media')">画像・資料</button>
       </nav>
@@ -1358,6 +1439,9 @@ function openEventForm(id = null){
           </label>
         </div>
       </section>
+      <section class="modal-section" id="event-action">
+        ${actionConfigEditorHtml('ev', actionCfg, {title:'参加後アクション', note:'参加ボタンを押した後に、案内ボタンまたはポップアップを表示できます。'})}
+      </section>
       <section class="modal-section" id="event-link">
         <div class="modal-section-head"><div class="modal-section-title">公開・案内リンク</div><div class="modal-section-note">一覧への掲載範囲と、チケット等の外部案内を設定します。</div></div>
         <div class="field"><label>公開範囲</label>
@@ -1396,6 +1480,7 @@ function openEventForm(id = null){
   body.scrollTop = 0;
   renderEventFeeItems();
   syncEventCheckinAvailability();
+  syncActionEditor('ev');
 }
 function syncEventCheckinAvailability(){
   const participant = document.getElementById('ev-participant-enabled');
@@ -1441,6 +1526,7 @@ async function saveEvent(){
     external_button_highlight: document.getElementById('ev-ext-highlight')?.checked || false,
     participant_enabled: document.getElementById('ev-participant-enabled')?.checked !== false,
     checkin_enabled: document.getElementById('ev-checkin-enabled')?.checked || false,
+    action_config: collectActionConfig('ev', 'event'),
     visibility: val('ev-visibility') || 'public',
   };
   const action = editingEventId ? 'event_update' : 'event_create';
@@ -1516,6 +1602,7 @@ function renderFormList(){
 function openFormModal(id = null){
   editingFormId = id;
   const f = id ? myForms.find(x => x.id === id) : null;
+  const actionCfg = actionConfigFrom(f, 'form');
   formQuestions = f ? JSON.parse(JSON.stringify(f.questions || [])) : [{id:'q1',label:'',type:'text',required:1,options:[],help:'',placeholder:''}];
   expandedFormQuestion = formQuestions.length ? 0 : null;
   document.getElementById('form-modal-title').textContent = id ? 'フォームを編集' : '新しいフォーム';
@@ -1524,6 +1611,7 @@ function openFormModal(id = null){
       <nav class="builder-jump" aria-label="フォーム作成項目">
         <button type="button" onclick="scrollModalSection('form-basic')">基本情報</button>
         <button type="button" onclick="scrollModalSection('form-rules')">公開・回答条件</button>
+        <button type="button" onclick="scrollModalSection('form-action')">回答後アクション</button>
         <button type="button" onclick="scrollModalSection('form-questions')">質問項目</button>
       </nav>
       <div id="form-editor-msg" class="msg"></div>
@@ -1572,6 +1660,9 @@ function openFormModal(id = null){
           </div>
         </div>
       </section>
+      <section class="form-builder-section" id="form-action">
+        ${actionConfigEditorHtml('form', actionCfg, {title:'回答後アクション', note:'フォーム回答後に、案内ボタンまたはポップアップを表示できます。'})}
+      </section>
       <section class="form-builder-section" id="form-questions">
         <div class="modal-section-head"><div class="modal-section-title">質問項目</div><div class="modal-section-note">質問は最大30件。見出しで回答内容をセクション分けできます。</div></div>
         <div id="form-question-list" class="admin-table"></div>
@@ -1600,6 +1691,7 @@ function openFormModal(id = null){
   `;
   renderFormQuestions();
   syncFormModeSettings();
+  syncActionEditor('form');
   document.getElementById('form-modal').classList.add('open');
   document.body.style.overflow = 'hidden';
   document.getElementById('form-modal-body').scrollTop = 0;
@@ -1707,6 +1799,7 @@ async function saveForm(){
     collect_profile: val('form-collect') === '1', one_response: document.getElementById('form-one-response').checked,
     allow_anonymous_vote: document.getElementById('form-anonymous-vote')?.checked || false,
     show_results: document.getElementById('form-show-results')?.checked || false,
+    action_config: collectActionConfig('form', 'form'),
     questions: formQuestions.map((q,i)=>({...q,id:q.id||('q'+i)})),
   };
   if (editingFormId) payload.id = editingFormId;

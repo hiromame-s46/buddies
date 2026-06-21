@@ -1,8 +1,5 @@
 <?php
 header('Content-Type: text/html; charset=utf-8');
-header('X-Frame-Options: SAMEORIGIN');
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: strict-origin-when-cross-origin');
 $data = file_exists('data.json') ? file_get_contents('data.json') : '{"categories":[]}';
 ?>
 <!DOCTYPE html>
@@ -11,24 +8,6 @@ $data = file_exists('data.json') ? file_get_contents('data.json') : '{"categorie
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Buddies profile ヘルプ</title>
-<meta name="description" content="Buddies profile の使い方やよくある質問を確認できます。">
-<meta property="og:title" content="Buddies profile ヘルプ">
-<meta property="og:description" content="Buddies profile の使い方やよくある質問を確認できます。">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/help/">
-<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
-<meta property="og:site_name" content="Buddies">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="Buddies profile ヘルプ">
-<meta name="twitter:description" content="Buddies profile の使い方やよくある質問を確認できます。">
-<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/help/">
-<link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../icon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="../icon/favicon-16x16.png">
-<link rel="manifest" href="../icon/site.webmanifest">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
 :root{--fg:#111;--muted:#666;--line:#e5e5e5}
@@ -127,7 +106,6 @@ button{border:0;background:none;padding:0;cursor:pointer}
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 <script>
 const DATA = <?= $data ?>;
 const list = document.getElementById('list');
@@ -139,9 +117,7 @@ const aTitle = document.getElementById('aTitle');
 
 const items = DATA.categories.flatMap(c => c.items.map(i => ({...i, cat:c.title})));
 
-function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function nl2br(s){ return esc(s).replace(/\n/g,'<br>'); }
-function safeMarkdown(s){ return DOMPurify.sanitize(marked.parse(s||''), {USE_PROFILES:{html:true}}); }
+function nl2br(s){ return (s||'').replace(/\n/g,'<br>'); }
 
 function render(filter=''){
   list.innerHTML='';
@@ -171,7 +147,7 @@ function render(filter=''){
 }
 function open(it){
   aTitle.textContent = it.title;
-  aBody.innerHTML = safeMarkdown(it.body||'');
+  aBody.innerHTML = marked.parse(it.body||'');
   article.classList.add('on');
   document.body.style.overflow='hidden';
 }

@@ -102,7 +102,13 @@ function avatarInner(p){
 function localDateKey(d=new Date()){return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
 function liveDateObj(date){const m=String(date||'').match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?new Date(Number(m[1]),Number(m[2])-1,Number(m[3])):null;}
 function liveDateLabel(date, weekday){const d=liveDateObj(date);if(!d)return date||'';const w=weekday||['日','月','火','水','木','金','土'][d.getDay()];return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w})`;}
-function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+let ambiguousLiveDates=new Set();
+function legacyLiveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+function liveId(title,date,venue){return ambiguousLiveDates.has(date||'')?legacyLiveId(title,date,venue):(date||'');}
+function liveIdDate(id){return String(id||'').split('|')[0]||'';}
+function normalizeLiveId(id){const date=liveIdDate(id);return date&&!ambiguousLiveDates.has(date)?date:String(id||'');}
+function sameLiveId(a,b){return normalizeLiveId(a)===normalizeLiveId(b);}
+function uniqueLiveIds(ids){const out=[];(Array.isArray(ids)?ids:[]).forEach(id=>{const normalized=normalizeLiveId(id);if(normalized&&!out.some(v=>sameLiveId(v,normalized)))out.push(normalized);});return out;}
 function venueForPerformance(live,perf,index){
   const lines=String(live.detail_text||'').split(/\n+/).map(s=>s.trim()).filter(Boolean);
   let current=(live.venues&&live.venues.length===1)?live.venues[0]:'';
@@ -123,6 +129,11 @@ function venueForPerformance(live,perf,index){
 function buildLiveOptions(raw){
   const items=Array.isArray(raw?.items)?raw.items:(Array.isArray(raw)?raw:[]);
   const out=[];
+  const dateCounts={};
+  items.forEach(live=>{
+    (Array.isArray(live.performances)?live.performances:[]).forEach(perf=>{const date=perf.date||'';if(date)dateCounts[date]=(dateCounts[date]||0)+1;});
+  });
+  ambiguousLiveDates=new Set(Object.keys(dateCounts).filter(date=>dateCounts[date]>1));
   items.forEach(live=>{
     (Array.isArray(live.performances)?live.performances:[]).forEach((perf,index)=>{
       const venue=venueForPerformance(live,perf,index);
@@ -131,8 +142,8 @@ function buildLiveOptions(raw){
   });
   return out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.title).localeCompare(String(b.title)));
 }
-function liveDisplay(id){const live=liveOptions.find(l=>l.id===id);if(live)return live;const [date,title,venue]=String(id||'').split('|');return {id,date,title:title||'ライブ',venue:venue||'',weekday:''};}
-function pastLiveIds(p){const ids=Array.isArray(p?.next_lives)?p.next_lives:[];const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !!live.date&&live.date<today;}).sort((a,b)=>String(liveDisplay(b).date||'').localeCompare(String(liveDisplay(a).date||'')));}
+function liveDisplay(id){const live=liveOptions.find(l=>sameLiveId(l.id,id));if(live)return live;const [date,title,venue]=String(id||'').split('|');return {id:normalizeLiveId(id),date,title:title||'ライブ',venue:venue||'',weekday:''};}
+function pastLiveIds(p){const ids=uniqueLiveIds(p?.next_lives);const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !!live.date&&live.date<today;}).sort((a,b)=>String(liveDisplay(b).date||'').localeCompare(String(liveDisplay(a).date||'')));}
 function historyDateLabel(item){const y=item?.year?`${item.year}`:'';if(!y)return'';const m=item.month?`${String(item.month).padStart(2,'0')}`:'';const d=item.day?`${String(item.day).padStart(2,'0')}`:'';return [y,m,d].filter(Boolean).join('.');}
 function historyEntryDateKey(item){const y=Number(item?.year||0),m=Number(item?.month||0),d=Number(item?.day||0);if(!y)return'';return `${String(y).padStart(4,'0')}-${String(m||0).padStart(2,'0')}-${String(d||0).padStart(2,'0')}`;}
 function historyLiveDateItem(id){

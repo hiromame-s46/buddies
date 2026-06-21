@@ -3,6 +3,7 @@ declare(strict_types=1);
 
 const BUDDIES_BASE_URL = 'https://buddies46.stars.ne.jp/satellite/buddies/';
 const BUDDIES_MEMBER_DATA_PATH = __DIR__ . '/../data/member.json';
+const BUDDIES_LIVE_DATA_PATH = __DIR__ . '/../data/live.json';
 const BUDDIES_CARD_LOGO_PATH = __DIR__ . '/assets/buddies-logo.jpg';
 
 function buddies_db(): PDO {
@@ -72,6 +73,62 @@ function buddies_members(): array {
     return $members = is_array($json) ? $json : [];
 }
 
+function buddies_ambiguous_live_dates(): array {
+    static $dates = null;
+    if ($dates !== null) return $dates;
+    $dates = [];
+    if (!is_file(BUDDIES_LIVE_DATA_PATH)) return $dates;
+    $raw = json_decode((string)file_get_contents(BUDDIES_LIVE_DATA_PATH), true);
+    $items = is_array($raw['items'] ?? null) ? $raw['items'] : (is_array($raw) ? $raw : []);
+    $counts = [];
+    foreach ($items as $live) {
+        foreach ((array)($live['performances'] ?? []) as $perf) {
+            $date = trim((string)($perf['date'] ?? ''));
+            if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $date)) $counts[$date] = ($counts[$date] ?? 0) + 1;
+        }
+    }
+    foreach ($counts as $date => $count) if ($count > 1) $dates[$date] = true;
+    return $dates;
+}
+
+function buddies_live_id_date(string $id): string {
+    $date = explode('|', $id, 2)[0] ?? '';
+    return preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) ? $date : '';
+}
+
+function buddies_normalize_live_id(string $id): string {
+    $id = trim($id);
+    $date = buddies_live_id_date($id);
+    return ($date !== '' && !isset(buddies_ambiguous_live_dates()[$date])) ? $date : $id;
+}
+
+function buddies_live_options(): array {
+    static $options = null;
+    if ($options !== null) return $options;
+    $options = [];
+    if (!is_file(BUDDIES_LIVE_DATA_PATH)) return $options;
+    $raw = json_decode((string)file_get_contents(BUDDIES_LIVE_DATA_PATH), true);
+    $items = is_array($raw['items'] ?? null) ? $raw['items'] : (is_array($raw) ? $raw : []);
+    foreach ($items as $live) {
+        foreach ((array)($live['performances'] ?? []) as $perf) {
+            $date = (string)($perf['date'] ?? '');
+            if ($date === '') continue;
+            $venue = '';
+            $venues = is_array($live['venues'] ?? null) ? $live['venues'] : [];
+            if (count($venues) === 1) $venue = (string)$venues[0];
+            $id = isset(buddies_ambiguous_live_dates()[$date])
+                ? implode('|', [$date, (string)($live['title'] ?? ''), $venue])
+                : $date;
+            $options[buddies_normalize_live_id($id)] = [
+                'date' => $date,
+                'title' => (string)($live['title'] ?? 'ライブ'),
+                'venue' => $venue,
+            ];
+        }
+    }
+    return $options;
+}
+
 function buddies_profile_url(int $uid): string {
     return BUDDIES_BASE_URL . 'view.html?id=' . $uid;
 }
@@ -110,7 +167,14 @@ function buddies_next_live(array $p): ?array {
     $today = (new DateTime('now', new DateTimeZone('Asia/Tokyo')))->format('Y-m-d');
     $items = [];
     foreach (($p['next_lives'] ?? []) as $id) {
-        $parts = explode('|', (string)$id, 3);
+        $id = buddies_normalize_live_id((string)$id);
+        $known = buddies_live_options()[$id] ?? null;
+        if ($known) {
+            if ($known['date'] < $today) continue;
+            $items[] = $known;
+            continue;
+        }
+        $parts = explode('|', $id, 3);
         $date = $parts[0] ?? '';
         if (!preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) || $date < $today) continue;
         $items[] = ['date' => $date, 'title' => $parts[1] ?? 'ライブ', 'venue' => $parts[2] ?? ''];

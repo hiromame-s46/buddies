@@ -2546,13 +2546,14 @@ function contactDeleteButtonHtml(c){
   return `<button class="btn contact-admin-delete ${canDelete ? '' : 'is-disabled'}" type="button" data-delete-contact-id="${id}" ${canDelete ? '' : 'disabled aria-disabled="true"'} title="${esc(title)}">削除</button>`;
 }
 function canSendContactMailNotification(c){
-  return !!(c && c.raw_user_id && c.need_reply && c.reply_channel === 'site' && Array.isArray(c.messages) && c.messages.some(m => m.sender === 'admin'));
+  return !!(c && c.contact_mail_notification_available && Array.isArray(c.messages) && c.messages.some(m => m.sender === 'admin'));
 }
 function contactMailButtonHtml(c){
+  if(!(c && c.contact_mail_notification_available)) return '';
   const enabled = canSendContactMailNotification(c);
   const sent = !!(c && c.email_notification);
   const label = sent ? 'メール通知を再送' : 'メール通知を送信';
-  const title = enabled ? label : 'サイト内返信・ログインユーザー・管理者返信済みの場合に送信できます。';
+  const title = enabled ? label : '管理者返信済みの場合に送信できます。';
   return `<button class="btn ${sent ? '' : 'btn-primary'} ${enabled ? '' : 'is-disabled'}" type="button" data-contact-mail-id="${Number(c && c.id || 0)}" ${enabled ? '' : 'disabled aria-disabled="true"'} title="${esc(title)}">${esc(label)}</button>`;
 }
 async function sendContactMailNotification(id){

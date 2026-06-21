@@ -5893,6 +5893,10 @@ function contactFetchJoined(int $id): ?array {
 function buildContactInquiryData(array $r, bool $includeMessages = false): array {
     $mode = (string)($r['account_mode'] ?? 'guest');
     $isAnonymous = $mode === 'anonymous';
+    $contactMailSub = null;
+    if (!$isAnonymous && !empty($r['user_id']) && !empty($r['need_reply']) && (string)($r['reply_channel'] ?? '') === 'site') {
+        $contactMailSub = contactMailSubscriptionForUser((int)$r['user_id']);
+    }
     $name = 'ログインなし';
     if ($mode === 'anonymous') $name = '匿名';
     elseif (!empty($r['requester_name'])) $name = (string)$r['requester_name'];
@@ -5915,6 +5919,7 @@ function buildContactInquiryData(array $r, bool $includeMessages = false): array
         'dm_service'=>(string)($r['dm_service'] ?? ''),
         'dm_account'=>(string)($r['dm_account'] ?? ''),
         'email_notification'=>!empty($r['email_notification']),
+        'contact_mail_notification_available'=>$contactMailSub !== null,
         'status'=>(string)$r['status'],
         'status_label'=>contactStatusLabelForApi((string)($r['status'] ?? 'open')),
         'admin_replied_at'=>$r['admin_replied_at'] ?? null,
@@ -6296,6 +6301,9 @@ function actionContactAdminReply(): void { ensureContactTables();
 }
 
 function ensureContactMailSubscriptionColumn(): void {
+    static $checked = false;
+    if ($checked) return;
+    $checked = true;
     $cols = tableColumns(db(), 'buddies_todo_email_subscriptions');
     if (!$cols) return;
     if (!in_array('contact_enabled', $cols, true)) {
@@ -6307,12 +6315,15 @@ function ensureContactMailSubscriptionColumn(): void {
 
 function contactMailSubscriptionForUser(int $userId): ?array {
     if ($userId <= 0) return null;
+    static $cache = [];
+    if (array_key_exists($userId, $cache)) return $cache[$userId];
     ensureContactMailSubscriptionColumn();
     $st = db()->prepare("SELECT * FROM buddies_todo_email_subscriptions
         WHERE user_id = ? AND status = 'active' AND COALESCE(contact_enabled, 0) = 1
         LIMIT 1");
     $st->execute([$userId]);
-    return $st->fetch() ?: null;
+    $cache[$userId] = $st->fetch() ?: null;
+    return $cache[$userId];
 }
 
 function latestAdminContactMessage(int $inquiryId): ?array {

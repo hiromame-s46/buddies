@@ -1,18 +1,9 @@
 <?php
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_samesite', 'Lax');
-if (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-  ini_set('session.cookie_secure', '1');
-  header('Strict-Transport-Security: max-age=31536000; includeSubDomains');
-}
-header('X-Frame-Options: SAMEORIGIN');
-header('X-Content-Type-Options: nosniff');
-header('Referrer-Policy: strict-origin-when-cross-origin');
 session_start();
-$ADMIN_PASS = getenv('BUDDIES_HELP_ADMIN_PASSWORD') ?: '';
+$ADMIN_PASS = '447686';
 
 if(isset($_POST['logout'])){ session_destroy(); header('Location: admin.php'); exit; }
-if(isset($_POST['pass'])){ if($ADMIN_PASS !== '' && hash_equals($ADMIN_PASS, (string)$_POST['pass'])){ $_SESSION['admin']=1; } else { $err=$ADMIN_PASS === '' ? '管理パスワードが設定されていません' : 'パスワードが違います'; } }
+if(isset($_POST['pass'])){ if($_POST['pass']===$ADMIN_PASS){ $_SESSION['admin']=1; } else { $err='パスワードが違います'; } }
 
 $dataFile='data.json';
 if(!file_exists($dataFile)) file_put_contents($dataFile, json_encode(['categories'=>[]],JSON_UNESCAPED_UNICODE|JSON_PRETTY_PRINT));
@@ -51,8 +42,6 @@ if(isset($_POST['action']) && !empty($_SESSION['admin'])){
 $data = json_decode(file_get_contents($dataFile), true);
 if(empty($_SESSION['admin'])): ?>
 <!DOCTYPE html><html lang="ja"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>ログイン</title>
-<meta name="robots" content="noindex,nofollow"><meta name="description" content="Buddies profile のヘルプ管理ページです。"><meta property="og:title" content="ヘルプ管理 - Buddies profile"><meta property="og:description" content="Buddies profile のヘルプ管理ページです。"><meta property="og:type" content="website"><meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/help/admin.php"><meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png"><meta property="og:image:width" content="512"><meta property="og:image:height" content="512"><meta property="og:site_name" content="Buddies"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="ヘルプ管理 - Buddies profile"><meta name="twitter:description" content="Buddies profile のヘルプ管理ページです。"><meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png"><link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/help/admin.php">
-<link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png"><link rel="icon" type="image/png" sizes="32x32" href="../icon/favicon-32x32.png"><link rel="icon" type="image/png" sizes="16x16" href="../icon/favicon-16x16.png"><link rel="manifest" href="../icon/site.webmanifest">
 <style>body{margin:0;font-family:-apple-system,sans-serif;background:#f6f6f6;display:grid;place-items:center;min-height:100vh}form{background:#fff;padding:24px;border-radius:16px;width:90%;max-width:340px}input{width:100%;height:48px;font-size:16px;padding:0 12px;border:1px solid #ddd;border-radius:12px}button{width:100%;height:48px;margin-top:12px;border-radius:9999px;background:#111;color:#fff;border:1px solid #111;font-weight:600;font-size:16px}</style>
 </head><body>
 <form method="post"><h2 style="margin:0 0 16px">管理者ログイン</h2><?php if(!empty($err)) echo "<p style=color:#d00>$err</p>";?><input type="password" name="pass" placeholder="パスワード" autofocus><button>ログイン</button></form>
@@ -62,28 +51,8 @@ if(empty($_SESSION['admin'])): ?>
 <head>
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <title>ヘルプ編集</title>
-<meta name="robots" content="noindex,nofollow">
-<meta name="description" content="Buddies profile のヘルプ管理ページです。">
-<meta property="og:title" content="ヘルプ管理 - Buddies profile">
-<meta property="og:description" content="Buddies profile のヘルプ管理ページです。">
-<meta property="og:type" content="website">
-<meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/help/admin.php">
-<meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
-<meta property="og:site_name" content="Buddies">
-<meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="ヘルプ管理 - Buddies profile">
-<meta name="twitter:description" content="Buddies profile のヘルプ管理ページです。">
-<meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<link rel="canonical" href="https://buddies46.stars.ne.jp/satellite/buddies/help/admin.php">
-<link rel="apple-touch-icon" sizes="180x180" href="../icon/apple-touch-icon.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../icon/favicon-32x32.png">
-<link rel="icon" type="image/png" sizes="16x16" href="../icon/favicon-16x16.png">
-<link rel="manifest" href="../icon/site.webmanifest">
 <script src="https://unpkg.com/lucide@latest"></script>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
 <style>
 :root{--line:#e5e5e5}
 *{box-sizing:border-box}html,body{height:100%}
@@ -227,8 +196,7 @@ function delItem(id,cat){
   document.getElementById('delForm').submit();
 }
 function md(a,b){ const s=fBody.selectionStart, e=fBody.selectionEnd, t=fBody.value; fBody.value=t.slice(0,s)+a+t.slice(s,e)+b+t.slice(e); fBody.focus(); fBody.selectionStart=s+a.length; fBody.selectionEnd=e+a.length; updatePreview(); }
-function safeMarkdown(s){ return DOMPurify.sanitize(marked.parse(s||''), {USE_PROFILES:{html:true}}); }
-function updatePreview(){ preview.innerHTML = safeMarkdown(fBody.value||'*プレビューがここに表示されます*'); }
+function updatePreview(){ preview.innerHTML = marked.parse(fBody.value||'*プレビューがここに表示されます*'); }
 fBody.addEventListener('input', updatePreview);
 function beforeSave(){ if(!fCat.value.trim()||!fTitle.value.trim()){ alert('カテゴリとタイトルは必須です'); return false;} return true; }
 function openFormNew(){ document.getElementById('fTitle').textContent='新規記事'; fId.value=''; fCat.value=''; fTitle.value=''; fDesc.value=''; fBody.value=''; updatePreview(); openForm(); }

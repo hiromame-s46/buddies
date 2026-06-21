@@ -2,9 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#ffffff">
-<meta name="color-scheme" content="light">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Buddies profile</title>
 
 <!-- SEO: メタディスクリプション -->
@@ -16,12 +14,10 @@
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://buddies46.stars.ne.jp/satellite/buddies/">
 <meta property="og:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
-<meta property="og:image:width" content="512">
-<meta property="og:image:height" content="512">
 <meta property="og:site_name" content="Buddies">
 
 <!-- Twitter Card -->
-<meta name="twitter:card" content="summary">
+<meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="Buddies profile">
 <meta name="twitter:description" content="櫻坂46ファン同士でプロフィール交換できるBuddies profile。推しメン・好きな曲・SNSをまとめてシェア。">
 <meta name="twitter:image" content="https://buddies46.stars.ne.jp/satellite/buddies/icon/android-chrome-512x512.png">
@@ -36,41 +32,14 @@
 <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
 <style>
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-:root { color-scheme:light; --black:#000; --gray:#666; --light:#f5f5f5; --border:#ddd; --eee:#eee; --bottom-nav-height:118px; }
-html { min-height:100%; background:#fff; }
-body { min-height:100vh; min-height:100svh; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif; background:#fff; color:#111; line-height:1.5; }
-.app-container { max-width:1200px; margin:0 auto; min-height:100vh; min-height:100svh; background:#fff; position:relative; padding:0 16px calc(136px + env(safe-area-inset-bottom)); }
+:root { --black:#000; --gray:#666; --light:#f5f5f5; --border:#ddd; --eee:#eee; }
+body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic",Meiryo,sans-serif; background:#f7f7f7; color:#111; line-height:1.5; }
+.app-container { max-width:1200px; margin:0 auto; min-height:100vh; background:#fff; position:relative; padding:0 16px 110px; }
 header { padding:24px 0 8px; background:#fff; z-index:10; }
 .logo { font-size:24px; font-weight:800; letter-spacing:-0.5px; }
 
 h2.section-title { font-size:17px; font-weight:700; margin:28px 0 12px; }
 .card { background:#fff; border:1px solid var(--eee); border-radius:24px; padding:20px; margin-bottom:14px; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
-.today-card { background:#fff; border:1px solid var(--eee); border-radius:24px; padding:18px; margin:18px 0 14px; box-shadow:0 2px 8px rgba(0,0,0,0.03); }
-.today-head { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:14px; }
-.today-head.is-compact { margin-bottom:0; }
-.home-head-actions { display:flex; align-items:center; gap:8px; flex-shrink:0; }
-.home-collapse-btn { display:inline-flex; align-items:center; justify-content:center; min-width:34px; min-height:34px; border:1px solid #ececec; border-radius:9999px; background:#fff; color:#111; font-size:12px; font-weight:900; cursor:pointer; }
-.home-collapse-btn:active { transform:scale(.98); }
-.home-collapsed-summary { margin-top:10px; padding:9px 12px; border-radius:9999px; background:#fafafa; border:1px solid #f0f0f0; color:#777; font-size:12px; font-weight:800; line-height:1.35; }
-.today-kicker { font-size:11px; font-weight:800; color:#999; letter-spacing:.04em; text-transform:uppercase; }
-.today-title { font-size:20px; font-weight:800; letter-spacing:-.02em; }
-.today-date { font-size:12px; color:#666; margin-top:2px; }
-.today-more { display:inline-flex; align-items:center; justify-content:center; min-height:34px; padding:8px 13px; border-radius:9999px; background:#111; color:#fff; text-decoration:none; font-size:12px; font-weight:700; white-space:nowrap; }
-.today-grid { display:grid; gap:12px; }
-.today-block { border-top:1px solid #f1f1f1; padding-top:13px; }
-.today-block:first-child { border-top:0; padding-top:0; }
-.today-block-head { display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px; }
-.today-block-title { display:flex; align-items:center; gap:7px; font-size:13px; font-weight:800; }
-.today-count { font-size:11px; color:#999; font-weight:700; }
-.today-list { display:grid; gap:8px; }
-.today-item { display:flex; align-items:flex-start; gap:10px; padding:11px 12px; border-radius:16px; background:#fafafa; color:#111; text-decoration:none; border:1px solid #f2f2f2; }
-.today-dot { width:9px; height:9px; border-radius:50%; margin-top:6px; flex-shrink:0; background:#111; }
-.today-thumb { width:44px; height:44px; border-radius:12px; object-fit:cover; object-position:top center; flex-shrink:0; background:#f3f3f3; }
-.today-item-main { flex:1; min-width:0; }
-.today-item-title { font-size:13px; font-weight:800; line-height:1.45; overflow:hidden; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-.today-item-meta { font-size:11px; color:#777; margin-top:3px; line-height:1.45; }
-.today-empty { padding:12px; border-radius:16px; background:#fafafa; color:#999; font-size:12px; text-align:center; }
-.today-toggle { width:100%; min-height:34px; margin-top:8px; border:0; background:#f3f3f3; border-radius:9999px; font-size:12px; font-weight:700; color:#333; cursor:pointer; }
 
 .pill-input, select.pill-input, textarea.pill-input { width:100%; padding:14px 20px; border:1px solid var(--border); border-radius:9999px; font-size:14px; background:#fff; outline:none; transition:border .2s; font-family:inherit; color:#000; -webkit-appearance:none; -moz-appearance:none; appearance:none; }
 .pill-input:focus { border-color:#000; }
@@ -85,7 +54,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .pill-button:disabled { opacity:.5; cursor:not-allowed; }
 
 @media (max-width: 500px) {
-  .app-container { padding:0 12px calc(136px + env(safe-area-inset-bottom)); }
+  .app-container { padding:0 12px 110px; }
   header { padding:16px 0 6px; }
   .logo { font-size:20px; }
   h2.section-title { font-size:15px; margin:20px 0 10px; }
@@ -111,7 +80,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 }
 
 @media (min-width: 501px) and (max-width: 768px) {
-  .app-container { max-width:600px; padding:0 20px calc(136px + env(safe-area-inset-bottom)); }
+  .app-container { max-width:600px; padding:0 20px 110px; }
   header { padding:28px 0 12px; }
   .logo { font-size:24px; }
   h2.section-title { font-size:16px; margin:24px 0 12px; }
@@ -129,7 +98,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 }
 
 @media (min-width: 769px) {
-  .app-container { max-width:1000px; padding:0 40px calc(136px + env(safe-area-inset-bottom)); }
+  .app-container { max-width:1000px; padding:0 40px 110px; }
   header { padding:32px 0 16px; }
   .logo { font-size:28px; }
   h2.section-title { font-size:18px; margin:32px 0 16px; font-weight:700; }
@@ -383,49 +352,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   background:#f2f2f2; color:#666; font-size:10px; font-weight:700;
 }
 .option-chip.selected .option-chip-count { background:rgba(255,255,255,.22); color:#fff; }
-.next-live-edit-list{display:grid;gap:8px}
-.next-live-edit-item{display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap;padding:12px 14px;border:1px solid #eee;border-radius:16px;background:#fafafa}
-.next-live-edit-item input{margin-top:4px;accent-color:#000;flex-shrink:0}
-.next-live-edit-main{min-width:0;flex:1;display:block}
-.next-live-edit-date{font-size:12px;font-weight:800;color:#111;line-height:1.35}
-.next-live-edit-title{display:block;font-size:13px;font-weight:700;color:#222;line-height:1.45;margin-top:2px}
-.next-live-edit-venue{display:block;font-size:11px;color:#777;line-height:1.45;margin-top:2px}
-.next-live-edit-count{margin-left:auto;align-self:center;flex-shrink:0;border-radius:999px;background:#fff;border:1px solid #e8e8e8;padding:4px 8px;font-size:11px;font-weight:800;color:#555}
-.next-live-seat-editor{flex:0 0 calc(100% - 26px);margin:10px 0 0 26px;padding:10px;border-radius:14px;background:#fff;border:1px solid #eee;display:grid;gap:8px}
-.next-live-seat-grid{display:grid;grid-template-columns:minmax(70px,.7fr) minmax(108px,1fr) minmax(138px,1.25fr);gap:8px}
-.next-live-seat-field{display:grid;gap:4px;min-width:0}
-.next-live-seat-field span{font-size:10px;font-weight:900;color:#777;line-height:1}
-.next-live-seat-control{display:flex;align-items:center;gap:5px;min-width:0;border:1px solid #e5e5e5;border-radius:12px;background:#fafafa;padding:0 8px}
-.next-live-seat-control input,.next-live-seat-control select{width:100%;min-width:0;border:0;background:transparent;padding:9px 0;font:inherit;font-size:12px;outline:none}
-.next-live-seat-suffix{font-size:11px;font-weight:900;color:#777;white-space:nowrap;font-style:normal}
-.next-live-seat-note{font-size:10px;color:#999;line-height:1.5}
-@media(max-width:640px){.next-live-seat-grid{grid-template-columns:1fr}.next-live-seat-editor{flex-basis:100%;margin-left:0}}
-.next-live-more-btn{border:1px solid #e5e5e5;background:#fff;border-radius:999px;min-height:38px;font-size:13px;font-weight:800;color:#111;cursor:pointer}
-.next-with-list{display:grid;gap:10px;margin:8px 0 18px}
-.next-with-card{border:1px solid #eee;border-radius:18px;background:#fff;padding:13px 14px;display:grid;gap:8px}
-.next-with-head{display:flex;justify-content:space-between;gap:10px;align-items:flex-start}
-.next-with-date{font-size:11px;font-weight:900;color:#777;white-space:nowrap}
-.next-with-title{font-size:14px;font-weight:900;color:#111;line-height:1.45}
-.next-with-seat{font-size:12px;font-weight:900;color:#333;background:#f7f7f7;border:1px solid #eee;border-radius:999px;width:fit-content;max-width:100%;padding:5px 9px}
-.next-with-buddies{display:grid;gap:6px}
-.next-with-buddy{display:flex;align-items:center;gap:8px;font-size:12px;color:#444}
-.next-with-avatar{width:26px;height:26px;border-radius:50%;background:#eee;overflow:hidden;display:grid;place-items:center;color:#777;font-weight:900;flex-shrink:0}
-.next-with-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center}
-.next-with-proximity{margin-left:auto;color:#777;font-weight:800;font-size:11px}
-.live-filter-group{display:grid;gap:8px}
-.live-filter-group + .live-filter-group{margin-top:18px;padding-top:16px;border-top:1px solid #f0f0f0}
-.live-filter-heading{display:flex;align-items:baseline;justify-content:space-between;gap:10px;margin:0 2px 2px}
-.live-filter-heading-main{font-size:12px;font-weight:900;color:#111;letter-spacing:.02em}
-.live-filter-heading-sub{font-size:11px;font-weight:700;color:#999;white-space:nowrap}
-.live-filter-past .next-live-edit-item{background:#fff;border-color:#f0f0f0}
-.live-filter-past .next-live-edit-date,.live-filter-past .next-live-edit-title{color:#555}
-.live-filter-past .next-live-edit-venue{color:#999}
-.next-live-list{display:grid;gap:8px}
-.next-live-item{display:grid;gap:3px;padding:12px 14px;border:1px solid #ececec;border-radius:16px;background:#fff}
-.next-live-date{font-size:12px;font-weight:900;color:#111}
-.next-live-title{font-size:13px;font-weight:800;color:#222;line-height:1.45}
-.next-live-venue{font-size:12px;color:#666;line-height:1.45}
-.next-live-more{width:100%;margin-top:10px;min-height:38px;border-radius:9999px;border:1px solid #e5e5e5;background:#fff;font:700 12px inherit;color:#111}
 
 /* SNSトグル */
 .filter-toggle-card {
@@ -435,7 +361,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 }
 .filter-toggle-card:hover { border-color:#999; }
 .filter-toggle-card:has(input:checked) { border-color:#000; background:#fafafa; }
-.filter-tab-panel[data-tab="sns"] .filter-toggle-card + .filter-toggle-card { margin-top:10px; }
 .filter-switch {
   position:absolute; opacity:0; pointer-events:none;
 }
@@ -477,8 +402,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .sakulabo-fav-face { width:34px; height:34px; border-radius:50%; border:2px solid #fff; overflow:hidden; background:#fdf2f8; display:grid; place-items:center; color:#f9a8d4; font-size:12px; font-weight:800; box-shadow:0 1px 3px rgba(0,0,0,.06); }
 .sakulabo-fav-face + .sakulabo-fav-face { margin-left:-10px; }
 .sakulabo-fav-face img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
-.sakulabo-fav-thumb { width:50px; height:50px; border-radius:13px; overflow:hidden; background:#eee; flex-shrink:0; border:1px solid #e9e9e9; }
-.sakulabo-fav-thumb img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
 .sakulabo-fav-main { min-width:0; flex:1; }
 .sakulabo-fav-date { font-size:10px; color:#999; font-weight:700; line-height:1.2; margin-bottom:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sakulabo-fav-title { font-size:13px; font-weight:700; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -497,10 +420,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .sakumap-link-note { font-size:12px; color:#777; line-height:1.7; background:#fafafa; border:1px solid #eee; border-radius:14px; padding:12px; }
 .sakumap-link-note a { color:#111; font-weight:800; }
 .history-edit-list { display:grid; gap:10px; max-height:48dvh; overflow:auto; padding-right:2px; }
-.history-edit-item { border:1px solid #eee; border-radius:16px; background:#fff; padding:12px; display:grid; gap:8px; }
+.history-edit-item { border:1px solid #eee; border-radius:16px; background:#fafafa; padding:12px; display:grid; gap:8px; }
 .history-edit-date { display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:8px; align-items:center; }
 .history-edit-item input, .history-edit-item textarea { width:100%; border:1px solid #e5e5e5; border-radius:12px; background:#fff; padding:10px 12px; font:inherit; font-size:14px; }
-.history-edit-item select { width:100%; border:1px solid #e5e5e5; border-radius:12px; background:#fff; padding:10px 12px; font:inherit; font-size:13px; }
 .history-edit-item textarea { min-height:70px; resize:vertical; line-height:1.6; }
 .history-image-row { display:flex; gap:10px; align-items:center; min-width:0; }
 .history-image-preview { width:64px; height:64px; border-radius:14px; border:1px solid #eee; background:#fff; overflow:hidden; display:grid; place-items:center; flex-shrink:0; color:#aaa; font-size:11px; text-align:center; }
@@ -509,21 +431,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .history-image-actions input[type="file"] { padding:8px; font-size:12px; }
 .history-remove-btn { width:38px; height:38px; border-radius:12px; border:none; background:#fff5f5; color:#d33; cursor:pointer; display:grid; place-items:center; }
 .history-empty-note { border:1px dashed #ddd; border-radius:16px; padding:18px; color:#888; font-size:13px; text-align:center; line-height:1.7; }
-.history-page { position:fixed; inset:0; background:#fff; z-index:1002; display:none; overflow:hidden; }
-.history-page.active { display:block; }
-.history-sheet { width:100%; height:100dvh; background:#fff; overflow-y:auto; -webkit-overflow-scrolling:touch; position:relative; }
-.history-page .icon-button { background:transparent; border:none; box-shadow:none; }
-.history-page .history-edit-list { max-height:none; overflow:visible; padding-right:0; }
-.history-page-header { position:sticky; top:0; z-index:3; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 16px; background:rgba(255,255,255,.94); border-bottom:1px solid #eee; backdrop-filter:blur(14px); }
-.history-page-title { font-size:16px; font-weight:800; letter-spacing:-.2px; }
-.history-page-body { max-width:720px; margin:0 auto; padding:18px 16px 104px; display:grid; gap:16px; }
-.history-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; border:1px solid #eee; border-radius:999px; background:#f7f7f7; }
-.history-tab-btn { border:none; border-radius:999px; background:transparent; padding:10px 8px; font-size:13px; font-weight:800; color:#666; cursor:pointer; }
-.history-tab-btn.active { background:#fff; color:#111; box-shadow:0 1px 4px rgba(0,0,0,.06); }
-.history-panel-note { font-size:12px; color:#777; line-height:1.65; background:#fafafa; border:1px solid #f0f0f0; border-radius:14px; padding:10px 12px; }
-.history-panel-note + .next-live-edit-list { margin-top:14px; }
-.history-page-actions { position:fixed; left:0; right:0; bottom:0; z-index:4; display:flex; gap:10px; padding:12px 16px max(12px, env(safe-area-inset-bottom)); background:rgba(255,255,255,.94); border-top:1px solid #eee; backdrop-filter:blur(14px); }
-.history-live-select-label { font-size:11px; color:#777; font-weight:800; margin:2px 2px -2px; }
 
 .stance-btn.active { background:#000; color:#fff; border-color:#000; }
 .stance-pill { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border-radius:9999px; font-size:12px; font-weight:500; background:#eef7ff; color:#0c63a8; border:1px solid #cce4f7; }
@@ -616,12 +523,11 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .header-icon-btn:hover { background:#f2f2f2; color:#000; }
 .header-icon-btn:active { background:#e8e8e8; }
 
-.floating-tabbar { position:fixed; left:0; right:0; bottom:calc(-48px - env(safe-area-inset-bottom)); height:calc(172px + env(safe-area-inset-bottom)); padding:34px max(22px, env(safe-area-inset-left)) calc(66px + env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-right)); background:linear-gradient(to top,#fff 0%,#fff 28%,rgba(255,255,255,.98) 48%,rgba(255,255,255,.9) 74%,rgba(255,255,255,0) 100%); border:0; border-radius:0; box-shadow:none; display:flex; align-items:flex-end; justify-content:center; gap:30px; z-index:100; pointer-events:none; }
-.tab-btn { width:48px; height:48px; flex:0 0 48px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:0; cursor:pointer; transition:color .18s, transform .18s; color:#a8a8a8; background:transparent; border:0; box-shadow:none; text-decoration:none; pointer-events:auto; }
-.tab-btn svg { width:25px; height:25px; stroke:currentColor; fill:none; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
+.floating-tabbar { position:fixed; bottom:20px; left:50%; transform:translateX(-50%); width:90%; max-width:360px; background:#fff; border:1px solid var(--eee); border-radius:9999px; box-shadow:0 4px 12px rgba(0,0,0,0.08); padding:8px; display:flex; justify-content:space-around; z-index:100; }
+.tab-btn { flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:8px 4px; border-radius:9999px; cursor:pointer; transition:all .2s; color:#bbb; background:transparent; border:none; }
+.tab-btn svg { width:24px; height:24px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .tab-btn.active { color:#000; }
-.tab-btn.active svg { stroke-width:2.55; }
-.tab-btn:active { transform:translateY(1px) scale(.96); }
+.tab-btn.active svg { stroke-width:2.3; }
 
 .modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.3); display:flex; align-items:flex-end; justify-content:center; z-index:1000; padding:0; opacity:0; pointer-events:none; transition:opacity .3s; backdrop-filter:blur(2px); }
 .modal-overlay.active { opacity:1; pointer-events:auto; }
@@ -633,26 +539,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
 .edit-page { display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:#fff; z-index:999; overflow-y:auto; animation:slideInUp .3s ease-out; }
 .edit-page.active { display:block; }
-.edit-page.section-mode .edit-header { display:none; }
-.edit-page.section-mode .edit-content { padding-top:18px; }
-.edit-profile-summary { display:flex; align-items:center; gap:14px; padding:8px 4px 20px; border-bottom:1px solid #eee; margin-bottom:18px; }
-.edit-summary-icon { width:62px; height:62px; border-radius:50%; background:#eee; overflow:hidden; display:grid; place-items:center; flex-shrink:0; color:#999; font-size:22px; font-weight:900; }
-.edit-summary-icon img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
-.edit-summary-name { font-size:20px; font-weight:900; letter-spacing:-.02em; line-height:1.2; }
-.edit-summary-sub { font-size:12px; color:#777; font-weight:700; margin-top:4px; }
-.edit-menu { display:grid; gap:10px; padding-bottom:90px; }
-.edit-menu-card { width:100%; border:1px solid #eee; border-radius:18px; background:#fff; padding:15px 16px; display:flex; align-items:center; justify-content:space-between; gap:12px; color:#111; cursor:pointer; text-align:left; }
-.edit-menu-card:active { transform:scale(.99); background:#fafafa; }
-.edit-menu-main { min-width:0; display:grid; gap:3px; }
-.edit-menu-title { font-size:14px; font-weight:900; color:#111; }
-.edit-menu-desc { font-size:12px; color:#777; line-height:1.55; }
-.edit-panel { display:none; padding-bottom:96px; }
-.edit-panel.active { display:block; }
-.edit-panel-heading { display:flex; align-items:center; gap:10px; margin:0 0 16px; }
-.edit-panel-back { width:38px; height:38px; border:none; background:transparent; border-radius:50%; display:grid; place-items:center; cursor:pointer; font-size:20px; color:#111; }
-.edit-panel-title { font-size:18px; font-weight:900; letter-spacing:-.02em; }
-.edit-section-actions { display:none; position:fixed; left:0; right:0; bottom:0; z-index:1000; gap:10px; padding:12px 16px max(12px, env(safe-area-inset-bottom)); background:rgba(255,255,255,.94); border-top:1px solid #eee; backdrop-filter:blur(14px); }
-.edit-page.section-mode .edit-section-actions { display:flex; }
 @keyframes slideInUp { from { transform:translateY(100%); } to { transform:translateY(0); } }
 
 .edit-header { position:relative; top:auto; background:#fff; padding:12px 24px; border:none; display:flex; align-items:center; gap:16px; z-index:10; box-shadow:none; }
@@ -854,8 +740,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="home-page" hidden>
     <div id="my-home-card"></div>
     <div id="verified-home-section"></div>
-    <div id="next-live-with-section"></div>
-    <div id="todays-sakura-section"></div>
     <h2 id="similar-title" class="section-title">おすすめのBuddies</h2>
     <div id="similar-list" class="profile-list"></div>
   </div>
@@ -863,7 +747,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="search-page" hidden>
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲、ライブで検索" style="padding-left:44px; padding-right:44px;">
+      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲で検索" style="padding-left:44px; padding-right:44px;">
       <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" aria-label="クリア">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -921,9 +805,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <button class="tab-btn" data-tab="search" onclick="switchTab('search')" aria-label="検索">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
   </button>
-  <a class="tab-btn" href="./live.html" aria-label="ネクストライブ">
-    <svg viewBox="0 0 24 24"><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-4Z"/><path d="M13 6v2"/><path d="M13 16v2"/><path d="M13 11v2"/></svg>
-  </a>
   <button class="tab-btn" data-tab="mypage" onclick="switchTab('mypage')" aria-label="マイページ">
     <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
   </button>
@@ -937,39 +818,10 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 <!-- Edit Page -->
 <div id="edit-page" class="edit-page">
   <div class="edit-header">
-    <button class="edit-header-back" onclick="requestCloseEdit()">&larr;</button>
+    <button class="edit-header-back" onclick="closeEdit()">&larr;</button>
     <div class="edit-header-title">プロフィール編集</div>
   </div>
   <div class="edit-content">
-    <div id="edit-home-view">
-      <div class="edit-profile-summary">
-        <div id="edit-summary-icon" class="edit-summary-icon"></div>
-        <div style="min-width:0;flex:1;">
-          <div id="edit-summary-name" class="edit-summary-name"></div>
-          <div class="edit-summary-sub">編集する項目を選んでください</div>
-        </div>
-      </div>
-      <div class="edit-menu">
-        <button type="button" class="edit-menu-card" onclick="openEditSection('basic')">
-          <span class="edit-menu-main"><span class="edit-menu-title">基本情報</span><span class="edit-menu-desc">アイコン、名前、生年月日、Bio、SNS、紹介タグ</span></span><i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
-        </button>
-        <button type="button" class="edit-menu-card" onclick="openEditSection('oshi')">
-          <span class="edit-menu-main"><span class="edit-menu-title">My推し</span><span class="edit-menu-desc">推しメン、推し始めた時期、興味、好きな曲</span></span><i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
-        </button>
-        <button type="button" class="edit-menu-card" onclick="openEditSection('next-live')">
-          <span class="edit-menu-main"><span class="edit-menu-title">Next Live</span><span class="edit-menu-desc">参加予定のライブを選択</span></span><i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
-        </button>
-        <button type="button" class="edit-menu-card" onclick="openHistoryPage()">
-          <span class="edit-menu-main"><span class="edit-menu-title">Buddies history</span><span class="edit-menu-desc">思い出と過去に参加したライブ</span></span><i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
-        </button>
-        <button type="button" class="edit-menu-card" onclick="openEditSection('links')">
-          <span class="edit-menu-main"><span class="edit-menu-title">各種連携</span><span class="edit-menu-desc">SakuLabo、SakuMap、SakuMV Quiz</span></span><i data-lucide="chevron-right" style="width:18px;height:18px;"></i>
-        </button>
-      </div>
-    </div>
-
-    <div id="edit-section-basic" class="edit-panel">
-      <div class="edit-panel-heading"><button type="button" class="edit-panel-back" onclick="requestDiscardEditSection()">←</button><div class="edit-panel-title">基本情報</div></div>
     <!-- 基本情報 -->
     <div class="edit-section">
       <div class="edit-section-title">基本情報</div>
@@ -984,7 +836,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
       <div>
         <div class="edit-field-label">表示名 <span style="color:#e00;">*</span></div>
-        <input id="edit-name" class="pill-input" maxlength="64" placeholder="表示名" required oninput="updateEditSummary()">
+        <input id="edit-name" class="pill-input" maxlength="64" placeholder="表示名" required>
       </div>
 
       <div>
@@ -1019,16 +871,19 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       </div>
 
       <div>
+        <div class="edit-field-label">興味タグ（最大5個）</div>
+        <div id="edit-tags-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; min-height:32px;"></div>
+        <button type="button" id="add-tag-btn" class="pill-button" style="width:100%;" onclick="addTag()">+ 興味タグを追加</button>
+      </div>
+
+      <div>
         <div class="edit-field-label">自己紹介</div>
         <textarea id="edit-bio" class="pill-input" style="min-height:80px;" maxlength="500" placeholder="好きなこと、活動エリアなど"></textarea>
       </div>
     </div>
-    </div>
 
-    <div id="edit-section-oshi" class="edit-panel">
-      <div class="edit-panel-heading"><button type="button" class="edit-panel-back" onclick="requestDiscardEditSection()">←</button><div class="edit-panel-title">My推し</div></div>
-      <!-- My推し -->
-      <div class="edit-section">
+    <!-- My推し -->
+    <div class="edit-section">
       <div class="edit-section-title">My推し</div>
 
       <div>
@@ -1046,33 +901,23 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
         <div id="edit-songs-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; min-height:32px;"></div>
         <button type="button" id="add-song-btn" class="pill-button" style="width:100%;" onclick="addSong()">+ 好きな曲を追加</button>
       </div>
-
-      <div>
-        <div class="edit-field-label">興味タグ（最大5個）</div>
-        <div id="edit-tags-container" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px; min-height:32px;"></div>
-        <button type="button" id="add-tag-btn" class="pill-button" style="width:100%;" onclick="addTag()">+ 興味タグを追加</button>
-      </div>
-      </div>
     </div>
 
-    <div id="edit-section-next-live" class="edit-panel">
-      <div class="edit-panel-heading"><button type="button" class="edit-panel-back" onclick="requestDiscardEditSection()">←</button><div class="edit-panel-title">Next Live</div></div>
-      <!-- NEXTライブ -->
-      <div class="edit-section">
-        <div class="edit-section-title">NEXTライブ</div>
-        <div style="font-size:11px; color:#999; line-height:1.7; margin:0 4px;">参加予定の公演を選ぶとプロフィールに表示され、同じ公演に参加するBuddiesがおすすめや検索で見つけやすくなります。</div>
-        <div id="edit-next-lives-list" class="next-live-edit-list"></div>
-      </div>
+    <!-- My Buddies history -->
+    <div class="edit-section">
+      <div class="edit-section-title">My Buddies history</div>
+      <button type="button" class="pill-button" style="width:100%;" onclick="openHistoryEditor()">
+        <i data-lucide="history" style="width:16px;height:16px;"></i>My Buddies historyを編集
+      </button>
+      <div style="font-size:11px; color:#999; line-height:1.7; margin:0 4px;">参加したライブ、イベント、Buddiesとしての思い出を最新順でプロフィールに表示します。</div>
     </div>
 
-    <div id="edit-section-links" class="edit-panel">
-      <div class="edit-panel-heading"><button type="button" class="edit-panel-back" onclick="requestDiscardEditSection()">←</button><div class="edit-panel-title">各種連携</div></div>
-      <!-- SNS -->
-      <div id="edit-sns-section" class="edit-section">
+    <!-- SNS -->
+    <div class="edit-section">
       <div class="edit-section-title">SNS</div>
 
       <div>
-        <div class="edit-field-label">SNSリンク（最大10個）</div>
+        <div class="edit-field-label">SNSリンク（最大4個）</div>
         <div id="edit-sns-container" style="display:flex; flex-direction:column; gap:8px; margin-bottom:8px;"></div>
         <button type="button" id="add-sns-btn" class="pill-button" style="width:100%;">+ SNSリンクを追加</button>
       </div>
@@ -1105,7 +950,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
 
     <!-- SakuLabo連携 -->
-    <div id="edit-sakulabo-section" class="edit-section">
+    <div class="edit-section">
       <div class="edit-section-title">SakuLabo連携</div>
       <label class="sakulabo-toggle-card">
         <input id="edit-show-favorite-mimis" class="filter-switch" type="checkbox" onchange="syncSakulaboToggle(this)">
@@ -1127,7 +972,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
     </div>
 
     <!-- SakuMap連携 -->
-    <div id="edit-sakumap-section" class="edit-section">
+    <div class="edit-section">
       <div class="edit-section-title">SakuMap連携</div>
       <label id="sakumap-stamps-toggle-card" class="sakulabo-toggle-card" style="display:none;">
         <input id="edit-show-sakumap-stamps" class="filter-switch" type="checkbox" onchange="syncSakulaboToggle(this)">
@@ -1154,10 +999,9 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
         </span>
       </label>
     </div>
-    </div>
-    <div class="edit-section-actions">
-      <button type="button" class="pill-button" style="flex:1;" onclick="requestDiscardEditSection()">キャンセル</button>
-      <button type="button" class="pill-button black" style="flex:1;" onclick="saveEditSection()">保存して戻る</button>
+    <div style="display:flex; gap:8px; margin-top:8px; margin-bottom:80px;">
+      <button type="button" class="pill-button" style="flex:1;" onclick="closeEdit()">キャンセル</button>
+      <button type="button" class="pill-button black" style="flex:1;" onclick="saveEdit()">保存</button>
     </div>
   </div>
 </div>
@@ -1250,34 +1094,17 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   </div>
 </div>
 
-<!-- My Buddies history Page -->
-<div id="history-page" class="history-page">
-  <div class="history-sheet">
-  <div class="history-page-header">
-    <button type="button" class="icon-button" onclick="requestSaveHistoryAndReturn()" aria-label="戻る">
-      <i data-lucide="arrow-left" style="width:20px;height:20px;"></i>
-    </button>
-    <div class="history-page-title">My Buddies history</div>
-    <button type="button" class="pill-button black" style="min-height:36px;padding:0 14px;font-size:12px;" onclick="saveHistoryAndReturn()">保存して戻る</button>
-  </div>
-  <div class="history-page-body">
-    <div class="history-tabs">
-      <button type="button" class="history-tab-btn" data-history-tab="history" onclick="switchHistoryTab('history')">History</button>
-      <button type="button" class="history-tab-btn active" data-history-tab="past-lives" onclick="switchHistoryTab('past-lives')">参加したライブ</button>
+<!-- My Buddies history Modal -->
+<div id="history-modal" class="input-modal-overlay" onclick="if(event.target===this)closeHistoryEditor()">
+  <div class="input-modal" style="padding-bottom:24px;">
+    <div class="input-modal-title" style="margin-bottom:6px;">My Buddies history</div>
+    <div style="font-size:12px;color:#777;line-height:1.6;margin-bottom:14px;">最新の思い出が上に表示されます。月日を入れない場合は年だけで保存できます。</div>
+    <div id="history-edit-list" class="history-edit-list"></div>
+    <button type="button" class="pill-button" style="width:100%;margin-top:12px;" onclick="addHistoryItem()">+ 思い出を追加</button>
+    <div class="input-modal-buttons" style="margin-top:12px;">
+      <button class="pill-button" style="flex:1;" onclick="closeHistoryEditor()">キャンセル</button>
+      <button class="pill-button black" style="flex:1;" onclick="saveHistory()">保存</button>
     </div>
-    <section id="history-panel-history" class="history-tab-panel" hidden>
-      <div class="history-panel-note">最新の思い出が上に表示されます。参加したライブと紐づけると、日付や公演名を記録しやすくなります。</div>
-      <div id="history-edit-list" class="history-edit-list"></div>
-      <button type="button" class="pill-button" style="width:100%;margin-top:12px;" onclick="addHistoryItem()">+ 思い出を追加</button>
-    </section>
-    <section id="history-panel-past-lives" class="history-tab-panel">
-      <div class="history-panel-note">過去に参加したライブを選択できます。My next live に登録していた公演は、終了後も同じ保存データからこちらに表示されます。</div>
-      <div id="past-live-edit-list" class="next-live-edit-list"></div>
-    </section>
-  </div>
-  <div class="history-page-actions">
-    <button class="pill-button black" style="flex:1;" onclick="saveHistoryAndReturn()">保存して戻る</button>
-  </div>
   </div>
 </div>
 
@@ -1296,8 +1123,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       <button type="button" class="filter-tab" data-tab="member" onclick="switchFilterTab('member')">メンバー</button>
       <button type="button" class="filter-tab" data-tab="tags"   onclick="switchFilterTab('tags')">興味</button>
       <button type="button" class="filter-tab" data-tab="songs"  onclick="switchFilterTab('songs')">楽曲</button>
-      <button type="button" class="filter-tab" data-tab="lives"  onclick="switchFilterTab('lives')">ライブ</button>
-      <button type="button" class="filter-tab" data-tab="sns"    onclick="switchFilterTab('sns')">公開設定</button>
+      <button type="button" class="filter-tab" data-tab="sns"    onclick="switchFilterTab('sns')">SNS</button>
     </div>
 
     <div class="filters-modal-body">
@@ -1344,66 +1170,15 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
         </div>
       </div>
 
-      <!-- ライブタブ -->
-      <div class="filter-tab-panel" data-tab="lives" hidden>
-        <div class="filter-section-label">選択中</div>
-        <div id="lives-filter-chips" class="filter-pill-list"></div>
-        <div class="filter-section-label">検索条件</div>
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:14px;">
-          <label class="filter-mode-card">
-            <input type="radio" name="live-mode" value="or" checked onchange="applyLiveFilterMode()">
-            <div>
-              <div class="filter-mode-title">いずれか</div>
-              <div class="filter-mode-sub">1公演でも一致</div>
-            </div>
-          </label>
-          <label class="filter-mode-card">
-            <input type="radio" name="live-mode" value="and" onchange="applyLiveFilterMode()">
-            <div>
-              <div class="filter-mode-title">全公演一致</div>
-              <div class="filter-mode-sub">すべて参加済み/予定</div>
-            </div>
-          </label>
-        </div>
-        <div class="filter-section-label">ライブ</div>
-        <div id="lives-options-list" class="next-live-edit-list">
-          <div class="option-loading">読み込み中…</div>
-        </div>
-      </div>
-
-      <!-- 公開設定タブ -->
+      <!-- SNSタブ -->
       <div class="filter-tab-panel" data-tab="sns" hidden>
-        <div class="filter-section-label">表示中のコンテンツ</div>
+        <div class="filter-section-label">SNS設定</div>
         <label class="filter-toggle-card">
           <div style="flex:1;">
             <div style="font-size:14px; font-weight:700; color:#000;">SNS設定済みのみ表示</div>
             <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">SNSリンクを登録しているユーザーに絞り込みます</div>
           </div>
-          <input type="checkbox" id="sns-set-filter" class="filter-switch" onchange="applyVisibilityFilters()">
-          <span class="filter-switch-track" aria-hidden="true"></span>
-        </label>
-        <label class="filter-toggle-card">
-          <div style="flex:1;">
-            <div style="font-size:14px; font-weight:700; color:#000;">過去のライブを設定済み</div>
-            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">参加したライブを登録しているユーザーに絞り込みます</div>
-          </div>
-          <input type="checkbox" id="past-live-set-filter" class="filter-switch" onchange="applyVisibilityFilters()">
-          <span class="filter-switch-track" aria-hidden="true"></span>
-        </label>
-        <label class="filter-toggle-card">
-          <div style="flex:1;">
-            <div style="font-size:14px; font-weight:700; color:#000;">さくみみを表示中</div>
-            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">お気に入りさくみみを公開しているユーザーに絞り込みます</div>
-          </div>
-          <input type="checkbox" id="mimis-display-filter" class="filter-switch" onchange="applyVisibilityFilters()">
-          <span class="filter-switch-track" aria-hidden="true"></span>
-        </label>
-        <label class="filter-toggle-card">
-          <div style="flex:1;">
-            <div style="font-size:14px; font-weight:700; color:#000;">ブログを表示中</div>
-            <div style="font-size:12px; color:#666; margin-top:3px; line-height:1.5;">お気に入りブログを公開しているユーザーに絞り込みます</div>
-          </div>
-          <input type="checkbox" id="blogs-display-filter" class="filter-switch" onchange="applyVisibilityFilters()">
+          <input type="checkbox" id="sns-set-filter" class="filter-switch" onchange="applySnsFilter()">
           <span class="filter-switch-track" aria-hidden="true"></span>
         </label>
       </div>
@@ -1486,7 +1261,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 const API = './api.php';
 const BLOG_DATA   = '../data/blogs.json';
 const MEMBER_DATA = '../data/member.json';
-const LIVE_DATA   = '../data/live.json';
 
 // ── 状態 ────────────────────────────────────────────────
 function shuffleArray(arr) {
@@ -1525,8 +1299,6 @@ const PREF_ROMAJI = {
 
 let me = null;              // ログインユーザー（DB）
 let memberMap = {};         // メンバーJSONマップ
-let memberDataLoaded = false;
-let liveOptions = [];        // live.json から生成した公演一覧
 let allBlogs = [];          // ブログJSON
 let verifiedAccounts = [];  // コミュニティアカウント（協力・イベント）
 let exchangedProfiles = []; // 交換済み（DBから）
@@ -1549,192 +1321,20 @@ let iconFavOnlyActive = false;  // お気に入りのみモード
 const ICON_PAGE_SIZE = 60;
 let selectedIconUrl = null;
 let restoringProfileReturn = false;
-let historyActiveTab = 'past-lives';
-let editNextLivesExpanded = false;
-let filterPastLivesExpanded = false;
-let editNextLiveSeats = {};
 
 const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
 const DEVELOPER_IDS = new Set([1]); // 開発者アカウント uid
 
 function esc(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function localDateKey(d = new Date()) {
-  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
-}
-function liveDateObj(date) {
-  const m = String(date || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null;
-}
-function liveDateLabel(date, weekday) {
-  const d = liveDateObj(date);
-  if (!d) return date || '';
-  const w = weekday || ['日','月','火','水','木','金','土'][d.getDay()];
-  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${w})`;
-}
-let ambiguousLiveDates = new Set();
-function legacyLiveId(title, date, venue) {
-  return [date || '', title || '', venue || ''].join('|');
-}
-function liveId(title, date, venue) {
-  return ambiguousLiveDates.has(date || '') ? legacyLiveId(title, date, venue) : (date || '');
-}
-function liveIdDate(id) {
-  return String(id || '').split('|')[0] || '';
-}
-function normalizeLiveId(id) {
-  const date = liveIdDate(id);
-  return date && !ambiguousLiveDates.has(date) ? date : String(id || '');
-}
-function sameLiveId(a, b) {
-  return normalizeLiveId(a) === normalizeLiveId(b);
-}
-function hasLiveId(ids, id) {
-  return Array.isArray(ids) && ids.some(v => sameLiveId(v, id));
-}
-function uniqueLiveIds(ids) {
-  const out = [];
-  (Array.isArray(ids) ? ids : []).forEach(id => {
-    const normalized = normalizeLiveId(id);
-    if (normalized && !out.some(v => sameLiveId(v, normalized))) out.push(normalized);
-  });
-  return out;
-}
-function liveSeat(seats, id) {
-  if (!seats || typeof seats !== 'object') return undefined;
-  if (seats[id]) return seats[id];
-  const normalized = normalizeLiveId(id);
-  if (seats[normalized]) return seats[normalized];
-  const found = Object.keys(seats).find(k => sameLiveId(k, id));
-  return found ? seats[found] : undefined;
-}
-function normalizeLiveSeats(seats, ids) {
-  const allowed = uniqueLiveIds(ids);
-  const out = {};
-  Object.entries(seats && typeof seats === 'object' ? seats : {}).forEach(([id, seat]) => {
-    const normalized = normalizeLiveId(id);
-    if (allowed.some(v => sameLiveId(v, normalized)) && seatHasValue(seat)) out[normalized] = cleanSeatInfo(seat);
-  });
-  return out;
-}
-function venueForPerformance(live, perf, index) {
-  const detailLines = String(live.detail_text || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
-  const targetDate = String(perf.date || '').replace(/-/g, '.').replace(/\.0/g, '.');
-  let currentVenue = (live.venues && live.venues.length === 1) ? live.venues[0] : '';
-  let found = '';
-  for (const line of detailLines) {
-    const looksDate = /\d{4}[./]\d{1,2}[./]\d{1,2}/.test(line);
-    if (!looksDate) currentVenue = line.replace(/^＠/, '').trim();
-    if (looksDate) {
-      const normalized = line.replace(/[年月]/g, '.').replace(/日/g, '').replace(/-/g, '.');
-      const parts = String(perf.date || '').split('-').map(n => String(Number(n)));
-      const compact = `${parts[0]}.${parts[1]}.${parts[2]}`;
-      if (normalized.includes(compact) || normalized.includes(targetDate)) {
-        found = currentVenue;
-        break;
-      }
-    }
-  }
-  return found || (Array.isArray(live.venues) && live.venues[index] ? live.venues[index] : (live.venues || []).join(' / '));
-}
-function buildLiveOptions(raw) {
-  const items = Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw) ? raw : []);
-  const out = [];
-  const dateCounts = {};
-  items.forEach(live => {
-    const perfs = Array.isArray(live.performances) ? live.performances : [];
-    perfs.forEach(perf => {
-      const date = perf.date || '';
-      if (date) dateCounts[date] = (dateCounts[date] || 0) + 1;
-    });
-  });
-  ambiguousLiveDates = new Set(Object.keys(dateCounts).filter(date => dateCounts[date] > 1));
-  items.forEach(live => {
-    const perfs = Array.isArray(live.performances) ? live.performances : [];
-    perfs.forEach((perf, index) => {
-      const venue = venueForPerformance(live, perf, index);
-      const id = liveId(live.title, perf.date, venue);
-      out.push({
-        id,
-        title: live.title || 'ライブ',
-        date: perf.date,
-        weekday: perf.weekday || '',
-        venue,
-        url: live.url || '',
-      });
-    });
-  });
-  out.sort((a,b) => String(a.date).localeCompare(String(b.date)) || String(a.title).localeCompare(String(b.title)));
-  return out;
-}
-function isFutureLive(live) {
-  return !live?.date || live.date >= localDateKey();
-}
-function isPastLive(live) {
-  return !!live?.date && live.date < localDateKey();
-}
-function futureLiveOptions() {
-  return liveOptions.filter(isFutureLive);
-}
-function pastLiveOptions() {
-  return liveOptions.filter(isPastLive).sort((a,b) => String(b.date).localeCompare(String(a.date)) || String(a.title).localeCompare(String(b.title)));
-}
-function liveById(id) {
-  const normalized = normalizeLiveId(id);
-  return liveOptions.find(l => sameLiveId(l.id, normalized)) || null;
-}
-function liveDisplay(id) {
-  const live = liveById(id);
-  if (live) return live;
-  const [date, title, venue] = String(id || '').split('|');
-  return { id, date, title: title || 'ライブ', venue: venue || '', weekday:'' };
-}
-function seatAreaLabel(v) { return v === 'arena' ? 'アリーナ' : v === 'stand' ? 'スタンド' : ''; }
-function cleanSeatInfo(seat = {}) {
-  const floor = String(seat.floor || '').replace(/[^0-9]/g, '').slice(0, 2);
-  const area = ['arena','stand'].includes(seat.area) ? seat.area : '';
-  const block = String(seat.block || '').replace(/[^a-zA-Z0-9]/g, '').toUpperCase().slice(0, 12);
-  return { floor, area, block };
-}
-function seatHasValue(seat) { const s = cleanSeatInfo(seat); return !!(s.floor || s.area || s.block); }
-function seatLabel(seat) {
-  const s = cleanSeatInfo(seat);
-  return [s.floor ? `${s.floor}階` : '', seatAreaLabel(s.area), s.block ? `${s.block}ブロック` : ''].filter(Boolean).join(' / ');
-}
-function blockNumber(block) {
-  const m = String(block || '').match(/^([A-Z]+)(\d+)$/);
-  return m ? { prefix:m[1], n:Number(m[2]) } : null;
-}
-function seatProximityLabel(a, b) {
-  const sa = cleanSeatInfo(a), sb = cleanSeatInfo(b);
-  if (sa.block && sb.block && sa.block === sb.block) return '同じブロック';
-  const ba = blockNumber(sa.block), bb = blockNumber(sb.block);
-  if (ba && bb && ba.prefix === bb.prefix && Math.abs(ba.n - bb.n) === 1) return '隣のブロック';
-  if (sa.area && sb.area && sa.area === sb.area) return '同じエリア';
-  if (sa.floor && sb.floor && sa.floor === sb.floor) return '同じ階';
-  return '';
-}
-function nextLiveIds(profile) {
-  const ids = Array.isArray(profile?.next_lives) ? profile.next_lives : [];
-  return ids
-    .filter(id => isFutureLive(liveDisplay(id)))
-    .sort((a, b) => String(liveDisplay(a).date || '9999-99-99').localeCompare(String(liveDisplay(b).date || '9999-99-99')));
-}
-function pastLiveIds(profile) {
-  const ids = Array.isArray(profile?.next_lives) ? profile.next_lives : [];
-  return ids
-    .filter(id => isPastLive(liveDisplay(id)))
-    .sort((a,b) => String(liveDisplay(b).date || '').localeCompare(String(liveDisplay(a).date || '')));
-}
 
 // ── 初期化 ───────────────────────────────────────────────
 async function init() {
   try {
-    const [meRes, bRes, mRes, vRes, liveRes] = await Promise.all([
+    const [meRes, bRes, mRes, vRes] = await Promise.all([
       fetch(API + '?action=auth_me', { credentials:'include' }),
       fetch(BLOG_DATA + '?_=' + Date.now()).catch(() => null),
       fetch(MEMBER_DATA + '?_=' + Date.now()).catch(() => null),
       fetch(API + '?action=verified_public_list&limit=6', { credentials:'include' }).catch(() => null),
-      fetch(LIVE_DATA + '?_=' + Date.now()).catch(() => null),
     ]);
     const meJson = await meRes.json();
     me = meJson.ok ? meJson.data : null;
@@ -1744,7 +1344,6 @@ async function init() {
       try {
         const rawM = await mRes.json();
         const arr = Array.isArray(rawM) ? rawM : Object.values(rawM || {});
-        memberDataLoaded = true;
         arr.forEach(m => { if (m && m.name) memberMap[m.name] = m; });
       } catch(e){}
     }
@@ -1753,9 +1352,6 @@ async function init() {
         const vJson = await vRes.json();
         if (vJson.ok) verifiedAccounts = vJson.data || [];
       } catch(e){}
-    }
-    if (liveRes) {
-      try { liveOptions = buildLiveOptions(await liveRes.json()); } catch(e){ liveOptions = []; }
     }
     // 認証データを me に合体（重複は認証側を優先）
     if (me) me = mergeVerifiedOntoProfile(me);
@@ -1767,7 +1363,6 @@ async function init() {
     await loadUserData();
     showMainUI();
     if (prepareFavoriteRedirectLogin()) return;
-    if (prepareLiveRedirectLogin()) return;
   } else {
     showMainUI();
     // 共有URLで開いた場合はログインモーダルを出さずそのまま閲覧させる。
@@ -1776,7 +1371,6 @@ async function init() {
     const hashParams = new URLSearchParams(location.hash.slice(1));
     const hasSharedUid = qs.get('uid') || hashParams.get('uid') || sessionStorage.getItem('buddies_shared_uid');
     if (prepareFavoriteRedirectLogin()) return;
-    if (prepareLiveRedirectLogin()) return;
     if (!hasSharedUid) showAuthModal();
   }
 
@@ -1822,12 +1416,6 @@ function showMainUI() {
   renderAll();
   restoreProfileReturnState();
   if (restoringProfileReturn) return;
-  const tabParam = new URLSearchParams(location.search).get('tab');
-  if (['home','search','mypage'].includes(tabParam)) {
-    history.replaceState(null, '', location.pathname);
-    switchTab(tabParam);
-    return;
-  }
   const savedTab = sessionStorage.getItem('buddies_active_tab');
   if (['home','search','mypage'].includes(savedTab)) {
     switchTab(savedTab);
@@ -1856,42 +1444,6 @@ function getFavoriteRedirectUrl() {
   try { decoded = decodeURIComponent(raw); } catch(e) {}
   if (!/^view\.html\?id=\d+$/.test(decoded)) return '';
   return decoded;
-}
-function getLiveRedirectUrl() {
-  const qs = new URLSearchParams(location.search);
-  const raw = qs.get('live_redirect') || sessionStorage.getItem('buddies_live_redirect') || '';
-  if (!raw) return '';
-  let decoded = raw;
-  try { decoded = decodeURIComponent(raw); } catch(e) {}
-  if (!/^live\.html(\?live=.+)?$/.test(decoded)) return '';
-  return decoded;
-}
-function clearLiveRedirectParam() {
-  sessionStorage.removeItem('buddies_live_redirect');
-  const qs = new URLSearchParams(location.search);
-  if (!qs.has('live_redirect')) return;
-  qs.delete('live_redirect');
-  const rest = qs.toString();
-  history.replaceState(null, '', location.pathname + (rest ? '?' + rest : '') + location.hash);
-}
-function redirectAfterLiveLogin() {
-  const redirect = getLiveRedirectUrl();
-  if (!redirect || !me) return false;
-  clearLiveRedirectParam();
-  location.href = redirect;
-  return true;
-}
-function prepareLiveRedirectLogin() {
-  const redirect = getLiveRedirectUrl();
-  if (!redirect) return false;
-  sessionStorage.setItem('buddies_live_redirect', redirect);
-  if (me) {
-    redirectAfterLiveLogin();
-  } else {
-    showAuthModal();
-    switchAuthTab('login');
-  }
-  return true;
 }
 function clearFavoriteRedirectParam() {
   sessionStorage.removeItem('buddies_favorite_redirect');
@@ -1946,7 +1498,6 @@ async function doLogin() {
     renderAll();
     toast('ログインしました');
     if (redirectAfterFavoriteLogin()) return;
-    if (redirectAfterLiveLogin()) return;
     reopenPendingProfile();
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
@@ -2006,16 +1557,13 @@ function renderHeaderAuth() {
 }
 
 // ── タブ切り替え ─────────────────────────────────────────
-function scrollAppToTop() {
-  window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-}
 function switchTab(tab) {
   document.getElementById('home-page').hidden = tab !== 'home';
   document.getElementById('search-page').hidden = tab !== 'search';
   document.getElementById('mypage-page').hidden = tab !== 'mypage';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   sessionStorage.setItem('buddies_active_tab', tab);
-  if (!restoringProfileReturn) scrollAppToTop();
+  if (!restoringProfileReturn) window.scrollTo(0,0);
   if (tab === 'search') {
     setupSearchObserver();
     if (!searchOffset && !searchLoading) resetAndLoadSearch();
@@ -2039,9 +1587,9 @@ function restoreProfileReturnState() {
   restoringProfileReturn = true;
   switchTab(state.tab);
   requestAnimationFrame(() => {
-    scrollAppToTop();
+    window.scrollTo(0, 0);
     setTimeout(() => {
-      scrollAppToTop();
+      window.scrollTo(0, 0);
       restoringProfileReturn = false;
     }, 80);
   });
@@ -2052,7 +1600,7 @@ function renderAll() { renderHome(); renderMyPage(); }
 // ── アバター表示 ─────────────────────────────────────────
 function getAvatarUrl(profile) {
   if (profile?.user_icon) return profile.user_icon;
-  const firstOshi = getOshiList(profile)[0];
+  const firstOshi = profile?.oshi_member || profile?.oshi?.[0]?.name;
   if (firstOshi && memberMap[firstOshi]?.image) return memberMap[firstOshi].image;
   return null;
 }
@@ -2065,16 +1613,13 @@ function avatarHtml(profile, size=56, fontSize=24) {
   return `<div class="avatar-circle" style="width:${size}px;height:${size}px;background:${color};font-size:${fontSize}px;">${esc((profile.display_name||profile.name||'？')[0])}</div>`;
 }
 function getOshi1Color(profile) {
-  const name = getOshiList(profile)[0];
+  const name = profile?.oshi_member || profile?.oshi?.[0]?.name;
   if (name && memberMap[name]?.color) return memberMap[name].color;
-  return '#ffb7c5';
+  return profile?.oshi?.[0]?.color || '#ffb7c5';
 }
 function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
 function isDeveloperAccount(p) { return p && DEVELOPER_IDS.has(Number(p.id)); }
 function currentVerifiedAccount() { return me && me.verified_account ? me.verified_account : null; }
-function collaboratorVerifiedAccounts() {
-  return Array.isArray(me?.verified_collaborator_accounts) ? me.verified_collaborator_accounts : [];
-}
 // コミュニティアカウントが紐づくユーザー（developer 含む）。通常編集を禁止し、管理ページで編集させる
 function isVerifiedManagedUser(p) {
   if (!p) return false;
@@ -2202,168 +1747,12 @@ function getOshiList(p) {
   if (p.oshi_member_2) list.push(p.oshi_member_2);
   if (p.oshi_member_3) list.push(p.oshi_member_3);
   if (!list.length && p.oshi) p.oshi.forEach(o => { if(o.name) list.push(o.name); });
-  return list.filter(name => !memberDataLoaded || !!memberMap[name]);
+  return list;
 }
-function isKnownMemberName(name) {
-  return !!name && (!memberDataLoaded || !!memberMap[name]);
-}
-
-// ── Today's 櫻坂 ───────────────────────────────────────
-const TODAY_DATA_PATHS = {
-  schedule: '../data/schedule.json',
-  blogs: '../data/blogs.json',
-  mimis: '../data/sakumimi_data.json'
-};
-const TODAY_WEEKDAYS = ['日','月','火','水','木','金','土'];
-let todaysSakuraLoaded = false;
-let todaysSakuraExpanded = {};
-let todaysSakuraPayload = null;
-let lastNextLiveWithProfiles = [];
-
-function getHomeCollapseState(key) {
-  try { return localStorage.getItem(`buddies_home_collapsed_${key}`) === '1'; }
-  catch (_) { return false; }
-}
-function setHomeCollapseState(key, value) {
-  try { localStorage.setItem(`buddies_home_collapsed_${key}`, value ? '1' : '0'); }
-  catch (_) {}
-}
-function toggleHomeCollapse(key) {
-  const next = !getHomeCollapseState(key);
-  setHomeCollapseState(key, next);
-  if (key === 'today' && todaysSakuraPayload) renderTodaysSakuraCard(todaysSakuraPayload);
-  if (key === 'next-live-with') renderNextLiveWithBuddies(lastNextLiveWithProfiles);
-}
-
-function todayLocalDateString(d = new Date()) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-function compactDateLabel(dateStr) {
-  const d = parseLocalDate(dateStr);
-  if (!d) return dateStr;
-  return `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} (${TODAY_WEEKDAYS[d.getDay()]})`;
-}
-function parseLocalDate(str) {
-  if (!str) return null;
-  const m = String(str).match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})/);
-  if (!m) return null;
-  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
-}
-function normalizeDateKey(str) {
-  const d = parseLocalDate(str);
-  if (!d) return '';
-  return todayLocalDateString(d);
-}
-async function loadJsonSafe(path) {
-  try {
-    const res = await fetch(path, { cache:'no-store' });
-    if (!res.ok) throw new Error('fetch failed');
-    const json = await res.json();
-    return Array.isArray(json) ? json : [];
-  } catch(e) {
-    return [];
-  }
-}
-function sakumimiOfficialUrl(item, allMimis) {
-  const latest = (allMimis || []).reduce((max, ep) => Math.max(max, Number(ep.episode) || 0), 0);
-  const ep = Number(item?.episode) || 0;
-  const perPage = window.innerWidth >= 1024 ? 12 : 10;
-  const page = Math.max(0, Math.floor((latest - ep) / perPage));
-  return `https://sakurazaka46.com/s/s46/diary/radio/list?ima=0000&page=${page}&cd=radio`;
-}
-function renderTodayItems(items, type, limit = 4) {
-  if (!items.length) return '<div class="today-empty">今日はまだありません</div>';
-  const expanded = !!todaysSakuraExpanded[type];
-  const shown = expanded ? items : items.slice(0, limit);
-  const html = shown.map(item => {
-    if (type === 'schedule') {
-      const links = Array.isArray(item.links) ? item.links : [];
-      const body = `<span class="today-dot"></span><span class="today-item-main"><span class="today-item-title">${esc(item.title || item.name || 'スケジュール')}</span><span class="today-item-meta">${esc([item.time, item.category, (item.members || []).join(' · ')].filter(Boolean).join(' / '))}</span></span>`;
-      return links[0] ? `<a class="today-item" href="${esc(links[0])}" target="_blank" rel="noopener">${body}</a>` : `<div class="today-item">${body}</div>`;
-    }
-    if (type === 'blogs') {
-      const title = (item.title || '').trim() || `${item.member || 'メンバー'}のブログ`;
-      return `<a class="today-item" href="${esc(item.link || '../sakulabo/blog/')}" target="_blank" rel="noopener">
-        ${item.thumb ? `<img class="today-thumb" src="${esc(item.thumb)}" alt="">` : '<span class="today-thumb"></span>'}
-        <span class="today-item-main"><span class="today-item-title">${esc(title)}</span><span class="today-item-meta">${esc(item.member || '')}</span></span>
-      </a>`;
-    }
-    const url = item._officialUrl || '../sakulabo/sakumimi/';
-    return `<a class="today-item" href="${esc(url)}" target="_blank" rel="noopener">
-      <span class="today-dot"></span><span class="today-item-main"><span class="today-item-title">EP.${esc(item.episode || '')}</span><span class="today-item-meta">${esc((item.members || []).join(' · ') || 'さくみみ')}</span></span>
-    </a>`;
-  }).join('');
-  const toggle = items.length > limit ? `<button class="today-toggle" type="button" onclick="toggleTodaysSakura('${type}')">${expanded ? '閉じる' : `すべて表示 (${items.length})`}</button>` : '';
-  return `<div class="today-list">${html}</div>${toggle}`;
-}
-function renderTodaysSakuraCard(payload) {
-  const wrap = document.getElementById('todays-sakura-section');
-  if (!wrap) return;
-  todaysSakuraPayload = payload;
-  const dateKey = payload.dateKey;
-  const collapsed = getHomeCollapseState('today');
-  const blocks = [
-    ['schedule', 'スケジュール', payload.schedule],
-    ['blogs', 'ブログ', payload.blogs],
-    ['mimis', 'さくみみ', payload.mimis],
-  ].filter(([, , items]) => Array.isArray(items) && items.length).map(([type, title, items]) => `
-        <div class="today-block">
-          <div class="today-block-head"><div class="today-block-title">${title}</div><div class="today-count">${items.length}件</div></div>
-          ${renderTodayItems(items, type)}
-        </div>`).join('');
-  const total = ['schedule','blogs','mimis'].reduce((sum, key) => sum + ((payload[key] || []).length), 0);
-  wrap.innerHTML = `
-    <section class="today-card">
-      <div class="today-head ${collapsed ? 'is-compact' : ''}">
-        <div>
-          <div class="today-kicker">Today's Sakurazaka</div>
-          <div class="today-title">Today’s 櫻坂</div>
-          <div class="today-date">${esc(compactDateLabel(dateKey))}</div>
-        </div>
-        <div class="home-head-actions">
-          <a class="today-more" href="./days.html?date=${encodeURIComponent(dateKey)}">日別で見る</a>
-          <button class="home-collapse-btn" type="button" onclick="toggleHomeCollapse('today')" aria-label="${collapsed ? 'Today’s 櫻坂を開く' : 'Today’s 櫻坂を折りたたむ'}">${collapsed ? '＋' : '−'}</button>
-        </div>
-      </div>
-      ${collapsed ? `<div class="home-collapsed-summary">${total ? `${total}件の情報があります` : '今日の情報はまだありません'}</div>` : (blocks ? `<div class="today-grid">${blocks}</div>` : '<div class="today-empty">今日の情報はまだありません</div>')}
-    </section>`;
-}
-function toggleTodaysSakura(type) {
-  todaysSakuraExpanded[type] = !todaysSakuraExpanded[type];
-  loadTodaysSakura(true);
-}
-async function loadTodaysSakura(forceRender = false) {
-  const wrap = document.getElementById('todays-sakura-section');
-  if (!wrap || (todaysSakuraLoaded && !forceRender)) return;
-  if (!forceRender) wrap.innerHTML = '<div class="today-card"><div class="today-empty">Today’s 櫻坂を読み込み中…</div></div>';
-  const dateKey = todayLocalDateString();
-  const [scheduleAll, blogsAll, mimisAll] = await Promise.all([
-    loadJsonSafe(TODAY_DATA_PATHS.schedule),
-    loadJsonSafe(TODAY_DATA_PATHS.blogs),
-    loadJsonSafe(TODAY_DATA_PATHS.mimis)
-  ]);
-  const targetDate = parseLocalDate(dateKey);
-  const shouldShowMimi = targetDate && [2, 5].includes(targetDate.getDay());
-  const mimis = shouldShowMimi ? mimisAll.filter(m => normalizeDateKey(m.date) === dateKey).map(m => ({ ...m, _officialUrl: sakumimiOfficialUrl(m, mimisAll) })) : [];
-  const payload = {
-    dateKey,
-    schedule: scheduleAll.filter(s => normalizeDateKey(s.date) === dateKey).sort((a,b) => String(a.time || '').localeCompare(String(b.time || ''))),
-    blogs: blogsAll.filter(b => normalizeDateKey(b.date) === dateKey),
-    mimis
-  };
-  todaysSakuraLoaded = true;
-  renderTodaysSakuraCard(payload);
-}
-window.toggleTodaysSakura = toggleTodaysSakura;
-window.toggleHomeCollapse = toggleHomeCollapse;
 
 // ── ホーム ───────────────────────────────────────────────
 async function renderHome() {
   const card = document.getElementById('my-home-card');
-  loadTodaysSakura();
   if (!me) {
     setHomeSimilarVisible(true);
     card.innerHTML = `<div class="card" style="margin-top:16px; text-align:center;">
@@ -2371,8 +1760,6 @@ async function renderHome() {
       <button class="pill-button black" onclick="showAuthModal()">ログイン / 新規登録</button>
     </div>`;
     renderVerifiedHome();
-    const nextWith = document.getElementById('next-live-with-section');
-    if (nextWith) nextWith.innerHTML = '';
     document.getElementById('similar-list').innerHTML = '';
     return;
   }
@@ -2400,18 +1787,8 @@ async function renderHome() {
   const list = document.getElementById('similar-list');
   list.innerHTML = '<div class="empty-state">読み込み中…</div>';
   try {
-    const [res, liveRes] = await Promise.all([
-      fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' }),
-      fetch(API + '?action=buddies_live_participants&limit=1000', { credentials:'include' }).catch(() => null)
-    ]);
+    const res = await fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' });
     const json = await res.json();
-    let liveParticipants = [];
-    if (liveRes) {
-      try {
-        const liveJson = await liveRes.json();
-        if (liveJson.ok && Array.isArray(liveJson.data)) liveParticipants = liveJson.data;
-      } catch(e) {}
-    }
     const similars = (json.ok && json.data) ? json.data.map(mergeVerifiedOntoProfile) : [];
     // コミュニティアカウントを混ぜる（重複ユーザーは既にマージ済み）
     const existingUids = new Set(similars.map(p => Number(p.id)));
@@ -2420,7 +1797,6 @@ async function renderHome() {
       .map(verifiedAsProfile)
       .filter(Boolean);
     const merged = intermixVerifiedProfiles(verifiedExtras, similars);
-    renderNextLiveWithBuddies(liveParticipants);
     if (merged.length) {
       list.innerHTML = merged.map(p => profileMini(p, {showReasons: true})).join('');
       list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(merged[i], false));
@@ -2429,46 +1805,6 @@ async function renderHome() {
     }
   } catch(e) { list.innerHTML = '<div class="empty-state">読み込みに失敗しました</div>'; }
   if(window.lucide) window.lucide.createIcons();
-}
-
-function renderNextLiveWithBuddies(profiles) {
-  lastNextLiveWithProfiles = Array.isArray(profiles) ? profiles : [];
-  let wrap = document.getElementById('next-live-with-section');
-  if (!wrap) {
-    wrap = document.createElement('div');
-    wrap.id = 'next-live-with-section';
-    document.getElementById('todays-sakura-section')?.before(wrap);
-  }
-  wrap.innerHTML = '';
-  const liveIds = nextLiveIds(me);
-  if (!liveIds.length) return;
-  const collapsed = getHomeCollapseState('next-live-with');
-  const blocks = liveIds.slice(0, 3).map(id => {
-    const live = liveDisplay(id);
-    const count = profiles.filter(p => hasLiveId(p.next_lives, id)).length;
-    const mySeat = liveSeat(me?.next_live_seats, id);
-    return `<a class="next-with-card" href="./live.html?live=${encodeURIComponent(id)}" style="text-decoration:none;color:inherit;">
-      <div class="next-with-head">
-        <div>
-          <div class="next-with-title">${esc(live.title)}</div>
-          ${live.venue ? `<div class="next-live-edit-venue">${esc(live.venue)}</div>` : ''}
-        </div>
-        <div class="next-with-date">${esc(liveDateLabel(live.date, live.weekday))}</div>
-      </div>
-      <div class="next-with-seat">${count}人参加予定${seatHasValue(mySeat) ? ` / ${esc(seatLabel(mySeat))}` : ''}</div>
-    </a>`;
-  }).join('');
-  wrap.innerHTML = `<section class="today-card">
-    <div class="today-head ${collapsed ? 'is-compact' : ''}">
-      <div>
-        <div class="today-kicker">Seat Match</div>
-        <div class="today-title">NEXT LIVE with Buddies</div>
-        <div class="today-date">${liveIds.length}公演に座席情報を登録中</div>
-      </div>
-      <button class="home-collapse-btn" type="button" onclick="toggleHomeCollapse('next-live-with')" aria-label="${collapsed ? 'NEXT LIVE with Buddiesを開く' : 'NEXT LIVE with Buddiesを折りたたむ'}">${collapsed ? '＋' : '−'}</button>
-    </div>
-    ${collapsed ? `<div class="home-collapsed-summary">${liveIds.length}公演の参加人数を確認できます</div>` : `<div class="next-with-list">${blocks}</div>`}
-  </section>`;
 }
 
 function setHomeSimilarVisible(show) {
@@ -2538,11 +1874,13 @@ function verifiedCard(a) {
 }
 function accountTypeLabel(type) {
   if (type === 'developer') return '開発者アカウント';
-  return 'コミュニティアカウント';
+  return type === 'official' ? 'コミュニティパートナー' : 'コミュニティアカウント';
 }
 function accountTypeDefinition(type) {
   if (type === 'developer') return 'Buddies profile の開発・運営を行うアカウントです。';
-  return 'イベント、フォーム、掲示板を運営できるコミュニティアカウントです。';
+  return type === 'official'
+    ? '極めて信頼性の高いことを証明するアカウントです。'
+    : '開発者が認証したアカウントです。';
 }
 
 // ── 検索 ─────────────────────────────────────────────────
@@ -2555,12 +1893,7 @@ let searchOshis = [];          // 選択された推しメン名
 let searchOshiMode = 'or';     // 'or' or 'and'
 let searchTags = [];           // 興味タグ
 let searchSongs = [];          // 楽曲
-let searchLiveIds = [];        // NEXTライブ
-let searchLiveMode = 'or';     // 'or' or 'and'
 let searchHasSns = false;      // SNS設定済みのみ
-let searchHasPastLive = false; // 参加したライブ設定済みのみ
-let searchShowsMimis = false;  // さくみみ公開中のみ
-let searchShowsBlogs = false;  // ブログ公開中のみ
 let searchActiveTab = 'member';
 let searchObserver = null;
 let filterOptionsCache = null; // { tags:[{name,count}], songs:[...] }
@@ -2578,15 +1911,7 @@ function buildSearchParams(offset) {
   if (searchOshiMode === 'and') params.set('oshi_mode', 'and');
   if (searchTags.length) params.set('tags', searchTags.join(','));
   if (searchSongs.length) params.set('songs', searchSongs.join(','));
-  if (searchLiveIds.length) params.set('live_ids', searchLiveIds.join(','));
-  if (searchLiveIds.length && searchLiveMode === 'and') params.set('live_mode', 'and');
   if (searchHasSns) params.set('has_sns', '1');
-  if (searchHasPastLive) {
-    params.set('has_past_live', '1');
-    params.set('past_live_ids', JSON.stringify(pastLiveOptions().map(live => live.id)));
-  }
-  if (searchShowsMimis) params.set('shows_mimis', '1');
-  if (searchShowsBlogs) params.set('shows_blogs', '1');
   return params.toString();
 }
 
@@ -2655,7 +1980,7 @@ function appendSearchResults(items, isFirst) {
   const results = document.getElementById('search-results');
   // コミュニティアカウントを 1ページ目に混ぜる（クエリ・フィルター無しの時のみ）
   if (isFirst) {
-    const noFilters = !lastSearchQuery && !searchOshis.length && !searchTags.length && !searchSongs.length && !searchLiveIds.length && !searchHasSns && !searchHasPastLive && !searchShowsMimis && !searchShowsBlogs;
+    const noFilters = !lastSearchQuery && !searchOshis.length && !searchTags.length && !searchSongs.length && !searchHasSns;
     if (noFilters && verifiedAccounts.length) {
       const existingUids = new Set(items.map(p => Number(p.id)));
       const verifiedExtras = verifiedAccounts
@@ -2702,7 +2027,7 @@ function setupSearchObserver() {
         if (!searchPage.hidden) loadMoreSearch();
       }
     }
-  }, { root: null, rootMargin: '300px 0px' });
+  }, { rootMargin: '300px 0px' });
   searchObserver.observe(sentinel);
 }
 
@@ -2720,7 +2045,6 @@ async function loadFilterOptions(force = false) {
   if (filterOptionsCache && !force) {
     renderTagsOptions();
     renderSongsOptions();
-    renderLivesOptions();
     return;
   }
   if (filterOptionsLoading) return;
@@ -2729,17 +2053,16 @@ async function loadFilterOptions(force = false) {
     const res = await fetch(API + '?action=buddies_filter_options', { credentials:'include' });
     const json = await res.json();
     if (json.ok) {
-      filterOptionsCache = json.data || { tags:[], songs:[], lives:[] };
+      filterOptionsCache = json.data || { tags:[], songs:[] };
     } else {
-      filterOptionsCache = { tags:[], songs:[], lives:[] };
+      filterOptionsCache = { tags:[], songs:[] };
     }
   } catch (e) {
-    filterOptionsCache = { tags:[], songs:[], lives:[] };
+    filterOptionsCache = { tags:[], songs:[] };
   }
   filterOptionsLoading = false;
   renderTagsOptions();
   renderSongsOptions();
-  renderLivesOptions();
 }
 
 function renderTagsOptions() {
@@ -2809,70 +2132,6 @@ function renderSongsOptions() {
     });
   });
 }
-
-function liveCountMap() {
-  const counts = {};
-  (filterOptionsCache?.lives || []).forEach(it => { counts[it.name] = it.count || 0; });
-  return counts;
-}
-function liveFilterItemHtml(live, counts) {
-  const sel = hasLiveId(searchLiveIds, live.id);
-  const rawCount = Object.prototype.hasOwnProperty.call(counts, live.id) ? counts[live.id] : 0;
-  const count = Number.isFinite(Number(rawCount)) ? Number(rawCount) : 0;
-  return `<label class="next-live-edit-item">
-    <input type="checkbox" value="${esc(live.id)}" ${sel ? 'checked' : ''} onchange="toggleLiveFilter(this.value, this.checked)">
-    <span class="next-live-edit-main">
-      <span class="next-live-edit-date">${esc(liveDateLabel(live.date, live.weekday))}</span>
-      <span class="next-live-edit-title">${esc(live.title)}</span>
-      ${live.venue ? `<span class="next-live-edit-venue">${esc(live.venue)}</span>` : ''}
-    </span>
-    <span class="next-live-edit-count">${esc(count)}人</span>
-  </label>`;
-}
-function renderLivesOptions() {
-  const wrap = document.getElementById('lives-options-list');
-  if (!wrap) return;
-  if (!liveOptions.length) {
-    wrap.innerHTML = '<div class="option-empty">ライブ情報が見つかりません</div>';
-    return;
-  }
-  const counts = liveCountMap();
-  const future = futureLiveOptions();
-  const past = pastLiveOptions();
-  const selectedPastIds = new Set(searchLiveIds.filter(id => isPastLive(liveDisplay(id))));
-  const compactPast = past.filter((live, index) => filterPastLivesExpanded || index < 5 || selectedPastIds.has(live.id));
-  const futureHtml = future.length
-    ? `<div class="live-filter-group">
-        <div class="live-filter-heading"><span class="live-filter-heading-main">今後のライブ</span><span class="live-filter-heading-sub">${future.length}件</span></div>
-        ${future.map(live => liveFilterItemHtml(live, counts)).join('')}
-      </div>`
-    : '<div class="option-empty">今後のライブ情報が見つかりません</div>';
-  const pastHtml = past.length
-    ? `<div class="live-filter-group live-filter-past">
-        <div class="live-filter-heading"><span class="live-filter-heading-main">過去のライブ</span><span class="live-filter-heading-sub">${past.length}件</span></div>
-        ${compactPast.map(live => liveFilterItemHtml(live, counts)).join('')}
-        ${!filterPastLivesExpanded && compactPast.length < past.length ? `<button type="button" class="next-live-more-btn" onclick="filterPastLivesExpanded=true;renderLivesOptions()">過去のライブをもっと見る（${past.length - compactPast.length}件）</button>` : ''}
-      </div>`
-    : '';
-  wrap.innerHTML = futureHtml + pastHtml;
-}
-function applyLiveFilterMode() {
-  const checked = document.querySelector('input[name="live-mode"]:checked');
-  searchLiveMode = checked && checked.value === 'and' ? 'and' : 'or';
-  renderLivesFilterChips();
-  renderFilterTabsCounts();
-  resetAndLoadSearch();
-}
-function toggleLiveFilter(id, checked) {
-  if (checked) {
-    if (!hasLiveId(searchLiveIds, id) && searchLiveIds.length < 20) searchLiveIds.push(normalizeLiveId(id));
-  } else {
-    searchLiveIds = searchLiveIds.filter(v => !sameLiveId(v, id));
-  }
-  renderLivesFilterChips();
-  renderFilterTabsCounts();
-  resetAndLoadSearch();
-}
 function closeFiltersModal() {
   document.getElementById('filters-modal').classList.remove('active');
   document.body.style.overflow = '';
@@ -2889,7 +2148,6 @@ function switchFilterTab(tab) {
   if (tab === 'member') renderOshiFilterChips();
   if (tab === 'tags')   { renderTagsFilterChips(); renderTagsOptions(); }
   if (tab === 'songs')  { renderSongsFilterChips(); renderSongsOptions(); }
-  if (tab === 'lives')  { renderLivesFilterChips(); renderLivesOptions(); }
 }
 
 function renderFilterTabsCounts() {
@@ -2897,18 +2155,17 @@ function renderFilterTabsCounts() {
     member: searchOshis.length,
     tags:   searchTags.length,
     songs:  searchSongs.length,
-    lives:  searchLiveIds.length,
-    sns:    [searchHasSns, searchHasPastLive, searchShowsMimis, searchShowsBlogs].filter(Boolean).length,
+    sns:    searchHasSns ? 1 : 0,
   };
   document.querySelectorAll('.filter-tab').forEach(btn => {
     const c = counts[btn.dataset.tab] || 0;
-    const label = ({member:'メンバー', tags:'興味', songs:'楽曲', lives:'ライブ', sns:'公開設定'})[btn.dataset.tab] || '';
+    const label = ({member:'メンバー', tags:'興味', songs:'楽曲', sns:'SNS'})[btn.dataset.tab] || '';
     btn.innerHTML = c > 0
       ? `${esc(label)}<span class="filter-tab-count">${c}</span>`
       : esc(label);
   });
 
-  const total = counts.member + counts.tags + counts.songs + counts.lives + counts.sns;
+  const total = counts.member + counts.tags + counts.songs + counts.sns;
   const badge = document.getElementById('filters-active-count');
   const trigger = document.getElementById('filters-open-btn');
   const clearBtn = document.getElementById('filters-clear-btn');
@@ -2943,14 +2200,7 @@ function renderFiltersSummary() {
   }
   searchTags.forEach((t, i) => items.push({ key:`tag-${i}`, label:`#${t}`, type:'tag', index:i }));
   searchSongs.forEach((s, i) => items.push({ key:`song-${i}`, label:`♪ ${s}`, type:'song', index:i }));
-  searchLiveIds.forEach((id, i) => {
-    const live = liveDisplay(id);
-    items.push({ key:`live-${i}`, label:`${liveDateLabel(live.date, live.weekday)} ${live.title}`, type:'live', index:i });
-  });
   if (searchHasSns) items.push({ key:'sns', label:'SNS設定済み', type:'sns' });
-  if (searchHasPastLive) items.push({ key:'past-live', label:'過去ライブ設定済み', type:'past-live' });
-  if (searchShowsMimis) items.push({ key:'mimis', label:'さくみみ表示中', type:'mimis' });
-  if (searchShowsBlogs) items.push({ key:'blogs', label:'ブログ表示中', type:'blogs' });
 
   if (!items.length) {
     wrap.style.display = 'none';
@@ -2965,8 +2215,7 @@ function renderFiltersSummary() {
     const handler = it.type === 'member' ? `removeOshiAt(${it.index})`
                   : it.type === 'tag'    ? `removeTagsFilter(${it.index})`
                   : it.type === 'song'   ? `removeSongsFilter(${it.index})`
-                  : it.type === 'live'   ? `removeLiveFilter(${it.index})`
-                  : `clearVisibilityFilter('${it.type}')`;
+                  : `toggleSnsFilter(false)`;
     return `<span class="summary-pill">${esc(it.label)}<span class="remove" onclick="${handler}" aria-label="削除">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"><path d="M18 6 6 18M6 6l12 12"/></svg>
     </span></span>`;
@@ -2979,40 +2228,22 @@ function removeOshiAt(i) {
   renderFilterTabsCounts();
   resetAndLoadSearch();
 }
-function clearVisibilityFilter(type) {
-  if (type === 'sns') searchHasSns = false;
-  if (type === 'past-live') searchHasPastLive = false;
-  if (type === 'mimis') searchShowsMimis = false;
-  if (type === 'blogs') searchShowsBlogs = false;
-  syncVisibilityFilterInputs();
+function toggleSnsFilter(v) {
+  searchHasSns = !!v;
+  const cb = document.getElementById('sns-set-filter');
+  if (cb) cb.checked = searchHasSns;
   renderFilterTabsCounts();
   resetAndLoadSearch();
-}
-
-function syncVisibilityFilterInputs() {
-  const states = {
-    'sns-set-filter': searchHasSns,
-    'past-live-set-filter': searchHasPastLive,
-    'mimis-display-filter': searchShowsMimis,
-    'blogs-display-filter': searchShowsBlogs,
-  };
-  Object.entries(states).forEach(([id, checked]) => {
-    const input = document.getElementById(id);
-    if (input) input.checked = checked;
-  });
 }
 
 function renderAllFilterChips() {
   renderOshiFilterChips();
   renderTagsFilterChips();
   renderSongsFilterChips();
-  renderLivesFilterChips();
   renderTagsOptions();
   renderSongsOptions();
-  renderLivesOptions();
-  syncVisibilityFilterInputs();
-  const liveRadio = document.querySelector(`input[name="live-mode"][value="${searchLiveMode}"]`);
-  if (liveRadio) liveRadio.checked = true;
+  const cb = document.getElementById('sns-set-filter');
+  if (cb) cb.checked = searchHasSns;
   renderFilterTabsCounts();
 }
 
@@ -3020,17 +2251,9 @@ function clearAllFilters() {
   searchOshis = [];
   searchTags = [];
   searchSongs = [];
-  searchLiveIds = [];
-  searchLiveMode = 'or';
-  filterPastLivesExpanded = false;
   searchHasSns = false;
-  searchHasPastLive = false;
-  searchShowsMimis = false;
-  searchShowsBlogs = false;
   const orRadio = document.querySelector('input[name="oshi-mode"][value="or"]');
   if (orRadio) orRadio.checked = true;
-  const liveOrRadio = document.querySelector('input[name="live-mode"][value="or"]');
-  if (liveOrRadio) liveOrRadio.checked = true;
   searchOshiMode = 'or';
   renderAllFilterChips();
   resetAndLoadSearch();
@@ -3162,35 +2385,10 @@ function removeSongsFilter(i) {
   resetAndLoadSearch();
 }
 
-function renderLivesFilterChips() {
-  const wrap = document.getElementById('lives-filter-chips');
-  if (!wrap) return;
-  if (!searchLiveIds.length) {
-    wrap.innerHTML = '<div style="font-size:12px; color:#888; padding:6px 2px;">参加予定・参加済みのライブで絞り込めます</div>';
-    return;
-  }
-  const modeLabel = searchLiveMode === 'and' ? '<span class="filter-pill">全公演一致</span>' : '';
-  wrap.innerHTML = modeLabel + searchLiveIds.map((id, i) => {
-    const live = liveDisplay(id);
-    return `<span class="filter-pill">${esc(liveDateLabel(live.date, live.weekday))}<span class="remove" onclick="removeLiveFilter(${i})" aria-label="削除">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
-    </span></span>`;
-  }).join('');
-}
-function removeLiveFilter(i) {
-  searchLiveIds.splice(i, 1);
-  renderLivesFilterChips();
-  renderLivesOptions();
-  renderFilterTabsCounts();
-  resetAndLoadSearch();
-}
-
-// ── 公開設定フィルター ───────────────────────────────────
-function applyVisibilityFilters() {
-  searchHasSns = !!document.getElementById('sns-set-filter')?.checked;
-  searchHasPastLive = !!document.getElementById('past-live-set-filter')?.checked;
-  searchShowsMimis = !!document.getElementById('mimis-display-filter')?.checked;
-  searchShowsBlogs = !!document.getElementById('blogs-display-filter')?.checked;
+// ── SNSフィルター ────────────────────────────────────────
+function applySnsFilter() {
+  const cb = document.getElementById('sns-set-filter');
+  searchHasSns = !!(cb && cb.checked);
   renderFilterTabsCounts();
   resetAndLoadSearch();
 }
@@ -3207,9 +2405,6 @@ function calcMatchReasons(p) {
   const myTags = Array.isArray(me.tags) ? me.tags : [];
   const cTags  = Array.isArray(p.tags)  ? p.tags  : [];
   if (myTags.some(t => cTags.includes(t))) reasons.push('興味が一緒');
-  const myLives = nextLiveIds(me);
-  const cLives = nextLiveIds(p);
-  if (myLives.some(id => hasLiveId(cLives, id))) reasons.push('同じ公演に参加予定');
   if (me.location && p.location && me.location === p.location) reasons.push('都道府県が一緒');
   if (me.follow_stance && p.follow_stance && me.follow_stance === p.follow_stance) reasons.push('SNSスタンスが一緒');
   return reasons;
@@ -3249,7 +2444,7 @@ function renderMyPage() {
       <button class="pill-button black" style="flex:1;" onclick="openQR('show')"><i data-lucide="qr-code" style="width:16px;height:16px;"></i>QRで交換</button>
     </div>
     ${isDeveloperAccount(me) ? `<div style="display:flex; gap:8px; margin-top:8px;">
-      <a class="pill-button" style="flex:1; text-decoration:none; background:#fff8e1; border-color:#f3e3a8; color:#7c5600;" href="./admin.html"><i data-lucide="settings" style="width:16px;height:16px;"></i>コミュニティ管理</a>
+      <a class="pill-button" style="flex:1; text-decoration:none; background:#fff8e1; border-color:#f3e3a8; color:#7c5600;" href="./admin.html"><i data-lucide="settings" style="width:16px;height:16px;"></i>コミュニティアカウントを管理</a>
     </div>` : ''}
     <div style="display:flex; gap:8px; margin-top:8px;">
       <button class="pill-button" style="flex:1;" onclick="copyProfileURL()"><i data-lucide="link" style="width:16px;height:16px;"></i>URL</button>
@@ -3335,7 +2530,7 @@ async function loadMyEvents(){
     <div class="ev-cover">${e.cover_url ? `<img src="${esc(assetUrl(e.cover_url))}" alt="">` : '🎫'}</div>
     <div class="ev-body">
       <div class="ev-t">${esc(e.title)}</div>
-      <div class="ev-m">${esc(fmt(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}${e.is_checked_in ? ' ・ ✓ 受付済み' : ''}</div>
+      <div class="ev-m">${esc(fmt(e.starts_at))}${e.venue ? ' ・ ' + esc(e.venue) : ''}</div>
     </div>
   </a>`;
   if (joined.length) { wrapJ.innerHTML = joined.map(card).join(''); titleJ.hidden = false; }
@@ -3393,29 +2588,7 @@ function renderVerifiedAccountMyPage() {
 
 function renderVerifiedMyPage() {
   const wrap = document.getElementById('verified-mypage-section');
-  if (!wrap) return;
-  const accounts = collaboratorVerifiedAccounts();
-  if (!accounts.length) { wrap.innerHTML = ''; return; }
-  wrap.innerHTML = `<section class="card verified-mypage-card" style="margin-top:16px;">
-    <div>
-      <div class="verified-label">共同運営者</div>
-      <div class="verified-mypage-title" style="margin-top:8px;">共同運営アカウント</div>
-      <div class="verified-mypage-note">参加中のコミュニティアカウントを一般アカウントから開けます。</div>
-    </div>
-    <div class="profile-list">
-      ${accounts.map(a => {
-        const icon = a.icon_url ? `<img src="${esc(assetUrl(a.icon_url))}" alt="">` : esc((a.display_name || '認')[0]);
-        return `<a class="profile-mini" href="./verified/?account_id=${encodeURIComponent(a.id)}" style="text-decoration:none;color:inherit;">
-          <div class="verified-icon" style="width:48px;height:48px;">${icon}</div>
-          <div class="profile-mini-info">
-            <div class="profile-mini-name">${esc(a.display_name)}</div>
-            <div class="profile-mini-meta">${esc(a.label || accountTypeLabel(a.account_type))} / 共同運営者</div>
-          </div>
-          <i>›</i>
-        </a>`;
-      }).join('')}
-    </div>
-  </section>`;
+  if (wrap) wrap.innerHTML = '';
 }
 
 function renderExchangedSection() {
@@ -3502,41 +2675,6 @@ function profileMini(p, opts = {}) {
 function sakulaboFavMeta(parts) {
   return parts.filter(Boolean).join(' ・ ');
 }
-function liveItemHtml(id, label = '') {
-  const live = liveDisplay(id);
-  const prefix = label ? `${esc(label)} ` : '';
-  return `<div class="next-live-item">
-    <div class="next-live-date">${prefix}${esc(liveDateLabel(live.date, live.weekday))}</div>
-    <div class="next-live-title">${esc(live.title)}</div>
-    ${live.venue ? `<div class="next-live-venue">${esc(live.venue)}</div>` : ''}
-  </div>`;
-}
-function renderNextLivesSection(profile, opts = {}) {
-  const ids = nextLiveIds(profile);
-  if (!ids.length) return '';
-  const limit = opts.limit || 3;
-  const collapsed = ids.length > limit;
-  const shown = collapsed ? ids.slice(0, limit) : ids;
-  const restHtml = collapsed ? ids.slice(limit).map(id => liveItemHtml(id)).join('') : '';
-  return `<div class="profile-section">
-    <div class="profile-section-title">NEXT LIVE</div>
-    <div class="next-live-list">${shown.map(id => liveItemHtml(id)).join('')}</div>
-    ${collapsed ? `<button class="next-live-more" type="button" data-more="${esc(restHtml)}" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend', this.dataset.more); this.remove();">すべて見る（${ids.length}件）</button>` : ''}
-  </div>`;
-}
-function renderPastLivesSection(profile, opts = {}) {
-  const ids = pastLiveIds(profile);
-  if (!ids.length) return '';
-  const limit = opts.limit || 5;
-  const collapsed = ids.length > limit;
-  const shown = collapsed ? ids.slice(0, limit) : ids;
-  const restHtml = collapsed ? ids.slice(limit).map(id => liveItemHtml(id, 'PAST')).join('') : '';
-  return `<div class="profile-section">
-    <div class="profile-section-title">参加したライブ</div>
-    <div class="next-live-list">${shown.map(id => liveItemHtml(id, 'PAST')).join('')}</div>
-    ${collapsed ? `<button class="next-live-more" type="button" data-more="${esc(restHtml)}" onclick="this.previousElementSibling.insertAdjacentHTML('beforeend', this.dataset.more); this.remove();">すべて見る（${ids.length}件）</button>` : ''}
-  </div>`;
-}
 function sakulaboFavLink(url, body) {
   if (url) return `<a class="sakulabo-fav-item" href="${esc(url)}" target="_blank" rel="noopener">${body}<i data-lucide="external-link" style="width:14px;height:14px;color:#aaa;flex-shrink:0;margin-left:auto;"></i></a>`;
   return `<div class="sakulabo-fav-item">${body}</div>`;
@@ -3557,13 +2695,10 @@ function sakulaboMimiFaces(item) {
 function favoriteMemberName(name) {
   return typeof name === 'string' ? name.trim() : '';
 }
-function isValidSakulaboBlog(item) {
-  return !!(item && item.id && item.title && item.member && item.url);
-}
 function renderSakulaboFavorites(profile) {
   const fav = profile.sakulabo_favorites || {};
   const mimis = Array.isArray(fav.mimis) ? fav.mimis.filter(Boolean) : [];
-  const blogs = Array.isArray(fav.blogs) ? fav.blogs.filter(isValidSakulaboBlog) : [];
+  const blogs = Array.isArray(fav.blogs) ? fav.blogs.filter(Boolean) : [];
   const sections = [];
   if (profile.show_favorite_mimis && mimis.length) {
     sections.push(`<div class="profile-section"><div class="profile-section-title">お気に入りのさくみみ</div><div class="sakulabo-favorites-card">${mimis.slice(0,10).map(item => {
@@ -3575,8 +2710,7 @@ function renderSakulaboFavorites(profile) {
   if (profile.show_favorite_blogs && blogs.length) {
     sections.push(`<div class="profile-section"><div class="profile-section-title">お気に入りのブログ</div><div class="sakulabo-favorites-card">${blogs.slice(0,10).map(item => {
       const meta = sakulaboFavMeta([favoriteMemberName(item.member), item.date]);
-      const thumb = item.image_url ? `<div class="sakulabo-fav-thumb"><img src="${esc(item.image_url)}" alt="" loading="lazy"></div>` : '';
-      const body = `${thumb}<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
+      const body = `<div class="sakulabo-fav-main"><div class="sakulabo-fav-title">${esc(item.title || 'ブログ')}</div>${meta ? `<div class="sakulabo-fav-meta">${esc(meta)}</div>` : ''}</div>`;
       return sakulaboFavLink(item.url, body);
     }).join('')}</div></div>`);
   }
@@ -3621,9 +2755,6 @@ function getSnsIcon(type) {
     'tiktok': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M19.321 7.532a5.88 5.88 0 0 1-3.442-1.103 5.91 5.91 0 0 1-2.146-3.043 5.86 5.86 0 0 1-.165-1.386h-3.14v12.63a3.02 3.02 0 1 1-2.137-2.895v-3.2a6.23 6.23 0 0 0-1.24-.124 6.22 6.22 0 1 0 6.22 6.22V9.59a8.91 8.91 0 0 0 4.93 1.49v-3.14a5.9 5.9 0 0 1-.88-.408Z"/></svg>',
     'youtube': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M23.498 6.186a2.997 2.997 0 0 0-2.11-2.12C19.505 3.546 12 3.546 12 3.546s-7.505 0-9.388.52A2.997 2.997 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a2.997 2.997 0 0 0 2.11 2.12c1.883.52 9.388.52 9.388.52s7.505 0 9.388-.52a2.997 2.997 0 0 0 2.11-2.12C24 15.93 24 12 24 12s0-3.93-.502-5.814ZM9.546 15.568V8.432L15.818 12l-6.272 3.568Z"/></svg>',
     'github': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.38 7.86 10.9.58.1.79-.25.79-.56v-2.16c-3.2.7-3.87-1.36-3.87-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.75 2.69 1.24 3.34.95.1-.74.4-1.24.73-1.53-2.55-.29-5.23-1.28-5.23-5.68 0-1.25.45-2.28 1.18-3.08-.12-.29-.51-1.46.11-3.04 0 0 .96-.31 3.16 1.18A10.9 10.9 0 0 1 12 6.03c.98 0 1.96.13 2.88.39 2.19-1.49 3.15-1.18 3.15-1.18.63 1.58.24 2.75.12 3.04.74.8 1.18 1.83 1.18 3.08 0 4.42-2.69 5.39-5.25 5.67.41.36.78 1.06.78 2.14v3.17c0 .31.21.67.8.56A11.51 11.51 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5Z"/></svg>',
-    'line': '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M12 3C6.49 3 2 6.66 2 11.16c0 4.03 3.58 7.4 8.42 8.05.33.07.78.22.9.5.1.25.07.64.03.9l-.15.86c-.04.25-.2.98.87.53 1.08-.45 5.8-3.41 7.91-5.84A7.27 7.27 0 0 0 22 11.16C22 6.66 17.51 3 12 3Zm-3.86 9.9H6.11V8.94h.82v3.22h1.21v.74Zm1.53 0h-.82V8.94h.82v3.96Zm4.13 0h-.82l-1.68-2.27v2.27h-.82V8.94h.82l1.68 2.27V8.94h.82v3.96Zm3.14-3.22h-1.62v.75h1.46v.74h-1.46v.99h1.62v.74H14.5V8.94h2.44v.74Z"/></svg>',
-    'note': '<svg viewBox="0 0 100 100" width="20" height="20" aria-hidden="true"><image href="https://is1-ssl.mzstatic.com/image/thumb/Purple211/v4/80/77/ae/8077aea2-dcdd-36bd-7f58-783f0d463ef3/Icon-1x_U007epad-0-1-85-220-0.png/100x100bb.jpg" width="100" height="100"/></svg>',
-    'ameba': '<svg viewBox="0 0 100 100" width="16" height="16" aria-hidden="true"><rect width="100" height="100" rx="22" fill="#fff"/><text x="50" y="55" fill="#111" font-size="23" font-family="Arial, Helvetica, sans-serif" font-weight="700" text-anchor="middle" dominant-baseline="middle">Ameba</text></svg>',
     'link': '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>'
   };
   return icons[type] || icons['link'];
@@ -3668,7 +2799,7 @@ async function openProfile(profile, isOwn, opts = {}) {
   const oshiHtml  = oshiList.map(o=>`<span class="pill-tag black">${esc(o)}</span>`).join('');
   const tagsHtml  = (profile.tags||[]).map(t=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(t)}" title="${esc(t)}を検索">${esc(t)}</button>`).join('');
   const songsHtml = (profile.favorite_songs||profile.favoriteSongs||[]).map(s=>`<button class="pill-tag search-pill-btn" data-keyword="${esc(s)}" title="${esc(s)}を検索">${esc(s)}</button>`).join('');
-  const snsNames  = {x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',line:'LINE',note:'note',ameba:'Ameba',link:'Link'};
+  const snsNames  = {x:'X',threads:'Threads',instagram:'Instagram',tiktok:'TikTok',youtube:'YouTube',github:'GitHub',link:'Link'};
   const snsLinks  = (profile.sns_links||profile.sns||[]).filter(s => s.url && s.url.trim()).slice(0,10);
   const isVerifiedProfile = !!profile.verified_account;
 
@@ -3764,12 +2895,10 @@ async function openProfile(profile, isOwn, opts = {}) {
           ${snsDiv}
         </div>
       </div>
-      ${renderNextLivesSection(profile)}
       ${oshiHtml?`<div class="profile-section"><div class="profile-section-title">推しメン</div><div class="profile-oshi-list">${oshiHtml}</div></div>`:''}
       ${tagsHtml?`<div class="profile-section"><div class="profile-section-title">興味</div><div class="profile-tag-list">${tagsHtml}</div></div>`:''}
       ${songsHtml?`<div class="profile-section"><div class="profile-section-title">好きな曲</div><div class="profile-tag-list">${songsHtml}</div></div>`:''}
       ${profile.bio?`<div class="profile-section"><div class="profile-section-title">自己紹介</div><div class="profile-bio">${esc(profile.bio)}</div></div>`:''}
-      ${renderPastLivesSection(profile)}
       ${renderSakulaboFavorites(profile)}
       ${renderSakumapStamps(profile)}
       ${renderSakumvQuizRecords(profile)}
@@ -3911,7 +3040,6 @@ let editSongs = [];
 let editSns = [];
 let editFollowStance = null; // 'silent_ok' | 'hello_please' | null
 let editHistory = [];
-let editNextLives = [];
 
 function syncSakulaboToggle(input) {
   const card = input?.closest?.('.sakulabo-toggle-card');
@@ -3930,19 +3058,9 @@ function normalizeHistoryClient(items) {
     day: item.day || '',
     title: item.title || '',
     note: item.note || '',
-    live_id: item.live_id || '',
     image_url: item.image_url || '',
     image_data: '',
   }));
-}
-
-function historyLiveOptionsHtml(selectedId) {
-  const options = editNextLives
-    .filter(id => isPastLive(liveDisplay(id)))
-    .map(id => liveDisplay(id))
-    .sort((a,b) => String(b.date || '').localeCompare(String(a.date || '')) || String(a.title || '').localeCompare(String(b.title || '')));
-  return `<option value="">ライブと紐づけない</option>
-    ${options.map(live => `<option value="${esc(live.id)}" ${live.id === selectedId ? 'selected' : ''}>${esc(liveDateLabel(live.date, live.weekday))} ${esc(live.title)}${live.venue ? ` / ${esc(live.venue)}` : ''}</option>`).join('')}`;
 }
 
 function renderHistoryEditor() {
@@ -3962,8 +3080,6 @@ function renderHistoryEditor() {
       </div>
       <input maxlength="160" placeholder="イベントタイトル" value="${esc(item.title)}" oninput="updateHistoryItem(${i},'title',this.value)">
       <textarea maxlength="300" placeholder="一言（任意）" oninput="updateHistoryItem(${i},'note',this.value)">${esc(item.note)}</textarea>
-      <div class="history-live-select-label">参加したライブと紐づけ</div>
-      <select onchange="setHistoryLive(${i}, this.value)">${historyLiveOptionsHtml(item.live_id || '')}</select>
       <div class="history-image-row">
         <div class="history-image-preview">${item.image_data || item.image_url ? `<img src="${esc(assetUrl(item.image_data || item.image_url))}" alt="">` : '画像'}</div>
         <div class="history-image-actions">
@@ -3976,64 +3092,20 @@ function renderHistoryEditor() {
   if (window.lucide) window.lucide.createIcons();
 }
 
-function renderPastLivesEditor() {
-  const wrap = document.getElementById('past-live-edit-list');
-  if (!wrap) return;
-  const options = pastLiveOptions();
-  if (!options.length) {
-    wrap.innerHTML = '<div class="history-empty-note">過去のライブ情報がまだ見つかりません。</div>';
-    return;
-  }
-  wrap.innerHTML = options.map(live => {
-    const checked = hasLiveId(editNextLives, live.id);
-    return `<label class="next-live-edit-item">
-      <input type="checkbox" value="${esc(live.id)}" ${checked ? 'checked' : ''} onchange="toggleEditNextLive(this.value, this.checked)">
-      <span class="next-live-edit-main">
-        <span class="next-live-edit-date">${esc(liveDateLabel(live.date, live.weekday))}</span>
-        <span class="next-live-edit-title">${esc(live.title)}</span>
-        ${live.venue ? `<span class="next-live-edit-venue">${esc(live.venue)}</span>` : ''}
-      </span>
-    </label>`;
-  }).join('');
-}
-
-function renderHistoryPage() {
-  document.querySelectorAll('.history-tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.historyTab === historyActiveTab);
-  });
-  const historyPanel = document.getElementById('history-panel-history');
-  const livePanel = document.getElementById('history-panel-past-lives');
-  if (historyPanel) historyPanel.hidden = historyActiveTab !== 'history';
-  if (livePanel) livePanel.hidden = historyActiveTab !== 'past-lives';
-  renderHistoryEditor();
-  renderPastLivesEditor();
-}
-
-function switchHistoryTab(tab) {
-  historyActiveTab = tab === 'past-lives' ? 'past-lives' : 'history';
-  if (historyActiveTab === 'history' && !editHistory.length) addHistoryItem(false);
-  renderHistoryPage();
-}
-
-function openHistoryPage() {
+function openHistoryEditor() {
   editHistory = normalizeHistoryClient(me?.buddies_history || []);
-  editNextLives = uniqueLiveIds(me?.next_lives);
-  editNextLiveSeats = JSON.parse(JSON.stringify(me?.next_live_seats || {}));
-  historyActiveTab = 'past-lives';
-  renderHistoryPage();
-  document.getElementById('history-page').classList.add('active');
-  if (window.lucide) window.lucide.createIcons();
+  if (!editHistory.length) addHistoryItem(false);
+  renderHistoryEditor();
+  document.getElementById('history-modal').classList.add('active');
 }
 
-function closeHistoryPage() {
-  document.getElementById('history-page').classList.remove('active');
+function closeHistoryEditor() {
+  document.getElementById('history-modal').classList.remove('active');
 }
-function openHistoryEditor() { openHistoryPage(); }
-function closeHistoryEditor() { closeHistoryPage(); }
 
 function addHistoryItem(render = true) {
-  editHistory.unshift({ id: 0, year: new Date().getFullYear(), month: '', day: '', title: '', note: '', live_id: '', image_url: '', image_data: '' });
-  if (render) renderHistoryPage();
+  editHistory.unshift({ id: 0, year: new Date().getFullYear(), month: '', day: '', title: '', note: '', image_url: '', image_data: '' });
+  if (render) renderHistoryEditor();
 }
 
 function updateHistoryItem(i, key, value) {
@@ -4041,23 +3113,9 @@ function updateHistoryItem(i, key, value) {
   editHistory[i][key] = value;
 }
 
-function setHistoryLive(i, id) {
-  if (!editHistory[i]) return;
-  editHistory[i].live_id = id;
-  const live = id ? liveDisplay(id) : null;
-  if (live && live.date) {
-    const parts = live.date.split('-');
-    if (!editHistory[i].year) editHistory[i].year = parts[0] || '';
-    if (!editHistory[i].month) editHistory[i].month = parts[1] ? String(Number(parts[1])) : '';
-    if (!editHistory[i].day) editHistory[i].day = parts[2] ? String(Number(parts[2])) : '';
-  }
-  if (live && !editHistory[i].title) editHistory[i].title = live.title || '';
-  renderHistoryEditor();
-}
-
 function removeHistoryItem(i) {
   editHistory.splice(i, 1);
-  renderHistoryPage();
+  renderHistoryEditor();
 }
 
 function selectHistoryImage(i, file) {
@@ -4074,7 +3132,7 @@ function selectHistoryImage(i, file) {
   reader.onload = () => {
     editHistory[i].image_data = reader.result;
     editHistory[i].image_url = '';
-    renderHistoryPage();
+    renderHistoryEditor();
   };
   reader.onerror = () => alert('画像を読み込めませんでした。');
   reader.readAsDataURL(file);
@@ -4084,7 +3142,7 @@ function clearHistoryImage(i) {
   if (!editHistory[i]) return;
   editHistory[i].image_data = '';
   editHistory[i].image_url = '';
-  renderHistoryPage();
+  renderHistoryEditor();
 }
 
 function historyPayload() {
@@ -4095,14 +3153,12 @@ function historyPayload() {
     day: String(item.day || '').trim(),
     title: String(item.title || '').trim(),
     note: String(item.note || '').trim(),
-    live_id: String(item.live_id || '').trim(),
     image_url: String(item.image_url || '').trim(),
     image_data: String(item.image_data || ''),
-  })).filter(item => item.year || item.month || item.day || item.title || item.note || item.live_id);
+  })).filter(item => item.year || item.month || item.day || item.title || item.note);
 }
 
-async function saveHistory(options = {}) {
-  const shouldClose = options.close !== false;
+async function saveHistory() {
   const history = historyPayload();
   for (const item of history) {
     if (!item.year || !item.title) {
@@ -4120,173 +3176,18 @@ async function saveHistory(options = {}) {
       method:'POST',
       credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ history, next_lives: uniqueLiveIds(editNextLives) }),
+      body: JSON.stringify({ history }),
     });
     const json = await res.json();
     if (!json.ok) { alert(json.error || '保存に失敗しました'); return; }
     me.buddies_history = json.data.history || [];
-    me.next_lives = Array.isArray(json.data.next_lives) ? json.data.next_lives : editNextLives;
-    me.next_live_seats = me.next_live_seats || {};
-    editNextLives = uniqueLiveIds(me.next_lives);
-    renderEditNextLives();
-    if (shouldClose) closeHistoryPage();
+    closeHistoryEditor();
     toast('My Buddies historyを保存しました');
   } catch(e) {
     alert('保存に失敗しました');
   } finally {
     setLoading(false);
   }
-}
-
-async function saveHistoryAndReturn() {
-  await saveHistory({ close:true });
-}
-
-function requestSaveHistoryAndReturn() {
-  openConfirmModal(
-    'Historyを保存して戻る',
-    '入力中のMy Buddies historyを保存して編集トップに戻りますか？',
-    () => saveHistoryAndReturn()
-  );
-}
-
-function ensureEditSectionPlacement() {
-  const basic = document.getElementById('edit-section-basic');
-  const links = document.getElementById('edit-section-links');
-  const sns = document.getElementById('edit-sns-section');
-  const sakulabo = document.getElementById('edit-sakulabo-section');
-  const sakumap = document.getElementById('edit-sakumap-section');
-  const sakumv = document.getElementById('sakumv-quiz-section');
-  if (basic && sns && sns.parentElement !== basic) basic.appendChild(sns);
-  if (links && sakulabo && sakulabo.parentElement !== links) links.appendChild(sakulabo);
-  if (links && sakumap && sakumap.parentElement !== links) links.appendChild(sakumap);
-  if (links && sakumv && sakumv.parentElement !== links) links.appendChild(sakumv);
-}
-
-function updateEditSummary() {
-  const nameEl = document.getElementById('edit-summary-name');
-  const iconEl = document.getElementById('edit-summary-icon');
-  if (nameEl) nameEl.textContent = document.getElementById('edit-name')?.value || me?.display_name || me?.username || 'プロフィール';
-  if (!iconEl) return;
-  const url = getAvatarUrlFromState();
-  if (url) {
-    iconEl.innerHTML = `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`;
-  } else {
-    iconEl.textContent = (nameEl?.textContent || '?').charAt(0);
-  }
-}
-
-function showEditHome() {
-  const page = document.getElementById('edit-page');
-  const home = document.getElementById('edit-home-view');
-  if (home) home.style.display = 'block';
-  document.querySelectorAll('.edit-panel').forEach(panel => panel.classList.remove('active'));
-  page?.classList.remove('section-mode');
-  updateEditSummary();
-  if (window.lucide) window.lucide.createIcons();
-}
-
-function loadEditFormFromCurrentUser() {
-  if (!me) return;
-  document.getElementById('edit-name').value = me.display_name || '';
-  document.getElementById('edit-gender').value = me.gender || '';
-  document.getElementById('edit-location').value = me.location || '';
-  document.getElementById('edit-bio').value = me.bio || '';
-  document.getElementById('edit-show-favorite-mimis').checked = !!me.show_favorite_mimis;
-  document.getElementById('edit-show-favorite-blogs').checked = !!me.show_favorite_blogs;
-  document.getElementById('edit-show-sakumap-stamps').checked = !!me.show_sakumap_stamps;
-  document.getElementById('edit-show-sakumv-quiz').checked = me.show_sakumv_quiz !== false;
-  document.getElementById('sakumap-stamps-toggle-card').style.display = me.sakumap_linked ? 'flex' : 'none';
-  document.getElementById('sakumap-link-note').style.display = me.sakumap_linked ? 'none' : 'block';
-  document.getElementById('sakumv-quiz-section').style.display = me.sakumv_quiz_linked ? 'block' : 'none';
-  syncSakulaboToggles();
-
-  setupBirthdaySelectors(me.birthday || '');
-  setupBuddiesSinceSelectors(me.buddies_since || '');
-
-  editOshiList = [];
-  if (isKnownMemberName(me.oshi_member))   editOshiList.push(me.oshi_member);
-  if (isKnownMemberName(me.oshi_member_2)) editOshiList.push(me.oshi_member_2);
-  if (isKnownMemberName(me.oshi_member_3)) editOshiList.push(me.oshi_member_3);
-
-  editTags  = [...(me.tags || [])];
-  editSongs = [...(me.favorite_songs || [])];
-  editNextLives = uniqueLiveIds(me.next_lives);
-  editNextLiveSeats = JSON.parse(JSON.stringify(me.next_live_seats || {}));
-  editNextLivesExpanded = false;
-  editSns   = JSON.parse(JSON.stringify(me.sns_links || []));
-  editFollowStance = me.follow_stance || null;
-
-  const rawTpl = me.post_template || '';
-  currentTplId = null;
-  tplDirty     = false;
-  if (rawTpl) {
-    try {
-      const obj = JSON.parse(rawTpl);
-      if (obj.tpl && POST_TEMPLATES[obj.tpl]) currentTplId = obj.tpl;
-    } catch (_) { currentTplId = 'custom'; }
-  }
-  document.getElementById('edit-post-template').value = expandPostTemplate(rawTpl);
-  highlightTplBtn(currentTplId);
-  togglePostTemplate(!!rawTpl);
-
-  renderEditOshi();
-  renderEditTags();
-  renderEditSongs();
-  renderEditNextLives();
-  renderEditSns();
-  renderFollowStance();
-  renderEditIconPreview();
-  updateBirthdayAgePreview();
-  updateEditSummary();
-}
-
-function openEditSection(section) {
-  ensureEditSectionPlacement();
-  if (section === 'history') {
-    openHistoryPage();
-    return;
-  }
-  const home = document.getElementById('edit-home-view');
-  if (home) home.style.display = 'none';
-  document.querySelectorAll('.edit-panel').forEach(panel => {
-    panel.classList.toggle('active', panel.id === `edit-section-${section}`);
-  });
-  document.getElementById('edit-page')?.classList.add('section-mode');
-  if (window.lucide) window.lucide.createIcons();
-}
-
-function discardEditSection() {
-  loadEditFormFromCurrentUser();
-  showEditHome();
-}
-
-function requestDiscardEditSection() {
-  openConfirmModal(
-    '編集をキャンセル',
-    'このセクションで変更した内容を破棄して編集トップに戻りますか？',
-    () => discardEditSection(),
-    'danger'
-  );
-}
-
-async function saveEditSection() {
-  const ok = await saveEdit({ stayOpen:true });
-  if (ok) showEditHome();
-}
-
-function requestCloseEdit() {
-  const editPage = document.getElementById('edit-page');
-  if (!editPage?.classList.contains('section-mode')) {
-    closeEdit();
-    return;
-  }
-  openConfirmModal(
-    '編集を終了',
-    '保存していない変更は破棄されます。編集を終了しますか？',
-    () => closeEdit(),
-    'danger'
-  );
 }
 
 function openEdit() {
@@ -4314,15 +3215,12 @@ function openEdit() {
 
   // 推しメン（1番目＝第一推し）
   editOshiList = [];
-  if (isKnownMemberName(me.oshi_member))   editOshiList.push(me.oshi_member);
-  if (isKnownMemberName(me.oshi_member_2)) editOshiList.push(me.oshi_member_2);
-  if (isKnownMemberName(me.oshi_member_3)) editOshiList.push(me.oshi_member_3);
+  if (me.oshi_member)   editOshiList.push(me.oshi_member);
+  if (me.oshi_member_2) editOshiList.push(me.oshi_member_2);
+  if (me.oshi_member_3) editOshiList.push(me.oshi_member_3);
 
   editTags  = [...(me.tags || [])];
   editSongs = [...(me.favorite_songs || [])];
-  editNextLives = uniqueLiveIds(me.next_lives);
-  editNextLiveSeats = JSON.parse(JSON.stringify(me.next_live_seats || {}));
-  editNextLivesExpanded = false;
   editSns   = JSON.parse(JSON.stringify(me.sns_links || []));
   editFollowStance = me.follow_stance || null;
 
@@ -4342,20 +3240,16 @@ function openEdit() {
   highlightTplBtn(currentTplId);
   togglePostTemplate(!!rawTpl);
 
-  ensureEditSectionPlacement();
   renderEditOshi();
   renderEditTags();
   renderEditSongs();
-  renderEditNextLives();
   renderEditSns();
   renderFollowStance();
   renderEditIconPreview();
   updateBirthdayAgePreview();
-  updateEditSummary();
 
   document.getElementById('edit-page').classList.add('active');
   document.body.style.overflow = 'hidden';
-  showEditHome();
   if (!filterOptionsCache) loadFilterOptions();
 }
 
@@ -4427,7 +3321,6 @@ function setupBuddiesSinceSelectors(value) {
 }
 function closeEdit() {
   document.getElementById('edit-page').classList.remove('active');
-  document.getElementById('edit-page').classList.remove('section-mode');
   document.body.style.overflow = 'auto';
 }
 
@@ -4438,11 +3331,6 @@ function renderEditIconPreview() {
     el.innerHTML = `<img src="${esc(url)}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:top center;" onerror="this.style.display='none'">`;
   } else {
     el.textContent = '？';
-  }
-  const summary = document.getElementById('edit-summary-icon');
-  if (summary) {
-    if (url) summary.innerHTML = `<img src="${esc(url)}" alt="" onerror="this.style.display='none'">`;
-    else summary.textContent = (document.getElementById('edit-name')?.value || me?.display_name || '?').charAt(0);
   }
 }
 
@@ -4537,78 +3425,6 @@ function addSong() {
 }
 function removeSong(i) { editSongs.splice(i,1); renderEditSongs(); }
 
-function renderEditNextLives() {
-  const wrap = document.getElementById('edit-next-lives-list');
-  if (!wrap) return;
-  const options = futureLiveOptions();
-  if (!options.length) {
-    wrap.innerHTML = '<div style="font-size:12px;color:#888;line-height:1.7;">今後のライブ情報が見つかりません。</div>';
-    return;
-  }
-  wrap.innerHTML = options.map(live => {
-    const checked = hasLiveId(editNextLives, live.id);
-    const seat = cleanSeatInfo(liveSeat(editNextLiveSeats, live.id) || {});
-    return `<div class="next-live-edit-item">
-      <input type="checkbox" value="${esc(live.id)}" ${checked ? 'checked' : ''} onchange="toggleEditNextLive(this.value, this.checked)">
-      <span class="next-live-edit-main">
-        <span class="next-live-edit-date">${esc(liveDateLabel(live.date, live.weekday))}</span>
-        <span class="next-live-edit-title">${esc(live.title)}</span>
-        ${live.venue ? `<span class="next-live-edit-venue">${esc(live.venue)}</span>` : ''}
-      </span>
-      ${checked ? `<div class="next-live-seat-editor">
-        <div class="next-live-seat-grid">
-          <label class="next-live-seat-field">
-            <span>階</span>
-            <div class="next-live-seat-control">
-              <input data-live-id="${esc(live.id)}" inputmode="numeric" placeholder="1" value="${esc(seat.floor)}" oninput="updateNextLiveSeat(this.dataset.liveId,'floor',this.value)">
-              <em class="next-live-seat-suffix">階</em>
-            </div>
-          </label>
-          <label class="next-live-seat-field">
-            <span>エリア</span>
-            <div class="next-live-seat-control">
-              <select data-live-id="${esc(live.id)}" onchange="updateNextLiveSeat(this.dataset.liveId,'area',this.value)">
-                <option value="">未入力</option>
-                <option value="arena" ${seat.area === 'arena' ? 'selected' : ''}>アリーナ</option>
-                <option value="stand" ${seat.area === 'stand' ? 'selected' : ''}>スタンド</option>
-              </select>
-            </div>
-          </label>
-          <label class="next-live-seat-field">
-            <span>ブロック</span>
-            <div class="next-live-seat-control">
-              <input data-live-id="${esc(live.id)}" placeholder="A6" value="${esc(seat.block)}" oninput="updateNextLiveSeat(this.dataset.liveId,'block',this.value)">
-              <em class="next-live-seat-suffix">ブロック</em>
-            </div>
-          </label>
-        </div>
-        <div class="next-live-seat-note">階とブロックは半角英数字のみ保存されます。未入力でもOKです。</div>
-      </div>` : ''}
-    </div>`;
-  }).join('');
-}
-function updateNextLiveSeat(id, key, value) {
-  const current = cleanSeatInfo(liveSeat(editNextLiveSeats, id) || {});
-  current[key] = value;
-  const cleaned = cleanSeatInfo(current);
-  const normalized = normalizeLiveId(id);
-  if (seatHasValue(cleaned)) editNextLiveSeats[normalized] = cleaned;
-  else Object.keys(editNextLiveSeats).filter(k => sameLiveId(k, id)).forEach(k => delete editNextLiveSeats[k]);
-}
-function toggleEditNextLive(id, checked) {
-  if (checked) {
-    if (!hasLiveId(editNextLives, id)) editNextLives.push(normalizeLiveId(id));
-  } else {
-    editNextLives = editNextLives.filter(v => !sameLiveId(v, id));
-    Object.keys(editNextLiveSeats).filter(k => sameLiveId(k, id)).forEach(k => delete editNextLiveSeats[k]);
-  }
-  editHistory.forEach(item => {
-    if (item.live_id === id && !checked) item.live_id = '';
-  });
-  renderEditNextLives();
-  renderHistoryEditor();
-}
-
 function renderEditSns() {
   const c = document.getElementById('edit-sns-container');
   c.innerHTML = editSns.map((s,i)=>`
@@ -4620,18 +3436,15 @@ function renderEditSns() {
         <option value="tiktok" ${s.type==='tiktok'?'selected':''}>TikTok</option>
         <option value="youtube" ${s.type==='youtube'?'selected':''}>YouTube</option>
         <option value="github" ${s.type==='github'?'selected':''}>GitHub</option>
-        <option value="line" ${s.type==='line'?'selected':''}>LINE</option>
-        <option value="note" ${s.type==='note'?'selected':''}>note</option>
-        <option value="ameba" ${s.type==='ameba'?'selected':''}>Ameba</option>
         <option value="link" ${s.type==='link'?'selected':''}>Link</option>
       </select>
       <input class="pill-input" style="flex:1; padding:10px 14px; font-size:13px;" placeholder="https://" value="${esc(s.url)}" oninput="updateSns(${i},'url',this.value)">
       <button type="button" class="pill-button" style="padding:10px;" onclick="removeSns(${i})"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>`).join('');
-  document.getElementById('add-sns-btn').style.display = editSns.length >= 10 ? 'none' : 'block';
+  document.getElementById('add-sns-btn').style.display = editSns.length >= 4 ? 'none' : 'block';
   renderFollowStance();
 }
-function addSns() { if(editSns.length >= 10) return; editSns.push({type:'x',url:''}); renderEditSns(); }
+function addSns() { if(editSns.length >= 4) return; editSns.push({type:'x',url:''}); renderEditSns(); }
 function updateSns(i,k,v) { editSns[i][k] = v; }
 function removeSns(i) {
   editSns.splice(i,1);
@@ -4815,12 +3628,12 @@ function removePostTemplate() {
   togglePostTemplate(false);
 }
 
-async function saveEdit(options = {}) {
-  if (!me) return false;
+async function saveEdit() {
+  if (!me) return;
   const name = document.getElementById('edit-name').value.trim();
-  if (!name || name.length > 64) { alert('表示名は1〜64文字で入力してください'); return false; }
+  if (!name || name.length > 64) { alert('表示名は1〜64文字で入力してください'); return; }
   const bio = document.getElementById('edit-bio').value.trim();
-  if (bio.length > 500) { alert('自己紹介は500文字以内で入力してください'); return false; }
+  if (bio.length > 500) { alert('自己紹介は500文字以内で入力してください'); return; }
 
   const buddiesSince = document.getElementById('edit-buddies-year').value || null;
   const birthday = getBirthdayValue();
@@ -4837,9 +3650,7 @@ async function saveEdit(options = {}) {
     oshi_member_3: editOshiList[2] || null,
     tags:          editTags,
     favorite_songs:editSongs,
-    next_lives:    uniqueLiveIds(editNextLives),
-    next_live_seats: normalizeLiveSeats(editNextLiveSeats, editNextLives),
-    sns_links:     editSns.slice(0, 10),
+    sns_links:     editSns.slice(0, 4),
     follow_stance: editSns.some(s => s.url && s.url.trim()) ? (editFollowStance || null) : null,
     post_template: buildPostTemplatePayload(),
     show_favorite_mimis: document.getElementById('edit-show-favorite-mimis').checked,
@@ -4856,14 +3667,13 @@ async function saveEdit(options = {}) {
       body: JSON.stringify(payload),
     });
     const json = await res.json();
-    if (!json.ok) { alert(json.error); return false; }
+    if (!json.ok) { alert(json.error); return; }
     me = json.data;
-    if (!options.stayOpen) closeEdit();
+    closeEdit();
     renderAll();
     toast('保存しました');
     if(window.lucide) window.lucide.createIcons();
-    return true;
-  } catch(e) { alert('通信エラーが発生しました'); return false; }
+  } catch(e) { alert('通信エラーが発生しました'); }
   finally { setLoading(false); }
 }
 
@@ -5102,15 +3912,29 @@ function switchQRTab(tab) {
   else { clearQRTimers(); startScanner(); }
 }
 
-async function verifyQRToken(token) {
-  try {
-    const res = await fetch(API + '?action=buddies_qr_verify', {
-      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({token}),
-    });
-    const json = await res.json();
-    return json.ok ? Number(json.data.user_id) : null;
-  } catch(e) { return null; }
+function makeQRToken() {
+  // uid + タイムスタンプ（30秒刻み）+ 簡易ハッシュでリアルタイム認証
+  const slot = Math.floor(Date.now() / (QR_TOKEN_TTL * 1000));
+  const raw  = `${me.id}:${slot}:buddies`;
+  // 軽量なFNVハッシュ（クライアント側署名）
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i++) { h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  const sig = h.toString(36);
+  return `${me.id}:${slot}:${sig}`;
+}
+
+function verifyQRToken(token) {
+  // スキャン側でトークンを検証
+  const parts = token.split(':');
+  if (parts.length !== 3) return null;
+  const [uid, slot, sig] = parts;
+  const now = Math.floor(Date.now() / (QR_TOKEN_TTL * 1000));
+  if (Math.abs(now - parseInt(slot, 10)) > 1) return null; // ±1スロット（最大2分）許容
+  const raw = `${uid}:${slot}:buddies`;
+  let h = 2166136261;
+  for (let i = 0; i < raw.length; i++) { h ^= raw.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  if (h.toString(36) !== sig) return null;
+  return parseInt(uid, 10);
 }
 
 function startQRCycle() {
@@ -5145,19 +3969,14 @@ function startTimerBar(seconds) {
   }, 1000);
 }
 
-async function generateQR() {
+function generateQR() {
   const el = document.getElementById('qrcode');
   el.innerHTML = '';
   if (!me) return;
-  try {
-    const res = await fetch(API + '?action=buddies_qr_token', { credentials:'include' });
-    const json = await res.json();
-    if (!json.ok || !json.data?.token) throw new Error('token');
-    const qrUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=exchange&token=' + encodeURIComponent(json.data.token);
-    new QRCode(el, { text:qrUrl, width:220, height:220, correctLevel:QRCode.CorrectLevel.M, colorDark:'#000', colorLight:'#fff' });
-  } catch(e) {
-    el.innerHTML = '<div style="padding:36px 12px;color:#888;font-size:12px;text-align:center;">QRを生成できませんでした</div>';
-  }
+  const token = makeQRToken();
+  // QRにはトークンURLを埋め込む（アプリ内スキャン時はtokenパラメータも含む）
+  const qrUrl = location.origin + location.pathname + '#uid=' + me.id + '&mode=exchange&token=' + encodeURIComponent(token);
+  new QRCode(el, { text:qrUrl, width:220, height:220, correctLevel:QRCode.CorrectLevel.M, colorDark:'#000', colorLight:'#fff' });
 }
 function startScanner() {
   if (currentScanner) return;
@@ -5190,13 +4009,12 @@ function startScanner() {
           // tokenなし = OSカメラ向けURL → 閲覧のみでプロフィール表示
           stopScanner();
           const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${uid}`, { credentials:'include' });
-          if (!pRes || !pRes.ok) { toast('エラーが発生しました'); return; }
           const pJson = await pRes.json();
-          if (pJson && pJson.ok) { closeQR(); setTimeout(() => openProfile(pJson.data, false), 300); }
+          if (pJson.ok) { closeQR(); setTimeout(() => openProfile(pJson.data, false), 300); }
           else { toast('プロフィールが見つかりません'); scanning = false; }
           return;
         }
-        const verifiedUid = await verifyQRToken(token);
+        const verifiedUid = verifyQRToken(token);
         if (!verifiedUid || verifiedUid !== uid) {
           toast('QRコードが期限切れです。相手に再表示してもらってください');
           return;
@@ -5252,7 +4070,6 @@ async function addExchangedById(targetId, showSuccess = false) {
     }
     // プロフィール詳細を取得
     const pRes = await fetch(API + `?action=buddies_profile_get&user_id=${targetId}`, { credentials:'include' });
-    if (!pRes || !pRes.ok) { toast('エラーが発生しました'); return; }
     const pJson = await pRes.json();
     const profile = pJson.ok ? pJson.data : null;
     if (profile && !alreadyExchanged) exchangedProfiles.unshift(profile);
@@ -5372,13 +4189,6 @@ function closeExchangeOverlay() {
 function buildProfileURL(uid) {
   return location.origin + location.pathname.replace(/[^/]*$/, '') + 'view.html?id=' + encodeURIComponent(uid);
 }
-function buildMyProfileURL() {
-  const a = currentVerifiedAccount();
-  if (a && a.id) {
-    return location.origin + location.pathname.replace(/[^/]*$/, '') + 'verified/view.html?id=' + encodeURIComponent(a.id);
-  }
-  return buildProfileURL(me.id);
-}
 function openMyProfileView() {
   if (!me) return;
   saveProfileReturnState();
@@ -5391,14 +4201,14 @@ function openMyProfileView() {
 }
 function copyProfileURL() {
   if (!me) return;
-  const url = buildMyProfileURL();
+  const url = buildProfileURL(me.id);
   navigator.clipboard.writeText(url).then(()=>toast('URLをコピーしました')).catch(()=>toast('コピーできませんでした'));
 }
 function shareToX() {
   if (!me) return;
   const tpl = expandPostTemplate(me.post_template || '').trim();
-  const profileUrl = buildMyProfileURL();
-  const profileText = `${getDisplayName(me)}のBuddies profile\n#BuddiesProfile #櫻坂46 @hiromame_sakura\n${profileUrl}`;
+  const profileUrl = buildProfileURL(me.id);
+  const profileText = `${getDisplayName(me)}のBuddiesプロフィール`;
 
   if (tpl) {
     // タグあり → 選択シートを表示
@@ -5406,7 +4216,7 @@ function shareToX() {
       {
         label: 'プロフィールを共有',
         sub: profileUrl,
-        action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}`, '_blank'),
+        action: () => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}&url=${encodeURIComponent(profileUrl)}`, '_blank'),
       },
       {
         label: '紹介タグを共有',
@@ -5415,13 +4225,13 @@ function shareToX() {
       },
     ]);
   } else {
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}`, '_blank');
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(profileText)}&url=${encodeURIComponent(profileUrl)}`, '_blank');
   }
 }
 
 function shareProfile() {
   if (!me) return;
-  const url = buildMyProfileURL();
+  const url = buildProfileURL(me.id);
   const name = getDisplayName(me);
   if (navigator.share) {
     navigator.share({ title: `${name}のBuddiesプロフィール`, url }).catch(() => {});
@@ -5523,7 +4333,7 @@ async function checkUrl() {
     }
 
     if (mode === 'exchange' && token && me) {
-      const verifiedUid = await verifyQRToken(token);
+      const verifiedUid = verifyQRToken(token);
       if (verifiedUid && verifiedUid === parseInt(uid, 10)) {
         history.replaceState(null, '', location.pathname);
         sessionStorage.removeItem('buddies_shared_uid');
@@ -5584,9 +4394,7 @@ function openConfirmModal(title, body, onOk, variant = 'default') {
 }
 function closeConfirmModal() {
   document.getElementById('confirm-modal').classList.remove('active');
-  const keepLocked = ['edit-page', 'history-page', 'filters-modal', 'icon-picker-modal']
-    .some(id => document.getElementById(id)?.classList.contains('active'));
-  document.body.style.overflow = keepLocked ? 'hidden' : 'auto';
+  document.body.style.overflow = 'auto';
 }
 
 // ── インプットモーダル ────────────────────────────────────

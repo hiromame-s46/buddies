@@ -200,7 +200,12 @@ function assetUrl(url){
   if(/^https?:\/\//.test(url) || url.startsWith('data:')) return url;
   return url.startsWith('/') ? url : './' + url;
 }
-function liveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+let ambiguousLiveDates=new Set();
+function legacyLiveId(title,date,venue){return [date||'',title||'',venue||''].join('|');}
+function liveId(title,date,venue){return ambiguousLiveDates.has(date||'')?legacyLiveId(title,date,venue):(date||'');}
+function liveIdDate(id){return String(id||'').split('|')[0]||'';}
+function normalizeLiveId(id){const date=liveIdDate(id);return date&&!ambiguousLiveDates.has(date)?date:String(id||'');}
+function sameLiveId(a,b){return normalizeLiveId(a)===normalizeLiveId(b);}
 function venueForPerformance(live, perf, index){
   const lines = String(live.detail_text || '').split(/\n+/).map(s=>s.trim()).filter(Boolean);
   const targetDate = String(perf.date || '').replace(/-/g,'.').replace(/\.0/g,'.');
@@ -221,6 +226,11 @@ function venueForPerformance(live, perf, index){
 function buildLiveOptions(raw){
   const items = Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw) ? raw : []);
   const out = [];
+  const dateCounts = {};
+  items.forEach(live=>{
+    (Array.isArray(live.performances) ? live.performances : []).forEach(perf=>{const date=perf.date||'';if(date)dateCounts[date]=(dateCounts[date]||0)+1;});
+  });
+  ambiguousLiveDates = new Set(Object.keys(dateCounts).filter(date=>dateCounts[date]>1));
   items.forEach(live=>{
     (Array.isArray(live.performances) ? live.performances : []).forEach((perf,index)=>{
       const venue = venueForPerformance(live, perf, index);
@@ -230,10 +240,10 @@ function buildLiveOptions(raw){
   return out.sort((a,b)=>String(a.date).localeCompare(String(b.date)) || String(a.title).localeCompare(String(b.title)));
 }
 function liveDisplay(id){
-  const live = liveOptions.find(l=>l.id===id);
+  const live = liveOptions.find(l=>sameLiveId(l.id,id));
   if (live) return live;
   const [date,title,venue] = String(id || '').split('|');
-  return {id,date,title:title||'ライブ',venue:venue||'',weekday:''};
+  return {id:normalizeLiveId(id),date,title:title||'ライブ',venue:venue||'',weekday:''};
 }
 function liveItem(item){
   const actions = item.url ? `<div class="actions"><a class="open-link" href="${esc(item.url)}" target="_blank" rel="noopener">公式情報を開く</a></div>` : '';
