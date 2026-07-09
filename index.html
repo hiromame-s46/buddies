@@ -597,6 +597,61 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .profile-mini-exchanged-at { font-size:11px; color:#aaa; margin-top:3px; white-space:nowrap; }
 .profile-mini-reasons { display:flex; flex-wrap:wrap; gap:4px; margin-top:5px; }
 .match-reason { font-size:10px; font-weight:600; padding:2px 7px; border-radius:9999px; background:#f0f0f0; color:#555; white-space:nowrap; }
+.social-home { padding-top:12px; }
+.social-topbar { display:flex; align-items:center; justify-content:space-between; gap:14px; margin:2px 0 14px; }
+.social-kicker { font-size:11px; font-weight:900; color:#888; letter-spacing:.06em; text-transform:uppercase; }
+.social-title { margin:0; font-size:24px; line-height:1.2; font-weight:950; }
+.social-account-btn { width:44px; height:44px; border:1px solid #ececec; border-radius:50%; background:#fff; padding:0; overflow:hidden; display:grid; place-items:center; color:#777; font-weight:900; cursor:pointer; flex-shrink:0; }
+.social-account-btn img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
+.social-composer { border:1px solid var(--eee); border-radius:20px; background:#fff; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.025); margin-bottom:12px; }
+.social-composer textarea, .social-composer input, .social-composer select { width:100%; border:1px solid #e5e5e5; border-radius:14px; background:#fff; padding:11px 12px; font:inherit; font-size:14px; outline:none; }
+.social-composer textarea { min-height:88px; resize:vertical; line-height:1.65; }
+.social-composer textarea:focus, .social-composer input:focus, .social-composer select:focus { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,.05); }
+.social-composer-row { display:flex; gap:8px; align-items:center; justify-content:space-between; margin-top:10px; flex-wrap:wrap; }
+.social-composer-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; min-width:0; }
+.social-tool-note { font-size:11px; color:#777; font-weight:700; }
+.social-advanced { margin-top:10px; border-top:1px solid #f0f0f0; padding-top:10px; }
+.social-advanced summary { cursor:pointer; font-size:12px; font-weight:900; color:#555; }
+.social-advanced-grid { display:grid; gap:8px; margin-top:10px; }
+.social-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; border:1px solid #eee; border-radius:999px; background:#f7f7f7; margin:14px 0; }
+.social-tab { border:0; border-radius:999px; background:transparent; min-height:38px; font:inherit; font-size:13px; font-weight:900; color:#666; cursor:pointer; }
+.social-tab.active { background:#fff; color:#111; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.social-feed { display:grid; gap:12px; }
+.social-post { border:1px solid var(--eee); border-radius:18px; background:#fff; padding:14px; display:grid; gap:12px; }
+.social-post-head { display:flex; align-items:flex-start; gap:10px; }
+.social-post-author { min-width:0; flex:1; cursor:pointer; }
+.social-post-name { font-size:14px; font-weight:900; line-height:1.35; }
+.social-post-meta { font-size:11px; color:#777; font-weight:700; margin-top:2px; }
+.social-menu { position:relative; }
+.social-menu summary { list-style:none; width:32px; height:32px; border-radius:50%; display:grid; place-items:center; cursor:pointer; color:#777; }
+.social-menu summary::-webkit-details-marker { display:none; }
+.social-menu summary:hover { background:#f5f5f5; color:#111; }
+.social-menu-list { position:absolute; top:36px; right:0; z-index:5; min-width:132px; padding:6px; border:1px solid #e9e9e9; border-radius:14px; background:#fff; box-shadow:0 10px 28px rgba(0,0,0,.12); display:grid; gap:2px; }
+.social-menu-list button { border:0; background:transparent; border-radius:10px; padding:9px 10px; font:inherit; font-size:12px; font-weight:800; color:#111; text-align:left; cursor:pointer; }
+.social-menu-list button:hover { background:#f5f5f5; }
+.social-menu-list button.danger { color:#d33; }
+.social-post-body { font-size:14px; line-height:1.75; white-space:pre-wrap; word-break:break-word; color:#222; }
+.social-images { display:grid; gap:6px; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.social-images.one { grid-template-columns:1fr; }
+.social-image-item { min-width:0; color:inherit; text-decoration:none; display:block; }
+.social-images img { width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:14px; background:#f2f2f2; border:1px solid #eee; display:block; }
+.social-image-credit { margin-top:6px; font-size:11px; line-height:1.45; color:#666; font-weight:800; display:grid; gap:1px; }
+.social-image-credit b { color:#111; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.social-links, .social-tags { display:flex; flex-wrap:wrap; gap:6px; }
+.social-link, .social-tag { display:inline-flex; align-items:center; min-height:28px; max-width:100%; border-radius:999px; background:#f5f5f5; color:#333; text-decoration:none; padding:5px 10px; font-size:12px; font-weight:800; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.social-quote { border:1px solid #e9e9e9; border-radius:16px; background:#fafafa; padding:12px; display:grid; gap:7px; color:#222; text-decoration:none; }
+.social-quote-title { font-size:13px; font-weight:900; line-height:1.45; }
+.social-quote-sub { font-size:12px; color:#666; line-height:1.55; }
+.social-quote img { width:100%; max-height:180px; object-fit:cover; border-radius:12px; border:1px solid #eee; }
+.social-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; border-top:1px solid #f1f1f1; padding-top:10px; }
+.social-action { border:0; background:transparent; color:#555; padding:6px 8px; border-radius:999px; font:inherit; font-size:12px; font-weight:900; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
+.social-action:hover { background:#f5f5f5; color:#111; }
+.social-action.liked { color:#111; background:#f2f2f2; }
+.social-comments { display:grid; gap:8px; }
+.social-comment { display:flex; gap:8px; align-items:flex-start; font-size:12px; line-height:1.55; color:#333; background:#fafafa; border-radius:14px; padding:9px 10px; }
+.social-comment b { color:#111; }
+.social-feed-state { padding:22px; border:1px dashed #ddd; border-radius:18px; color:#888; text-align:center; font-size:13px; font-weight:800; }
+.social-sentinel { height:1px; }
 .verified-section{display:grid;gap:10px;margin-top:20px}
 .verified-card{border:1px solid #ead8c8;border-radius:20px;background:#fffdf9;overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.04)}
 .verified-banner{height:86px;background:linear-gradient(135deg,#fff1f7,#edf7ff);overflow:hidden}
@@ -852,15 +907,31 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="page-loading" style="text-align:center; padding:60px 20px; color:#999; font-size:14px;">読み込み中…</div>
 
   <div id="home-page" hidden>
-    <div id="my-home-card"></div>
-    <div id="verified-home-section"></div>
-    <div id="next-live-with-section"></div>
-    <div id="todays-sakura-section"></div>
-    <h2 id="similar-title" class="section-title">おすすめのBuddies</h2>
-    <div id="similar-list" class="profile-list"></div>
+    <section class="social-home">
+      <div class="social-topbar">
+        <div>
+          <div class="social-kicker">Buddies SNS</div>
+          <h1 class="social-title">タイムライン</h1>
+        </div>
+        <button id="home-account-button" class="social-account-btn" type="button" onclick="openHomeAccount()" aria-label="アカウント"></button>
+      </div>
+      <div id="social-composer" class="social-composer"></div>
+      <div class="social-tabs" role="tablist" aria-label="タイムライン切り替え">
+        <button class="social-tab active" type="button" data-social-mode="all" onclick="switchSocialMode('all')">タイムライン</button>
+        <button class="social-tab" type="button" data-social-mode="following" onclick="switchSocialMode('following')">フォロー</button>
+      </div>
+      <div id="social-feed" class="social-feed"></div>
+      <div id="social-loading" class="social-feed-state" hidden>読み込み中…</div>
+      <div id="social-sentinel" class="social-sentinel" aria-hidden="true"></div>
+    </section>
   </div>
 
   <div id="search-page" hidden>
+    <section id="search-recommend-section">
+      <h2 id="similar-title" class="section-title">おすすめのBuddies</h2>
+      <div id="similar-list" class="profile-list"></div>
+    </section>
+
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
       <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲、ライブで検索" style="padding-left:44px; padding-right:44px;">
@@ -894,6 +965,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="mypage-page" hidden>
     <div id="my-page-card" class="card"></div>
     <div id="verified-mypage-section"></div>
+    <div id="todays-sakura-section"></div>
     <h2 id="related-sites-title" class="section-title" hidden>関連サイト</h2>
     <div id="related-sites-section" class="related-site-list"></div>
     <h2 id="my-events-joined-title" class="section-title" hidden>参加中のイベント</h2>
@@ -1553,6 +1625,13 @@ let historyActiveTab = 'past-lives';
 let editNextLivesExpanded = false;
 let filterPastLivesExpanded = false;
 let editNextLiveSeats = {};
+let socialMode = 'all';
+let socialPosts = [];
+let socialBeforeId = 0;
+let socialLoading = false;
+let socialEnded = false;
+let socialObserver = null;
+let searchRecommendationsLoaded = false;
 
 const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
 const DEVELOPER_IDS = new Set([1]); // 開発者アカウント uid
@@ -2017,6 +2096,7 @@ function switchTab(tab) {
   sessionStorage.setItem('buddies_active_tab', tab);
   if (!restoringProfileReturn) scrollAppToTop();
   if (tab === 'search') {
+    renderSearchRecommendations();
     setupSearchObserver();
     if (!searchOffset && !searchLoading) resetAndLoadSearch();
   }
@@ -2360,45 +2440,408 @@ async function loadTodaysSakura(forceRender = false) {
 window.toggleTodaysSakura = toggleTodaysSakura;
 window.toggleHomeCollapse = toggleHomeCollapse;
 
-// ── ホーム ───────────────────────────────────────────────
-async function renderHome() {
-  const card = document.getElementById('my-home-card');
-  loadTodaysSakura();
+function fmtSocialDate(value) {
+  if (!value) return '';
+  const d = new Date(String(value).replace(' ', 'T'));
+  if (isNaN(d)) return '';
+  const now = Date.now();
+  const diff = Math.max(0, now - d.getTime());
+  if (diff < 60 * 1000) return 'たった今';
+  if (diff < 60 * 60 * 1000) return `${Math.floor(diff / 60000)}分前`;
+  if (diff < 24 * 60 * 60 * 1000) return `${Math.floor(diff / 3600000)}時間前`;
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function renderSocialAccountButton() {
+  const btn = document.getElementById('home-account-button');
+  if (!btn) return;
   if (!me) {
-    setHomeSimilarVisible(true);
-    card.innerHTML = `<div class="card" style="margin-top:16px; text-align:center;">
-      <p style="color:#666; font-size:14px; margin-bottom:12px;">ログインしてプロフィールを作成しましょう</p>
-      <button class="pill-button black" onclick="showAuthModal()">ログイン / 新規登録</button>
-    </div>`;
-    renderVerifiedHome();
-    const nextWith = document.getElementById('next-live-with-section');
-    if (nextWith) nextWith.innerHTML = '';
-    document.getElementById('similar-list').innerHTML = '';
+    btn.innerHTML = '?';
+    btn.title = 'ログイン';
     return;
   }
-  setHomeSimilarVisible(true);
-  const meHasSns = Array.isArray(me.sns_links) && me.sns_links.some(s => s && s.url && String(s.url).trim());
-  const meSnsBadge = meHasSns
-    ? `<div class="profile-mini-sns-badge" title="SNS登録済み"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>`
-    : '';
-  card.innerHTML = `<div class="card" style="margin-top:16px; cursor:pointer;" onclick="openMyProfileView()">
-    <div style="display:flex; align-items:center; gap:14px;">
-      <div class="profile-mini-avatar-wrap">${avatarHtml(me)}${meSnsBadge}</div>
-      <div style="flex:1;">
-        <div style="font-size:20px; font-weight:700;">${esc(getDisplayName(me))}</div>
-        <div style="font-size:12px; color:#666; margin-top:2px;">Buddies歴 ${esc(me.buddies_since || '-')}</div>
+  const url = getAvatarUrl(me);
+  btn.innerHTML = url ? `<img src="${esc(assetUrl(url))}" alt="">` : esc((getDisplayName(me)[0] || '?'));
+  btn.title = getDisplayName(me);
+}
+
+function openHomeAccount() {
+  if (!me) { showAuthModal(); return; }
+  location.href = './view.html?id=' + encodeURIComponent(me.id) + '&tab=posts';
+}
+
+function renderSocialComposer() {
+  const wrap = document.getElementById('social-composer');
+  if (!wrap) return;
+  if (!me) {
+    wrap.innerHTML = `<div style="text-align:center;padding:8px 4px;">
+      <div style="font-size:13px;color:#666;font-weight:700;margin-bottom:10px;">ログインすると投稿・いいね・コメントができます</div>
+      <button class="pill-button black" type="button" onclick="showAuthModal()">ログイン / 新規登録</button>
+    </div>`;
+    return;
+  }
+  wrap.innerHTML = `
+    <textarea id="social-body" maxlength="2000" placeholder="櫻坂のこと、現地のこと、Buddiesに共有したいこと"></textarea>
+    <div class="social-composer-row">
+      <div class="social-composer-tools">
+        <input id="social-images" type="file" accept="image/png,image/jpeg,image/webp" multiple style="max-width:210px;padding:8px;font-size:12px;">
+        <span class="social-tool-note">2枚まで・自動圧縮</span>
       </div>
+      <button id="social-submit" class="pill-button black" type="button" onclick="submitSocialPost()">投稿</button>
     </div>
-    <div style="display:flex; flex-wrap:wrap; gap:6px; margin-top:14px;">
-      ${getOshiList(me).map(o=>`<span class="oshi-pill">${esc(o)}</span>`).join('')}
+    <details class="social-advanced">
+      <summary>URL・ハッシュタグ・引用を追加</summary>
+      <div class="social-advanced-grid">
+        <textarea id="social-links" placeholder="URLを1行ずつ入力"></textarea>
+        <input id="social-hashtags" placeholder="ハッシュタグ（カンマ区切り / 10個まで）">
+        <select id="social-quote-type">
+          <option value="">引用なし</option>
+          <option value="sakumap_spot">SakuMapスポット</option>
+          <option value="sakulabo_blog">SakuLaboブログ</option>
+          <option value="sakulabo_mimi">さくみみ</option>
+        </select>
+        <input id="social-quote-ref" placeholder="引用IDまたはURL">
+        <input id="social-quote-title" placeholder="引用タイトル">
+        <input id="social-quote-member" placeholder="メンバー名（ブログ引用時）">
+        <input id="social-quote-url" placeholder="引用リンクURL">
+        <input id="social-quote-image" placeholder="引用画像URL">
+        <textarea id="social-image-urls" placeholder="SakuMap画像・ブログ画像URLを1行ずつ入力（最大10枚）"></textarea>
+      </div>
+    </details>`;
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ''));
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+async function imageFileToCompressedDataUrl(file) {
+  if (!file || !file.type || !file.type.startsWith('image/')) return readFileAsDataUrl(file);
+  const maxSide = 1600;
+  const quality = 0.82;
+  try {
+    const bitmap = window.createImageBitmap ? await createImageBitmap(file) : null;
+    let objectUrl = '';
+    const source = bitmap || await new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = reject;
+      objectUrl = URL.createObjectURL(file);
+      img.src = objectUrl;
+    });
+    const width = source.width || file.width || 1;
+    const height = source.height || file.height || 1;
+    const scale = Math.min(1, maxSide / Math.max(width, height));
+    const canvas = document.createElement('canvas');
+    canvas.width = Math.max(1, Math.round(width * scale));
+    canvas.height = Math.max(1, Math.round(height * scale));
+    const ctx = canvas.getContext('2d');
+    ctx.fillStyle = '#fff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(source, 0, 0, canvas.width, canvas.height);
+    if (bitmap && bitmap.close) bitmap.close();
+    const blob = await new Promise(resolve => canvas.toBlob(resolve, 'image/jpeg', quality));
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    return blob ? readFileAsDataUrl(blob) : readFileAsDataUrl(file);
+  } catch(e) {
+    return readFileAsDataUrl(file);
+  }
+}
+
+function socialLines(id) {
+  const el = document.getElementById(id);
+  return (el?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
+}
+
+function socialHashtagsFromInput(id = 'social-hashtags') {
+  const el = document.getElementById(id);
+  return (el?.value || '').split(/[,\s、]+/).map(s => s.replace(/^[#＃]+/, '').trim()).filter(Boolean).slice(0, 10);
+}
+
+function socialQuoteFromComposer() {
+  const type = document.getElementById('social-quote-type')?.value || '';
+  if (!type) return null;
+  const ref = document.getElementById('social-quote-ref')?.value.trim() || '';
+  const title = document.getElementById('social-quote-title')?.value.trim() || '';
+  const member = document.getElementById('social-quote-member')?.value.trim() || '';
+  const url = document.getElementById('social-quote-url')?.value.trim() || '';
+  const image = document.getElementById('social-quote-image')?.value.trim() || '';
+  return { type, ref, payload: { title, member, url, image_url: image } };
+}
+
+async function socialPayloadFromComposer() {
+  const files = Array.from(document.getElementById('social-images')?.files || []).slice(0, 2);
+  const imageData = [];
+  for (const file of files) imageData.push(await imageFileToCompressedDataUrl(file));
+  return {
+    body: document.getElementById('social-body')?.value || '',
+    links: socialLines('social-links'),
+    hashtags: socialHashtagsFromInput(),
+    image_urls: socialLines('social-image-urls').slice(0, 10),
+    image_data: imageData,
+    quote: socialQuoteFromComposer(),
+  };
+}
+
+async function submitSocialPost() {
+  if (!me) { showAuthModal(); return; }
+  const btn = document.getElementById('social-submit');
+  if (btn) btn.disabled = true;
+  try {
+    const payload = await socialPayloadFromComposer();
+    const res = await fetch(API + '?action=buddies_post_create', {
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(payload)
+    });
+    const json = await res.json();
+    if (!json.ok) { toast(json.error || '投稿できませんでした'); return; }
+    renderSocialComposer();
+    await loadSocialPosts(true);
+    toast('投稿しました');
+  } catch(e) {
+    toast('投稿できませんでした');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+function switchSocialMode(mode) {
+  socialMode = mode === 'following' ? 'following' : 'all';
+  document.querySelectorAll('.social-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.socialMode === socialMode));
+  loadSocialPosts(true);
+}
+
+async function loadSocialPosts(reset = false) {
+  if (socialLoading) return;
+  if (reset) {
+    socialPosts = [];
+    socialBeforeId = 0;
+    socialEnded = false;
+    const feed = document.getElementById('social-feed');
+    if (feed) feed.innerHTML = '';
+  } else if (socialEnded) return;
+  socialLoading = true;
+  document.getElementById('social-loading')?.removeAttribute('hidden');
+  try {
+    const params = new URLSearchParams({ action:'buddies_posts_list', mode:socialMode, limit:'20' });
+    if (socialBeforeId) params.set('before_id', String(socialBeforeId));
+    const res = await fetch(API + '?' + params.toString(), { credentials:'include' });
+    const json = await res.json();
+    const items = json.ok ? (json.data || []) : [];
+    if (items.length < 20) socialEnded = true;
+    socialPosts = reset ? items : socialPosts.concat(items);
+    if (items.length) socialBeforeId = items[items.length - 1].id;
+    renderSocialFeed();
+  } catch(e) {
+    const feed = document.getElementById('social-feed');
+    if (feed) feed.innerHTML = '<div class="social-feed-state">読み込みに失敗しました</div>';
+  } finally {
+    socialLoading = false;
+    document.getElementById('social-loading')?.setAttribute('hidden', '');
+  }
+}
+
+function renderSocialFeed() {
+  const feed = document.getElementById('social-feed');
+  if (!feed) return;
+  if (!socialPosts.length) {
+    feed.innerHTML = `<div class="social-feed-state">${socialMode === 'following' ? 'フォロー中のBuddiesの投稿はまだありません' : 'まだ投稿がありません'}</div>`;
+    return;
+  }
+  feed.innerHTML = socialPosts.map(renderSocialPost).join('');
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function setupSocialObserver() {
+  const sentinel = document.getElementById('social-sentinel');
+  if (!sentinel || socialObserver) return;
+  socialObserver = new IntersectionObserver(entries => {
+    const homeVisible = !document.getElementById('home-page')?.hidden;
+    if (homeVisible && entries.some(entry => entry.isIntersecting)) loadSocialPosts(false);
+  }, { root:null, rootMargin:'480px 0px' });
+  socialObserver.observe(sentinel);
+}
+
+function socialProfileUrl(author) {
+  return './view.html?id=' + encodeURIComponent(author.id) + '&tab=posts';
+}
+
+function blogQuotePayload(post) {
+  const q = post?.quote || null;
+  if (!q || q.type !== 'sakulabo_blog' || !q.payload) return null;
+  return q.payload;
+}
+
+function renderSocialImages(images, post = null) {
+  images = Array.isArray(images) ? images.filter(i => i && i.url) : [];
+  if (!images.length) return '';
+  const blog = blogQuotePayload(post);
+  const credit = blog ? `<div class="social-image-credit"><span>櫻坂46</span>${blog.member ? `<b>${esc(blog.member)}</b>` : ''}${blog.title ? `<span>${esc(blog.title)}</span>` : ''}</div>` : '';
+  return `<div class="social-images ${images.length === 1 ? 'one' : ''}">${images.slice(0, 10).map(i => {
+    const inner = `<img src="${esc(assetUrl(i.url))}" alt="" loading="lazy">${credit}`;
+    return blog?.url ? `<a class="social-image-item" href="${esc(blog.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="social-image-item">${inner}</div>`;
+  }).join('')}</div>`;
+}
+
+function renderSocialQuote(q) {
+  if (!q || !q.payload) return '';
+  const p = q.payload;
+  const title = p.title || p.author_name || (q.type === 'sakumap_spot' ? 'SakuMapスポット' : q.type === 'sakulabo_mimi' ? 'さくみみ' : q.type === 'sakulabo_blog' ? 'SakuLaboブログ' : '引用投稿');
+  const sub = p.body || p.subtitle || p.member || p.date || '';
+  const href = p.url || (q.type === 'post' && p.post_id ? `./?post=${encodeURIComponent(p.post_id)}` : '');
+  const inner = `${p.image_url ? `<img src="${esc(assetUrl(p.image_url))}" alt="" loading="lazy">` : ''}<div class="social-quote-title">${esc(title)}</div>${sub ? `<div class="social-quote-sub">${esc(sub)}</div>` : ''}`;
+  return href ? `<a class="social-quote" href="${esc(href)}">${inner}</a>` : `<div class="social-quote">${inner}</div>`;
+}
+
+function renderSocialPost(post) {
+  const a = post.author || {};
+  const body = post.body ? `<div class="social-post-body">${esc(post.body)}</div>` : '';
+  const links = (post.links || []).map(u => `<a class="social-link" href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, ''))}</a>`).join('');
+  const tags = (post.hashtags || []).map(t => `<button class="social-tag" type="button" onclick="searchByKeyword('#${esc(t)}')">#${esc(t)}</button>`).join('');
+  const comments = (post.comments || []).map(c => `<div class="social-comment"><b>${esc(c.author?.display_name || c.author?.username || '名無し')}</b><span>${esc(c.body)}</span></div>`).join('');
+  const menu = `<details class="social-menu"><summary aria-label="投稿メニュー">•••</summary><div class="social-menu-list">
+    ${post.can_edit ? `<button type="button" onclick="editSocialPost(${post.id})">編集</button>` : ''}
+    ${post.can_delete ? `<button class="danger" type="button" onclick="deleteSocialPost(${post.id})">削除</button>` : `<button type="button" onclick="reportSocialPost(${post.id})">通報</button>`}
+  </div></details>`;
+  return `<article class="social-post" data-post-id="${post.id}">
+    <div class="social-post-head">
+      <a href="${esc(socialProfileUrl(a))}" class="profile-mini-avatar-wrap" style="text-decoration:none;">${avatarHtml(a, 44, 18)}</a>
+      <a class="social-post-author" href="${esc(socialProfileUrl(a))}" style="text-decoration:none;color:inherit;">
+        <div class="social-post-name">${esc(getDisplayName(a))}</div>
+        <div class="social-post-meta">${esc(fmtSocialDate(post.created_at))}${post.edited_at ? ' ・ 編集済み' : ''}</div>
+      </a>
+      ${menu}
     </div>
-  </div>`;
+    ${body}
+    ${renderSocialImages(post.images, post)}
+    ${links ? `<div class="social-links">${links}</div>` : ''}
+    ${tags ? `<div class="social-tags">${tags}</div>` : ''}
+    ${renderSocialQuote(post.quote)}
+    <div class="social-actions">
+      <button class="social-action ${post.my_liked ? 'liked' : ''}" type="button" onclick="toggleSocialLike(${post.id})"><i data-lucide="heart" style="width:15px;height:15px;${post.my_liked ? 'fill:currentColor;' : ''}"></i>${post.like_count || 0}</button>
+      <button class="social-action" type="button" onclick="commentSocialPost(${post.id})"><i data-lucide="message-circle" style="width:15px;height:15px;"></i>${post.comment_count || 0}</button>
+      <button class="social-action" type="button" onclick="copyText('${esc(post.url || location.href)}')"><i data-lucide="link" style="width:15px;height:15px;"></i>共有</button>
+    </div>
+    ${comments ? `<div class="social-comments">${comments}</div>` : ''}
+  </article>`;
+}
 
-  renderVerifiedHome();
+function findSocialPost(id) {
+  return socialPosts.find(p => Number(p.id) === Number(id));
+}
 
-  // おすすめ読み込み
+async function toggleSocialLike(id) {
+  if (!me) { showAuthModal(); return; }
+  const post = findSocialPost(id);
+  if (!post) return;
+  try {
+    const res = await fetch(API + '?action=buddies_post_like_toggle', {
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ post_id:id })
+    });
+    const json = await res.json();
+    if (!json.ok) { toast(json.error || '操作できませんでした'); return; }
+    post.my_liked = !!json.data.liked;
+    post.like_count = Math.max(0, (post.like_count || 0) + (post.my_liked ? 1 : -1));
+    renderSocialFeed();
+  } catch(e) { toast('操作できませんでした'); }
+}
+
+async function commentSocialPost(id) {
+  if (!me) { showAuthModal(); return; }
+  const body = prompt('コメントを入力してください');
+  if (!body || !body.trim()) return;
+  try {
+    const res = await fetch(API + '?action=buddies_post_comment_add', {
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ post_id:id, body:body.trim() })
+    });
+    const json = await res.json();
+    if (!json.ok) { toast(json.error || 'コメントできませんでした'); return; }
+    await loadSocialPosts(true);
+  } catch(e) { toast('コメントできませんでした'); }
+}
+
+async function editSocialPost(id) {
+  const post = findSocialPost(id);
+  if (!post) return;
+  const body = prompt('投稿本文を編集', post.body || '');
+  if (body === null) return;
+  const payload = {
+    body,
+    links: post.links || [],
+    hashtags: post.hashtags || [],
+    image_urls: (post.images || []).map(i => i.url).filter(Boolean),
+    quote: post.quote,
+  };
+  const res = await fetch(API + '?action=buddies_post_update', {
+    method:'POST',
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ id, ...payload })
+  });
+  const json = await res.json().catch(()=>({ok:false}));
+  if (!json.ok) { toast(json.error || '編集できませんでした'); return; }
+  await loadSocialPosts(true);
+}
+
+async function deleteSocialPost(id) {
+  if (!confirm('この投稿を削除しますか？')) return;
+  const res = await fetch(API + '?action=buddies_post_delete', {
+    method:'POST',
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ id })
+  });
+  const json = await res.json().catch(()=>({ok:false}));
+  if (!json.ok) { toast(json.error || '削除できませんでした'); return; }
+  socialPosts = socialPosts.filter(p => Number(p.id) !== Number(id));
+  renderSocialFeed();
+}
+
+async function reportSocialPost(id) {
+  if (!me) { showAuthModal(); return; }
+  const reason = prompt('通報理由を入力してください（任意）') || '';
+  const res = await fetch(API + '?action=buddies_post_report', {
+    method:'POST',
+    credentials:'include',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ post_id:id, reason })
+  });
+  const json = await res.json().catch(()=>({ok:false}));
+  if (!json.ok) { toast(json.error || '通報できませんでした'); return; }
+  toast('通報を送信しました');
+}
+
+// ── ホーム ───────────────────────────────────────────────
+async function renderHome() {
+  renderSocialAccountButton();
+  renderSocialComposer();
+  document.querySelectorAll('.social-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.socialMode === socialMode));
+  setupSocialObserver();
+  await loadSocialPosts(true);
+}
+
+async function renderSearchRecommendations(force = false) {
+  if (searchRecommendationsLoaded && !force) return;
   const list = document.getElementById('similar-list');
+  if (!list) return;
   list.innerHTML = '<div class="empty-state">読み込み中…</div>';
+  if (!me) {
+    list.innerHTML = '<div class="empty-state">ログインするとおすすめのBuddiesが表示されます</div>';
+    return;
+  }
+  searchRecommendationsLoaded = true;
   try {
     const [res, liveRes] = await Promise.all([
       fetch(API + '?action=buddies_similar&limit=25', { credentials:'include' }),
@@ -2420,7 +2863,6 @@ async function renderHome() {
       .map(verifiedAsProfile)
       .filter(Boolean);
     const merged = intermixVerifiedProfiles(verifiedExtras, similars);
-    renderNextLiveWithBuddies(liveParticipants);
     if (merged.length) {
       list.innerHTML = merged.map(p => profileMini(p, {showReasons: true})).join('');
       list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(merged[i], false));
@@ -3220,6 +3662,7 @@ function calcMatchReasons(p) {
 function renderMyPage() {
   const card = document.getElementById('my-page-card');
   const verifiedWrap = document.getElementById('verified-mypage-section');
+  loadTodaysSakura();
   if (!me) {
     setMyPageListSectionsVisible(false);
     card.innerHTML = `<div style="text-align:center; padding:20px;">

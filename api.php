@@ -105,6 +105,7 @@ function db(): PDO {
     } else {
         ensureBuddiesProfileSakulaboColumns($pdo);
         ensureBuddiesHistoryTable($pdo);
+        ensureBuddiesSocialTables($pdo);
         ensureVerifiedCollaboratorTables($pdo);
     }
     return $pdo;
@@ -225,6 +226,62 @@ function ensureBuddiesHistoryTable(PDO $pdo): void {
     }
 }
 
+function ensureBuddiesSocialTables(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_posts (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        body TEXT NULL DEFAULT NULL,
+        images_json MEDIUMTEXT NULL DEFAULT NULL COMMENT 'JSON array of {url,source}',
+        links_json MEDIUMTEXT NULL DEFAULT NULL COMMENT 'JSON array of URLs',
+        hashtags_json TEXT NULL DEFAULT NULL COMMENT 'JSON array',
+        quote_type VARCHAR(24) NULL DEFAULT NULL COMMENT 'post|sakumap_spot|sakulabo_blog|sakulabo_mimi',
+        quote_ref VARCHAR(128) NULL DEFAULT NULL,
+        quote_json MEDIUMTEXT NULL DEFAULT NULL,
+        source VARCHAR(32) NOT NULL DEFAULT 'manual',
+        source_ref VARCHAR(128) NULL DEFAULT NULL,
+        edited_at DATETIME NULL DEFAULT NULL,
+        deleted_at DATETIME NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        KEY idx_timeline (deleted_at, created_at, id),
+        KEY idx_user_created (user_id, deleted_at, created_at),
+        KEY idx_source (source, source_ref),
+        KEY idx_quote (quote_type, quote_ref)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_post_likes (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        post_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_post_like (post_id, user_id),
+        KEY idx_user (user_id),
+        KEY idx_post (post_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_post_comments (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        post_id BIGINT UNSIGNED NOT NULL,
+        user_id BIGINT UNSIGNED NOT NULL,
+        body VARCHAR(500) NOT NULL,
+        deleted_at DATETIME NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_post_created (post_id, deleted_at, created_at),
+        KEY idx_user (user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_post_reports (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        post_id BIGINT UNSIGNED NOT NULL,
+        reporter_user_id BIGINT UNSIGNED NOT NULL,
+        reason VARCHAR(300) NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_post_reporter (post_id, reporter_user_id),
+        KEY idx_post (post_id),
+        KEY idx_reporter (reporter_user_id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+}
+
 function runMigrations(PDO $pdo): void {
     // ─ sakulabo_users に Buddies 拡張カラムを追加 ─
     $cols = tableColumns($pdo, 'sakulabo_users');
@@ -285,6 +342,7 @@ function runMigrations(PDO $pdo): void {
     }
     ensureBuddiesProfileSakulaboColumns($pdo);
     ensureBuddiesHistoryTable($pdo);
+    ensureBuddiesSocialTables($pdo);
 
     // ─ 交換済みプロフィールテーブル ─
     $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_exchanges (
@@ -1797,6 +1855,15 @@ match ($action) {
     'buddies_icon_update'     => actionIconUpdate(),
     'buddies_icon_clear'      => actionIconClear(),
 
+    'buddies_posts_list'      => actionPostsList(),
+    'buddies_post_create'     => actionPostCreate(),
+    'buddies_post_update'     => actionPostUpdate(),
+    'buddies_post_delete'     => actionPostDelete(),
+    'buddies_post_like_toggle'=> actionPostLikeToggle(),
+    'buddies_post_comment_add'=> actionPostCommentAdd(),
+    'buddies_post_report'     => actionPostReport(),
+    'buddies_hashtag_suggest' => actionHashtagSuggest(),
+
     'buddies_exchange_add'    => actionExchangeAdd(),
     'buddies_exchange_list'   => actionExchangeList(),
     'buddies_exchange_remove' => actionExchangeRemove(),
@@ -2420,6 +2487,475 @@ function actionHistoryOnDay(): void {
             'image_url' => $r['image_url'] !== null ? (string)$r['image_url'] : '',
         ];
     }, $st->fetchAll()));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Buddies SNS
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function socialUploadUserDirName(array $user): string {
+    return historyUploadUserDirName($user);
+}
+
+function socialUploadBaseDir(array $user): string {
+    return __DIR__ . '/uploads/social/img/' . socialUploadUserDirName($user);
+}
+
+function socialUploadUrlPrefix(array $user): string {
+    return 'uploads/social/img/' . socialUploadUserDirName($user) . '/';
+}
+
+function isSocialImageUrlForUser(string $url, array $user): bool {
+    if ($url === '' || preg_match('/^https?:\/\//', $url)) return false;
+    $clean = strtok($url, '?') ?: $url;
+    return str_starts_with($clean, socialUploadUrlPrefix($user));
+}
+
+function saveSocialImageData(string $dataUrl, array $user, array &$newFiles): array {
+    if (!preg_match('/^data:(image\/png|image\/jpeg|image\/webp);base64,/', $dataUrl, $m)) {
+        err('投稿画像はPNG/JPEG/WebPのみ指定できます。');
+    }
+    $mime = $m[1];
+    $raw = base64_decode(substr($dataUrl, strpos($dataUrl, ',') + 1), true);
+    if ($raw === false) err('投稿画像を読み込めませんでした。');
+    if (strlen($raw) > 3 * 1024 * 1024) err('投稿画像サイズは3MB以内にしてください。');
+    if (!@getimagesizefromstring($raw)) err('有効な画像ファイルではありません。');
+    $ext = match ($mime) {
+        'image/png' => 'png',
+        'image/jpeg' => 'jpg',
+        default => 'webp',
+    };
+    $dir = socialUploadBaseDir($user);
+    if (!is_dir($dir) && !mkdir($dir, 0755, true) && !is_dir($dir)) err('アップロード先を作成できません。', 500);
+    $fileId = bin2hex(random_bytes(16));
+    while (is_file($dir . '/' . $fileId . '.' . $ext)) $fileId = bin2hex(random_bytes(16));
+    $path = $dir . '/' . $fileId . '.' . $ext;
+    if (file_put_contents($path, $raw) === false) err('画像を保存できませんでした。', 500);
+    $newFiles[] = $path;
+    return ['url' => socialUploadUrlPrefix($user) . $fileId . '.' . $ext, 'source' => 'upload', 'mime' => $mime, 'size' => strlen($raw)];
+}
+
+function cleanSocialUrl(string $url, string $label = 'URL'): string {
+    $url = trim($url);
+    if ($url === '' || mb_strlen($url) > 2048) err("{$label}が正しくありません。");
+    if (!filter_var($url, FILTER_VALIDATE_URL)) err("有効な{$label}を指定してください。");
+    $scheme = strtolower((string)parse_url($url, PHP_URL_SCHEME));
+    if (!in_array($scheme, ['http', 'https'], true)) err("{$label}は http または https のみ利用できます。");
+    return $url;
+}
+
+function normalizeSocialHashtags($value): array {
+    if (!is_array($value)) return [];
+    $out = [];
+    foreach ($value as $tag) {
+        $tag = trim(preg_replace('/^[#＃]+/u', '', (string)$tag));
+        $tag = preg_replace('/[\s\x{3000}#＃]+/u', '', $tag);
+        $tag = mb_substr((string)$tag, 0, 40);
+        if ($tag !== '') $out[$tag] = $tag;
+        if (count($out) >= 10) break;
+    }
+    return array_values($out);
+}
+
+function normalizeSocialQuote($value): ?array {
+    if (!is_array($value)) return null;
+    $type = trim((string)($value['type'] ?? ''));
+    if (!in_array($type, ['post', 'sakumap_spot', 'sakulabo_blog', 'sakulabo_mimi'], true)) return null;
+    $ref = mb_substr(trim((string)($value['ref'] ?? $value['id'] ?? '')), 0, 128);
+    $payload = is_array($value['payload'] ?? null) ? $value['payload'] : [];
+    $clean = [];
+    foreach (['title', 'subtitle', 'body', 'url', 'image_url', 'member', 'date', 'spot_id'] as $k) {
+        if (!array_key_exists($k, $payload)) continue;
+        $v = trim((string)$payload[$k]);
+        if (in_array($k, ['url', 'image_url'], true) && $v !== '') {
+            if (!filter_var($v, FILTER_VALIDATE_URL)) continue;
+        }
+        $clean[$k] = mb_substr($v, 0, in_array($k, ['body'], true) ? 500 : 2048);
+    }
+    if ($type === 'post') {
+        $postId = (int)$ref;
+        if ($postId <= 0) err('引用する投稿が正しくありません。');
+        $st = db()->prepare(
+            'SELECT p.id, p.body, p.images_json, p.created_at, u.id AS user_id, u.username, u.display_name, u.user_icon
+               FROM buddies_posts p
+               JOIN sakulabo_users u ON u.id = p.user_id
+              WHERE p.id = ? AND p.deleted_at IS NULL
+              LIMIT 1'
+        );
+        $st->execute([$postId]);
+        $row = $st->fetch();
+        if (!$row) err('引用する投稿が見つかりません。', 404);
+        $images = json_decode((string)($row['images_json'] ?? '[]'), true);
+        $firstImage = is_array($images) && !empty($images[0]['url']) ? (string)$images[0]['url'] : '';
+        $clean = [
+            'post_id' => (int)$row['id'],
+            'author_id' => (int)$row['user_id'],
+            'author_name' => (string)($row['display_name'] ?: $row['username'] ?: '名無し'),
+            'author_icon' => (string)($row['user_icon'] ?? ''),
+            'body' => mb_substr((string)($row['body'] ?? ''), 0, 240),
+            'image_url' => $firstImage,
+            'created_at' => $row['created_at'] ?? null,
+        ];
+        $ref = (string)$postId;
+    }
+    if ($ref === '' && empty($clean)) return null;
+    return ['type' => $type, 'ref' => $ref, 'payload' => $clean];
+}
+
+function normalizeSocialPayload(array $b, array $user, bool $editing = false): array {
+    $body = trim((string)($b['body'] ?? ''));
+    $body = preg_replace('/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/u', ' ', $body) ?? '';
+    if (mb_strlen($body) > 2000) err('投稿本文は2000文字以内で入力してください。');
+
+    $newFiles = [];
+    $images = [];
+    $imageData = is_array($b['image_data'] ?? null) ? array_slice($b['image_data'], 0, 2) : [];
+    foreach ($imageData as $dataUrl) {
+        $images[] = saveSocialImageData((string)$dataUrl, $user, $newFiles);
+    }
+    $imageUrls = is_array($b['image_urls'] ?? null) ? array_slice($b['image_urls'], 0, 10) : [];
+    foreach ($imageUrls as $url) {
+        $url = trim((string)$url);
+        if ($url !== '' && isSocialImageUrlForUser($url, $user)) {
+            $images[] = ['url' => $url, 'source' => 'upload'];
+        } else {
+            $images[] = ['url' => cleanSocialUrl($url, '画像URL'), 'source' => 'external'];
+        }
+    }
+    if (count($images) > 10) $images = array_slice($images, 0, 10);
+
+    $links = [];
+    $rawLinks = is_array($b['links'] ?? null) ? array_slice($b['links'], 0, 50) : [];
+    foreach ($rawLinks as $url) $links[] = cleanSocialUrl((string)$url, 'リンクURL');
+    $links = array_values(array_unique($links));
+
+    $hashtags = normalizeSocialHashtags($b['hashtags'] ?? []);
+    $quote = normalizeSocialQuote($b['quote'] ?? null);
+    if ($body === '' && !$images && !$links && !$quote) {
+        err('本文、画像、URL、引用のいずれかを入力してください。');
+    }
+    return compact('body', 'images', 'links', 'hashtags', 'quote', 'newFiles');
+}
+
+function socialPostUrl(int $postId): string {
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $scheme = $https ? 'https' : 'http';
+    $host = preg_replace('/[\r\n\0]/', '', $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp');
+    $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
+    if ($dir === '/' || $dir === '.') $dir = '';
+    return $scheme . '://' . $host . $dir . '/?post=' . $postId;
+}
+
+function socialAuthorFromRow(array $r): array {
+    return buildRowData([
+        'id' => $r['user_id'],
+        'username' => $r['username'] ?? '',
+        'display_name' => $r['display_name'] ?? '',
+        'oshi_member' => $r['oshi_member'] ?? null,
+        'oshi_member_2' => $r['oshi_member_2'] ?? null,
+        'oshi_member_3' => $r['oshi_member_3'] ?? null,
+        'user_icon' => $r['user_icon'] ?? null,
+        'birthday' => $r['birthday'] ?? null,
+        'age' => $r['age'] ?? null,
+        'gender' => $r['gender'] ?? null,
+        'location' => $r['location'] ?? null,
+        'buddies_since' => $r['buddies_since'] ?? null,
+        'bio' => $r['bio'] ?? null,
+        'tags' => $r['tags'] ?? null,
+        'favorite_songs' => $r['favorite_songs'] ?? null,
+        'next_lives' => $r['next_lives'] ?? null,
+        'next_live_seats' => $r['next_live_seats'] ?? null,
+        'sns_links' => $r['sns_links'] ?? null,
+        'follow_stance' => $r['follow_stance'] ?? null,
+        'post_template' => $r['post_template'] ?? null,
+        'show_favorite_mimis' => $r['show_favorite_mimis'] ?? 0,
+        'show_favorite_blogs' => $r['show_favorite_blogs'] ?? 0,
+        'show_sakumap_stamps' => $r['show_sakumap_stamps'] ?? 0,
+    ]);
+}
+
+function buildSocialComment(array $r): array {
+    return [
+        'id' => (int)$r['id'],
+        'post_id' => (int)$r['post_id'],
+        'body' => (string)$r['body'],
+        'created_at' => $r['created_at'] ?? null,
+        'author' => [
+            'id' => (int)$r['user_id'],
+            'username' => (string)($r['username'] ?? ''),
+            'display_name' => (string)($r['display_name'] ?: $r['username'] ?: '名無し'),
+            'user_icon' => (string)($r['user_icon'] ?? ''),
+        ],
+    ];
+}
+
+function socialCommentsForPosts(array $postIds): array {
+    $postIds = array_values(array_unique(array_filter(array_map('intval', $postIds))));
+    if (!$postIds) return [];
+    $ph = implode(',', array_fill(0, count($postIds), '?'));
+    $st = db()->prepare(
+        "SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.username, u.display_name, u.user_icon
+           FROM buddies_post_comments c
+           JOIN sakulabo_users u ON u.id = c.user_id
+          WHERE c.deleted_at IS NULL AND c.post_id IN ($ph)
+          ORDER BY c.created_at ASC, c.id ASC"
+    );
+    $st->execute($postIds);
+    $out = [];
+    foreach ($st->fetchAll() as $r) {
+        $pid = (int)$r['post_id'];
+        $out[$pid] ??= [];
+        if (count($out[$pid]) < 5) $out[$pid][] = buildSocialComment($r);
+    }
+    return $out;
+}
+
+function buildSocialPost(array $r, ?array $me, array $commentsByPost = []): array {
+    $postId = (int)$r['post_id'];
+    $quotePayload = $r['quote_json'] ? (json_decode($r['quote_json'], true) ?: []) : [];
+    return [
+        'id' => $postId,
+        'body' => (string)($r['body'] ?? ''),
+        'images' => $r['images_json'] ? (json_decode($r['images_json'], true) ?: []) : [],
+        'links' => $r['links_json'] ? (json_decode($r['links_json'], true) ?: []) : [],
+        'hashtags' => $r['hashtags_json'] ? (json_decode($r['hashtags_json'], true) ?: []) : [],
+        'quote' => $r['quote_type'] ? ['type' => $r['quote_type'], 'ref' => $r['quote_ref'], 'payload' => $quotePayload] : null,
+        'source' => (string)($r['source'] ?? 'manual'),
+        'source_ref' => $r['source_ref'] ?? null,
+        'like_count' => (int)($r['like_count'] ?? 0),
+        'comment_count' => (int)($r['comment_count'] ?? 0),
+        'my_liked' => !empty($r['my_liked']),
+        'can_edit' => $me && (int)$me['id'] === (int)$r['user_id'] && strtotime((string)$r['created_at']) >= time() - 15 * 60,
+        'can_delete' => $me && (int)$me['id'] === (int)$r['user_id'],
+        'edited_at' => $r['edited_at'] ?? null,
+        'created_at' => $r['created_at'] ?? null,
+        'updated_at' => $r['updated_at'] ?? null,
+        'url' => socialPostUrl($postId),
+        'author' => socialAuthorFromRow($r),
+        'comments' => $commentsByPost[$postId] ?? [],
+    ];
+}
+
+function socialPostSelectSql(int $meId): string {
+    $liked = $meId > 0
+        ? "EXISTS (SELECT 1 FROM buddies_post_likes ml WHERE ml.post_id = p.id AND ml.user_id = {$meId}) AS my_liked"
+        : "0 AS my_liked";
+    return "p.id AS post_id, p.user_id, p.body, p.images_json, p.links_json, p.hashtags_json,
+            p.quote_type, p.quote_ref, p.quote_json, p.source, p.source_ref, p.edited_at,
+            p.created_at, p.updated_at,
+            u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3, u.user_icon,
+            bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
+            bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
+            bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
+            (SELECT COUNT(*) FROM buddies_post_likes l WHERE l.post_id = p.id) AS like_count,
+            (SELECT COUNT(*) FROM buddies_post_comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
+            {$liked}";
+}
+
+function actionPostsList(): void {
+    ensureBuddiesSocialTables(db());
+    $me = currentUser();
+    $meId = $me ? (int)$me['id'] : 0;
+    $mode = trim((string)($_GET['mode'] ?? 'all'));
+    $userId = (int)($_GET['user_id'] ?? 0);
+    $beforeId = (int)($_GET['before_id'] ?? 0);
+    $limit = min(max((int)($_GET['limit'] ?? 20), 1), 50);
+    $params = [];
+    $where = ['p.deleted_at IS NULL'];
+    if ($beforeId > 0) {
+        $where[] = 'p.id < ?';
+        $params[] = $beforeId;
+    }
+    if ($userId > 0) {
+        $where[] = 'p.user_id = ?';
+        $params[] = $userId;
+    } elseif ($mode === 'following') {
+        if (!$me) ok([]);
+        $where[] = 'EXISTS (SELECT 1 FROM buddies_favorites f WHERE f.user_id = ? AND f.target_id = p.user_id)';
+        $params[] = $meId;
+    }
+    $params[] = $limit;
+    $sql = 'SELECT ' . socialPostSelectSql($meId) . '
+              FROM buddies_posts p
+              JOIN sakulabo_users u ON u.id = p.user_id
+         LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
+             WHERE ' . implode(' AND ', $where) . '
+             ORDER BY p.id DESC
+             LIMIT ?';
+    $st = db()->prepare($sql);
+    $st->execute($params);
+    $rows = $st->fetchAll();
+    $comments = socialCommentsForPosts(array_map(fn($r) => (int)$r['post_id'], $rows));
+    ok(array_map(fn($r) => buildSocialPost($r, $me, $comments), $rows));
+}
+
+function actionPostCreate(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $b = body();
+    $payload = normalizeSocialPayload($b, $me);
+    $source = trim((string)($b['source'] ?? 'manual'));
+    if (!in_array($source, ['manual', 'sakumap_spot', 'sakumap_visit'], true)) $source = 'manual';
+    $sourceRef = mb_substr(trim((string)($b['source_ref'] ?? '')), 0, 128);
+    try {
+        $q = $payload['quote'];
+        $st = db()->prepare(
+            'INSERT INTO buddies_posts
+                (user_id, body, images_json, links_json, hashtags_json, quote_type, quote_ref, quote_json, source, source_ref)
+             VALUES (?,?,?,?,?,?,?,?,?,?)'
+        );
+        $st->execute([
+            (int)$me['id'],
+            $payload['body'] !== '' ? $payload['body'] : null,
+            json_encode($payload['images'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            json_encode($payload['links'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            json_encode($payload['hashtags'], JSON_UNESCAPED_UNICODE),
+            $q['type'] ?? null,
+            $q['ref'] ?? null,
+            $q ? json_encode($q['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+            $source,
+            $sourceRef !== '' ? $sourceRef : null,
+        ]);
+        $id = (int)db()->lastInsertId();
+    } catch (\Throwable $e) {
+        foreach ($payload['newFiles'] as $path) {
+            if (is_file($path)) @unlink($path);
+        }
+        err('投稿できませんでした。');
+    }
+    ok(['id' => $id, 'url' => socialPostUrl($id)]);
+}
+
+function actionPostUpdate(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $id = (int)req('id');
+    $st = db()->prepare('SELECT * FROM buddies_posts WHERE id=? AND deleted_at IS NULL LIMIT 1');
+    $st->execute([$id]);
+    $post = $st->fetch();
+    if (!$post) err('投稿が見つかりません。', 404);
+    if ((int)$post['user_id'] !== (int)$me['id']) err('この投稿は編集できません。', 403);
+    if (strtotime((string)$post['created_at']) < time() - 15 * 60) err('投稿の編集は15分以内のみ可能です。', 403);
+    $payload = normalizeSocialPayload(body(), $me, true);
+    $q = $payload['quote'];
+    db()->prepare(
+        'UPDATE buddies_posts
+            SET body=?, images_json=?, links_json=?, hashtags_json=?, quote_type=?, quote_ref=?, quote_json=?, edited_at=NOW()
+          WHERE id=?'
+    )->execute([
+        $payload['body'] !== '' ? $payload['body'] : null,
+        json_encode($payload['images'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        json_encode($payload['links'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        json_encode($payload['hashtags'], JSON_UNESCAPED_UNICODE),
+        $q['type'] ?? null,
+        $q['ref'] ?? null,
+        $q ? json_encode($q['payload'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) : null,
+        $id,
+    ]);
+    ok(['id' => $id, 'updated' => true]);
+}
+
+function actionPostDelete(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $id = (int)req('id');
+    $st = db()->prepare('SELECT user_id FROM buddies_posts WHERE id=? AND deleted_at IS NULL LIMIT 1');
+    $st->execute([$id]);
+    $post = $st->fetch();
+    if (!$post) err('投稿が見つかりません。', 404);
+    if ((int)$post['user_id'] !== (int)$me['id']) err('この投稿は削除できません。', 403);
+    db()->prepare('UPDATE buddies_posts SET deleted_at=NOW() WHERE id=?')->execute([$id]);
+    ok(['deleted' => true]);
+}
+
+function actionPostLikeToggle(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $postId = (int)req('post_id');
+    $st = db()->prepare('SELECT id FROM buddies_posts WHERE id=? AND deleted_at IS NULL LIMIT 1');
+    $st->execute([$postId]);
+    if (!$st->fetch()) err('投稿が見つかりません。', 404);
+    $ck = db()->prepare('SELECT id FROM buddies_post_likes WHERE post_id=? AND user_id=? LIMIT 1');
+    $ck->execute([$postId, (int)$me['id']]);
+    if ($ck->fetch()) {
+        db()->prepare('DELETE FROM buddies_post_likes WHERE post_id=? AND user_id=?')->execute([$postId, (int)$me['id']]);
+        ok(['liked' => false]);
+    }
+    db()->prepare('INSERT IGNORE INTO buddies_post_likes (post_id, user_id) VALUES (?,?)')->execute([$postId, (int)$me['id']]);
+    ok(['liked' => true]);
+}
+
+function actionPostCommentAdd(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $postId = (int)req('post_id');
+    $body = trim((string)req('body'));
+    if (mb_strlen($body) > 500) err('コメントは500文字以内で入力してください。');
+    $st = db()->prepare('SELECT id FROM buddies_posts WHERE id=? AND deleted_at IS NULL LIMIT 1');
+    $st->execute([$postId]);
+    if (!$st->fetch()) err('投稿が見つかりません。', 404);
+    db()->prepare('INSERT INTO buddies_post_comments (post_id, user_id, body) VALUES (?,?,?)')
+        ->execute([$postId, (int)$me['id'], $body]);
+    ok(['commented' => true]);
+}
+
+function actionPostReport(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $postId = (int)req('post_id');
+    $reason = mb_substr(trim((string)(body()['reason'] ?? '')), 0, 300);
+    $st = db()->prepare(
+        'SELECT p.id, p.user_id, p.body, p.created_at, u.username AS author_username, u.display_name AS author_name,
+                r.username AS reporter_username, r.display_name AS reporter_name
+           FROM buddies_posts p
+           JOIN sakulabo_users u ON u.id = p.user_id
+           JOIN sakulabo_users r ON r.id = ?
+          WHERE p.id = ? AND p.deleted_at IS NULL
+          LIMIT 1'
+    );
+    $st->execute([(int)$me['id'], $postId]);
+    $post = $st->fetch();
+    if (!$post) err('投稿が見つかりません。', 404);
+    if ((int)$post['user_id'] === (int)$me['id']) err('自分の投稿は通報できません。');
+    db()->prepare('INSERT IGNORE INTO buddies_post_reports (post_id, reporter_user_id, reason) VALUES (?,?,?)')
+        ->execute([$postId, (int)$me['id'], $reason !== '' ? $reason : null]);
+    $body  = "Buddies SNSの投稿が通報されました。\n\n";
+    $body .= "────────────────────\n";
+    $body .= "通報者: " . (($post['reporter_name'] ?? '') ?: ($post['reporter_username'] ?? '')) . " / ID " . (int)$me['id'] . "\n";
+    $body .= "通報日時: " . date('Y/m/d H:i:s') . "\n";
+    $body .= "理由: " . ($reason !== '' ? $reason : '未入力') . "\n";
+    $body .= "投稿ID: " . $postId . "\n";
+    $body .= "投稿主: " . (($post['author_name'] ?? '') ?: ($post['author_username'] ?? '')) . " / ID " . (int)$post['user_id'] . "\n";
+    $body .= "投稿日時: " . ($post['created_at'] ?? '') . "\n";
+    $body .= "投稿リンク: " . socialPostUrl($postId) . "\n";
+    $body .= "────────────────────\n";
+    $body .= "本文:\n" . mb_substr((string)($post['body'] ?? ''), 0, 1200) . "\n";
+    contactMailAdmin('[Buddies SNS] 投稿通報 #' . $postId, $body);
+    ok(['reported' => true]);
+}
+
+function actionHashtagSuggest(): void {
+    ensureBuddiesSocialTables(db());
+    $q = trim((string)($_GET['q'] ?? ''));
+    $limit = min(max((int)($_GET['limit'] ?? 20), 1), 50);
+    $rows = db()->query("SELECT hashtags_json FROM buddies_posts WHERE deleted_at IS NULL AND hashtags_json IS NOT NULL AND hashtags_json <> '[]' ORDER BY id DESC LIMIT 500")->fetchAll();
+    $counts = [];
+    foreach ($rows as $r) {
+        $tags = json_decode((string)$r['hashtags_json'], true);
+        if (!is_array($tags)) continue;
+        foreach ($tags as $tag) {
+            $tag = trim((string)$tag);
+            if ($tag === '') continue;
+            if ($q !== '' && mb_stripos($tag, $q) === false) continue;
+            $counts[$tag] = ($counts[$tag] ?? 0) + 1;
+        }
+    }
+    arsort($counts);
+    $out = [];
+    foreach ($counts as $tag => $count) {
+        $out[] = ['tag' => $tag, 'count' => $count];
+        if (count($out) >= $limit) break;
+    }
+    ok($out);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

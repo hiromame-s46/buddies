@@ -178,6 +178,23 @@ main{padding:24px 22px 34px}
 .confirm-actions{display:grid;gap:8px}
 .confirm-btn{min-height:46px;border-radius:9999px;border:1px solid #ddd;background:#fff;color:#111;font:800 14px inherit;cursor:pointer}
 .confirm-btn.danger{background:#e00;border-color:#e00;color:#fff}
+.profile-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;border:1px solid #eee;border-radius:999px;background:#f7f7f7;margin:8px 0 20px}
+.profile-tab{border:0;border-radius:999px;background:transparent;min-height:40px;font:inherit;font-size:13px;font-weight:900;color:#666;cursor:pointer}
+.profile-tab.active{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.profile-panel[hidden]{display:none}
+.post-list{display:grid;gap:12px}
+.post-card{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px;display:grid;gap:10px}
+.post-meta{font-size:11px;color:#777;font-weight:800}
+.post-body{font-size:14px;line-height:1.75;white-space:pre-wrap;color:#222}
+.post-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.post-images.one{grid-template-columns:1fr}
+.post-image-item{min-width:0;color:inherit;text-decoration:none;display:block}
+.post-images img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:14px;border:1px solid #eee;background:#f2f2f2;display:block}
+.post-image-credit{margin-top:6px;font-size:11px;line-height:1.45;color:#666;font-weight:800;display:grid;gap:1px}
+.post-image-credit b{color:#111;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.post-tags,.post-links{display:flex;gap:6px;flex-wrap:wrap}
+.post-pill{display:inline-flex;min-height:28px;align-items:center;border-radius:999px;background:#f5f5f5;color:#333;text-decoration:none;padding:5px 10px;font-size:12px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.post-empty{padding:26px 14px;border:1px dashed #ddd;border-radius:18px;color:#888;text-align:center;font-size:13px;font-weight:800}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;border-radius:9999px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:560px){main{padding:18px 16px 32px}.hero{padding:20px 10px 12px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.section{margin-top:30px}.section+.section{margin-top:38px}.card{border-radius:24px;padding:18px}.next-live-card{padding:0}.next-live-card .next-live-item{grid-template-columns:68px 1fr auto;column-gap:13px;padding:12px;min-height:92px}.next-live-card .next-live-month,.next-live-card .next-live-day{font-size:20px}.next-live-card .next-live-slash{font-size:20px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}.sakumap-stamps{gap:10px}.sakumap-stamp{padding:11px 8px}.sakumv-record{padding:14px}}
@@ -723,6 +740,15 @@ function render(p){
     renderSakumvQuizRecords(p),
   ].filter(Boolean).join('');
 
+  const mainPanel = `
+    ${nextLiveSection}
+    ${myOshiSection}
+    ${bioSection}
+    ${historySection}
+    ${linkedSections}
+    ${snsSection}
+    <div id="favorite-area" class="section"></div>`;
+
   document.getElementById('app').innerHTML = `
     <div class="hero">
       <div class="icon-wrap"><div class="icon" style="background:${esc(heroBg)}">${heroIcon}</div>${badge}</div>
@@ -732,17 +758,74 @@ function render(p){
       ${heroMeta(rows)}
     </div>
 
-    ${nextLiveSection}
-    ${myOshiSection}
-    ${bioSection}
-    ${historySection}
-    ${linkedSections}
-    ${snsSection}
-    <div id="favorite-area" class="section"></div>
+    <div class="profile-tabs">
+      <button class="profile-tab active" type="button" data-profile-tab="main" onclick="switchProfileTab('main')">メイン</button>
+      <button class="profile-tab" type="button" data-profile-tab="posts" onclick="switchProfileTab('posts')">投稿</button>
+    </div>
+    <div id="profile-panel-main" class="profile-panel">${mainPanel}</div>
+    <div id="profile-panel-posts" class="profile-panel" hidden><div class="post-empty">投稿を読み込み中…</div></div>
 
     <div class="footer">Buddies profile</div>
   `;
   renderFavoriteArea();
+  const initialTab = new URLSearchParams(location.search).get('tab') === 'posts' ? 'posts' : 'main';
+  switchProfileTab(initialTab);
+}
+
+function switchProfileTab(tab){
+  tab = tab === 'posts' ? 'posts' : 'main';
+  document.querySelectorAll('.profile-tab').forEach(btn=>btn.classList.toggle('active', btn.dataset.profileTab === tab));
+  const main = document.getElementById('profile-panel-main');
+  const posts = document.getElementById('profile-panel-posts');
+  if (main) main.hidden = tab !== 'main';
+  if (posts) posts.hidden = tab !== 'posts';
+  if (tab === 'posts') loadProfilePosts();
+}
+
+function postDateLabel(value){
+  if(!value)return'';
+  const d=new Date(String(value).replace(' ','T'));
+  if(isNaN(d))return'';
+  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function renderProfilePostImages(images, post){
+  images = Array.isArray(images) ? images.filter(i=>i&&i.url) : [];
+  if(!images.length)return'';
+  const q = post?.quote || null;
+  const blog = q && q.type === 'sakulabo_blog' && q.payload ? q.payload : null;
+  const credit = blog ? `<div class="post-image-credit"><span>櫻坂46</span>${blog.member ? `<b>${esc(blog.member)}</b>` : ''}${blog.title ? `<span>${esc(blog.title)}</span>` : ''}</div>` : '';
+  return `<div class="post-images ${images.length===1?'one':''}">${images.slice(0,10).map(i=>{
+    const inner = `<img src="${esc(assetUrl(i.url))}" alt="" loading="lazy">${credit}`;
+    return blog?.url ? `<a class="post-image-item" href="${esc(blog.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="post-image-item">${inner}</div>`;
+  }).join('')}</div>`;
+}
+
+function renderProfilePost(post){
+  const images = Array.isArray(post.images) ? post.images.filter(i=>i&&i.url) : [];
+  const links = Array.isArray(post.links) ? post.links : [];
+  const tags = Array.isArray(post.hashtags) ? post.hashtags : [];
+  return `<article class="post-card">
+    <div class="post-meta">${esc(postDateLabel(post.created_at))}${post.edited_at ? ' ・ 編集済み' : ''} ・ ${post.like_count||0}いいね ・ ${post.comment_count||0}コメント</div>
+    ${post.body ? `<div class="post-body">${esc(post.body)}</div>` : ''}
+    ${renderProfilePostImages(images, post)}
+    ${links.length ? `<div class="post-links">${links.map(u=>`<a class="post-pill" href="${esc(u)}" target="_blank" rel="noopener">${esc(String(u).replace(/^https?:\/\//,''))}</a>`).join('')}</div>` : ''}
+    ${tags.length ? `<div class="post-tags">${tags.map(t=>`<span class="post-pill">#${esc(t)}</span>`).join('')}</div>` : ''}
+  </article>`;
+}
+
+async function loadProfilePosts(){
+  const panel = document.getElementById('profile-panel-posts');
+  if (!panel || panel.dataset.loaded === '1' || !profile?.id) return;
+  panel.dataset.loaded = '1';
+  try{
+    const res = await fetch(`${API}?action=buddies_posts_list&user_id=${encodeURIComponent(profile.id)}&limit=50`, { credentials:'include' });
+    const json = await res.json();
+    const posts = json.ok ? (json.data || []) : [];
+    panel.innerHTML = posts.length ? `<div class="post-list">${posts.map(renderProfilePost).join('')}</div>` : '<div class="post-empty">まだ投稿はありません</div>';
+  }catch(e){
+    panel.innerHTML = '<div class="post-empty">投稿を読み込めませんでした</div>';
+  }
 }
 
 function openLoginForFavorite(){
