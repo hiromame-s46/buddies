@@ -701,6 +701,7 @@ function err(string $msg, int $code = 400): never {
     echo json_encode(['ok' => false, 'error' => $msg], JSON_UNESCAPED_UNICODE);
     exit;
 }
+class ContactUploadException extends RuntimeException {}
 function body(): array {
     static $b = null;
     if ($b !== null) return $b;
@@ -941,6 +942,90 @@ function getBuddiesProfile(int $userId): ?array {
     return $st->fetch() ?: null;
 }
 
+function buddiesQuestTableExists(string $table): bool {
+    if (!preg_match('/^[a-zA-Z0-9_]+$/', $table)) return false;
+    try {
+        $st = db()->prepare('SHOW TABLES LIKE ?');
+        $st->execute([$table]);
+        return (bool)$st->fetchColumn();
+    } catch (\Throwable $e) {
+        return false;
+    }
+}
+
+function buddiesQuestRankForXp(int $xp): array {
+    $tiers = [
+        ['level'=>1,'key'=>'beginner','name'=>'ビギナー','min_xp'=>0,'color'=>'#7b8b78','icon'=>'sprout'],
+        ['level'=>2,'key'=>'rookie','name'=>'ルーキー','min_xp'=>30,'color'=>'#5f8f66','icon'=>'footprints'],
+        ['level'=>3,'key'=>'challenger','name'=>'チャレンジャー','min_xp'=>80,'color'=>'#4f7f9b','icon'=>'swords'],
+        ['level'=>4,'key'=>'adventurer','name'=>'アドベンチャー','min_xp'=>160,'color'=>'#8b6fa8','icon'=>'compass'],
+        ['level'=>5,'key'=>'expert','name'=>'エキスパート','min_xp'=>300,'color'=>'#bd7b39','icon'=>'medal'],
+        ['level'=>6,'key'=>'master','name'=>'マスター','min_xp'=>500,'color'=>'#b05276','icon'=>'trophy'],
+        ['level'=>7,'key'=>'legend','name'=>'レジェンド','min_xp'=>800,'color'=>'#8a6818','icon'=>'crown'],
+        ['level'=>8,'key'=>'grand-master','name'=>'グランドマスター','min_xp'=>1200,'color'=>'#315c37','icon'=>'gem'],
+    ];
+    $current = $tiers[0];
+    $next = null;
+    foreach ($tiers as $index => $tier) {
+        if ($xp < (int)$tier['min_xp']) { $next = $tier; break; }
+        $current = $tier;
+        $next = $tiers[$index + 1] ?? null;
+    }
+    $start = (int)$current['min_xp'];
+    $nextXp = $next ? (int)$next['min_xp'] : null;
+    $range = $nextXp !== null ? max(1, $nextXp - $start) : 1;
+    return $current + [
+        'xp'=>$xp,
+        'next_xp'=>$nextXp,
+        'next_name'=>$next['name'] ?? null,
+        'until_next'=>$nextXp !== null ? max(0, $nextXp - $xp) : 0,
+        'progress'=>$nextXp !== null ? min(100, max(0, (int)round((($xp - $start) / $range) * 100))) : 100,
+    ];
+}
+
+function buddiesQuestAssetUrl(string $path): string {
+    $path = trim($path);
+    if ($path === '') return '';
+    if (preg_match('~^https?://~i', $path)) return $path;
+    return '../todo/' . ltrim($path, '/');
+}
+
+function buddiesQuestProfileForUser(int $userId): ?array {
+    if (!buddiesQuestTableExists('buddies_todo_progress') || !buddiesQuestTableExists('buddies_todo_tasks')) return null;
+    try {
+        $st = db()->prepare("SELECT COUNT(*) AS completed_count,
+            COALESCE(SUM(CASE COALESCE(t.reset_cycle, 'daily') WHEN 'weekly' THEN 30 WHEN 'once' THEN 50 ELSE 10 END), 0) AS quest_xp
+            FROM buddies_todo_progress p
+            LEFT JOIN buddies_todo_tasks t ON t.id = p.item_id
+            WHERE p.user_id = ?");
+        $st->execute([$userId]);
+        $summary = $st->fetch() ?: [];
+        $completed = max(0, (int)($summary['completed_count'] ?? 0));
+        $xp = max(0, (int)($summary['quest_xp'] ?? 0));
+        $badges = [];
+        if (buddiesQuestTableExists('buddies_todo_badges') && buddiesQuestTableExists('buddies_todo_badge_awards')) {
+            $badgeSt = db()->prepare('SELECT b.id, b.title, b.description, b.icon, b.image_path, b.color, a.awarded_at
+                FROM buddies_todo_badge_awards a
+                INNER JOIN buddies_todo_badges b ON b.id = a.badge_id
+                WHERE a.user_id = ? AND b.enabled = 1
+                ORDER BY a.awarded_at DESC, a.id DESC');
+            $badgeSt->execute([$userId]);
+            foreach ($badgeSt->fetchAll() as $badge) {
+                $badges[] = [
+                    'id'=>(string)$badge['id'], 'title'=>(string)$badge['title'],
+                    'description'=>(string)($badge['description'] ?? ''), 'icon'=>(string)($badge['icon'] ?? 'award'),
+                    'image_url'=>buddiesQuestAssetUrl((string)($badge['image_path'] ?? '')),
+                    'color'=>(string)($badge['color'] ?? '#5f8f66'), 'awarded_at'=>$badge['awarded_at'] ?? null,
+                ];
+            }
+        }
+        if ($completed === 0 && !$badges) return null;
+        return ['xp'=>$xp, 'completed_count'=>$completed, 'rank'=>buddiesQuestRankForXp($xp), 'badges'=>$badges, 'quest_url'=>'../todo/index.html'];
+    } catch (\Throwable $e) {
+        return null;
+    }
+}
+
 // ── ユーザー情報ビルダー（sakulabo_users + buddies_profiles） ─
 function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false): array {
     $data = [
@@ -1013,6 +1098,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         ? getSakumvQuizBestRecords((int)$u['id'])
         : [];
     $data['buddies_history'] = getBuddiesHistoryForProfile((int)$u['id']);
+    $data['quest_profile'] = buddiesQuestProfileForUser((int)$u['id']);
     return $data;
 }
 
@@ -1714,6 +1800,25 @@ function buildVerifiedData(array $a, bool $includePrivate = false): array {
     if (!$includePrivate) unset($data['login_id']);
     return $data;
 }
+
+function verifiedDisplayForUserId(int $userId): ?array {
+    static $cache = [];
+    if ($userId <= 0) return null;
+    if (array_key_exists($userId, $cache)) return $cache[$userId];
+    $a = verifiedAccountByUserId($userId);
+    $cache[$userId] = $a ? buildVerifiedData($a, false) : null;
+    return $cache[$userId];
+}
+
+function applyVerifiedDisplayToUserData(array $data, ?int $userId = null): array {
+    $uid = $userId ?? (int)($data['id'] ?? $data['user_id'] ?? 0);
+    $v = verifiedDisplayForUserId($uid);
+    if (!$v) return $data;
+    $data['verified_account'] = $v;
+    if (!empty($v['display_name'])) $data['display_name'] = $v['display_name'];
+    if (!empty($v['icon_url'])) $data['user_icon'] = $v['icon_url'];
+    return $data;
+}
 function normalizeVerifiedType(string $type): string {
     return match ($type) {
         'developer' => 'developer',
@@ -1861,6 +1966,7 @@ match ($action) {
     'buddies_post_delete'     => actionPostDelete(),
     'buddies_post_like_toggle'=> actionPostLikeToggle(),
     'buddies_post_comment_add'=> actionPostCommentAdd(),
+    'buddies_post_comment_delete'=> actionPostCommentDelete(),
     'buddies_post_report'     => actionPostReport(),
     'buddies_hashtag_suggest' => actionHashtagSuggest(),
 
@@ -1950,12 +2056,17 @@ match ($action) {
     'form_results'            => actionFormResults(),
 
     'contact_mine_list'       => actionContactMineList(),
+    'contact_create'          => actionContactCreate(),
     'contact_update'          => actionContactUpdate(),
     'contact_update_message'  => actionContactUpdateMessage(),
     'contact_cancel'          => actionContactCancel(),
     'contact_user_reply'      => actionContactUserReply(),
     'contact_mark_read'       => actionContactMarkRead(),
     'contact_user_hide'       => actionContactUserHide(),
+    'contact_mail_status'     => actionContactMailStatus(),
+    'contact_mail_request'    => actionContactMailRequest(),
+    'contact_mail_confirm'    => actionContactMailConfirm(),
+    'contact_mail_enable'     => actionContactMailEnable(),
     'contact_admin_list'      => actionContactAdminList(),
     'contact_admin_get'       => actionContactAdminGet(),
     'contact_admin_reply'     => actionContactAdminReply(),
@@ -2165,6 +2276,14 @@ function actionPublicProfileGet(): void {
     $showMimis = !empty($data['show_favorite_mimis']);
     $showBlogs = !empty($data['show_favorite_blogs']);
     $data['sakulabo_favorites'] = getSakulaboFavoritesForProfile($targetId, $showMimis, $showBlogs);
+    try {
+        ensureBuddiesSocialTables(db());
+        $postCountSt = db()->prepare('SELECT COUNT(*) FROM buddies_posts WHERE user_id = ? AND deleted_at IS NULL');
+        $postCountSt->execute([$targetId]);
+        $data['post_count'] = (int)$postCountSt->fetchColumn();
+    } catch (\Throwable $e) {
+        $data['post_count'] = 0;
+    }
 
     ok($data);
 }
@@ -2352,7 +2471,7 @@ function actionLiveParticipants(): void {
             LIMIT ?";
     $st = db()->prepare($sql);
     $st->execute($params);
-    ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
+    ok(array_map(fn($r) => applyVerifiedDisplayToUserData(buildRowData($r), (int)$r['id']), $st->fetchAll()));
 }
 
 function actionHistoryUpdate(): void {
@@ -2637,48 +2756,37 @@ function normalizeSocialPayload(array $b, array $user, bool $editing = false): a
 }
 
 function socialPostUrl(int $postId): string {
-    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    $forwardedProto = strtolower(trim(explode(',', (string)($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? ''))[0] ?? ''));
+    $https = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') || $forwardedProto === 'https';
     $scheme = $https ? 'https' : 'http';
     $host = preg_replace('/[\r\n\0]/', '', $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp');
     $dir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
     if ($dir === '/' || $dir === '.') $dir = '';
-    return $scheme . '://' . $host . $dir . '/?post=' . $postId;
+    return $scheme . '://' . $host . $dir . '/index.html?post=' . $postId;
 }
 
 function socialAuthorFromRow(array $r): array {
-    return buildRowData([
-        'id' => $r['user_id'],
-        'username' => $r['username'] ?? '',
-        'display_name' => $r['display_name'] ?? '',
+    $author = applyVerifiedDisplayToUserData([
+        'id' => (int)$r['user_id'],
+        'username' => (string)($r['username'] ?? ''),
+        'display_name' => (string)($r['display_name'] ?? ''),
         'oshi_member' => $r['oshi_member'] ?? null,
         'oshi_member_2' => $r['oshi_member_2'] ?? null,
         'oshi_member_3' => $r['oshi_member_3'] ?? null,
-        'user_icon' => $r['user_icon'] ?? null,
-        'birthday' => $r['birthday'] ?? null,
-        'age' => $r['age'] ?? null,
-        'gender' => $r['gender'] ?? null,
-        'location' => $r['location'] ?? null,
-        'buddies_since' => $r['buddies_since'] ?? null,
-        'bio' => $r['bio'] ?? null,
-        'tags' => $r['tags'] ?? null,
-        'favorite_songs' => $r['favorite_songs'] ?? null,
-        'next_lives' => $r['next_lives'] ?? null,
-        'next_live_seats' => $r['next_live_seats'] ?? null,
-        'sns_links' => $r['sns_links'] ?? null,
-        'follow_stance' => $r['follow_stance'] ?? null,
-        'post_template' => $r['post_template'] ?? null,
-        'show_favorite_mimis' => $r['show_favorite_mimis'] ?? 0,
-        'show_favorite_blogs' => $r['show_favorite_blogs'] ?? 0,
-        'show_sakumap_stamps' => $r['show_sakumap_stamps'] ?? 0,
-    ]);
+        'user_icon' => (string)($r['user_icon'] ?? ''),
+    ], (int)$r['user_id']);
+    $questXp = max(0, (int)($r['quest_xp'] ?? 0));
+    $author['quest_rank'] = $questXp > 0 ? buddiesQuestRankForXp($questXp) : null;
+    return $author;
 }
 
-function buildSocialComment(array $r): array {
+function buildSocialComment(array $r, ?array $me = null): array {
     return [
         'id' => (int)$r['id'],
         'post_id' => (int)$r['post_id'],
         'body' => (string)$r['body'],
         'created_at' => $r['created_at'] ?? null,
+        'can_delete' => $me && ((int)$me['id'] === (int)$r['user_id'] || (int)$me['id'] === (int)($r['post_user_id'] ?? 0)),
         'author' => [
             'id' => (int)$r['user_id'],
             'username' => (string)($r['username'] ?? ''),
@@ -2688,13 +2796,14 @@ function buildSocialComment(array $r): array {
     ];
 }
 
-function socialCommentsForPosts(array $postIds): array {
+function socialCommentsForPosts(array $postIds, ?array $me = null): array {
     $postIds = array_values(array_unique(array_filter(array_map('intval', $postIds))));
     if (!$postIds) return [];
     $ph = implode(',', array_fill(0, count($postIds), '?'));
     $st = db()->prepare(
-        "SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, u.username, u.display_name, u.user_icon
+        "SELECT c.id, c.post_id, c.user_id, c.body, c.created_at, p.user_id AS post_user_id, u.username, u.display_name, u.user_icon
            FROM buddies_post_comments c
+           JOIN buddies_posts p ON p.id = c.post_id
            JOIN sakulabo_users u ON u.id = c.user_id
           WHERE c.deleted_at IS NULL AND c.post_id IN ($ph)
           ORDER BY c.created_at ASC, c.id ASC"
@@ -2704,7 +2813,8 @@ function socialCommentsForPosts(array $postIds): array {
     foreach ($st->fetchAll() as $r) {
         $pid = (int)$r['post_id'];
         $out[$pid] ??= [];
-        if (count($out[$pid]) < 5) $out[$pid][] = buildSocialComment($r);
+        $out[$pid][] = buildSocialComment($r, $me);
+        if (count($out[$pid]) > 5) array_shift($out[$pid]);
     }
     return $out;
 }
@@ -2712,15 +2822,20 @@ function socialCommentsForPosts(array $postIds): array {
 function buildSocialPost(array $r, ?array $me, array $commentsByPost = []): array {
     $postId = (int)$r['post_id'];
     $quotePayload = $r['quote_json'] ? (json_decode($r['quote_json'], true) ?: []) : [];
-    return [
+    $images = $r['images_json'] ? (json_decode($r['images_json'], true) ?: []) : [];
+    $images = array_values(array_filter(array_map(function($image) {
+        if (!is_array($image) || empty($image['url'])) return null;
+        return ['url' => (string)$image['url']];
+    }, is_array($images) ? $images : [])));
+    $post = [
         'id' => $postId,
         'body' => (string)($r['body'] ?? ''),
-        'images' => $r['images_json'] ? (json_decode($r['images_json'], true) ?: []) : [],
+        'images' => $images,
         'links' => $r['links_json'] ? (json_decode($r['links_json'], true) ?: []) : [],
         'hashtags' => $r['hashtags_json'] ? (json_decode($r['hashtags_json'], true) ?: []) : [],
         'quote' => $r['quote_type'] ? ['type' => $r['quote_type'], 'ref' => $r['quote_ref'], 'payload' => $quotePayload] : null,
         'source' => (string)($r['source'] ?? 'manual'),
-        'source_ref' => $r['source_ref'] ?? null,
+        'source_ref' => (string)($r['source_ref'] ?? ''),
         'like_count' => (int)($r['like_count'] ?? 0),
         'comment_count' => (int)($r['comment_count'] ?? 0),
         'my_liked' => !empty($r['my_liked']),
@@ -2728,24 +2843,24 @@ function buildSocialPost(array $r, ?array $me, array $commentsByPost = []): arra
         'can_delete' => $me && (int)$me['id'] === (int)$r['user_id'],
         'edited_at' => $r['edited_at'] ?? null,
         'created_at' => $r['created_at'] ?? null,
-        'updated_at' => $r['updated_at'] ?? null,
         'url' => socialPostUrl($postId),
         'author' => socialAuthorFromRow($r),
-        'comments' => $commentsByPost[$postId] ?? [],
     ];
+    if (isset($commentsByPost[$postId])) $post['comments'] = $commentsByPost[$postId];
+    return $post;
 }
 
 function socialPostSelectSql(int $meId): string {
     $liked = $meId > 0
         ? "EXISTS (SELECT 1 FROM buddies_post_likes ml WHERE ml.post_id = p.id AND ml.user_id = {$meId}) AS my_liked"
         : "0 AS my_liked";
+    $questXp = buddiesQuestTableExists('buddies_todo_progress') && buddiesQuestTableExists('buddies_todo_tasks')
+        ? "(SELECT COALESCE(SUM(CASE COALESCE(qt.reset_cycle, 'daily') WHEN 'weekly' THEN 30 WHEN 'once' THEN 50 ELSE 10 END), 0) FROM buddies_todo_progress qp LEFT JOIN buddies_todo_tasks qt ON qt.id = qp.item_id WHERE qp.user_id = u.id) AS quest_xp"
+        : "0 AS quest_xp";
     return "p.id AS post_id, p.user_id, p.body, p.images_json, p.links_json, p.hashtags_json,
-            p.quote_type, p.quote_ref, p.quote_json, p.source, p.source_ref, p.edited_at,
-            p.created_at, p.updated_at,
+            p.quote_type, p.quote_ref, p.quote_json, p.source, p.source_ref, p.edited_at, p.created_at,
             u.username, u.display_name, u.oshi_member, u.oshi_member_2, u.oshi_member_3, u.user_icon,
-            bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
-            bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
-            bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
+            {$questXp},
             (SELECT COUNT(*) FROM buddies_post_likes l WHERE l.post_id = p.id) AS like_count,
             (SELECT COUNT(*) FROM buddies_post_comments c WHERE c.post_id = p.id AND c.deleted_at IS NULL) AS comment_count,
             {$liked}";
@@ -2756,14 +2871,20 @@ function actionPostsList(): void {
     $me = currentUser();
     $meId = $me ? (int)$me['id'] : 0;
     $mode = trim((string)($_GET['mode'] ?? 'all'));
+    $postId = (int)($_GET['post_id'] ?? 0);
     $userId = (int)($_GET['user_id'] ?? 0);
     $beforeId = (int)($_GET['before_id'] ?? 0);
     $limit = min(max((int)($_GET['limit'] ?? 20), 1), 50);
+    $includeComments = truthyFlag($_GET['include_comments'] ?? 0) === 1;
     $params = [];
     $where = ['p.deleted_at IS NULL'];
     if ($beforeId > 0) {
         $where[] = 'p.id < ?';
         $params[] = $beforeId;
+    }
+    if ($postId > 0) {
+        $where[] = 'p.id = ?';
+        $params[] = $postId;
     }
     if ($userId > 0) {
         $where[] = 'p.user_id = ?';
@@ -2777,14 +2898,13 @@ function actionPostsList(): void {
     $sql = 'SELECT ' . socialPostSelectSql($meId) . '
               FROM buddies_posts p
               JOIN sakulabo_users u ON u.id = p.user_id
-         LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
              WHERE ' . implode(' AND ', $where) . '
              ORDER BY p.id DESC
              LIMIT ?';
     $st = db()->prepare($sql);
     $st->execute($params);
     $rows = $st->fetchAll();
-    $comments = socialCommentsForPosts(array_map(fn($r) => (int)$r['post_id'], $rows));
+    $comments = $includeComments ? socialCommentsForPosts(array_map(fn($r) => (int)$r['post_id'], $rows), $me) : [];
     ok(array_map(fn($r) => buildSocialPost($r, $me, $comments), $rows));
 }
 
@@ -2895,7 +3015,44 @@ function actionPostCommentAdd(): void {
     if (!$st->fetch()) err('投稿が見つかりません。', 404);
     db()->prepare('INSERT INTO buddies_post_comments (post_id, user_id, body) VALUES (?,?,?)')
         ->execute([$postId, (int)$me['id'], $body]);
-    ok(['commented' => true]);
+    ok([
+        'commented' => true,
+        'comment' => [
+            'id' => (int)db()->lastInsertId(),
+            'post_id' => $postId,
+            'body' => $body,
+            'created_at' => date('Y-m-d H:i:s'),
+            'can_delete' => true,
+            'author' => [
+                'id' => (int)$me['id'],
+                'username' => (string)($me['username'] ?? ''),
+                'display_name' => (string)($me['display_name'] ?: ($me['username'] ?? '名無し')),
+                'user_icon' => (string)($me['user_icon'] ?? ''),
+            ],
+        ],
+    ]);
+}
+
+function actionPostCommentDelete(): void {
+    ensureBuddiesSocialTables(db());
+    $me = requireAuth();
+    $commentId = (int)req('comment_id');
+    if ($commentId <= 0) err('コメントが正しくありません。');
+    $st = db()->prepare(
+        'SELECT c.id, c.post_id, c.user_id, p.user_id AS post_user_id
+           FROM buddies_post_comments c
+           JOIN buddies_posts p ON p.id = c.post_id
+          WHERE c.id = ? AND c.deleted_at IS NULL AND p.deleted_at IS NULL
+          LIMIT 1'
+    );
+    $st->execute([$commentId]);
+    $row = $st->fetch();
+    if (!$row) err('コメントが見つかりません。', 404);
+    if ((int)$row['user_id'] !== (int)$me['id'] && (int)$row['post_user_id'] !== (int)$me['id']) {
+        err('このコメントを削除する権限がありません。', 403);
+    }
+    db()->prepare('UPDATE buddies_post_comments SET deleted_at = NOW() WHERE id = ?')->execute([$commentId]);
+    ok(['deleted' => true, 'post_id' => (int)$row['post_id'], 'comment_id' => $commentId]);
 }
 
 function actionPostReport(): void {
@@ -3151,10 +3308,18 @@ function actionSearch(): void {
 
     if ($q !== '') {
         $like = '%' . $q . '%';
+        $tagLike = '%' . preg_replace('/^[#＃]+/u', '', $q) . '%';
         $where[] = '(u.display_name LIKE ? OR u.username LIKE ?
                     OR u.oshi_member LIKE ? OR u.oshi_member_2 LIKE ? OR u.oshi_member_3 LIKE ?
-                    OR bp.tags LIKE ? OR bp.location LIKE ? OR bp.favorite_songs LIKE ? OR bp.next_lives LIKE ?)';
-        for ($i = 0; $i < 9; $i++) $params[] = $like;
+                    OR bp.tags LIKE ? OR bp.location LIKE ? OR bp.favorite_songs LIKE ? OR bp.next_lives LIKE ?
+                    OR EXISTS (
+                        SELECT 1 FROM buddies_posts sp
+                         WHERE sp.user_id = u.id
+                           AND sp.deleted_at IS NULL
+                           AND (sp.body LIKE ? OR sp.hashtags_json LIKE ? OR sp.links_json LIKE ? OR sp.quote_json LIKE ?)
+                         LIMIT 1
+                    ))';
+        array_push($params, $like, $like, $like, $like, $like, $tagLike, $like, $like, $like, $like, $tagLike, $like, $like);
     }
 
     // 第一推し指定（最優先で oshi_member 列に固定）
@@ -3265,6 +3430,25 @@ function actionSearch(): void {
     if ($seed === 0) $seed = rand(1, 2147483647);
 
     $hasSnsExpr = "(CASE WHEN bp.sns_links IS NOT NULL AND bp.sns_links <> '' AND bp.sns_links <> '[]' AND bp.sns_links LIKE '%\"url\"%' THEN 1 ELSE 0 END)";
+    $recommendParts = [];
+    $myOshisForSearch = array_values(array_filter([$me['oshi_member'] ?? null, $me['oshi_member_2'] ?? null, $me['oshi_member_3'] ?? null]));
+    foreach (array_slice($myOshisForSearch, 0, 3) as $name) {
+        $qName = db()->quote((string)$name);
+        $recommendParts[] = "(CASE WHEN u.oshi_member = {$qName} THEN 12 WHEN u.oshi_member_2 = {$qName} OR u.oshi_member_3 = {$qName} THEN 5 ELSE 0 END)";
+    }
+    $myTagsForSearch = ($myBpForSearch && !empty($myBpForSearch['tags'])) ? (json_decode($myBpForSearch['tags'], true) ?: []) : [];
+    foreach (array_slice(array_values(array_filter($myTagsForSearch, 'is_string')), 0, 10) as $tag) {
+        $pattern = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $tag) . '"%';
+        $recommendParts[] = "(CASE WHEN bp.tags LIKE " . db()->quote($pattern) . " THEN 3 ELSE 0 END)";
+    }
+    $mySongsForSearch = ($myBpForSearch && !empty($myBpForSearch['favorite_songs'])) ? (json_decode($myBpForSearch['favorite_songs'], true) ?: []) : [];
+    foreach (array_slice(array_values(array_filter($mySongsForSearch, 'is_string')), 0, 10) as $song) {
+        $pattern = '%"' . str_replace(['\\', '"'], ['\\\\', '\\"'], $song) . '"%';
+        $recommendParts[] = "(CASE WHEN bp.favorite_songs LIKE " . db()->quote($pattern) . " THEN 2 ELSE 0 END)";
+    }
+    if ($myBpForSearch && !empty($myBpForSearch['location'])) {
+        $recommendParts[] = "(CASE WHEN bp.location = " . db()->quote((string)$myBpForSearch['location']) . " THEN 2 ELSE 0 END)";
+    }
     $liveMatchParts = [];
     foreach (array_slice(array_values(array_filter($myNextLivesForSearch, 'is_string')), 0, 20) as $id) {
         $parts = [];
@@ -3274,6 +3458,7 @@ function actionSearch(): void {
         if ($parts) $liveMatchParts[] = "(CASE WHEN (" . implode(' OR ', $parts) . ") THEN 1 ELSE 0 END)";
     }
     $liveMatchExpr = $liveMatchParts ? '(' . implode(' + ', $liveMatchParts) . ')' : '0';
+    $recommendExpr = $recommendParts ? '(' . implode(' + ', $recommendParts) . ')' : '0';
     $completionExpr =
         "(CASE WHEN u.oshi_member   IS NOT NULL AND u.oshi_member   <> '' THEN 1 ELSE 0 END) +
          (CASE WHEN u.oshi_member_2 IS NOT NULL AND u.oshi_member_2 <> '' THEN 1 ELSE 0 END) +
@@ -3289,20 +3474,21 @@ function actionSearch(): void {
 
     $params[] = $seed;
     $sql = "SELECT $selectCols,
+                   $recommendExpr AS _recommend,
                    $hasSnsExpr     AS _has_sns,
                    $liveMatchExpr  AS _live_match,
                    $completionExpr AS _completion
             FROM sakulabo_users u
             LEFT JOIN buddies_profiles bp ON bp.user_id = u.id
             WHERE " . implode(' AND ', $where) . "
-            ORDER BY _live_match DESC, _has_sns DESC, _completion DESC, RAND(?)
+            ORDER BY _recommend DESC, _live_match DESC, _has_sns DESC, _completion DESC, RAND(?)
             LIMIT ? OFFSET ?";
     $params[] = $limit;
     $params[] = $offset;
 
     $st = db()->prepare($sql);
     $st->execute($params);
-    ok(array_map(fn($r) => buildRowData($r), $st->fetchAll()));
+    ok(array_map(fn($r) => applyVerifiedDisplayToUserData(buildRowData($r), (int)$r['id']), $st->fetchAll()));
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -4998,14 +5184,14 @@ function actionEventParticipants(): void { ensureEventTables();
     );
     $st->execute([$id]);
     $rows = $st->fetchAll();
-    $data = array_map(fn($r) => [
+    $data = array_map(fn($r) => applyVerifiedDisplayToUserData([
         'id'           => (int)$r['id'],
         'display_name' => $r['display_name'] ?: $r['username'],
         'user_icon'    => $r['user_icon'] ?? null,
         'oshi_member'  => $r['oshi_member'] ?? null,
         'location'     => $r['location'] ?? null,
         'bio'          => $r['bio'] ?? null,
-    ], $rows);
+    ], (int)$r['id']), $rows);
     ok($data);
 }
 function actionEventParticipantsAdmin(): void { ensureEventTables();
@@ -5347,14 +5533,14 @@ function checkinUserData(int $userId): array {
     $st->execute([$userId]);
     $r = $st->fetch();
     if (!$r) err('ユーザーが見つかりません。', 404);
-    return [
+    return applyVerifiedDisplayToUserData([
         'id' => (int)$r['id'],
         'username' => (string)$r['username'],
         'display_name' => $r['display_name'] ?: $r['username'],
         'user_icon' => $r['user_icon'] ?? null,
         'oshi_members' => array_values(array_filter([$r['oshi_member'] ?? null, $r['oshi_member_2'] ?? null, $r['oshi_member_3'] ?? null])),
         'location' => $r['location'] ?? null,
-    ];
+    ], (int)$r['id']);
 }
 function actionEventCheckinScan(): void { ensureEventTables();
     $a = requireVerifiedAccount();
@@ -5846,14 +6032,14 @@ function actionSubeventParticipants(): void { ensureEventTables();
     );
     $st->execute([$id]);
     $rows = $st->fetchAll();
-    $data = array_map(fn($r) => [
+    $data = array_map(fn($r) => applyVerifiedDisplayToUserData([
         'id'           => (int)$r['id'],
         'display_name' => $r['display_name'] ?: $r['username'],
         'user_icon'    => $r['user_icon'] ?? null,
         'oshi_member'  => $r['oshi_member'] ?? null,
         'location'     => $r['location'] ?? null,
         'bio'          => $r['bio'] ?? null,
-    ], $rows);
+    ], (int)$r['id']), $rows);
     ok($data);
 }
 function actionSubeventParticipantsAdmin(): void { ensureEventTables();
@@ -6364,6 +6550,72 @@ function contactNormalizePayload(array $b, bool $loggedIn): array {
         'email_notification'=>0,
     ];
 }
+
+function actionContactCreate(): void { ensureContactTables();
+    $user = currentUser();
+    $payload = contactNormalizePayload(body(), $user !== null);
+    $rateKey = $user ? 'create_user_' . (int)$user['id'] : 'create_ip_' . hash('sha256', (string)($_SERVER['REMOTE_ADDR'] ?? 'unknown'));
+    contactRateLimit($rateKey, 6);
+
+    $pdo = db();
+    $images = [];
+    try {
+        $pdo->beginTransaction();
+        $code = contactGenerateCode($pdo);
+        $userId = $user ? (int)$user['id'] : null;
+        $accountMode = $user ? $payload['account_mode'] : 'guest';
+        $requesterName = ($user && $accountMode === 'profile') ? (($user['display_name'] ?? '') ?: ($user['username'] ?? '')) : null;
+        $requesterUsername = ($user && $accountMode === 'profile') ? ($user['username'] ?? null) : null;
+        $st = $pdo->prepare("INSERT INTO buddies_contact_inquiries
+            (contact_code, user_id, account_mode, requester_name, requester_username, category, title, site_name, message, need_reply, reply_channel, dm_service, dm_account, email_notification)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+        $st->execute([
+            $code, $userId, $accountMode, $requesterName, $requesterUsername,
+            $payload['category'], $payload['title'], $payload['site_name'], $payload['message'],
+            $payload['need_reply'], $payload['reply_channel'], $payload['dm_service'], $payload['dm_account'], 0,
+        ]);
+        $id = (int)$pdo->lastInsertId();
+        $pdo->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
+            ->execute([$id, 'user', $payload['message']]);
+        $messageId = (int)$pdo->lastInsertId();
+        $images = contactSaveUploadedImages($pdo, $id, $messageId, $code, 2);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        foreach ($images as $image) {
+            if (!empty($image['path']) && is_file($image['path'])) @unlink($image['path']);
+        }
+        if ($e instanceof ContactUploadException) err($e->getMessage());
+        error_log('[contact] create failed: ' . $e->getMessage());
+        err('お問い合わせを保存できませんでした。時間をおいて再度お試しください。', 500);
+    }
+
+    $row = contactFetchJoined($id);
+    if (!$row) err('送信したお問い合わせを取得できませんでした。', 500);
+    $row['image_count'] = count($images);
+    $adminUrl = contactAdminUrl($code);
+    $subject = "[お問い合わせ {$code}] " . $payload['category'];
+    $mailBody  = "お問い合わせがありました。\n\n";
+    $mailBody .= "────────────────────\n";
+    $mailBody .= "管理番号: {$code}\n";
+    $mailBody .= "カテゴリ: " . $payload['category'] . "\n";
+    if ($payload['site_name'] !== '') $mailBody .= "対象サイト名: " . $payload['site_name'] . "\n";
+    $mailBody .= "返信方法: " . contactReplyLabelForMail($row) . "\n";
+    $mailBody .= "アカウント: " . contactAccountLabelForMail($row) . "\n";
+    $mailBody .= "画像: " . (count($images) ? count($images) . "枚添付" : 'なし') . "\n";
+    $mailBody .= "管理者ページを開く: {$adminUrl}\n";
+    $mailBody .= "────────────────────\n";
+    $mailBody .= "本文:\n" . $payload['message'] . "\n";
+    $mailBody .= "────────────────────\n";
+    $mailBody .= "送信日時: " . date('Y/m/d H:i:s') . "\n";
+    $mailSent = contactMailAdminWithImages($subject, $mailBody, $images);
+    if (!$mailSent) error_log('[contact] admin mail failed for ' . $code);
+
+    $data = buildContactInquiryData($row, true);
+    $data['mail_sent'] = $mailSent;
+    $data['admin_url'] = $adminUrl;
+    ok($data);
+}
 function contactAdminUrl(string $code): string {
     $override = getenv('BUDDIES_CONTACT_ADMIN_URL') ?: '';
     if ($override !== '') return str_contains($override, '%s') ? sprintf($override, $code) : rtrim($override, '?&') . '?' . rawurlencode($code);
@@ -6655,16 +6907,14 @@ function contactPublicBaseFromApi(): string {
     $scheme = $https ? 'https' : 'http';
     $host = preg_replace('/[\r\n\0]/', '', $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp');
     $apiDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
-    $parent = rtrim(dirname($apiDir), '/');
-    if ($parent === '.' || $parent === '/') $parent = '';
-    return $scheme . '://' . $host . $parent . '/Form/';
+    return $scheme . '://' . $host . $apiDir . '/form/';
 }
 function contactSaveUploadedImages(PDO $pdo, int $inquiryId, ?int $messageId, string $code, int $maxAdd = 1): array {
     if (empty($_FILES['images'])) return [];
     $cur = $pdo->prepare('SELECT COUNT(*) FROM buddies_contact_images WHERE inquiry_id=?');
     $cur->execute([$inquiryId]);
     $remaining = 10 - (int)$cur->fetchColumn();
-    if ($remaining <= 0) err('画像はお問い合わせごとに合計10枚までです。');
+    if ($remaining <= 0) throw new ContactUploadException('画像はお問い合わせごとに合計10枚までです。');
     $limit = min($maxAdd, $remaining);
     $files = $_FILES['images'];
     $names = is_array($files['name']) ? $files['name'] : [$files['name']];
@@ -6672,25 +6922,35 @@ function contactSaveUploadedImages(PDO $pdo, int $inquiryId, ?int $messageId, st
     $errs  = is_array($files['error']) ? $files['error'] : [$files['error']];
     $sizes = is_array($files['size']) ? $files['size'] : [$files['size']];
     $allowed = ['image/jpeg','image/png','image/gif','image/webp'];
-    $dir = dirname(__DIR__) . '/Form/img';
+    $dir = __DIR__ . '/form/img';
     if (!is_dir($dir) && !@mkdir($dir, 0755, true)) err('画像保存先を作成できません。');
     $saved = [];
     for ($i=0; $i<min(count($names), $limit); $i++) {
-        if (($errs[$i] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) continue;
-        if (($sizes[$i] ?? 0) > 5 * 1024 * 1024) err('画像は1枚5MBまでです。');
+        $uploadError = $errs[$i] ?? UPLOAD_ERR_NO_FILE;
+        if ($uploadError === UPLOAD_ERR_NO_FILE) continue;
+        if ($uploadError !== UPLOAD_ERR_OK) throw new ContactUploadException('画像をアップロードできませんでした。画像サイズを確認してください。');
+        if (($sizes[$i] ?? 0) > 5 * 1024 * 1024) throw new ContactUploadException('画像は1枚5MBまでです。');
         $tmp = $tmps[$i] ?? '';
-        if (!is_uploaded_file($tmp)) continue;
+        if (!is_uploaded_file($tmp)) throw new ContactUploadException('画像のアップロードを確認できませんでした。');
         $mime = mime_content_type($tmp) ?: '';
-        if (!in_array($mime, $allowed, true) || @getimagesize($tmp) === false) err('対応していない画像形式です。');
+        if (!in_array($mime, $allowed, true) || @getimagesize($tmp) === false) throw new ContactUploadException('対応していない画像形式です。');
         $filename = $code . '_m' . ($messageId ?: 0) . '_' . ($i + 1) . '_' . bin2hex(random_bytes(4)) . '.jpg';
         $dest = $dir . '/' . $filename;
-        if (!contactSaveCompressedJpeg($tmp, $mime, $dest)) continue;
+        if (!contactSaveCompressedJpeg($tmp, $mime, $dest)) {
+            @unlink($dest);
+            throw new ContactUploadException('画像を保存できませんでした。');
+        }
         $relative = 'img/' . $filename;
         $url = contactPublicBaseFromApi() . $relative;
         $size = (int)@filesize($dest);
         $original = contactClean((string)($names[$i] ?? ''), 255);
-        $pdo->prepare('INSERT INTO buddies_contact_images (inquiry_id, message_id, file_path, file_url, original_name, mime_type, size_bytes) VALUES (?,?,?,?,?,?,?)')
-            ->execute([$inquiryId, $messageId, $relative, $url, $original, 'image/jpeg', $size]);
+        try {
+            $pdo->prepare('INSERT INTO buddies_contact_images (inquiry_id, message_id, file_path, file_url, original_name, mime_type, size_bytes) VALUES (?,?,?,?,?,?,?)')
+                ->execute([$inquiryId, $messageId, $relative, $url, $original, 'image/jpeg', $size]);
+        } catch (Throwable $e) {
+            @unlink($dest);
+            throw $e;
+        }
         $saved[] = ['path'=>$dest,'url'=>$url,'name'=>$filename,'mime'=>'image/jpeg','size'=>$size];
     }
     return $saved;
@@ -6727,11 +6987,25 @@ function actionContactUserReply(): void { ensureContactTables();
     if (!$r) err('お問い合わせが見つかりません。', 404);
     if (!in_array((string)$r['status'], ['open','pending'], true)) err('このステータスのお問い合わせには送信できません。');
     contactRateLimit('user_reply_' . (int)$u['id'] . '_' . $id, 4);
-    $pdo->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
-      ->execute([$id, 'user', $message]);
-    $messageId = (int)$pdo->lastInsertId();
     $code = (string)($r['contact_code'] ?? ('ID' . $id));
-    $images = contactSaveUploadedImages($pdo, $id, $messageId, $code, 1);
+    $images = [];
+    try {
+        $pdo->beginTransaction();
+        $pdo->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
+          ->execute([$id, 'user', $message]);
+        $messageId = (int)$pdo->lastInsertId();
+        $images = contactSaveUploadedImages($pdo, $id, $messageId, $code, 1);
+        $pdo->prepare('UPDATE buddies_contact_inquiries SET updated_at=NOW() WHERE id=?')->execute([$id]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        foreach ($images as $image) {
+            if (!empty($image['path']) && is_file($image['path'])) @unlink($image['path']);
+        }
+        if ($e instanceof ContactUploadException) err($e->getMessage());
+        error_log('[contact] user reply failed: ' . $e->getMessage());
+        err('追加メッセージを保存できませんでした。', 500);
+    }
     $row = contactFetchJoined($id);
     if ($row) {
         $subject = "[お問い合わせ {$code}] 追加メッセージ";
@@ -6821,6 +7095,7 @@ function actionContactAdminReply(): void { ensureContactTables();
     $b = body();
     $id = (int)($b['id'] ?? 0);
     $reply = contactClean($b['reply'] ?? '', 4000);
+    $sendEmail = !empty($b['send_email']);
     if ($id <= 0) err('id は必須です。');
     if ($reply === '') err('返信内容を入力してください。');
     $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
@@ -6831,15 +7106,53 @@ function actionContactAdminReply(): void { ensureContactTables();
     contactRateLimit('admin_reply_' . $id, 4);
     db()->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
       ->execute([$id, 'admin', $reply]);
-    db()->prepare("UPDATE buddies_contact_inquiries SET admin_replied_at=NOW(), status=CASE WHEN status IN ('accepted','replied','rejected','cancelled','closed') THEN status ELSE 'open' END, updated_at=NOW() WHERE id=?")->execute([$id]);
+    db()->prepare("UPDATE buddies_contact_inquiries SET admin_replied_at=NOW(), email_notification=0, status=CASE WHEN status IN ('accepted','replied','rejected','cancelled','closed') THEN status ELSE 'open' END, updated_at=NOW() WHERE id=?")->execute([$id]);
     $fresh = contactFetchJoined($id);
-    ok(['replied'=>true, 'inquiry'=>$fresh ? buildContactInquiryData($fresh, true) : null]);
+    $mailNotification = ['requested'=>$sendEmail,'sent'=>false,'available'=>false,'reason'=>'今回はメール通知を送信していません。'];
+    if ($sendEmail) {
+        try {
+            $mailNotification = ['requested'=>true] + sendContactReplyNotificationForInquiry($id);
+        } catch (Throwable $e) {
+            error_log('[contact] reply notification failed: ' . $e->getMessage());
+            $mailNotification = ['requested'=>true,'sent'=>false,'available'=>true,'reason'=>'メール通知に失敗しました。管理画面から再送できます。'];
+        }
+    }
+    $fresh = contactFetchJoined($id);
+    ok(['replied'=>true, 'mail_notification'=>$mailNotification, 'inquiry'=>$fresh ? buildContactInquiryData($fresh, true) : null]);
 }
 
 function ensureContactMailSubscriptionColumn(): void {
     static $checked = false;
     if ($checked) return;
     $checked = true;
+    db()->exec("CREATE TABLE IF NOT EXISTS buddies_todo_email_subscriptions (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        email VARCHAR(254) NOT NULL,
+        status VARCHAR(20) NOT NULL DEFAULT 'pending',
+        confirm_token_hash CHAR(64) NULL DEFAULT NULL,
+        token_expires_at DATETIME NULL DEFAULT NULL,
+        confirmed_at DATETIME NULL DEFAULT NULL,
+        unsubscribed_at DATETIME NULL DEFAULT NULL,
+        last_sent_on DATE NULL DEFAULT NULL,
+        last_sent_at DATETIME NULL DEFAULT NULL,
+        last_error TEXT NULL DEFAULT NULL,
+        delivery_days VARCHAR(32) NOT NULL DEFAULT '0,1,2,3,4,5,6',
+        streak_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        streak_count INT UNSIGNED NOT NULL DEFAULT 0,
+        streak_last_date DATE NULL DEFAULT NULL,
+        notify_condition VARCHAR(32) NOT NULL DEFAULT 'incomplete_only',
+        important_opt_out TINYINT(1) NOT NULL DEFAULT 0,
+        checklist_enabled TINYINT(1) NOT NULL DEFAULT 1,
+        contact_enabled TINYINT(1) NOT NULL DEFAULT 0,
+        contact_pending_email VARCHAR(254) NULL DEFAULT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_user (user_id),
+        KEY idx_email (email),
+        KEY idx_status (status),
+        KEY idx_confirm_token (confirm_token_hash)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
     $cols = tableColumns(db(), 'buddies_todo_email_subscriptions');
     if (!$cols) return;
     if (!in_array('contact_enabled', $cols, true)) {
@@ -6847,6 +7160,139 @@ function ensureContactMailSubscriptionColumn(): void {
             db()->exec("ALTER TABLE buddies_todo_email_subscriptions ADD COLUMN contact_enabled TINYINT(1) NOT NULL DEFAULT 0 AFTER checklist_enabled");
         } catch (Throwable $e) {}
     }
+    if (!in_array('contact_pending_email', $cols, true)) {
+        try {
+            db()->exec("ALTER TABLE buddies_todo_email_subscriptions ADD COLUMN contact_pending_email VARCHAR(254) NULL DEFAULT NULL AFTER contact_enabled");
+        } catch (Throwable $e) {}
+    }
+}
+
+function contactMailRegistrationStateForUser(int $userId): array {
+    ensureContactMailSubscriptionColumn();
+    $st = db()->prepare('SELECT email, status, contact_enabled, contact_pending_email, token_expires_at, confirmed_at FROM buddies_todo_email_subscriptions WHERE user_id=? LIMIT 1');
+    $st->execute([$userId]);
+    $row = $st->fetch() ?: null;
+    if (!$row || (string)($row['status'] ?? '') === 'unsubscribed') {
+        return ['status'=>'none','email'=>null,'pending_email'=>null,'verified'=>false,'contact_enabled'=>false];
+    }
+    return [
+        'status'=>(string)$row['status'],
+        'email'=>(string)$row['email'],
+        'pending_email'=>($row['contact_pending_email'] ?? null) ?: null,
+        'verified'=>(string)$row['status'] === 'active',
+        'contact_enabled'=>(string)$row['status'] === 'active' && !empty($row['contact_enabled']),
+        'token_expires_at'=>$row['token_expires_at'] ?? null,
+        'confirmed_at'=>$row['confirmed_at'] ?? null,
+    ];
+}
+
+function contactLoadMailSystemCore(): void {
+    if (function_exists('todo_mail_send')) return;
+    $core = __DIR__ . '/../mail-system/system/mail.php';
+    if (!is_file($core)) err('Mail Systemの送信機能が見つかりません。', 500);
+    require_once $core;
+    if (!function_exists('todo_mail_send')) err('Mail Systemの送信機能を読み込めませんでした。', 500);
+}
+
+function contactMailConfirmationUrl(string $token): string {
+    $base = rtrim(contactUserFormUrl(), '/');
+    return $base . '/?mail-confirm=' . rawurlencode($token);
+}
+
+function contactMailRegistrationMessage(array $user, string $email, string $confirmUrl): array {
+    contactLoadMailSystemCore();
+    $name = (string)(($user['display_name'] ?? '') ?: ($user['username'] ?? 'Buddies'));
+    $expires = function_exists('todo_mail_confirm_expires_label') ? todo_mail_confirm_expires_label() : '24時間以内';
+    $subject = '[Buddies お問い合わせ] 返信メール通知の登録確認';
+    $text = "お問い合わせ返信通知のメールアドレス確認\n\n"
+        . $name . " さん\n\n"
+        . "お問い合わせへの返信をメールでお知らせするため、メールアドレスの確認をお願いします。\n"
+        . "下のリンクを開くとメールアドレスが認証され、お問い合わせページで通知先を確認できます。\n\n"
+        . "▼メールアドレスを認証する\n" . $confirmUrl . "\n\n"
+        . "このリンクの有効期限は " . $expires . " です。\n"
+        . "心当たりがない場合は、このメールを破棄してください。\n\n"
+        . (function_exists('mail_system_footer_text') ? mail_system_footer_text(contactUserFormUrl()) : 'ひろまめ / Mail System');
+    return ['subject'=>$subject,'text'=>$text,'html'=>''];
+}
+
+function actionContactMailStatus(): void {
+    $u = requireAuth();
+    ok(['email'=>contactMailRegistrationStateForUser((int)$u['id'])]);
+}
+
+function actionContactMailRequest(): void {
+    $u = requireAuth();
+    ensureContactMailSubscriptionColumn();
+    $email = trim((string)(body()['email'] ?? ''));
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL) || strlen($email) > 254) err('メールアドレスを正しく入力してください。');
+    $uid = (int)$u['id'];
+    contactRateLimit('contact_mail_request_' . $uid, 15);
+    $st = db()->prepare('SELECT * FROM buddies_todo_email_subscriptions WHERE user_id=? LIMIT 1');
+    $st->execute([$uid]);
+    $existing = $st->fetch() ?: null;
+    if ($existing && (string)$existing['status'] === 'active' && strtolower((string)$existing['email']) === strtolower($email)) {
+        ok(['email'=>contactMailRegistrationStateForUser($uid),'already_verified'=>true,'message'=>'このメールアドレスは認証済みです。']);
+    }
+    $token = bin2hex(random_bytes(32));
+    $hash = hash('sha256', $token);
+    $hours = max(1, min(168, (int)(envv('TODO_MAIL_CONFIRM_EXPIRES_HOURS', '24') ?: '24')));
+    $expires = date('Y-m-d H:i:s', time() + $hours * 3600);
+    if ($existing && (string)$existing['status'] === 'active') {
+        db()->prepare('UPDATE buddies_todo_email_subscriptions SET contact_pending_email=?, confirm_token_hash=?, token_expires_at=?, contact_enabled=0, last_error=NULL WHERE user_id=?')
+            ->execute([$email, $hash, $expires, $uid]);
+    } elseif ($existing) {
+        db()->prepare("UPDATE buddies_todo_email_subscriptions SET email=?, status='pending', contact_pending_email=NULL, confirm_token_hash=?, token_expires_at=?, confirmed_at=NULL, unsubscribed_at=NULL, contact_enabled=0, last_error=NULL WHERE user_id=?")
+            ->execute([$email, $hash, $expires, $uid]);
+    } else {
+        db()->prepare("INSERT INTO buddies_todo_email_subscriptions (user_id,email,status,confirm_token_hash,token_expires_at,checklist_enabled,contact_enabled) VALUES (?,?,'pending',?,?,0,0)")
+            ->execute([$uid, $email, $hash, $expires]);
+    }
+    $confirmUrl = contactMailConfirmationUrl($token);
+    $message = contactMailRegistrationMessage($u, $email, $confirmUrl);
+    $sent = todo_mail_send([$email], $message['subject'], $message['text'], $message['html']);
+    if (!$sent) {
+        if ($existing) {
+            db()->prepare('UPDATE buddies_todo_email_subscriptions SET email=?, status=?, contact_pending_email=?, confirm_token_hash=?, token_expires_at=?, confirmed_at=?, unsubscribed_at=?, contact_enabled=?, last_error=? WHERE user_id=?')
+                ->execute([
+                    $existing['email'], $existing['status'], $existing['contact_pending_email'] ?? null,
+                    $existing['confirm_token_hash'] ?? null, $existing['token_expires_at'] ?? null,
+                    $existing['confirmed_at'] ?? null, $existing['unsubscribed_at'] ?? null,
+                    (int)($existing['contact_enabled'] ?? 0), '確認メールの送信に失敗しました。', $uid,
+                ]);
+        } else {
+            db()->prepare('DELETE FROM buddies_todo_email_subscriptions WHERE user_id=?')->execute([$uid]);
+        }
+        err('確認メールを送信できませんでした。時間をおいて再度お試しください。', 500);
+    }
+    ok(['email'=>contactMailRegistrationStateForUser($uid),'verification_sent'=>true,'message'=>'確認メールを送信しました。メール内のリンクを開いて認証してください。']);
+}
+
+function actionContactMailConfirm(): void {
+    ensureContactMailSubscriptionColumn();
+    $token = trim((string)(body()['token'] ?? $_GET['token'] ?? ''));
+    if ($token === '') err('確認トークンがありません。');
+    $hash = hash('sha256', $token);
+    $st = db()->prepare("SELECT * FROM buddies_todo_email_subscriptions WHERE confirm_token_hash=? AND token_expires_at>NOW() LIMIT 1");
+    $st->execute([$hash]);
+    $sub = $st->fetch();
+    if (!$sub) err('確認リンクの期限が切れているか、すでに使用されています。');
+    $email = trim((string)(($sub['contact_pending_email'] ?? '') ?: $sub['email']));
+    db()->prepare("UPDATE buddies_todo_email_subscriptions SET email=?, status='active', contact_pending_email=NULL, confirm_token_hash=NULL, token_expires_at=NULL, confirmed_at=NOW(), unsubscribed_at=NULL, contact_enabled=0, last_error=NULL WHERE id=?")
+        ->execute([$email, (int)$sub['id']]);
+    ok(['email'=>contactMailRegistrationStateForUser((int)$sub['user_id']),'message'=>'メールアドレスを認証しました。']);
+}
+
+function actionContactMailEnable(): void {
+    $u = requireAuth();
+    ensureContactMailSubscriptionColumn();
+    $uid = (int)$u['id'];
+    $st = db()->prepare("UPDATE buddies_todo_email_subscriptions SET contact_enabled=1 WHERE user_id=? AND status='active'");
+    $st->execute([$uid]);
+    if ($st->rowCount() < 1) {
+        $state = contactMailRegistrationStateForUser($uid);
+        if (!$state['verified']) err('先にメールアドレス認証を完了してください。');
+    }
+    ok(['email'=>contactMailRegistrationStateForUser($uid),'message'=>'お問い合わせ返信のメール通知を有効にしました。']);
 }
 
 function contactMailSubscriptionForUser(int $userId): ?array {
@@ -6880,39 +7326,48 @@ function contactUserFormUrl(): string {
     return (string)(envv('BUDDIES_CONTACT_URL', 'https://buddies46.stars.ne.jp/satellite/buddies/form/') ?: 'https://buddies46.stars.ne.jp/satellite/buddies/form/');
 }
 
+function sendContactReplyNotificationForInquiry(int $id): array {
+    $r = contactFetchJoined($id);
+    if (!$r) throw new RuntimeException('お問い合わせが見つかりません。');
+    if (empty($r['user_id'])) return ['sent'=>false,'available'=>false,'reason'=>'ログインなしのお問い合わせです。'];
+    if (empty($r['need_reply']) || (string)($r['reply_channel'] ?? '') !== 'site') {
+        return ['sent'=>false,'available'=>false,'reason'=>'サイト内返信通知の対象外です。'];
+    }
+    $sub = contactMailSubscriptionForUser((int)$r['user_id']);
+    if (!$sub) return ['sent'=>false,'available'=>false,'reason'=>'返信メール通知が登録されていません。'];
+    $message = latestAdminContactMessage($id);
+    if (!$message) throw new RuntimeException('通知できる管理者返信がありません。');
+    $template = __DIR__ . '/../mail-system/contact/mail.php';
+    if (!is_file($template)) throw new RuntimeException('お問い合わせメールテンプレートが見つかりません。');
+    require_once $template;
+    if (!function_exists('contact_mail_reply_notification_message') || !function_exists('todo_mail_send')) {
+        throw new RuntimeException('お問い合わせメール送信機能を読み込めませんでした。');
+    }
+    $code = (string)($r['contact_code'] ?? ('ID' . $id));
+    $payload = contact_mail_reply_notification_message($r, $message, contactUserFormUrl(), contactMailSystemUrl('contact-mail'));
+    $sent = todo_mail_send([(string)$sub['email']], $payload['subject'], $payload['text'], $payload['html']);
+    if (!$sent) throw new RuntimeException('Mail Systemから返信通知を送信できませんでした。');
+    db()->prepare('UPDATE buddies_contact_inquiries SET email_notification=1, updated_at=NOW() WHERE id=?')->execute([$id]);
+    return ['sent'=>true,'available'=>true,'to'=>(string)$sub['email'],'contact_code'=>$code];
+}
+
 function actionContactAdminSendMail(): void { ensureContactTables();
     requireHiromameAdmin();
     $b = body();
     $id = (int)($b['id'] ?? 0);
     if ($id <= 0) err('id は必須です。');
-    $r = contactFetchJoined($id);
-    if (!$r) err('お問い合わせが見つかりません。', 404);
-    if (empty($r['user_id'])) err('ログインなしのお問い合わせにはメール通知を送信できません。');
-    if (empty($r['need_reply']) || (string)($r['reply_channel'] ?? '') !== 'site') {
-        err('このサイトで返信を受け取るお問い合わせのみメール通知できます。');
+    try {
+        $result = sendContactReplyNotificationForInquiry($id);
+    } catch (Throwable $e) {
+        err($e->getMessage(), 500);
     }
-    $sub = contactMailSubscriptionForUser((int)$r['user_id']);
-    if (!$sub) {
-        err('送信先ユーザーは、Mail Systemでメール認証とお問い合わせ返信通知の有効化を完了していません。');
-    }
-    $message = latestAdminContactMessage($id);
-    if (!$message) err('通知できる管理者返信がまだありません。');
-    $template = __DIR__ . '/../mail-system/contact/mail.php';
-    if (!is_file($template)) err('お問い合わせメールテンプレートが見つかりません。', 500);
-    require_once $template;
-    if (!function_exists('contact_mail_reply_notification_message') || !function_exists('todo_mail_send')) {
-        err('お問い合わせメール送信機能を読み込めませんでした。', 500);
-    }
-    $code = (string)($r['contact_code'] ?? ('ID' . $id));
-    $payload = contact_mail_reply_notification_message($r, $message, contactUserFormUrl(), contactMailSystemUrl('contact-mail'));
-    $sent = todo_mail_send([(string)$sub['email']], $payload['subject'], $payload['text'], $payload['html']);
-    if (!$sent) err('メール送信に失敗しました。Mail SystemのSMTP設定を確認してください。', 500);
-    db()->prepare('UPDATE buddies_contact_inquiries SET email_notification=1, updated_at=NOW() WHERE id=?')->execute([$id]);
+    if (empty($result['available'])) err((string)($result['reason'] ?? 'メール通知の対象外です。'));
+    if (empty($result['sent'])) err((string)($result['reason'] ?? 'メール通知を送信できませんでした。'), 500);
     $fresh = contactFetchJoined($id);
     ok([
         'sent' => true,
-        'to' => (string)$sub['email'],
-        'contact_code' => $code,
+        'to' => (string)($result['to'] ?? ''),
+        'contact_code' => (string)($result['contact_code'] ?? ''),
         'inquiry' => $fresh ? buildContactInquiryData($fresh, true) : null,
     ]);
 }

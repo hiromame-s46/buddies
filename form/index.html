@@ -224,8 +224,14 @@ html,body{width:100%;height:100%;position:fixed;inset:0;overflow:hidden;overscro
 .half-body .bot-card{max-width:100%;width:100%;box-shadow:none;margin:0;border-radius:22px;}
 .half-body .settings-card{width:100%;}
 .half-body .edit-only-card textarea{width:100%;min-height:170px;max-height:42dvh;resize:vertical;line-height:1.7;font-size:16px;}
+.action-confirm-sheet{max-width:440px;}
+.action-confirm-body{display:grid;gap:14px;padding:20px 18px max(20px,env(safe-area-inset-bottom));}
+.action-confirm-copy{font-size:14px;color:#555;line-height:1.75;}
+.action-confirm-warning{border:1px solid #fecaca;background:#fff1f2;color:#9f1239;border-radius:14px;padding:11px 12px;font-size:13px;font-weight:900;}
+.action-confirm-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:2px;}
+.action-confirm-actions .btn{min-height:46px;}
 @media(min-width:801px){.half-modal{align-items:center;padding:24px}.half-sheet{border-radius:28px;max-height:min(82vh,760px)}}
-@media(max-width:520px){.summary-line{grid-template-columns:96px minmax(0,1fr);padding:8px 9px}.half-sheet{max-height:88dvh;border-radius:24px 24px 0 0}.half-body{padding:12px 10px max(16px,env(safe-area-inset-bottom));}}
+@media(max-width:520px){.summary-line{grid-template-columns:96px minmax(0,1fr);padding:8px 9px}.half-sheet{max-height:88dvh;border-radius:24px 24px 0 0}.half-body{padding:12px 10px max(16px,env(safe-area-inset-bottom));}.action-confirm-actions{grid-template-columns:1fr;}}
 
 
 /* v14: iOS/Safari keyboard jump stabilization */
@@ -491,6 +497,8 @@ html,body{max-width:100%;touch-action:manipulation;}
 .mail-message-tools{margin-top:8px;}
 @media(max-width:520px){.draft-flow{padding:12px 10px 14px;}.settings-page-title,.draft-next-title{font-size:20px}.settings-option-card{min-height:54px;padding:8px}.settings-page-list{gap:8px}.settings-block{padding-top:8px;gap:7px}.settings-block-icon,.settings-page-icon{width:32px;height:32px}.settings-option-emoji{width:30px;height:30px}.dm-grid{grid-template-columns:1fr 1fr;gap:8px}.settings-inline-panel{padding:8px}.settings-page .input{padding:9px 10px}.settings-page .field{gap:5px;margin:0}.settings-page .field label{font-size:11px}.settings-page .card-actions .btn{min-height:44px}}
 @media(max-height:760px) and (max-width:520px){.settings-page-copy,.settings-block-note,.settings-option-sub{font-size:11px;line-height:1.35}.settings-option-card{min-height:48px;border-radius:16px}.settings-block .toggle-row{min-height:48px}.settings-page .card-actions .btn{min-height:42px}.draft-flow{padding-top:8px}.settings-page-list{gap:6px}.settings-block{gap:6px}.settings-page-hero{margin-bottom:6px}.draft-progress-line{margin-bottom:7px}}
+.send.sending svg{animation:send-pulse .8s ease-in-out infinite alternate}.composer-note{display:block!important;min-height:1.45em}.composer-note.error{color:var(--danger)!important;font-weight:800}.toast.error{background:#b42318}@keyframes send-pulse{to{transform:translateY(-2px);opacity:.55}}
+.mail-register-card{display:grid;gap:14px;padding:4px 2px 8px}.mail-register-icon{width:48px;height:48px;border-radius:16px;background:#111;color:#fff;display:grid;place-items:center}.mail-register-icon svg{width:24px;height:24px}.mail-register-title{font-size:20px;font-weight:950;letter-spacing:-.03em;line-height:1.35}.mail-register-copy{font-size:14px;color:#555;line-height:1.8}.mail-register-address{border:1px solid var(--line);border-radius:16px;background:#f7f7f8;padding:12px 13px;font-size:14px;font-weight:900;word-break:break-all}.mail-register-actions{display:grid;gap:8px}.mail-register-actions.three{grid-template-columns:1fr 1fr}.mail-register-actions.three .btn:last-child{grid-column:1/-1}.mail-register-actions .btn{width:100%;min-height:46px}.mail-register-notice{border:1px solid #dbeafe;background:#eff6ff;color:#1e3a8a;border-radius:14px;padding:11px 12px;font-size:12.5px;line-height:1.65}.mail-register-notice.error{border-color:#fecaca;background:#fff1f2;color:#9f1239}@media(max-width:520px){.mail-register-actions.three{grid-template-columns:1fr}.mail-register-actions.three .btn:last-child{grid-column:auto}}
 
 </style>
 <script id="lucide-static" src="https://unpkg.com/lucide@latest"></script>
@@ -508,7 +516,7 @@ html,body{max-width:100%;touch-action:manipulation;}
   <div class="main">
     <aside class="list-pane" id="listPane">
       <div class="list-top">
-        <div class="list-headline"><div><div class="list-title-main">お問い合わせ一覧</div><div class="list-count" id="listCount">0件</div></div><button class="btn black small" id="newBtn" type="button">新規</button></div>
+        <div class="list-headline"><div><div class="list-title-main">お問い合わせ一覧</div><div class="list-count" id="listCount">0件</div></div><button class="btn black small" id="newBtn" type="button">＋ 新規お問い合わせ</button></div>
         <div class="login-card hidden" id="loginBox">
           <div class="login-title">Buddies profile ログイン</div>
           <div class="login-note">ログインすると、過去のお問い合わせ・サイト内返信・取りやめ・返信前の変更が使えます。</div>
@@ -529,17 +537,17 @@ html,body{max-width:100%;touch-action:manipulation;}
       <div class="composer" id="composer">
         <div class="attach-strip" id="attachStrip"></div>
         <div class="compose-row">
-          <button class="plus" id="plusBtn" type="button">＋</button>
-          <textarea id="messageInput" placeholder="本文を入力" rows="1"></textarea>
-          <button class="send" id="sendBtn" type="button" aria-label="送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button>
-          <input type="file" id="imagePicker" accept="image/*" multiple hidden>
+          <button class="plus" id="plusBtn" type="button" aria-label="画像を添付">＋</button>
+          <textarea id="messageInput" placeholder="本文を入力" rows="1" maxlength="3000" aria-describedby="composerNote"></textarea>
+          <button class="send" id="sendBtn" type="button" aria-label="お問い合わせを送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button>
+          <input type="file" id="imagePicker" accept="image/jpeg,image/png,image/gif,image/webp" multiple hidden>
         </div>
-        <div class="composer-note" id="composerNote"></div>
+        <div class="composer-note" id="composerNote" role="status" aria-live="polite"></div>
       </div>
     </section>
   </div>
 </div>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <div class="half-modal" id="settingsModal" aria-hidden="true">
   <div class="half-sheet" role="dialog" aria-modal="true" aria-labelledby="settingsModalTitle">
     <div>
@@ -564,10 +572,22 @@ html,body{max-width:100%;touch-action:manipulation;}
     <div class="half-body" id="editModalBody"></div>
   </div>
 </div>
+<div class="half-modal" id="mailRegisterModal" aria-hidden="true">
+  <div class="half-sheet" role="dialog" aria-modal="true" aria-labelledby="mailRegisterTitle">
+    <div><div class="half-handle"></div><div class="half-head"><div class="half-title" id="mailRegisterTitle">返信メール通知</div></div></div>
+    <div class="half-body" id="mailRegisterBody"></div>
+  </div>
+</div>
+<div class="half-modal" id="actionConfirmModal" aria-hidden="true">
+  <div class="half-sheet action-confirm-sheet" role="alertdialog" aria-modal="true" aria-labelledby="actionConfirmTitle" aria-describedby="actionConfirmDescription">
+    <div><div class="half-handle"></div><div class="half-head"><div class="half-title" id="actionConfirmTitle">操作の確認</div><button class="btn small" id="actionConfirmClose" type="button">閉じる</button></div></div>
+    <div class="action-confirm-body"><div class="action-confirm-copy" id="actionConfirmDescription"></div><div class="action-confirm-warning">この操作は取り消せません。</div><div class="action-confirm-actions"><button class="btn" id="actionConfirmCancel" type="button">キャンセル</button><button class="btn danger" id="actionConfirmAccept" type="button">実行する</button></div></div>
+  </div>
+</div>
 
 <script>
 
-const API_CANDIDATES=['../buddies/api.php','../api.php','./api.php'];let API=API_CANDIDATES[0];let me=null,inquiries=[],drafts=[],activeKey='',apiReady=false,existingEdit=null,editModalKind='';let lastRenderedKey='',recentlySubmitted=new Set();let forceNextScrollBottom=false;let sendLockUntil=0,sendLockTimer=null,settingsModalKey='',draftStepTimers={};const SEND_COOLDOWN_MS=3500;
+const API_CANDIDATES=['../api.php','../buddies/api.php','./api.php'];let API=API_CANDIDATES[0];let me=null,inquiries=[],drafts=[],activeKey='',apiReady=false,existingEdit=null,editModalKind='';let lastRenderedKey='',recentlySubmitted=new Set();let forceNextScrollBottom=false;let sendLockUntil=0,sendLockTimer=null,sending=false,sendError='',settingsModalKey='',draftStepTimers={};const SEND_COOLDOWN_MS=6000;
 const cats=['お問い合わせ','サイトの感想や意見','情報の提供','不具合の報告','誤情報の報告','機能のリクエスト','サイトのリクエストや提案','情報請求','その他'];
 const $=id=>document.getElementById(id);const esc=s=>String(s??'').replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
 const UA=navigator.userAgent||'';const IS_ANDROID=/Android/i.test(UA);const IS_IOS=/iP(hone|ad|od)/i.test(UA)||(/Macintosh/i.test(UA)&&navigator.maxTouchPoints>1);
@@ -632,7 +652,7 @@ window.addEventListener('resize',()=>{adjustViewportAfterKeyboard();});
 window.addEventListener('orientationchange',()=>setTimeout(()=>{setAppHeight('orientation');resetWindowScrollSoon();},250));
 async function discoverAPI(){for(const u of API_CANDIDATES){try{const r=await fetch(u+'?action=auth_me',{credentials:'include'});if(r.ok){API=u;apiReady=true;return await r.json()}}catch(e){}}return null}
 async function apiFetch(action,opt={}){const res=await fetch(API+'?action='+encodeURIComponent(action),{credentials:'include',...opt});let json=null;try{json=await res.json()}catch(e){}if(!res.ok&&!json)throw new Error('network');return json}
-function toast(t){const el=$('toast');el.textContent=t;el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),2300)}
+function toast(t,kind=''){const el=$('toast');el.textContent=t;el.classList.toggle('error',kind==='error');el.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove('show'),kind==='error'?5000:2800)}
 function defaultSettings(){return{anonymous:!!me,account_mode:me?'anonymous':'guest',need_reply:true,reply_channel:me?'site':'dm',dm_service:'X',dm_account:''}}
 function newDraft(open=true){const d={key:'draft-'+Date.now()+'-'+Math.random().toString(16).slice(2),draft:true,created_at:new Date().toISOString(),settings:defaultSettings(),settings_done:false,category:'',category_done:false,site_name:'',site_done:false,showSettingsEditor:true,showCategoryEditor:false,showSiteEditor:false,pendingStep:'',files:[],body_draft:'',sent:false,contact_code:'',contact_id:0};drafts.unshift(d);if(open)activeKey=d.key;renderAll();closeList()}
 function hasDraftContent(d){return !!(d.settings_done||d.category_done||d.site_done||d.files?.length||String(d.body_draft||'').trim())}
@@ -715,10 +735,27 @@ function saveCategory(){const d=activeItem();if(!d||!d.draft)return;d.category=$
 function editCategory(){const d=activeItem();if(d&&d.draft&&!d.sent){d.pendingStep='';openEditModal('カテゴリを変更',categoryCard(d),'category')}}
 function saveSite(){const d=activeItem();if(!d||!d.draft)return;const val=$('draft_site').value.trim();if(!val){toast('対象サイト名を入力してください');return}d.site_name=val;d.site_done=true;d.showSiteEditor=false;d.pendingStep='body';if(editModalKind==='site')closeEditModal();renderAll();scheduleDraftStep(d.key,'body')}
 function editSite(){const d=activeItem();if(d&&d.draft&&!d.sent){d.pendingStep='';openEditModal('対象サイト名を変更',siteCard(d),'site')}}
+let actionConfirmResolver=null;
+function closeActionConfirm(accepted=false){
+  const modal=$('actionConfirmModal'),resolve=actionConfirmResolver;
+  actionConfirmResolver=null;
+  if(modal){modal.classList.remove('open');modal.setAttribute('aria-hidden','true');}
+  if(resolve)resolve(accepted);
+}
+function askActionConfirm({title,description,confirmLabel}){
+  if(actionConfirmResolver)closeActionConfirm(false);
+  $('actionConfirmTitle').textContent=title;
+  $('actionConfirmDescription').textContent=description;
+  $('actionConfirmAccept').textContent=confirmLabel;
+  const modal=$('actionConfirmModal');
+  modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+  setTimeout(()=>$('actionConfirmCancel')?.focus(),40);
+  return new Promise(resolve=>{actionConfirmResolver=resolve;});
+}
 function discardDraft(){const d=activeItem();if(!d||!d.draft)return;if(!confirm('この下書きを削除しますか？'))return;(d.files||[]).forEach(revokeFileUrl);drafts=drafts.filter(x=>x.key!==d.key);activeKey='';lastRenderedKey='';renderAll();toast('下書きを削除しました')}
 function startExistingEdit(messageId){const c=activeItem();if(!c||c.draft)return;const m=(c.messages||[]).find(x=>+x.id===+messageId);if(!m||!m.can_edit){toast('この本文は編集できません');return}existingEdit={id:c.id,message_id:+m.id,message:m.body||''};openEditModal('本文を修正',existingEditCard(c,m),'message')}
 async function saveExistingEdit(){const c=activeItem();if(!c||!existingEdit)return;const message=$('edit_message').value;if(!message.trim()){toast('本文を入力してください');return}const json=await apiFetch('contact_update_message',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id,message_id:existingEdit.message_id,message})}).catch(()=>null);if(!json||!json.ok){toast(json?.error||'変更に失敗しました');return}const keepId=c.id;closeEditModal();await loadMine();activeKey='id-'+keepId;forceNextScrollBottom=true;renderAll();toast('本文を変更しました')}
-async function cancelCurrentInquiry(){const c=activeItem();if(!c||c.draft)return;if(!c.can_cancel&&!['open','pending'].includes(String(c.status||''))){toast('このお問い合わせは取りやめできません');return;}if(!confirm('このお問い合わせを取りやめますか？'))return;const json=await apiFetch('contact_cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);if(!json||!json.ok||json.data?.cancelled===false){toast(json?.error||'取りやめに失敗しました');return}await loadMine();activeKey='';closeEditModal();renderAll();goHome();toast('取りやめました。一覧から非表示にしました')}
+async function cancelCurrentInquiry(){const c=activeItem();if(!c||c.draft)return;if(!c.can_cancel&&!['open','pending'].includes(String(c.status||''))){toast('このお問い合わせは取りやめできません');return;}const accepted=await askActionConfirm({title:'お問い合わせを取りやめますか？',description:`#${c.contact_code||c.id} を取りやめ、一覧から非表示にします。`,confirmLabel:'取りやめる'});if(!accepted)return;const json=await apiFetch('contact_cancel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);if(!json||!json.ok||json.data?.cancelled===false){toast(json?.error||'取りやめに失敗しました');return}await loadMine();activeKey='';closeEditModal();renderAll();goHome();toast('取りやめました。一覧から非表示にしました')}
 async function markReadIfNeeded(c){if(!me||!c||c.draft||!+c.unread_admin_count)return;apiFetch('contact_mark_read',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).then(j=>{if(j&&j.ok){const row=inquiries.find(x=>+x.id===+c.id);if(row)row.unread_admin_count=0;renderList()}}).catch(()=>{})}
 function pickImages(){const item=activeItem();if(!item)return;if(item.draft&&item.sent)return;if(!item.draft&&(!me||item.status!=='open'))return;const picker=$('imagePicker');picker.multiple=!!item.draft;picker.click()}
 function handlePickedImages(e){const item=activeItem();if(!item)return;const add=Array.from(e.target.files||[]).filter(f=>f.type.startsWith('image/'));if(item.draft){const before=(item.files||[]).length;item.files=[...(item.files||[]),...add].slice(0,2);if(before+add.length>2)toast('初回画像は2枚までです')}else{const current=+(item.image_count||((item.images||[]).length)||0);const remain=Math.max(0,10-current);if(remain<=0){toast('画像はお問い合わせごとに合計10枚までです')}else{item.files=add.slice(0,1);if(add.length>1)toast('追加メッセージの画像は1枚までです')}}e.target.value='';renderAll()}
@@ -743,9 +780,12 @@ function focusComposerSoon(){
   setTimeout(()=>{setAppHeight('focus');if(!IS_ANDROID)resetWindowScrollSoon();keepBottomDuringKeyboard();},60);
   setTimeout(()=>{setAppHeight('focus-late');if(!IS_ANDROID)resetWindowScrollSoon();keepBottomDuringKeyboard();},260);
 }
-async function sendComposer(){if(isSendLocked()){toast('連続送信を防止しています。数秒後にもう一度お試しください');return}const item=activeItem();if(!item)return;const text=$('messageInput').value;if(!text.trim()){toast('本文を入力してください');return}setSendCooldown();if(item.draft)await submitDraft(item,text);else await submitFollowup(item,text)}
-async function submitDraft(d,text){if(!d.settings_done||!d.category_done||d.sent)return;if(needsSite(d.category)&&!d.site_done){toast('対象サイト名を入力してください');return}const fd=new FormData();fd.append('account_mode',d.settings.account_mode);fd.append('need_reply',d.settings.need_reply?'希望する':'希望しない');fd.append('reply_channel',d.settings.reply_channel);fd.append('sns_service',d.settings.dm_service||'');fd.append('sns_account',d.settings.dm_account||'');fd.append('category',d.category);fd.append('site_name',d.site_name||'');fd.append('title','');fd.append('message',text);fd.append('agree','1');(d.files||[]).forEach(f=>fd.append('images[]',f));$('sendBtn').disabled=true;const res=await fetch('send.php',{method:'POST',credentials:'include',body:fd}).catch(()=>null);let json=null;try{json=res?await res.json():null}catch(e){}if(!json||!json.success){updateComposer();toast(json?.message||'送信に失敗しました');return}d.sent=true;d.contact_code=json.contact_code||'';d.contact_id=json.contact_id||0;d.body_draft='';$('messageInput').value='';autoGrow($('messageInput'));recentlySubmitted.add(+json.contact_id);if(me){await loadMine();if(json.contact_id)activeKey='id-'+json.contact_id;drafts=drafts.filter(x=>x.key!==d.key)}forceNextScrollBottom=true;renderAll();toast('送信しました')}
-async function submitFollowup(c,text){const fd=new FormData();fd.append('id',c.id);fd.append('message',text);(c.files||[]).slice(0,1).forEach(f=>fd.append('images[]',f));$('sendBtn').disabled=true;const res=await fetch(API+'?action=contact_user_reply',{method:'POST',credentials:'include',body:fd}).catch(()=>null);let json=null;try{json=res?await res.json():null}catch(e){}if(!json||!json.ok){updateComposer();toast(json?.error||'送信に失敗しました');return}$('messageInput').value='';(c.files||[]).forEach(revokeFileUrl);c.files=[];autoGrow($('messageInput'));await loadMine();activeKey='id-'+c.id;forceNextScrollBottom=true;renderAll();toast('送信しました')}
+function setSending(value){sending=!!value;if(sending)sendError='';const composer=$('composer'),button=$('sendBtn');if(composer)composer.setAttribute('aria-busy',sending?'true':'false');if(button){button.classList.toggle('sending',sending);button.setAttribute('aria-label',sending?'送信中':'お問い合わせを送信')}updateComposer()}
+function showSendError(message){sendError=message;updateComposer();toast(message,'error')}
+async function postForm(url,formData){let res;try{res=await fetch(url,{method:'POST',credentials:'include',body:formData})}catch(e){throw new Error('通信できませんでした。接続を確認して、もう一度お試しください。')}let json=null;try{json=await res.json()}catch(e){}if(!json)throw new Error(res.ok?'サーバーから正しい応答を受け取れませんでした。':'送信先でエラーが発生しました。時間をおいてお試しください。');return{res,json}}
+async function sendComposer(){if(sending)return;if(isSendLocked()){toast('送信済みです。少し待ってから追加送信できます');return}const item=activeItem();if(!item)return;const text=$('messageInput').value.trim();if(!text){showSendError('本文を入力してください');$('messageInput').focus();return}setSending(true);try{if(item.draft)await submitDraft(item,text);else await submitFollowup(item,text)}finally{setSending(false)}}
+async function submitDraft(d,text){if(!d.settings_done||!d.category_done||d.sent){showSendError('送信に必要な項目を確認してください。');return}if(needsSite(d.category)&&!d.site_done){showSendError('対象サイト名を入力してください。');return}const fd=new FormData();fd.append('account_mode',d.settings.account_mode);fd.append('need_reply',d.settings.need_reply?'希望する':'希望しない');fd.append('reply_channel',d.settings.reply_channel);if(d.settings.reply_channel==='dm'){fd.append('sns_service',d.settings.dm_service||'');fd.append('sns_account',d.settings.dm_account||'')}fd.append('category',d.category);fd.append('site_name',d.site_name||'');fd.append('title','');fd.append('message',text);(d.files||[]).forEach(f=>fd.append('images[]',f));let result;try{result=await postForm(API+'?action=contact_create',fd)}catch(e){showSendError(e.message);return}const {res,json}=result;if(!res.ok||!json.ok){showSendError(json.error||'送信に失敗しました。入力内容を残したまま再試行できます。');return}const created=json.data||{};setSendCooldown();d.sent=true;d.contact_code=created.contact_code||'';d.contact_id=created.id||0;d.body_draft='';$('messageInput').value='';autoGrow($('messageInput'));recentlySubmitted.add(+created.id);if(me){await loadMine();const stored=inquiries.some(x=>+x.id===+created.id);if(stored){activeKey='id-'+created.id;drafts=drafts.filter(x=>x.key!==d.key)}else activeKey=d.key}forceNextScrollBottom=true;renderAll();toast(created.mail_sent===false?'受付を保存しました（メール通知のみ失敗しました）':'送信しました');setTimeout(()=>maybeOfferContactMailAfterSend(created),250)}
+async function submitFollowup(c,text){const fd=new FormData();fd.append('id',c.id);fd.append('message',text);(c.files||[]).slice(0,1).forEach(f=>fd.append('images[]',f));let result;try{result=await postForm(API+'?action=contact_user_reply',fd)}catch(e){showSendError(e.message);return}const {res,json}=result;if(!res.ok||!json.ok){showSendError(json.error||'送信に失敗しました。入力内容を残したまま再試行できます。');return}setSendCooldown();$('messageInput').value='';(c.files||[]).forEach(revokeFileUrl);c.files=[];autoGrow($('messageInput'));await loadMine();activeKey='id-'+c.id;forceNextScrollBottom=true;renderAll();toast('送信しました')}
 async function loadMine(){if(!me){inquiries=[];return}const json=await apiFetch('contact_mine_list').catch(()=>null);inquiries=json&&json.ok?(json.data||[]).filter(c=>c.status!=='cancelled'):[]}
 async function login(){const username=$('loginUsername').value.trim(),password=$('loginPassword').value;if(!username||!password){toast('ユーザー名とパスワードを入力してください');return}const json=await apiFetch('auth_login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})}).catch(()=>null);if(!json||!json.ok){toast(json?.error||'ログインに失敗しました');return}me=json.user||json.data||json;drafts.forEach(d=>{d.settings=defaultSettings()});await loadMine();renderAll();toast('ログインしました')}
 async function logout(){await apiFetch('auth_logout',{method:'POST'}).catch(()=>{});me=null;inquiries=[];drafts.forEach(d=>{d.settings=defaultSettings();d.settings_done=false;d.showSettingsEditor=true});activeKey='';renderAll();toast('ログアウトしました')}
@@ -900,9 +940,9 @@ function updateComposer(){
 }
 function afterMailRender(initialOpen=false){scrollTopSoon();}
 
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(settingsModalOpen())closeSettingsModal();if($('editModal')?.classList.contains('open'))closeEditModal();}});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(settingsModalOpen())closeSettingsModal();if($('editModal')?.classList.contains('open'))closeEditModal();if(contactMailModal()?.classList.contains('open'))closeContactMailModal();if($('actionConfirmModal')?.classList.contains('open'))closeActionConfirm(false);}});
 window.addEventListener('pagehide',()=>{drafts.forEach(d=>(d.files||[]).forEach(revokeFileUrl));});
-async function init(){bind();const auth=await discoverAPI();me=auth&&auth.ok?(auth.user||auth.data||null):null;await loadMine();renderAll();}
+async function init(){bind();const auth=await discoverAPI();me=auth&&auth.ok?(auth.user||auth.data||null):null;await loadMine();renderAll();await handleContactMailConfirmationFromUrl();}
 init();
 
 
@@ -971,7 +1011,8 @@ function updateComposer(){
 }
 async function hideCurrentInquiry(){
   const c=activeItem();if(!c||c.draft)return;
-  if(!confirm(`#${c.contact_code||c.id} を一覧から非表示にしますか？`))return;
+  const accepted=await askActionConfirm({title:'一覧から非表示にしますか？',description:`#${c.contact_code||c.id} をお問い合わせ一覧から非表示にします。`,confirmLabel:'非表示にする'});
+  if(!accepted)return;
   const json=await apiFetch('contact_user_hide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);
   if(!json||!json.ok){toast(json?.error||'非表示にできませんでした');return;}
   inquiries=inquiries.filter(x=>+x.id!==+c.id);activeKey='';renderAll();goHome();toast('非表示にしました');
@@ -1123,9 +1164,10 @@ function updateComposer(){
     attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);
     placeholder='追加メッセージを入力';
   }
-  const locked=isSendLocked();
+  const hasText=!!String(input.value||'').trim();
+  const locked=isSendLocked()||sending;
   input.disabled=!enabled;
-  send.disabled=!enabled||locked;
+  send.disabled=!enabled||!hasText||locked;
   plus.disabled=!attach||locked;
   input.placeholder=placeholder;
   let base=item.draft?(enabled?'本文を入力して送信できます。':'必要項目を設定してください。'):(enabled?'追加メッセージを送信できます。':'対応済みまたは棄却済みのため送信できません。');
@@ -1270,7 +1312,7 @@ function renderDraft(d,initialOpen=false){
   let body='';
   if(d.sent){
     const gn=!me?'<div class="mail-warning">ログインなし送信のため、この画面で履歴確認はできません。</div>':'';
-    body=`<div class="mail-confirm">${esc(completionMessage(!!d.settings?.need_reply))}<br>管理番号：${esc(d.contact_code||'')}</div>${gn}`;
+    body=`<div class="mail-confirm">${esc(completionMessage(!!d.settings?.need_reply))}<br>管理番号：${esc(d.contact_code||'')}</div>${gn}${mailSystemAfterSendHtml(d)}`;
     $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(d))}</div></div><div class="mail-body">${body}</div></article></div>`;
   }else{
     if(!d.settings_done)body=settingsCard(d,false);
@@ -1290,7 +1332,7 @@ function renderExisting(c,initialOpen=false){
   const cancelBtn=c.can_cancel?'<button class="btn danger small" id="cancelExistingBtn" data-act="cancel-inquiry" type="button">取りやめ</button>':'';
   $('chatActions').innerHTML=`${hideBtn}${cancelBtn}`;
   const messages=(c.messages||[]).map((m,i)=>mailMessageHtml(c,m,i)).join('')||'<div class="mail-section-copy">本文がありません。</div>';
-  const submitted=recentlySubmitted.has(+c.id)?`<div class="mail-confirm">${esc(completionMessage(!!c.need_reply))}<br>管理番号：${esc(c.contact_code||'')}</div>`:'';
+  const submitted=recentlySubmitted.has(+c.id)?`<div class="mail-confirm">${esc(completionMessage(!!c.need_reply))}<br>管理番号：${esc(c.contact_code||'')}</div>${mailSystemAfterSendHtml(c)}`:'';
   const closed=['rejected','cancelled'].includes(String(c.status||''))?`<div class="mail-warning">このお問い合わせは${statusLabel(c.status)}済みです。</div>`:'';
   const hideNote=canUserHideInquiry(c)?'<div class="hide-done-note">このお問い合わせは必要なければ「一覧から非表示」で消せます。削除は管理者側のみ可能です。</div>':'';
   $('mailContent').innerHTML=`<div class="mail-detail"><article class="mail-paper"><div class="mail-paper-head"><div class="mail-subject">${esc(mailSubject(c))}</div>${mailChips(c)}</div>${mailMetaRows(c)}<div class="mail-body">${submitted}${messages}${closed}${hideNote}</div></article></div>`;
@@ -1312,17 +1354,20 @@ function updateComposer(){
     attach=(+(item.image_count||((item.images||[]).length)||0)<10)&&((item.files||[]).length<1);
     placeholder='追加メッセージを入力';
   }
-  const locked=isSendLocked();
+  const hasText=!!String(input.value||'').trim();
+  const locked=isSendLocked()||sending;
   input.disabled=!enabled;
-  send.disabled=!enabled||locked;
+  send.disabled=!enabled||!hasText||locked;
   plus.disabled=!attach||locked;
   input.placeholder=placeholder;
-  note.textContent=locked?'少し待ってから再送できます。':(item.draft?(enabled?'本文を入力して送信できます。':'上の項目を設定してください。'):(enabled?'追加メッセージを送信できます。':'このステータスでは送信できません。'));
+  note.classList.toggle('error',!!sendError);
+  note.textContent=sendError||(sending?'送信しています。この画面を閉じずにお待ちください。':(isSendLocked()?'送信済みです。少し待ってから追加送信できます。':(item.draft?(enabled?(hasText?'送信ボタンで送信できます。':'本文を入力してください。'):'上の項目を設定してください。'):(enabled?(hasText?'送信ボタンで追加送信できます。':'追加メッセージを入力してください。'):'このステータスでは送信できません。'))));
   renderAttachStrip();
 }
 async function hideCurrentInquiry(){
   const c=activeItem();if(!c||c.draft)return;
-  if(!confirm(`#${c.contact_code||c.id} を一覧から非表示にしますか？`))return;
+  const accepted=await askActionConfirm({title:'一覧から非表示にしますか？',description:`#${c.contact_code||c.id} をお問い合わせ一覧から非表示にします。`,confirmLabel:'非表示にする'});
+  if(!accepted)return;
   const json=await apiFetch('contact_user_hide',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:c.id})}).catch(()=>null);
   if(!json||!json.ok){toast(json?.error||'非表示にできませんでした');return;}
   inquiries=inquiries.filter(x=>+x.id!==+c.id);
@@ -1360,6 +1405,10 @@ function bind(){
   on('loginBtn','click',login);
   on('mobileListBtn','click',goHome);
   on('sheetBg','click',closeList);
+  on('actionConfirmClose','click',()=>closeActionConfirm(false));
+  on('actionConfirmCancel','click',()=>closeActionConfirm(false));
+  on('actionConfirmAccept','click',()=>closeActionConfirm(true));
+  const actionConfirm=$('actionConfirmModal');if(actionConfirm)actionConfirm.addEventListener('click',e=>{if(e.target===actionConfirm)closeActionConfirm(false);});
   on('settingsModalClose','click',closeSettingsModal);
   const sm=$('settingsModal');if(sm)sm.onclick=e=>{if(e.target===sm)closeSettingsModal();const act=e.target.closest('[data-act]')?.dataset.act;if(act==='save-settings')saveSettings();
   if(act==='draft-back')goDraftBack(e.target.closest('[data-target]')?.dataset.target||'');};
@@ -1369,15 +1418,108 @@ function bind(){
   const picker=$('imagePicker');if(picker)picker.onchange=handlePickedImages;
   on('sendBtn','click',sendComposer);
   const content=$('mailContent');if(content)content.onclick=onMailClick;
-  const actions=$('chatActions');if(actions)actions.onclick=e=>{const b=e.target.closest('button');if(!b)return;const act=b.dataset.act;if(act==='hide-inquiry')hideCurrentInquiry();
-  if(act==='cancel-inquiry')cancelCurrentInquiry();if(b.id==='hideExistingBtn')hideCurrentInquiry();if(b.id==='discardDraftBtn')discardDraft();if(b.id==='cancelExistingBtn')cancelCurrentInquiry();};
+  const actions=$('chatActions');if(actions)actions.onclick=e=>{const b=e.target.closest('button');if(!b)return;const act=b.dataset.act;if(act==='hide-inquiry'||b.id==='hideExistingBtn'){hideCurrentInquiry();return}
+  if(act==='cancel-inquiry'||b.id==='cancelExistingBtn'){cancelCurrentInquiry();return}if(b.id==='discardDraftBtn')discardDraft();};
   const input=$('messageInput');
   if(input){
-    input.addEventListener('input',e=>{const item=activeItem();if(item&&item.draft)item.body_draft=e.target.value;autoGrow(e.target);if(item&&item.draft)renderList();const d=activeItem();if(d&&d.draft){$('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書き削除</button>':'';}});
+    input.addEventListener('input',e=>{sendError='';const item=activeItem();if(item&&item.draft)item.body_draft=e.target.value;autoGrow(e.target);updateComposer();if(item&&item.draft)renderList();const d=activeItem();if(d&&d.draft){$('chatActions').innerHTML=hasBodyDraft(d)&&!d.sent?'<button class="btn danger small" id="discardDraftBtn" type="button">下書き削除</button>':'';}});
     input.addEventListener('focus',focusComposerSoon);
     input.addEventListener('blur',()=>{keyboardBottomTimers.forEach(clearTimeout);keyboardBottomTimers=[];const app=$('app');if(app)app.classList.remove('keyboard-active');setTimeout(()=>{setAppHeight('blur');resetWindowScrollSoon();},80)});
     input.addEventListener('keydown',e=>{if(e.key==='Enter'){}});
   }
+}
+function replyDetailHtml(s,g){
+  if(!s.need_reply)return `<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('send')}</div><div><div class="settings-block-title">返信先なし</div><div class="settings-block-note">返信不要です。</div></div></div><div class="settings-reply-none">管理者からの返信はありません。</div></div>`;
+  const channel=g?'dm':(s.reply_channel||'site');
+  const picker=!g?`<div class="settings-option-grid"><label class="settings-option"><input type="radio" name="set_channel" value="site" ${channel==='site'?'checked':''}><div class="settings-option-card"><div class="settings-option-emoji">${icon('inbox')}</div><div><div class="settings-option-title">サイト内</div><div class="settings-option-sub">ログイン後に確認</div></div></div></label><label class="settings-option"><input type="radio" name="set_channel" value="dm" ${channel==='dm'?'checked':''}><div class="settings-option-card"><div class="settings-option-emoji">${icon('send')}</div><div><div class="settings-option-title">DM</div><div class="settings-option-sub">指定先へ返信</div></div></div></label></div>`:`<div class="settings-inline-panel">ログインなしの場合、DM返信のみ利用できます。</div>`;
+  const dmFields=channel==='dm'?`<div id="dmFields"><div class="settings-inline-panel"><div class="dm-grid"><div class="field"><label>サービス</label><select class="input" id="set_dm_service"><option value="X" ${s.dm_service==='X'?'selected':''}>X</option><option value="Instagram" ${s.dm_service==='Instagram'?'selected':''}>Instagram</option></select></div><div class="field"><label>アカウント</label><input class="input" id="set_dm_account" value="${esc(s.dm_account||'')}" placeholder="@yourname"></div></div></div></div>`:'<div id="dmFields" class="hidden"></div>';
+  return `<div class="settings-block"><div class="settings-block-head"><div class="settings-block-icon">${icon('inbox')}</div><div><div class="settings-block-title">受け取り方</div><div class="settings-block-note">返信先を選びます。</div></div></div>${picker}${dmFields}</div>`;
+}
+function mailSystemAfterSendHtml(item){
+  const settings=item?.draft?(item.settings||{}):item;
+  if(!me||!settings?.need_reply||settings.reply_channel!=='site')return'';
+  if(settings.contact_mail_notification_available)return '<div class="mail-confirm">Mail Systemの返信メール通知は設定済みです。</div>';
+  return `<div class="settings-inline-panel"><b>メールでも返信通知を受け取る場合</b><br>お問い合わせの送信は完了しています。必要な場合だけ、最後に <a href="../../mail-system/?contact-mail" target="_blank" rel="noopener">Mail Systemを登録</a> してください。</div>`;
+}
+function mailSystemAfterSendHtml(){return''}
+let contactMailFlow={view:'offer',email:null,pendingEmail:null,busy:false,error:''};
+function contactMailModal(){return $('mailRegisterModal')}
+function openContactMailModal(view='offer',data={}){
+  contactMailFlow={...contactMailFlow,...data,view,error:''};
+  const modal=contactMailModal();if(!modal)return;
+  modal.classList.add('open');modal.setAttribute('aria-hidden','false');
+  modal.onclick=handleContactMailModalClick;
+  renderContactMailModal();
+}
+function closeContactMailModal(){const modal=contactMailModal();if(!modal)return;modal.classList.remove('open');modal.setAttribute('aria-hidden','true');contactMailFlow.busy=false}
+function contactMailCard(content,actions='',notice=''){
+  return `<div class="mail-register-card"><div class="mail-register-icon">${icon('mail-check')}</div>${content}${notice?`<div class="mail-register-notice ${contactMailFlow.error?'error':''}">${esc(notice)}</div>`:''}${actions?`<div class="mail-register-actions ${actions.includes('data-mail-act="mail-edit"')?'three':''}">${actions}</div>`:''}</div>`;
+}
+function renderContactMailModal(){
+  const body=$('mailRegisterBody');if(!body)return;
+  const v=contactMailFlow.view,email=contactMailFlow.email||'',pending=contactMailFlow.pendingEmail||email;
+  if(contactMailFlow.busy){body.innerHTML=contactMailCard('<div class="mail-register-title">確認しています</div><div class="mail-register-copy">そのままお待ちください。</div>');renderLucideSoon();return}
+  if(v==='offer')body.innerHTML=contactMailCard('<div class="mail-register-title">送信が完了しました</div><div class="mail-register-copy">送信が完了しました。お問い合わせありがとうございました。返信があったときにメールでお知らせできます。</div>','<button class="btn black" type="button" data-mail-act="mail-start">メールを登録</button><button class="btn" type="button" data-mail-act="mail-close">やめておく</button>');
+  else if(v==='confirm')body.innerHTML=contactMailCard(`<div class="mail-register-title">通知先を確認</div><div class="mail-register-copy">メールアドレスの認証が完了しました。お問い合わせへの返信があったとき、次のメールアドレスに通知しますか？</div><div class="mail-register-address">${esc(email)}</div>`,'<button class="btn black" type="button" data-mail-act="mail-enable">通知を有効にする</button><button class="btn" type="button" data-mail-act="mail-edit">メールアドレスを修正</button><button class="btn" type="button" data-mail-act="mail-close">キャンセル</button>',contactMailFlow.error);
+  else if(v==='input')body.innerHTML=contactMailCard(`<div class="mail-register-title">メールアドレスを登録</div><div class="mail-register-copy">確認メールを送ります。メール内のリンクを開くと、このページで通知先を確認できます。</div><div class="field"><label for="contactMailInput">メールアドレス</label><input class="input" id="contactMailInput" type="email" autocomplete="email" inputmode="email" value="${esc(contactMailFlow.inputEmail||'')}" placeholder="name@example.com"></div>`,'<button class="btn black" type="button" data-mail-act="mail-request">確認メールを送る</button><button class="btn" type="button" data-mail-act="mail-close">キャンセル</button>',contactMailFlow.error);
+  else if(v==='pending')body.innerHTML=contactMailCard(`<div class="mail-register-title">確認メールを送信しました</div><div class="mail-register-copy">${esc(pending)} に確認メールを送りました。メール内のリンクを開いて認証してください。</div><div class="mail-register-address">${esc(pending)}</div>`,'<button class="btn black" type="button" data-mail-act="mail-check">認証状況を確認</button><button class="btn" type="button" data-mail-act="mail-edit">メールアドレスを修正</button><button class="btn" type="button" data-mail-act="mail-close">閉じる</button>',contactMailFlow.error);
+  else body.innerHTML=contactMailCard('<div class="mail-register-title">メール通知を設定できませんでした</div><div class="mail-register-copy">時間をおいて、もう一度お試しください。</div>','<button class="btn" type="button" data-mail-act="mail-close">閉じる</button>',contactMailFlow.error);
+  renderLucideSoon();setTimeout(()=>body.querySelector('button,input')?.focus(),40);
+}
+async function contactMailApi(action,payload={}){
+  const json=await apiFetch(action,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).catch(()=>null);
+  if(!json||!json.ok)throw new Error(json?.error||'通信に失敗しました。');
+  return json.data||{};
+}
+function applyContactMailState(result){
+  const state=result?.email||{};
+  contactMailFlow.email=state.email||'';contactMailFlow.pendingEmail=state.pending_email||'';
+  if(state.pending_email||state.status==='pending')contactMailFlow.view='pending';
+  else if(state.status==='active')contactMailFlow.view='confirm';
+  else contactMailFlow.view='input';
+}
+async function loadContactMailState(){
+  contactMailFlow.busy=true;renderContactMailModal();
+  try{applyContactMailState(await contactMailApi('contact_mail_status'));contactMailFlow.error=''}catch(e){contactMailFlow.view='error';contactMailFlow.error=e.message}finally{contactMailFlow.busy=false;renderContactMailModal()}
+}
+async function handleContactMailModalClick(e){
+  const act=e.target.closest('[data-mail-act]')?.dataset.mailAct;if(!act||contactMailFlow.busy)return;
+  if(act==='mail-close'){closeContactMailModal();return}
+  if(act==='mail-start'){await loadContactMailState();return}
+  if(act==='mail-edit'){contactMailFlow.view='input';contactMailFlow.inputEmail=contactMailFlow.pendingEmail||contactMailFlow.email||'';contactMailFlow.error='';renderContactMailModal();setTimeout(()=>$('contactMailInput')?.focus(),50);return}
+  if(act==='mail-request'){
+    const email=($('contactMailInput')?.value||'').trim();if(!email){contactMailFlow.error='メールアドレスを入力してください。';renderContactMailModal();return}
+    contactMailFlow.busy=true;contactMailFlow.inputEmail=email;renderContactMailModal();
+    try{const result=await contactMailApi('contact_mail_request',{email});applyContactMailState(result);contactMailFlow.error=''}catch(err){contactMailFlow.view='input';contactMailFlow.error=err.message}finally{contactMailFlow.busy=false;renderContactMailModal()}return;
+  }
+  if(act==='mail-check'){await loadContactMailState();if(contactMailFlow.view==='pending'){contactMailFlow.error='まだ認証が完了していません。メール内のリンクを開いてください。';renderContactMailModal()}return}
+  if(act==='mail-enable'){
+    contactMailFlow.busy=true;renderContactMailModal();
+    try{const result=await contactMailApi('contact_mail_enable');closeContactMailModal();toast(result.message||'返信メール通知を有効にしました')}catch(err){contactMailFlow.view='confirm';contactMailFlow.error=err.message;contactMailFlow.busy=false;renderContactMailModal()}return;
+  }
+}
+function maybeOfferContactMailAfterSend(inquiry){if(me&&inquiry?.need_reply&&inquiry?.reply_channel==='site')openContactMailModal('offer',{email:null,pendingEmail:null,inputEmail:''})}
+async function handleContactMailConfirmationFromUrl(){
+  const url=new URL(location.href),token=url.searchParams.get('mail-confirm');if(!token)return;
+  url.searchParams.delete('mail-confirm');history.replaceState({},'',url.pathname+url.search+url.hash);
+  openContactMailModal('offer');contactMailFlow.busy=true;renderContactMailModal();
+  try{const result=await contactMailApi('contact_mail_confirm',{token});applyContactMailState(result);contactMailFlow.view='confirm';contactMailFlow.error=''}catch(e){contactMailFlow.view='error';contactMailFlow.error=e.message}finally{contactMailFlow.busy=false;renderContactMailModal()}
+}
+function handlePickedImages(e){
+  const item=activeItem();if(!item)return;
+  const selected=Array.from(e.target.files||[]),allowed=['image/jpeg','image/png','image/gif','image/webp'];
+  const add=selected.filter(f=>allowed.includes(f.type)&&f.size<=5*1024*1024);
+  if(add.length<selected.length)toast('JPEG・PNG・GIF・WebPの5MB以下の画像を選んでください','error');
+  if(item.draft){
+    const before=(item.files||[]).length;
+    item.files=[...(item.files||[]),...add].slice(0,2);
+    if(before+add.length>2)toast('初回画像は2枚までです');
+  }else{
+    const current=+(item.image_count||((item.images||[]).length)||0),remain=Math.max(0,10-current);
+    if(remain<=0)toast('画像はお問い合わせごとに合計10枚までです');
+    else{item.files=add.slice(0,1);if(add.length>1)toast('追加メッセージの画像は1枚までです')}
+  }
+  e.target.value='';renderAll();
 }
 function afterMailRender(initialOpen=false){
   if(forceNextScrollBottom){scrollBottomSoon();forceNextScrollBottom=false;}

@@ -603,24 +603,115 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .social-title { margin:0; font-size:24px; line-height:1.2; font-weight:950; }
 .social-account-btn { width:44px; height:44px; border:1px solid #ececec; border-radius:50%; background:#fff; padding:0; overflow:hidden; display:grid; place-items:center; color:#777; font-weight:900; cursor:pointer; flex-shrink:0; }
 .social-account-btn img { width:100%; height:100%; object-fit:cover; object-position:top center; display:block; }
-.social-composer { border:1px solid var(--eee); border-radius:20px; background:#fff; padding:14px; box-shadow:0 1px 4px rgba(0,0,0,.025); margin-bottom:12px; }
+.social-compose-fab { position:fixed; right:max(18px, calc((100vw - 520px) / 2 + 18px)); bottom:86px; z-index:120; width:58px; height:58px; border-radius:50%; border:1px solid rgba(0,0,0,.08); background:#111; color:#fff; display:grid; place-items:center; box-shadow:0 14px 34px rgba(0,0,0,.22); cursor:pointer; transition:transform .15s, box-shadow .15s; }
+.social-compose-fab:hover { transform:translateY(-2px); box-shadow:0 18px 40px rgba(0,0,0,.25); }
+.social-compose-fab:active { transform:translateY(0) scale(.98); }
+.social-compose-fab i { width:26px; height:26px; }
+.social-composer[hidden] { display:none; }
+.social-composer { position:fixed; inset:0; z-index:300; display:grid; place-items:end center; padding:20px 14px 84px; background:rgba(0,0,0,.28); backdrop-filter:blur(8px); }
+.social-compose-dialog { width:min(100%, 520px); max-height:min(86vh, 760px); overflow:auto; overscroll-behavior:contain; border:1px solid rgba(255,255,255,.62); border-radius:24px; background:#fff; box-shadow:0 24px 80px rgba(0,0,0,.24); padding:16px; display:grid; gap:14px; }
+.social-compose-head { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.social-compose-title { margin:0; font-size:18px; line-height:1.3; font-weight:950; }
+.social-compose-close { width:36px; height:36px; border:0; border-radius:50%; background:#f4f4f4; color:#333; display:grid; place-items:center; cursor:pointer; flex-shrink:0; }
+.social-compose-close:hover { background:#ececec; }
+.social-compose-login { text-align:center; padding:14px 6px 8px; display:grid; gap:12px; justify-items:center; }
+.social-compose-login-text { font-size:13px; color:#666; font-weight:800; line-height:1.6; }
 .social-composer textarea, .social-composer input, .social-composer select { width:100%; border:1px solid #e5e5e5; border-radius:14px; background:#fff; padding:11px 12px; font:inherit; font-size:14px; outline:none; }
 .social-composer textarea { min-height:88px; resize:vertical; line-height:1.65; }
 .social-composer textarea:focus, .social-composer input:focus, .social-composer select:focus { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,.05); }
-.social-composer-row { display:flex; gap:8px; align-items:center; justify-content:space-between; margin-top:10px; flex-wrap:wrap; }
+.social-body-wrap { position:relative; }
+.social-body-highlight { position:absolute; inset:1px; overflow:hidden; pointer-events:none; white-space:pre-wrap; word-break:break-word; color:#222; padding:11px 12px; font:inherit; font-size:14px; line-height:1.65; border-radius:13px; z-index:1; }
+.social-body-highlight .tag { color:#cf5d83; background:#fff0f5; border-radius:6px; font-weight:900; }
+.social-body-input { position:relative; z-index:2; background:transparent !important; color:transparent; caret-color:#111; }
+.social-body-input::placeholder { color:#999; opacity:1; }
+.social-body-input::selection { background:rgba(207,93,131,.24); color:transparent; }
+.social-composer-row { display:flex; gap:8px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
 .social-composer-tools { display:flex; gap:8px; flex-wrap:wrap; align-items:center; min-width:0; }
 .social-tool-note { font-size:11px; color:#777; font-weight:700; }
-.social-advanced { margin-top:10px; border-top:1px solid #f0f0f0; padding-top:10px; }
-.social-advanced summary { cursor:pointer; font-size:12px; font-weight:900; color:#555; }
-.social-advanced-grid { display:grid; gap:8px; margin-top:10px; }
+.social-field { display:grid; gap:6px; }
+.social-field-label { font-size:12px; color:#333; font-weight:950; line-height:1.35; }
+.social-field-help { font-size:11px; color:#777; font-weight:700; line-height:1.45; }
+.social-field-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.social-advanced { border:1px solid #eee; border-radius:18px; background:#fafafa; padding:0; overflow:hidden; }
+.social-advanced summary { cursor:pointer; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 14px; font-size:13px; font-weight:950; color:#222; list-style:none; }
+.social-advanced summary::-webkit-details-marker { display:none; }
+.social-advanced summary small { color:#777; font-size:11px; font-weight:800; white-space:nowrap; }
+.social-advanced-grid { display:grid; gap:12px; padding:0 14px 14px; }
+.social-detail-card { border:1px solid #ececec; border-radius:16px; background:#fff; padding:12px; display:grid; gap:10px; }
+.social-detail-title { font-size:12px; font-weight:950; color:#111; }
+.social-action-grid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:8px; }
+.social-add-action { min-height:68px; border:1px solid #e8e8e8; border-radius:16px; background:#fff; color:#111; font:inherit; font-size:12px; font-weight:950; cursor:pointer; padding:10px 8px; display:grid; place-items:center; gap:6px; text-align:center; }
+.social-add-action:hover { background:#fafafa; border-color:#ddd; }
+.social-add-action i { width:18px; height:18px; color:#555; }
+.social-hidden-input { display:none !important; }
+.social-drafts { display:grid; gap:8px; }
+.social-draft-card { border:1px solid #ececec; border-radius:14px; background:#fff; padding:8px; display:grid; grid-template-columns:42px 1fr auto; gap:9px; align-items:center; min-width:0; }
+.social-draft-thumb { width:42px; height:42px; border-radius:10px; background:#f2f2f2; overflow:hidden; display:grid; place-items:center; color:#999; }
+.social-draft-thumb img { width:100%; height:100%; object-fit:cover; }
+.social-draft-main { min-width:0; }
+.social-draft-title { font-size:12px; font-weight:950; line-height:1.35; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.social-draft-sub { font-size:11px; color:#777; font-weight:800; line-height:1.4; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.social-draft-remove { width:30px; height:30px; border:0; border-radius:50%; background:#f4f4f4; color:#555; display:grid; place-items:center; cursor:pointer; }
+.social-draft-remove:hover { background:#ececec; color:#111; }
+.social-mini-action { min-height:38px; border:1px solid #e5e5e5; border-radius:999px; background:#fff; color:#111; font:inherit; font-size:12px; font-weight:900; cursor:pointer; padding:0 13px; display:inline-flex; align-items:center; justify-content:center; gap:6px; width:max-content; max-width:100%; }
+.social-mini-action:hover { background:#f6f6f6; }
+.social-suggest-list { display:grid; gap:6px; }
+.social-suggest-item { border:1px solid #ececec; border-radius:14px; background:#fff; padding:8px; display:grid; grid-template-columns:42px 1fr; gap:9px; text-align:left; cursor:pointer; font:inherit; color:#111; }
+.social-suggest-item:hover { background:#fafafa; }
+.social-suggest-thumb { width:42px; height:42px; border-radius:10px; background:#f2f2f2; overflow:hidden; display:grid; place-items:center; color:#999; }
+.social-suggest-thumb img { width:100%; height:100%; object-fit:cover; }
+.social-suggest-title { font-size:12px; font-weight:950; line-height:1.35; }
+.social-suggest-sub { font-size:11px; color:#777; line-height:1.45; margin-top:2px; }
+.social-picker[hidden] { display:none; }
+.social-picker { position:fixed; inset:0; z-index:420; display:grid; place-items:end center; padding:18px 12px 84px; background:rgba(0,0,0,.32); backdrop-filter:blur(8px); }
+.social-picker-dialog { width:min(100%, 520px); height:min(82vh, 720px); max-height:min(82vh, 720px); overflow:hidden; border-radius:24px; background:#fff; box-shadow:0 24px 80px rgba(0,0,0,.25); display:grid; grid-template-rows:auto auto minmax(0,1fr); }
+.social-picker-head { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 14px 10px; border-bottom:1px solid #f0f0f0; }
+.social-picker-heading { min-width:0; display:flex; align-items:center; gap:8px; }
+.social-picker-title { min-width:0; font-size:16px; font-weight:950; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.social-picker-back[hidden] { display:none; }
+.social-picker-back { width:34px; height:34px; flex:0 0 34px; border:0; border-radius:50%; background:#f3f3f3; color:#222; display:grid; place-items:center; cursor:pointer; }
+.social-blog-search-wrap[hidden] { display:none; }
+.social-picker-list { min-height:0; overflow:auto; padding:12px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); grid-auto-flow:row; grid-auto-rows:max-content; gap:10px; align-content:start; align-items:stretch; }
+.social-blog-option { min-width:0; height:100%; border:1px solid #ececec; border-radius:16px; background:#fff; padding:0; overflow:hidden; text-align:left; cursor:pointer; font:inherit; color:#111; display:grid; grid-template-rows:160px minmax(0,1fr); align-self:stretch; isolation:isolate; }
+.social-blog-option:hover { background:#fafafa; border-color:#ddd; }
+.social-blog-option-thumb { position:relative; min-width:0; min-height:0; overflow:hidden; background:#f2f2f2; }
+.social-blog-option-thumb img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+.social-blog-option-body { min-width:0; padding:9px; display:grid; align-content:start; gap:3px; overflow:hidden; }
+.social-blog-option-member { font-size:11px; color:#cf5d83; font-weight:950; }
+.social-blog-option-title { min-width:0; font-size:12px; font-weight:950; line-height:1.35; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.social-blog-option-date { font-size:10px; color:#888; font-weight:800; }
+.social-blog-image-option { position:relative; min-width:0; width:100%; aspect-ratio:1/1; border:1px solid #ececec; border-radius:14px; background:#f5f5f5; padding:0; overflow:hidden; cursor:pointer; isolation:isolate; }
+.social-blog-image-option:hover { border-color:#ccc; }
+.social-blog-image-option img { position:absolute; inset:0; width:100%; height:100%; min-width:0; min-height:0; object-fit:contain; display:block; }
+.social-compose-actions { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; border-top:1px solid #f0f0f0; padding-top:12px; }
+.social-modal-open { overflow:hidden; }
+@media(max-width:560px){
+  .social-compose-fab { right:18px; bottom:82px; width:56px; height:56px; }
+  .social-composer { padding:14px 12px 78px; }
+  .social-compose-dialog { max-height:88vh; border-radius:22px; padding:14px; }
+  .social-field-row, .social-compose-actions { grid-template-columns:1fr; }
+  .social-action-grid { grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; }
+  .social-add-action { min-height:60px; padding:8px 4px; font-size:11px; }
+  .social-advanced summary { align-items:flex-start; flex-direction:column; gap:3px; }
+  .social-picker { padding:12px 10px 78px; }
+  .social-picker-dialog { max-height:84vh; border-radius:22px; }
+  .social-picker-list { grid-template-columns:1fr 1fr; gap:8px; padding:10px; }
+  .social-blog-option { grid-template-rows:126px minmax(0,1fr); }
+}
 .social-tabs { display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px; border:1px solid #eee; border-radius:999px; background:#f7f7f7; margin:14px 0; }
+.social-tabs[hidden] { display:none; }
 .social-tab { border:0; border-radius:999px; background:transparent; min-height:38px; font:inherit; font-size:13px; font-weight:900; color:#666; cursor:pointer; }
 .social-tab.active { background:#fff; color:#111; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+.social-shared-context[hidden] { display:none; }
+.social-shared-context { margin:14px 0; min-height:44px; border:1px solid #e8e8e8; border-radius:14px; background:#fafafa; padding:8px 10px 8px 13px; display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.social-shared-context span { font-size:12px; color:#555; font-weight:900; }
+.social-shared-context button { border:0; border-radius:999px; background:#fff; color:#111; padding:7px 10px; font:inherit; font-size:11px; font-weight:900; cursor:pointer; box-shadow:0 0 0 1px #e5e5e5; }
 .social-feed { display:grid; gap:12px; }
 .social-post { border:1px solid var(--eee); border-radius:18px; background:#fff; padding:14px; display:grid; gap:12px; }
 .social-post-head { display:flex; align-items:flex-start; gap:10px; }
 .social-post-author { min-width:0; flex:1; cursor:pointer; }
 .social-post-name { font-size:14px; font-weight:900; line-height:1.35; }
+.social-post-name-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap}.quest-rank-badge{display:inline-grid;place-items:center;width:25px;height:25px;min-width:25px;border:1px solid color-mix(in srgb,var(--rank-color,#5f8f66) 42%,#ddd);border-radius:8px;background:color-mix(in srgb,var(--rank-color,#5f8f66) 12%,#fff);color:var(--rank-color,#315c37);cursor:pointer}.quest-rank-badge .lucide{width:15px;height:15px;stroke-width:2.5}
 .social-post-meta { font-size:11px; color:#777; font-weight:700; margin-top:2px; }
 .social-menu { position:relative; }
 .social-menu summary { list-style:none; width:32px; height:32px; border-radius:50%; display:grid; place-items:center; cursor:pointer; color:#777; }
@@ -631,10 +722,15 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .social-menu-list button:hover { background:#f5f5f5; }
 .social-menu-list button.danger { color:#d33; }
 .social-post-body { font-size:14px; line-height:1.75; white-space:pre-wrap; word-break:break-word; color:#222; }
+.social-inline-chip { display:inline-flex; align-items:center; max-width:100%; min-height:25px; margin:0 2px; padding:2px 8px; border:0; border-radius:999px; background:#f5f5f5; color:#333; font:inherit; font-size:12px; font-weight:850; line-height:1.35; text-decoration:none; vertical-align:baseline; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; cursor:pointer; }
+.social-inline-chip.tag { background:#fff0f5; color:#b94f73; }
+.social-inline-chip:hover { background:#ececec; }
+.social-inline-chip.tag:hover { background:#ffe3ed; }
 .social-images { display:grid; gap:6px; grid-template-columns:repeat(2,minmax(0,1fr)); }
 .social-images.one { grid-template-columns:1fr; }
 .social-image-item { min-width:0; color:inherit; text-decoration:none; display:block; }
-.social-images img { width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:14px; background:#f2f2f2; border:1px solid #eee; display:block; }
+.social-images img { width:auto; max-width:100%; height:auto; max-height:min(72vh,680px); object-fit:contain; border-radius:14px; background:#f2f2f2; border:1px solid #eee; display:block; margin-inline:auto; }
+.social-images:not(.one) img { max-height:min(54vh,440px); }
 .social-image-credit { margin-top:6px; font-size:11px; line-height:1.45; color:#666; font-weight:800; display:grid; gap:1px; }
 .social-image-credit b { color:#111; font-size:12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .social-links, .social-tags { display:flex; flex-wrap:wrap; gap:6px; }
@@ -642,14 +738,30 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .social-quote { border:1px solid #e9e9e9; border-radius:16px; background:#fafafa; padding:12px; display:grid; gap:7px; color:#222; text-decoration:none; }
 .social-quote-title { font-size:13px; font-weight:900; line-height:1.45; }
 .social-quote-sub { font-size:12px; color:#666; line-height:1.55; }
-.social-quote img { width:100%; max-height:180px; object-fit:cover; border-radius:12px; border:1px solid #eee; }
+.social-quote img { width:auto; max-width:100%; height:auto; max-height:min(48vh,320px); object-fit:contain; border-radius:12px; border:1px solid #eee; justify-self:center; }
 .social-actions { display:flex; gap:10px; align-items:center; flex-wrap:wrap; border-top:1px solid #f1f1f1; padding-top:10px; }
 .social-action { border:0; background:transparent; color:#555; padding:6px 8px; border-radius:999px; font:inherit; font-size:12px; font-weight:900; cursor:pointer; display:inline-flex; align-items:center; gap:5px; }
 .social-action:hover { background:#f5f5f5; color:#111; }
 .social-action.liked { color:#111; background:#f2f2f2; }
+.social-action:disabled { opacity:.55; cursor:wait; }
 .social-comments { display:grid; gap:8px; }
 .social-comment { display:flex; gap:8px; align-items:flex-start; font-size:12px; line-height:1.55; color:#333; background:#fafafa; border-radius:14px; padding:9px 10px; }
 .social-comment b { color:#111; }
+.social-comment span { flex:1; min-width:0; }
+.social-comment-delete { border:0; background:transparent; color:#999; font:inherit; font-size:11px; font-weight:900; cursor:pointer; padding:2px 4px; border-radius:8px; }
+.social-comment-delete:hover { background:#eee; color:#d33; }
+.social-comment-modal[hidden] { display:none; }
+.social-comment-modal { position:fixed; inset:0; z-index:430; display:grid; place-items:end center; padding:18px 12px 84px; background:rgba(0,0,0,.32); backdrop-filter:blur(8px); }
+.social-comment-dialog { width:min(100%, 520px); border-radius:24px; background:#fff; box-shadow:0 24px 80px rgba(0,0,0,.25); padding:16px; display:grid; gap:12px; }
+.social-comment-dialog textarea { width:100%; min-height:120px; border:1px solid #e5e5e5; border-radius:16px; padding:12px; resize:vertical; font:inherit; font-size:14px; line-height:1.65; outline:none; }
+.social-comment-dialog textarea:focus { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,.05); }
+.social-post-action-modal[hidden] { display:none; }
+.social-post-action-modal { position:fixed; inset:0; z-index:440; display:grid; place-items:end center; padding:18px 12px 84px; background:rgba(0,0,0,.32); backdrop-filter:blur(8px); }
+.social-post-action-dialog { width:min(100%, 520px); border-radius:24px; background:#fff; box-shadow:0 24px 80px rgba(0,0,0,.25); padding:16px; display:grid; gap:12px; }
+.social-post-action-dialog textarea { width:100%; min-height:150px; border:1px solid #e5e5e5; border-radius:16px; padding:12px; resize:vertical; font:inherit; font-size:14px; line-height:1.65; outline:none; }
+.social-post-action-dialog textarea:focus { border-color:#111; box-shadow:0 0 0 3px rgba(0,0,0,.05); }
+.social-post-action-note { font-size:11px; line-height:1.5; color:#777; font-weight:750; }
+.social-post-action-dialog .pill-button.danger { border-color:#b42318; background:#b42318; color:#fff; }
 .social-feed-state { padding:22px; border:1px dashed #ddd; border-radius:18px; color:#888; text-align:center; font-size:13px; font-weight:800; }
 .social-sentinel { height:1px; }
 .verified-section{display:grid;gap:10px;margin-top:20px}
@@ -911,30 +1023,32 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
       <div class="social-topbar">
         <div>
           <div class="social-kicker">Buddies SNS</div>
-          <h1 class="social-title">タイムライン</h1>
+          <h1 id="social-home-title" class="social-title">タイムライン</h1>
         </div>
         <button id="home-account-button" class="social-account-btn" type="button" onclick="openHomeAccount()" aria-label="アカウント"></button>
       </div>
-      <div id="social-composer" class="social-composer"></div>
       <div class="social-tabs" role="tablist" aria-label="タイムライン切り替え">
         <button class="social-tab active" type="button" data-social-mode="all" onclick="switchSocialMode('all')">タイムライン</button>
         <button class="social-tab" type="button" data-social-mode="following" onclick="switchSocialMode('following')">フォロー</button>
       </div>
+      <div id="social-shared-context" class="social-shared-context" hidden>
+        <span>共有された投稿を表示中</span>
+        <button type="button" onclick="clearSocialFocusedPost()">タイムラインへ</button>
+      </div>
       <div id="social-feed" class="social-feed"></div>
       <div id="social-loading" class="social-feed-state" hidden>読み込み中…</div>
       <div id="social-sentinel" class="social-sentinel" aria-hidden="true"></div>
+      <button id="social-compose-fab" class="social-compose-fab" type="button" onclick="openSocialComposer()" aria-label="投稿を作成">
+        <i data-lucide="plus"></i>
+      </button>
+      <div id="social-composer" class="social-composer" hidden></div>
     </section>
   </div>
 
   <div id="search-page" hidden>
-    <section id="search-recommend-section">
-      <h2 id="similar-title" class="section-title">おすすめのBuddies</h2>
-      <div id="similar-list" class="profile-list"></div>
-    </section>
-
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲、ライブで検索" style="padding-left:44px; padding-right:44px;">
+      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲、ライブ、投稿内容で検索" style="padding-left:44px; padding-right:44px;">
       <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" aria-label="クリア">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -956,6 +1070,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
     <!-- 適用中サマリー -->
     <div id="filters-summary" style="margin-top:8px; display:none; flex-wrap:wrap; gap:6px;"></div>
 
+    <h2 class="section-title">全ユーザー</h2>
     <div id="search-results" class="profile-list" style="margin-top:16px;"></div>
     <div id="search-loading" style="text-align:center; padding:14px 0; display:none; font-size:12px; color:#888;">読み込み中…</div>
     <div id="search-end" style="text-align:center; padding:14px 0; display:none; font-size:12px; color:#bbb;">— 結果は以上です —</div>
@@ -1546,6 +1661,33 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 </div>
 
 <div id="toast" class="toast"></div>
+<div id="social-comment-modal" class="social-comment-modal" hidden onclick="if(event.target===this)closeSocialCommentModal()">
+  <div class="social-comment-dialog" role="dialog" aria-modal="true" aria-labelledby="social-comment-title">
+    <div class="social-compose-head">
+      <h2 id="social-comment-title" class="social-compose-title">コメント</h2>
+      <button class="social-compose-close" type="button" onclick="closeSocialCommentModal()" aria-label="閉じる"><i data-lucide="x"></i></button>
+    </div>
+    <textarea id="social-comment-body" maxlength="500" placeholder="コメントを入力"></textarea>
+    <div class="social-compose-actions">
+      <span class="social-tool-note">500文字まで</span>
+      <button id="social-comment-submit" class="pill-button black" type="button" onclick="submitSocialComment()">送信</button>
+    </div>
+  </div>
+</div>
+<div id="social-post-action-modal" class="social-post-action-modal" hidden onclick="if(event.target===this)closeSocialPostActionModal()">
+  <div class="social-post-action-dialog" role="dialog" aria-modal="true" aria-labelledby="social-post-action-title">
+    <div class="social-compose-head">
+      <h2 id="social-post-action-title" class="social-compose-title">投稿を編集</h2>
+      <button class="social-compose-close" type="button" onclick="closeSocialPostActionModal()" aria-label="閉じる"><i data-lucide="x"></i></button>
+    </div>
+    <textarea id="social-post-action-body" maxlength="2000"></textarea>
+    <div id="social-post-action-note" class="social-post-action-note"></div>
+    <div class="social-compose-actions">
+      <span></span>
+      <button id="social-post-action-submit" class="pill-button black" type="button" onclick="submitSocialPostAction()">保存</button>
+    </div>
+  </div>
+</div>
 <div id="g-loading" class="g-loading" aria-live="polite" aria-label="読み込み中">
   <div class="g-loading-inner">
     <div class="g-loading-spinner"></div>
@@ -1556,9 +1698,10 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 <script>
 // ── 定数 ────────────────────────────────────────────────
 const API = './api.php';
-const BLOG_DATA   = '../data/blogs.json';
+const BLOG_PICKER_API = './blog-picker.php';
 const MEMBER_DATA = '../data/member.json';
 const LIVE_DATA   = '../data/live.json';
+const SAKUMAP_API = '../sakumap/api.php';
 
 // ── 状態 ────────────────────────────────────────────────
 function shuffleArray(arr) {
@@ -1599,7 +1742,6 @@ let me = null;              // ログインユーザー（DB）
 let memberMap = {};         // メンバーJSONマップ
 let memberDataLoaded = false;
 let liveOptions = [];        // live.json から生成した公演一覧
-let allBlogs = [];          // ブログJSON
 let verifiedAccounts = [];  // コミュニティアカウント（協力・イベント）
 let exchangedProfiles = []; // 交換済み（DBから）
 let favoriteProfiles = [];  // お気に入り（DBから）
@@ -1627,11 +1769,28 @@ let filterPastLivesExpanded = false;
 let editNextLiveSeats = {};
 let socialMode = 'all';
 let socialPosts = [];
+const questProfileCache = new Map();
 let socialBeforeId = 0;
 let socialLoading = false;
 let socialEnded = false;
 let socialObserver = null;
+let socialCommentPostId = 0;
+let socialPostAction = { mode:'', postId:0 };
+const socialLikePending = new Set();
+let socialFocusedPostId = Math.max(0, parseInt(new URLSearchParams(location.search).get('post') || '0', 10) || 0);
+let socialBlogItems = [];
+let socialBlogSelected = null;
+let socialBlogOffset = 0;
+let socialBlogHasMore = true;
+let socialBlogLoading = false;
+let socialBlogError = '';
+let socialBlogRequestToken = 0;
+let socialBlogSearchTimer = null;
+let socialBlogListScrollTop = 0;
 let searchRecommendationsLoaded = false;
+const SOCIAL_PAGE_SIZE = 12;
+const SOCIAL_BLOG_PAGE_SIZE = 20;
+let socialSakumapSuggestTimer = null;
 
 const oshiColors = ['#ffb7c5','#8b5cf6','#ec4899','#f97316','#22c55e','#3b82f6','#eab308'];
 const DEVELOPER_IDS = new Set([1]); // 開発者アカウント uid
@@ -1808,17 +1967,15 @@ function pastLiveIds(profile) {
 // ── 初期化 ───────────────────────────────────────────────
 async function init() {
   try {
-    const [meRes, bRes, mRes, vRes, liveRes] = await Promise.all([
+    const [meRes, mRes, vRes, liveRes] = await Promise.all([
       fetch(API + '?action=auth_me', { credentials:'include' }),
-      fetch(BLOG_DATA + '?_=' + Date.now()).catch(() => null),
-      fetch(MEMBER_DATA + '?_=' + Date.now()).catch(() => null),
+      fetch(MEMBER_DATA).catch(() => null),
       fetch(API + '?action=verified_public_list&limit=6', { credentials:'include' }).catch(() => null),
-      fetch(LIVE_DATA + '?_=' + Date.now()).catch(() => null),
+      fetch(LIVE_DATA).catch(() => null),
     ]);
     const meJson = await meRes.json();
     me = meJson.ok ? meJson.data : null;
 
-    if (bRes) { try { allBlogs = await bRes.json(); } catch(e){} }
     if (mRes) {
       try {
         const rawM = await mRes.json();
@@ -1837,7 +1994,10 @@ async function init() {
       try { liveOptions = buildLiveOptions(await liveRes.json()); } catch(e){ liveOptions = []; }
     }
     // 認証データを me に合体（重複は認証側を優先）
-    if (me) me = mergeVerifiedOntoProfile(me);
+    if (me) {
+      me = mergeVerifiedOntoProfile(me);
+      await attachQuestProfile(me);
+    }
   } catch(e){}
 
   document.getElementById('page-loading').style.display = 'none';
@@ -1849,14 +2009,10 @@ async function init() {
     if (prepareLiveRedirectLogin()) return;
   } else {
     showMainUI();
-    // 共有URLで開いた場合はログインモーダルを出さずそのまま閲覧させる。
-    // お気に入り用ログイン導線の場合だけ、ログイン後に view.html へ戻すためモーダルを出す。
-    const qs = new URLSearchParams(location.search);
-    const hashParams = new URLSearchParams(location.hash.slice(1));
-    const hasSharedUid = qs.get('uid') || hashParams.get('uid') || sessionStorage.getItem('buddies_shared_uid');
+    // ホームと投稿一覧はログインなしで閲覧できる。
+    // お気に入り・ライブ参加の導線だけはログイン後に元の画面へ戻す。
     if (prepareFavoriteRedirectLogin()) return;
     if (prepareLiveRedirectLogin()) return;
-    if (!hasSharedUid) showAuthModal();
   }
 
   checkUrl();
@@ -1899,6 +2055,11 @@ async function loadUserData() {
 function showMainUI() {
   renderHeaderAuth();
   renderAll();
+  if (socialFocusedPostId > 0) {
+    sessionStorage.removeItem('buddies_return_from_profile');
+    switchTab('home');
+    return;
+  }
   restoreProfileReturnState();
   if (restoringProfileReturn) return;
   const tabParam = new URLSearchParams(location.search).get('tab');
@@ -1933,7 +2094,7 @@ function getFavoriteRedirectUrl() {
   if (!raw) return '';
   let decoded = raw;
   try { decoded = decodeURIComponent(raw); } catch(e) {}
-  if (!/^view\.html\?id=\d+$/.test(decoded)) return '';
+  if (!/^view\.html\?id=\d+(?:&tab=posts)?$/.test(decoded)) return '';
   return decoded;
 }
 function getLiveRedirectUrl() {
@@ -2019,6 +2180,7 @@ async function doLogin() {
     const json = await res.json();
     if (!json.ok) { errEl.textContent = json.error; errEl.style.display = 'block'; return; }
     me = json.data.user;
+    await attachQuestProfile(me);
     await loadUserData();
     closeAuthModal();
     renderHeaderAuth();
@@ -2048,6 +2210,7 @@ async function doRegister() {
     const json = await res.json();
     if (!json.ok) { errEl.textContent = json.error; errEl.style.display = 'block'; return; }
     me = json.data.user;
+    await attachQuestProfile(me);
     await loadUserData();
     closeAuthModal();
     renderHeaderAuth();
@@ -2094,9 +2257,9 @@ function switchTab(tab) {
   document.getElementById('mypage-page').hidden = tab !== 'mypage';
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   sessionStorage.setItem('buddies_active_tab', tab);
+  if (tab !== 'home') closeSocialComposer();
   if (!restoringProfileReturn) scrollAppToTop();
   if (tab === 'search') {
-    renderSearchRecommendations();
     setupSearchObserver();
     if (!searchOffset && !searchLoading) resetAndLoadSearch();
   }
@@ -2150,6 +2313,29 @@ function getOshi1Color(profile) {
   return '#ffb7c5';
 }
 function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
+function questRankBadgeHtml(p){
+  const rank=p?.quest_rank||p?.quest_profile?.rank;
+  if(!rank?.name)return'';
+  return `<span class="quest-rank-badge" role="button" tabindex="0" style="--rank-color:${esc(rank.color||'#315c37')}" data-rank="${esc(rank.name)}" data-level="${esc(rank.level)}" data-xp="${esc(rank.xp||0)}" aria-label="クエストランクを表示" onclick="showQuestRankInfo(event,this)" onkeydown="if(event.key==='Enter'||event.key===' '){showQuestRankInfo(event,this)}"><i data-lucide="${esc(rank.icon||'award')}"></i></span>`;
+}
+function showQuestRankInfo(event,element){event?.preventDefault();event?.stopPropagation();toast(`RANK ${element.dataset.level} ${element.dataset.rank} ・ ${element.dataset.xp} XP`);}
+async function attachQuestProfile(profile){
+  if(!profile?.id)return profile;
+  const key=Number(profile.id);
+  if(questProfileCache.has(key)){
+    profile.quest_profile=questProfileCache.get(key);
+    return profile;
+  }
+  try{
+    const response=await fetch(`../todo/api.php?action=public_quest_profile_get&user_id=${encodeURIComponent(profile.id)}`,{credentials:'include'});
+    const json=await response.json();
+    if(json.ok&&json.data){
+      profile.quest_profile=json.data.quest_profile||profile.quest_profile||null;
+      questProfileCache.set(key,profile.quest_profile);
+    }
+  }catch(e){}
+  return profile;
+}
 function isDeveloperAccount(p) { return p && DEVELOPER_IDS.has(Number(p.id)); }
 function currentVerifiedAccount() { return me && me.verified_account ? me.verified_account : null; }
 function collaboratorVerifiedAccounts() {
@@ -2291,7 +2477,6 @@ function isKnownMemberName(name) {
 // ── Today's 櫻坂 ───────────────────────────────────────
 const TODAY_DATA_PATHS = {
   schedule: '../data/schedule.json',
-  blogs: '../data/blogs.json',
   mimis: '../data/sakumimi_data.json'
 };
 const TODAY_WEEKDAYS = ['日','月','火','水','木','金','土'];
@@ -2339,10 +2524,21 @@ function normalizeDateKey(str) {
 }
 async function loadJsonSafe(path) {
   try {
-    const res = await fetch(path, { cache:'no-store' });
+    const res = await fetch(path);
     if (!res.ok) throw new Error('fetch failed');
     const json = await res.json();
     return Array.isArray(json) ? json : [];
+  } catch(e) {
+    return [];
+  }
+}
+async function loadTodayBlogsSafe(dateKey) {
+  try {
+    const params = new URLSearchParams({ mode:'date', date:dateKey });
+    const res = await fetch(`${BLOG_PICKER_API}?${params.toString()}`);
+    if (!res.ok) throw new Error('fetch failed');
+    const json = await res.json();
+    return Array.isArray(json.items) ? json.items : [];
   } catch(e) {
     return [];
   }
@@ -2422,7 +2618,7 @@ async function loadTodaysSakura(forceRender = false) {
   const dateKey = todayLocalDateString();
   const [scheduleAll, blogsAll, mimisAll] = await Promise.all([
     loadJsonSafe(TODAY_DATA_PATHS.schedule),
-    loadJsonSafe(TODAY_DATA_PATHS.blogs),
+    loadTodayBlogsSafe(dateKey),
     loadJsonSafe(TODAY_DATA_PATHS.mimis)
   ]);
   const targetDate = parseLocalDate(dateKey);
@@ -2470,44 +2666,444 @@ function openHomeAccount() {
   location.href = './view.html?id=' + encodeURIComponent(me.id) + '&tab=posts';
 }
 
+function openSocialComposer() {
+  const wrap = document.getElementById('social-composer');
+  if (!wrap) return;
+  renderSocialComposer();
+  wrap.hidden = false;
+  document.body.classList.add('social-modal-open');
+  setTimeout(() => document.getElementById('social-body')?.focus(), 40);
+}
+
+function closeSocialComposer() {
+  const wrap = document.getElementById('social-composer');
+  if (wrap) wrap.hidden = true;
+  document.body.classList.remove('social-modal-open');
+}
+
+document.addEventListener('click', (ev) => {
+  const wrap = document.getElementById('social-composer');
+  if (wrap && !wrap.hidden && ev.target === wrap) closeSocialComposer();
+});
+
+document.addEventListener('keydown', (ev) => {
+  if (ev.key !== 'Escape') return;
+  if (!document.getElementById('social-post-action-modal')?.hidden) closeSocialPostActionModal();
+  if (!document.getElementById('social-comment-modal')?.hidden) closeSocialCommentModal();
+  if (!document.getElementById('social-composer')?.hidden) closeSocialComposer();
+});
+
 function renderSocialComposer() {
   const wrap = document.getElementById('social-composer');
   if (!wrap) return;
   if (!me) {
-    wrap.innerHTML = `<div style="text-align:center;padding:8px 4px;">
-      <div style="font-size:13px;color:#666;font-weight:700;margin-bottom:10px;">ログインすると投稿・いいね・コメントができます</div>
-      <button class="pill-button black" type="button" onclick="showAuthModal()">ログイン / 新規登録</button>
+    wrap.innerHTML = `<div class="social-compose-dialog" role="dialog" aria-modal="true" aria-labelledby="social-compose-title">
+      <div class="social-compose-head">
+        <h2 id="social-compose-title" class="social-compose-title">投稿を作成</h2>
+        <button class="social-compose-close" type="button" onclick="closeSocialComposer()" aria-label="閉じる"><i data-lucide="x"></i></button>
+      </div>
+      <div class="social-compose-login">
+        <div class="social-compose-login-text">ログインすると投稿・いいね・コメントができます</div>
+        <button class="pill-button black" type="button" onclick="closeSocialComposer();showAuthModal()">ログイン / 新規登録</button>
+      </div>
     </div>`;
+    if (window.lucide) window.lucide.createIcons();
     return;
   }
-  wrap.innerHTML = `
-    <textarea id="social-body" maxlength="2000" placeholder="櫻坂のこと、現地のこと、Buddiesに共有したいこと"></textarea>
-    <div class="social-composer-row">
-      <div class="social-composer-tools">
-        <input id="social-images" type="file" accept="image/png,image/jpeg,image/webp" multiple style="max-width:210px;padding:8px;font-size:12px;">
-        <span class="social-tool-note">2枚まで・自動圧縮</span>
+  wrap.innerHTML = `<div class="social-compose-dialog" role="dialog" aria-modal="true" aria-labelledby="social-compose-title">
+    <div class="social-compose-head">
+      <h2 id="social-compose-title" class="social-compose-title">投稿を作成</h2>
+      <button class="social-compose-close" type="button" onclick="closeSocialComposer()" aria-label="閉じる"><i data-lucide="x"></i></button>
+    </div>
+    <label class="social-field">
+      <span class="social-field-label">本文</span>
+      <span class="social-body-wrap">
+        <div id="social-body-highlight" class="social-body-highlight" aria-hidden="true"></div>
+        <textarea id="social-body" class="social-body-input" maxlength="2000" placeholder="櫻坂のこと、現地のこと、Buddiesに共有したいこと" oninput="syncSocialBodyHighlight()" onscroll="syncSocialBodyHighlightScroll()"></textarea>
+      </span>
+      <span class="social-field-help">URL と #ハッシュタグ は本文から自動で読み取ります。</span>
+    </label>
+    <input id="social-images" class="social-hidden-input" type="file" accept="image/png,image/jpeg,image/webp" multiple onchange="renderSocialDrafts()">
+    <details class="social-advanced">
+      <summary><span>詳細入力</span><small>画像・ブログ・SakuMap</small></summary>
+      <div class="social-advanced-grid">
+        <div class="social-detail-card">
+          <div class="social-action-grid">
+            <button class="social-add-action" type="button" onclick="document.getElementById('social-images')?.click()"><i data-lucide="image-plus"></i><span>画像を追加</span></button>
+            <button class="social-add-action" type="button" onclick="openSocialBlogPicker()"><i data-lucide="newspaper"></i><span>ブログを引用</span></button>
+            <button class="social-add-action" type="button" onclick="openSocialSakumapPicker()"><i data-lucide="map-pin"></i><span>SakuMapを引用</span></button>
+          </div>
+          <div id="social-drafts" class="social-drafts"></div>
+          <textarea id="social-image-urls" class="social-hidden-input" aria-hidden="true" tabindex="-1"></textarea>
+          <select id="social-quote-type" class="social-hidden-input" aria-hidden="true" tabindex="-1">
+            <option value="">引用なし</option>
+            <option value="sakumap_spot">SakuMapスポット</option>
+            <option value="sakulabo_blog">SakuLaboブログ</option>
+            <option value="sakulabo_mimi">さくみみ</option>
+          </select>
+          <input id="social-quote-ref" class="social-hidden-input" aria-hidden="true" tabindex="-1">
+          <input id="social-quote-title" class="social-hidden-input" aria-hidden="true" tabindex="-1">
+          <input id="social-quote-member" class="social-hidden-input" aria-hidden="true" tabindex="-1">
+          <input id="social-quote-url" class="social-hidden-input" aria-hidden="true" tabindex="-1">
+          <input id="social-quote-image" class="social-hidden-input" aria-hidden="true" tabindex="-1">
+        </div>
       </div>
+    </details>
+    <div id="social-blog-picker" class="social-picker" hidden>
+      <div class="social-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="social-blog-picker-title">
+        <div class="social-picker-head">
+          <div class="social-picker-heading">
+            <button id="social-blog-back" class="social-picker-back" type="button" onclick="backToSocialBlogList()" aria-label="ブログ一覧に戻る" hidden><i data-lucide="arrow-left"></i></button>
+            <div id="social-blog-picker-title" class="social-picker-title">ブログを選択</div>
+          </div>
+          <button class="social-compose-close" type="button" onclick="closeSocialBlogPicker()" aria-label="閉じる"><i data-lucide="x"></i></button>
+        </div>
+        <div id="social-blog-search-wrap" class="social-blog-search-wrap" style="padding:10px 12px;border-bottom:1px solid #f0f0f0;">
+          <input id="social-blog-search" placeholder="ブログ名・メンバー名で検索" oninput="scheduleSocialBlogSearch()">
+        </div>
+        <div id="social-blog-list" class="social-picker-list" onscroll="handleSocialBlogScroll(this)"></div>
+      </div>
+    </div>
+    <div id="social-sakumap-picker" class="social-picker" hidden>
+      <div class="social-picker-dialog" role="dialog" aria-modal="true" aria-labelledby="social-sakumap-picker-title">
+        <div class="social-picker-head">
+          <div id="social-sakumap-picker-title" class="social-picker-title">SakuMapスポットを検索</div>
+          <button class="social-compose-close" type="button" onclick="closeSocialSakumapPicker()" aria-label="閉じる"><i data-lucide="x"></i></button>
+        </div>
+        <div style="padding:10px 12px;border-bottom:1px solid #f0f0f0;">
+          <input id="social-sakumap-search" placeholder="スポット名・住所で検索" oninput="suggestSocialSakumapSpots()">
+        </div>
+        <div id="social-sakumap-suggestions" class="social-suggest-list" style="padding:12px;overflow:auto;"></div>
+      </div>
+    </div>
+    <div class="social-compose-actions">
+      <span class="social-tool-note">投稿画像は送信前に軽量化されます</span>
       <button id="social-submit" class="pill-button black" type="button" onclick="submitSocialPost()">投稿</button>
     </div>
-    <details class="social-advanced">
-      <summary>URL・ハッシュタグ・引用を追加</summary>
-      <div class="social-advanced-grid">
-        <textarea id="social-links" placeholder="URLを1行ずつ入力"></textarea>
-        <input id="social-hashtags" placeholder="ハッシュタグ（カンマ区切り / 10個まで）">
-        <select id="social-quote-type">
-          <option value="">引用なし</option>
-          <option value="sakumap_spot">SakuMapスポット</option>
-          <option value="sakulabo_blog">SakuLaboブログ</option>
-          <option value="sakulabo_mimi">さくみみ</option>
-        </select>
-        <input id="social-quote-ref" placeholder="引用IDまたはURL">
-        <input id="social-quote-title" placeholder="引用タイトル">
-        <input id="social-quote-member" placeholder="メンバー名（ブログ引用時）">
-        <input id="social-quote-url" placeholder="引用リンクURL">
-        <input id="social-quote-image" placeholder="引用画像URL">
-        <textarea id="social-image-urls" placeholder="SakuMap画像・ブログ画像URLを1行ずつ入力（最大10枚）"></textarea>
-      </div>
-    </details>`;
+  </div>`;
+  syncSocialBodyHighlight();
+  renderSocialDrafts();
+  if (window.lucide) window.lucide.createIcons();
+}
+
+async function openSocialBlogPicker() {
+  const picker = document.getElementById('social-blog-picker');
+  const list = document.getElementById('social-blog-list');
+  if (!picker || !list) return;
+  socialBlogSelected = null;
+  socialBlogListScrollTop = 0;
+  const search = document.getElementById('social-blog-search');
+  if (search) search.value = '';
+  picker.hidden = false;
+  updateSocialBlogPickerChrome();
+  await resetSocialBlogList();
+  setTimeout(() => document.getElementById('social-blog-search')?.focus(), 40);
+}
+
+function closeSocialBlogPicker() {
+  const picker = document.getElementById('social-blog-picker');
+  if (picker) picker.hidden = true;
+  socialBlogSelected = null;
+  socialBlogRequestToken++;
+  clearTimeout(socialBlogSearchTimer);
+}
+
+function socialBlogImages(blog) {
+  const images = Array.isArray(blog?.images) ? blog.images : [];
+  const out = images.filter(Boolean);
+  if (!out.length && blog?.thumb) out.push(blog.thumb);
+  return out.slice(0, 10);
+}
+
+function socialBlogListItemHtml(blog) {
+  return `<button class="social-blog-option" type="button" onclick="openSocialBlogImages(${Number(blog.id)})">
+    <span class="social-blog-option-thumb">${blog.thumb ? `<img src="${esc(blog.thumb)}" alt="" loading="lazy">` : ''}</span>
+    <span class="social-blog-option-body">
+      <span class="social-blog-option-member">${esc(blog.member || '櫻坂46')}</span>
+      <span class="social-blog-option-title">${esc(blog.title || 'ブログ')}</span>
+      <span class="social-blog-option-date">${esc(blog.date || '')}</span>
+    </span>
+  </button>`;
+}
+
+function renderSocialBlogList() {
+  const list = document.getElementById('social-blog-list');
+  if (!list || socialBlogSelected) return;
+  const keepScrollTop = list.scrollTop;
+  if (!socialBlogItems.length && socialBlogError) {
+    list.innerHTML = `<div class="social-feed-state" style="grid-column:1/-1;">${esc(socialBlogError)}</div>`;
+    return;
+  }
+  if (!socialBlogItems.length && !socialBlogLoading) {
+    list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">ブログが見つかりません</div>';
+    return;
+  }
+  const status = socialBlogLoading
+    ? '<div class="social-feed-state" style="grid-column:1/-1;">読み込み中…</div>'
+    : (socialBlogHasMore ? '<div class="social-feed-state" style="grid-column:1/-1;">スクロールして続きを読み込む</div>' : '');
+  list.innerHTML = socialBlogItems.map(socialBlogListItemHtml).join('') + status;
+  list.scrollTop = keepScrollTop;
+}
+
+async function resetSocialBlogList() {
+  const list = document.getElementById('social-blog-list');
+  socialBlogItems = [];
+  socialBlogOffset = 0;
+  socialBlogHasMore = true;
+  socialBlogLoading = false;
+  socialBlogError = '';
+  socialBlogRequestToken++;
+  if (list) {
+    list.scrollTop = 0;
+    list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">読み込み中…</div>';
+  }
+  await loadMoreSocialBlogs();
+}
+
+async function loadMoreSocialBlogs() {
+  if (socialBlogLoading || !socialBlogHasMore || socialBlogSelected) return;
+  const picker = document.getElementById('social-blog-picker');
+  if (!picker || picker.hidden) return;
+  const token = socialBlogRequestToken;
+  const q = (document.getElementById('social-blog-search')?.value || '').trim();
+  socialBlogLoading = true;
+  renderSocialBlogList();
+  try {
+    const params = new URLSearchParams({ mode:'list', offset:String(socialBlogOffset), limit:String(SOCIAL_BLOG_PAGE_SIZE) });
+    if (q) params.set('q', q);
+    const res = await fetch(`${BLOG_PICKER_API}?${params.toString()}`);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'ブログの読み込みに失敗しました。');
+    if (token !== socialBlogRequestToken) return;
+    socialBlogError = '';
+    const items = Array.isArray(data.items) ? data.items : [];
+    socialBlogItems.push(...items);
+    socialBlogOffset = Number(data.next_offset || (socialBlogOffset + items.length));
+    socialBlogHasMore = !!data.has_more;
+  } catch(e) {
+    if (token === socialBlogRequestToken) {
+      socialBlogHasMore = false;
+      socialBlogError = 'ブログの読み込みに失敗しました';
+    }
+  } finally {
+    if (token === socialBlogRequestToken) {
+      socialBlogLoading = false;
+      renderSocialBlogList();
+    }
+  }
+}
+
+function handleSocialBlogScroll(list) {
+  if (socialBlogSelected || socialBlogLoading || !socialBlogHasMore) return;
+  if (list.scrollHeight - list.scrollTop - list.clientHeight < 240) loadMoreSocialBlogs();
+}
+
+function scheduleSocialBlogSearch() {
+  clearTimeout(socialBlogSearchTimer);
+  socialBlogSearchTimer = setTimeout(() => resetSocialBlogList(), 280);
+}
+
+function updateSocialBlogPickerChrome() {
+  const inImages = !!socialBlogSelected;
+  const blog = socialBlogSelected || {};
+  const title = document.getElementById('social-blog-picker-title');
+  const back = document.getElementById('social-blog-back');
+  const searchWrap = document.getElementById('social-blog-search-wrap');
+  if (title) title.textContent = inImages ? (blog.title || '画像を選択') : 'ブログを選択';
+  if (back) back.hidden = !inImages;
+  if (searchWrap) searchWrap.hidden = inImages;
+  if (window.lucide) window.lucide.createIcons();
+}
+
+async function openSocialBlogImages(blogId) {
+  const summary = socialBlogItems.find(item => Number(item.id) === Number(blogId));
+  if (!summary) return;
+  const list = document.getElementById('social-blog-list');
+  socialBlogListScrollTop = list?.scrollTop || 0;
+  socialBlogSelected = { ...summary, images:[] };
+  updateSocialBlogPickerChrome();
+  if (list) list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">画像を読み込み中…</div>';
+  try {
+    const res = await fetch(`${BLOG_PICKER_API}?mode=detail&id=${encodeURIComponent(blogId)}`);
+    const data = await res.json();
+    if (!res.ok || !data.blog) throw new Error(data.error || '画像の読み込みに失敗しました。');
+    if (!socialBlogSelected || Number(socialBlogSelected.id) !== Number(blogId)) return;
+    socialBlogSelected = data.blog;
+    const images = socialBlogImages(socialBlogSelected);
+    updateSocialBlogPickerChrome();
+    if (!list) return;
+    list.innerHTML = images.length ? images.map((image, imageIndex) => `<button class="social-blog-image-option" type="button" onclick="selectSocialBlogImage(${imageIndex})" aria-label="画像 ${imageIndex + 1}を選択">
+      <img src="${esc(image)}" alt="" loading="lazy">
+    </button>`).join('') : '<div class="social-feed-state" style="grid-column:1/-1;">このブログには選択できる画像がありません</div>';
+    list.scrollTop = 0;
+  } catch(e) {
+    if (list) list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">画像の読み込みに失敗しました</div>';
+  }
+}
+
+function backToSocialBlogList() {
+  socialBlogSelected = null;
+  updateSocialBlogPickerChrome();
+  renderSocialBlogList();
+  const list = document.getElementById('social-blog-list');
+  if (list) list.scrollTop = socialBlogListScrollTop;
+  setTimeout(() => document.getElementById('social-blog-search')?.focus(), 40);
+}
+
+function selectSocialBlogImage(imageIndex) {
+  const blog = socialBlogSelected || {};
+  const images = socialBlogImages(blog);
+  const image = images[Number(imageIndex)] || blog.thumb || '';
+  if (!image) return;
+  clearSocialQuoteDraft(false);
+  document.getElementById('social-quote-type').value = 'sakulabo_blog';
+  document.getElementById('social-quote-ref').value = blog.link || '';
+  document.getElementById('social-quote-title').value = blog.title || '';
+  document.getElementById('social-quote-member').value = blog.member || '';
+  document.getElementById('social-quote-url').value = blog.link || '';
+  document.getElementById('social-quote-image').value = image;
+  const imageUrls = document.getElementById('social-image-urls');
+  if (imageUrls) {
+    const lines = socialLines('social-image-urls');
+    if (!lines.includes(image) && lines.length < 10) {
+      lines.push(image);
+      imageUrls.value = lines.join('\n');
+    }
+  }
+  closeSocialBlogPicker();
+  renderSocialDrafts();
+  toast('ブログ画像を引用に追加しました');
+}
+
+function openSocialSakumapPicker() {
+  const picker = document.getElementById('social-sakumap-picker');
+  const input = document.getElementById('social-sakumap-search');
+  const box = document.getElementById('social-sakumap-suggestions');
+  if (!picker) return;
+  picker.hidden = false;
+  if (input) input.value = '';
+  if (box) {
+    box.innerHTML = '<div class="social-field-help">スポット名や住所を入力してください</div>';
+    box.dataset.spots = '[]';
+  }
+  setTimeout(() => input?.focus(), 40);
+}
+
+function closeSocialSakumapPicker() {
+  const picker = document.getElementById('social-sakumap-picker');
+  if (picker) picker.hidden = true;
+}
+
+function suggestSocialSakumapSpots() {
+  clearTimeout(socialSakumapSuggestTimer);
+  socialSakumapSuggestTimer = setTimeout(loadSocialSakumapSuggestions, 240);
+}
+
+async function loadSocialSakumapSuggestions() {
+  const input = document.getElementById('social-sakumap-search');
+  const box = document.getElementById('social-sakumap-suggestions');
+  if (!input || !box) return;
+  const q = input.value.trim();
+  if (q.length < 2) { box.innerHTML = ''; return; }
+  box.innerHTML = '<div class="social-field-help">検索中…</div>';
+  try {
+    const params = new URLSearchParams({ action:'spots_list', q });
+    const res = await fetch(SAKUMAP_API + '?' + params.toString(), { credentials:'include' });
+    const json = await res.json();
+    const spots = json.ok ? (json.data || []).slice(0, 6) : [];
+    if (!spots.length) { box.innerHTML = '<div class="social-field-help">候補が見つかりません</div>'; return; }
+    box.innerHTML = spots.map(s => `<button class="social-suggest-item" type="button" onclick="selectSocialSakumapSpot(${Number(s.id)})">
+      <span class="social-suggest-thumb">${s.thumb ? `<img src="${esc(s.thumb)}" alt="" loading="lazy">` : '<i data-lucide="map-pin" style="width:17px;height:17px;"></i>'}</span>
+      <span>
+        <span class="social-suggest-title">${esc(s.title || 'スポット')}</span>
+        <span class="social-suggest-sub">${esc([s.summary, s.address].filter(Boolean).join(' / '))}</span>
+      </span>
+    </button>`).join('');
+    box.dataset.spots = JSON.stringify(spots);
+    if (window.lucide) window.lucide.createIcons();
+  } catch(e) {
+    box.innerHTML = '<div class="social-field-help">検索できませんでした</div>';
+  }
+}
+
+function selectSocialSakumapSpot(id) {
+  const box = document.getElementById('social-sakumap-suggestions');
+  const spots = JSON.parse(box?.dataset?.spots || '[]');
+  const spot = spots.find(s => Number(s.id) === Number(id));
+  if (!spot) return;
+  const url = 'https://buddies46.stars.ne.jp/satellite/sakumap/?spot=' + encodeURIComponent(spot.id);
+  clearSocialQuoteDraft(false);
+  document.getElementById('social-quote-type').value = 'sakumap_spot';
+  document.getElementById('social-quote-ref').value = String(spot.id);
+  document.getElementById('social-quote-title').value = spot.title || '';
+  document.getElementById('social-quote-member').value = '';
+  document.getElementById('social-quote-url').value = url;
+  document.getElementById('social-quote-image').value = spot.thumb || '';
+  const input = document.getElementById('social-sakumap-search');
+  if (input) input.value = spot.title || '';
+  if (box) box.innerHTML = '';
+  closeSocialSakumapPicker();
+  renderSocialDrafts();
+  toast('SakuMapスポットを引用に設定しました');
+}
+
+function removeSocialImageUrl(url) {
+  if (!url) return;
+  const imageUrls = document.getElementById('social-image-urls');
+  if (!imageUrls) return;
+  imageUrls.value = socialLines('social-image-urls').filter(line => line !== url).join('\n');
+}
+
+function clearSocialUploadedImages() {
+  const input = document.getElementById('social-images');
+  if (input) input.value = '';
+  renderSocialDrafts();
+}
+
+function clearSocialQuoteDraft(showToast = true) {
+  const image = document.getElementById('social-quote-image')?.value.trim() || '';
+  removeSocialImageUrl(image);
+  ['social-quote-type', 'social-quote-ref', 'social-quote-title', 'social-quote-member', 'social-quote-url', 'social-quote-image'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderSocialDrafts();
+  if (showToast) toast('引用を外しました');
+}
+
+function renderSocialDrafts() {
+  const box = document.getElementById('social-drafts');
+  if (!box) return;
+  const cards = [];
+  const files = Array.from(document.getElementById('social-images')?.files || []).slice(0, 2);
+  if (files.length) {
+    cards.push(`<div class="social-draft-card">
+      <span class="social-draft-thumb"><i data-lucide="image" style="width:18px;height:18px;"></i></span>
+      <span class="social-draft-main">
+        <span class="social-draft-title">アップロード画像 ${files.length}枚</span>
+        <span class="social-draft-sub">${esc(files.map(f => f.name).join(' / '))}</span>
+      </span>
+      <button class="social-draft-remove" type="button" onclick="clearSocialUploadedImages()" aria-label="画像を外す"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>`);
+  }
+  const type = document.getElementById('social-quote-type')?.value || '';
+  const title = document.getElementById('social-quote-title')?.value.trim() || '';
+  const member = document.getElementById('social-quote-member')?.value.trim() || '';
+  const image = document.getElementById('social-quote-image')?.value.trim() || '';
+  if (type) {
+    const label = type === 'sakulabo_blog' ? 'ブログを引用' : type === 'sakumap_spot' ? 'SakuMapを引用' : '引用';
+    const sub = type === 'sakulabo_blog' ? [member || '櫻坂46', title].filter(Boolean).join(' / ') : 'SakuMapスポット';
+    cards.push(`<div class="social-draft-card">
+      <span class="social-draft-thumb">${image ? `<img src="${esc(assetUrl(image))}" alt="">` : '<i data-lucide="link" style="width:18px;height:18px;"></i>'}</span>
+      <span class="social-draft-main">
+        <span class="social-draft-title">${esc(label)}</span>
+        <span class="social-draft-sub">${esc(sub || title || '引用を追加しました')}</span>
+      </span>
+      <button class="social-draft-remove" type="button" onclick="clearSocialQuoteDraft()" aria-label="引用を外す"><i data-lucide="x" style="width:16px;height:16px;"></i></button>
+    </div>`);
+  }
+  box.innerHTML = cards.join('');
+  if (window.lucide) window.lucide.createIcons();
 }
 
 function readFileAsDataUrl(file) {
@@ -2557,9 +3153,136 @@ function socialLines(id) {
   return (el?.value || '').split(/\n+/).map(s => s.trim()).filter(Boolean);
 }
 
-function socialHashtagsFromInput(id = 'social-hashtags') {
-  const el = document.getElementById(id);
-  return (el?.value || '').split(/[,\s、]+/).map(s => s.replace(/^[#＃]+/, '').trim()).filter(Boolean).slice(0, 10);
+function socialHashtagRegex() {
+  return /(^|[\s　])([#＃][^\s　#＃]+)/g;
+}
+
+function cleanSocialTag(tag) {
+  return String(tag || '')
+    .replace(/^[#＃]+/, '')
+    .replace(/[.,!?;:。、！？)）\]］」』]+$/u, '')
+    .trim();
+}
+
+function socialHashtagsFromText(text) {
+  const out = [];
+  const seen = new Set();
+  const re = socialHashtagRegex();
+  let m;
+  while ((m = re.exec(String(text || '')))) {
+    const tag = cleanSocialTag(m[2]);
+    if (!tag || seen.has(tag)) continue;
+    seen.add(tag);
+    out.push(tag);
+    if (out.length >= 10) break;
+  }
+  return out;
+}
+
+function socialUrlsFromText(text) {
+  const out = [];
+  const seen = new Set();
+  const re = /https?:\/\/[^\s　<>"']+/g;
+  let m;
+  while ((m = re.exec(String(text || '')))) {
+    const url = m[0].replace(/[.,!?;:。、！？)）\]］」』]+$/u, '');
+    if (!url || seen.has(url)) continue;
+    seen.add(url);
+    out.push(url);
+    if (out.length >= 50) break;
+  }
+  return out;
+}
+
+function compactDisplayUrl(url) {
+  try {
+    const u = new URL(String(url));
+    let path = u.pathname || '/';
+    if (path !== '/' && /\.[a-z0-9]{2,8}$/i.test(path.split('/').pop() || '')) {
+      path = path.slice(0, path.lastIndexOf('/') + 1) || '/';
+    }
+    let label = u.host + path;
+    if (label.length > 48) {
+      const parts = path.split('/').filter(Boolean);
+      label = u.host + '/' + parts.slice(0, 2).join('/') + (parts.length ? '/' : '');
+      if (label.length > 48) label = label.slice(0, 45) + '...';
+    }
+    return label;
+  } catch(e) {
+    const s = String(url || '').replace(/^https?:\/\//, '');
+    return s.length > 48 ? s.slice(0, 45) + '...' : s;
+  }
+}
+
+function renderSocialBody(text, inlineTokens = true) {
+  text = String(text || '');
+  if (!text) return '';
+  if (!inlineTokens) return esc(text);
+  const tokenRe = /https?:\/\/[^\s　<>"']+|[#＃][^\s　#＃]+/gu;
+  let html = '';
+  let last = 0;
+  let match;
+  while ((match = tokenRe.exec(text))) {
+    const raw = match[0];
+    const start = match.index;
+    const isUrl = /^https?:\/\//i.test(raw);
+    if (!isUrl && start > 0 && !/[\s　]/u.test(text[start - 1])) continue;
+    html += esc(text.slice(last, start));
+    if (isUrl) {
+      const url = raw.replace(/[.,!?;:。、！？)）\]］」』]+$/u, '');
+      const trailing = raw.slice(url.length);
+      html += `<a class="social-inline-chip" href="${esc(url)}" target="_blank" rel="noopener" title="${esc(url)}">${esc(compactDisplayUrl(url))}</a>${esc(trailing)}`;
+    } else {
+      const tag = cleanSocialTag(raw);
+      const visible = raw.slice(0, 1) + tag;
+      const trailing = raw.slice(visible.length);
+      if (tag) {
+        html += `<button class="social-inline-chip tag" type="button" data-tag="${esc(tag)}" onclick="searchByHashtag(this.dataset.tag)">${esc(visible)}</button>${esc(trailing)}`;
+      } else {
+        html += esc(raw);
+      }
+    }
+    last = start + raw.length;
+  }
+  html += esc(text.slice(last));
+  return html;
+}
+
+function highlightedSocialBodyHtml(text) {
+  text = String(text || '');
+  if (!text) return '';
+  const re = socialHashtagRegex();
+  let html = '';
+  let last = 0;
+  let m;
+  while ((m = re.exec(text))) {
+    const start = m.index;
+    const prefix = m[1] || '';
+    const tag = m[2] || '';
+    const tagStart = start + prefix.length;
+    html += esc(text.slice(last, tagStart));
+    html += `<span class="tag">${esc(tag)}</span>`;
+    last = tagStart + tag.length;
+  }
+  html += esc(text.slice(last));
+  if (text.endsWith('\n')) html += ' ';
+  return html;
+}
+
+function syncSocialBodyHighlight() {
+  const body = document.getElementById('social-body');
+  const highlight = document.getElementById('social-body-highlight');
+  if (!body || !highlight) return;
+  highlight.innerHTML = highlightedSocialBodyHtml(body.value);
+  syncSocialBodyHighlightScroll();
+}
+
+function syncSocialBodyHighlightScroll() {
+  const body = document.getElementById('social-body');
+  const highlight = document.getElementById('social-body-highlight');
+  if (!body || !highlight) return;
+  highlight.scrollTop = body.scrollTop;
+  highlight.scrollLeft = body.scrollLeft;
 }
 
 function socialQuoteFromComposer() {
@@ -2577,10 +3300,11 @@ async function socialPayloadFromComposer() {
   const files = Array.from(document.getElementById('social-images')?.files || []).slice(0, 2);
   const imageData = [];
   for (const file of files) imageData.push(await imageFileToCompressedDataUrl(file));
+  const body = document.getElementById('social-body')?.value || '';
   return {
-    body: document.getElementById('social-body')?.value || '',
-    links: socialLines('social-links'),
-    hashtags: socialHashtagsFromInput(),
+    body,
+    links: socialUrlsFromText(body),
+    hashtags: socialHashtagsFromText(body),
     image_urls: socialLines('social-image-urls').slice(0, 10),
     image_data: imageData,
     quote: socialQuoteFromComposer(),
@@ -2601,7 +3325,7 @@ async function submitSocialPost() {
     });
     const json = await res.json();
     if (!json.ok) { toast(json.error || '投稿できませんでした'); return; }
-    renderSocialComposer();
+    closeSocialComposer();
     await loadSocialPosts(true);
     toast('投稿しました');
   } catch(e) {
@@ -2612,9 +3336,31 @@ async function submitSocialPost() {
 }
 
 function switchSocialMode(mode) {
+  if (socialFocusedPostId > 0) clearSocialFocusedPost(false);
   socialMode = mode === 'following' ? 'following' : 'all';
   document.querySelectorAll('.social-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.socialMode === socialMode));
+  updateSocialFocusChrome();
   loadSocialPosts(true);
+}
+
+function updateSocialFocusChrome() {
+  const focused = socialFocusedPostId > 0;
+  const tabs = document.querySelector('.social-tabs');
+  const context = document.getElementById('social-shared-context');
+  const title = document.getElementById('social-home-title');
+  if (tabs) tabs.hidden = focused;
+  if (context) context.hidden = !focused;
+  if (title) title.textContent = focused ? '投稿' : 'タイムライン';
+}
+
+function clearSocialFocusedPost(reload = true) {
+  socialFocusedPostId = 0;
+  const params = new URLSearchParams(location.search);
+  params.delete('post');
+  const query = params.toString();
+  history.replaceState(null, '', location.pathname + (query ? '?' + query : '') + location.hash);
+  updateSocialFocusChrome();
+  if (reload) loadSocialPosts(true);
 }
 
 async function loadSocialPosts(reset = false) {
@@ -2629,12 +3375,25 @@ async function loadSocialPosts(reset = false) {
   socialLoading = true;
   document.getElementById('social-loading')?.removeAttribute('hidden');
   try {
-    const params = new URLSearchParams({ action:'buddies_posts_list', mode:socialMode, limit:'20' });
-    if (socialBeforeId) params.set('before_id', String(socialBeforeId));
+    const focused = socialFocusedPostId > 0;
+    const params = new URLSearchParams({
+      action:'buddies_posts_list',
+      mode:socialMode,
+      limit:focused ? '1' : String(SOCIAL_PAGE_SIZE),
+    });
+    if (focused) {
+      params.set('post_id', String(socialFocusedPostId));
+      params.set('include_comments', '1');
+    } else if (socialBeforeId) {
+      params.set('before_id', String(socialBeforeId));
+    }
     const res = await fetch(API + '?' + params.toString(), { credentials:'include' });
     const json = await res.json();
     const items = json.ok ? (json.data || []) : [];
-    if (items.length < 20) socialEnded = true;
+    await Promise.all(items.map(async post => {
+      if(post?.author?.id)await attachQuestProfile(post.author);
+    }));
+    if (focused || items.length < SOCIAL_PAGE_SIZE) socialEnded = true;
     socialPosts = reset ? items : socialPosts.concat(items);
     if (items.length) socialBeforeId = items[items.length - 1].id;
     renderSocialFeed();
@@ -2651,7 +3410,10 @@ function renderSocialFeed() {
   const feed = document.getElementById('social-feed');
   if (!feed) return;
   if (!socialPosts.length) {
-    feed.innerHTML = `<div class="social-feed-state">${socialMode === 'following' ? 'フォロー中のBuddiesの投稿はまだありません' : 'まだ投稿がありません'}</div>`;
+    const message = socialFocusedPostId > 0
+      ? '投稿が見つかりません。削除されたか、URLが正しくない可能性があります。'
+      : socialMode === 'following' ? 'フォロー中のBuddiesの投稿はまだありません' : 'まだ投稿がありません';
+    feed.innerHTML = `<div class="social-feed-state">${message}</div>`;
     return;
   }
   feed.innerHTML = socialPosts.map(renderSocialPost).join('');
@@ -2670,6 +3432,14 @@ function setupSocialObserver() {
 
 function socialProfileUrl(author) {
   return './view.html?id=' + encodeURIComponent(author.id) + '&tab=posts';
+}
+
+function socialShareUrl(postId) {
+  const url = new URL('./index.html', location.href);
+  url.search = '';
+  url.hash = '';
+  url.searchParams.set('post', String(postId));
+  return url.href;
 }
 
 function blogQuotePayload(post) {
@@ -2691,20 +3461,46 @@ function renderSocialImages(images, post = null) {
 
 function renderSocialQuote(q) {
   if (!q || !q.payload) return '';
+  if (q.type === 'sakulabo_blog') return '';
   const p = q.payload;
   const title = p.title || p.author_name || (q.type === 'sakumap_spot' ? 'SakuMapスポット' : q.type === 'sakulabo_mimi' ? 'さくみみ' : q.type === 'sakulabo_blog' ? 'SakuLaboブログ' : '引用投稿');
   const sub = p.body || p.subtitle || p.member || p.date || '';
-  const href = p.url || (q.type === 'post' && p.post_id ? `./?post=${encodeURIComponent(p.post_id)}` : '');
-  const inner = `${p.image_url ? `<img src="${esc(assetUrl(p.image_url))}" alt="" loading="lazy">` : ''}<div class="social-quote-title">${esc(title)}</div>${sub ? `<div class="social-quote-sub">${esc(sub)}</div>` : ''}`;
+  const href = p.url || (q.type === 'post' && p.post_id ? `./index.html?post=${encodeURIComponent(p.post_id)}` : '');
+  const showImage = p.image_url && q.type !== 'sakulabo_blog';
+  const inner = `${showImage ? `<img src="${esc(assetUrl(p.image_url))}" alt="" loading="lazy">` : ''}<div class="social-quote-title">${esc(title)}</div>${sub ? `<div class="social-quote-sub">${esc(sub)}</div>` : ''}`;
   return href ? `<a class="social-quote" href="${esc(href)}">${inner}</a>` : `<div class="social-quote">${inner}</div>`;
 }
 
+function socialPostInteractionsHtml(post) {
+  const shareUrl = socialShareUrl(post.id);
+  const commentsLoaded = Array.isArray(post.comments);
+  const comments = (commentsLoaded ? post.comments.slice(-5) : []).map(c => `<div class="social-comment"><b>${esc(c.author?.display_name || c.author?.username || '名無し')}</b><span>${esc(c.body)}</span>${c.can_delete ? `<button class="social-comment-delete" type="button" onclick="deleteSocialComment(${post.id}, ${Number(c.id)})">削除</button>` : ''}</div>`).join('');
+  const commentLoader = !commentsLoaded && Number(post.comment_count || 0) > 0
+    ? `<button class="social-action" type="button" onclick="loadSocialComments(${post.id})">コメントを表示</button>`
+    : '';
+  const pending = socialLikePending.has(Number(post.id));
+  return `<div class="social-actions">
+    <button class="social-action ${post.my_liked ? 'liked' : ''}" type="button" onclick="toggleSocialLike(${post.id})" ${pending ? 'disabled' : ''}><i data-lucide="heart" style="width:15px;height:15px;${post.my_liked ? 'fill:currentColor;' : ''}"></i>${post.like_count || 0}</button>
+    <button class="social-action" type="button" onclick="commentSocialPost(${post.id})"><i data-lucide="message-circle" style="width:15px;height:15px;"></i>${post.comment_count || 0}</button>
+    <button class="social-action" type="button" data-share-url="${esc(shareUrl)}" onclick="copyText(this.dataset.shareUrl)"><i data-lucide="link" style="width:15px;height:15px;"></i>共有</button>
+  </div>
+  ${comments ? `<div class="social-comments">${comments}</div>` : commentLoader}`;
+}
+
+function updateSocialPostInteractions(id) {
+  const post = findSocialPost(id);
+  const region = document.querySelector(`.social-post[data-post-id="${Number(id)}"] .social-interactions`);
+  if (!post || !region) return;
+  region.innerHTML = socialPostInteractionsHtml(post);
+  if (window.lucide) window.lucide.createIcons();
+}
+
 function renderSocialPost(post) {
-  const a = post.author || {};
-  const body = post.body ? `<div class="social-post-body">${esc(post.body)}</div>` : '';
-  const links = (post.links || []).map(u => `<a class="social-link" href="${esc(u)}" target="_blank" rel="noopener">${esc(u.replace(/^https?:\/\//, ''))}</a>`).join('');
-  const tags = (post.hashtags || []).map(t => `<button class="social-tag" type="button" onclick="searchByKeyword('#${esc(t)}')">#${esc(t)}</button>`).join('');
-  const comments = (post.comments || []).map(c => `<div class="social-comment"><b>${esc(c.author?.display_name || c.author?.username || '名無し')}</b><span>${esc(c.body)}</span></div>`).join('');
+  const a = mergeVerifiedOntoProfile(post.author || {});
+  const stackMetadata = (!!post.quote || (post.source && post.source !== 'manual'));
+  const body = post.body ? `<div class="social-post-body">${renderSocialBody(post.body, !stackMetadata)}</div>` : '';
+  const links = stackMetadata ? (post.links || []).map(u => `<a class="social-link" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(u)}">${esc(compactDisplayUrl(u))}</a>`).join('') : '';
+  const tags = stackMetadata ? (post.hashtags || []).map(t => `<button class="social-tag" type="button" data-tag="${esc(t)}" onclick="searchByHashtag(this.dataset.tag)">#${esc(t)}</button>`).join('') : '';
   const menu = `<details class="social-menu"><summary aria-label="投稿メニュー">•••</summary><div class="social-menu-list">
     ${post.can_edit ? `<button type="button" onclick="editSocialPost(${post.id})">編集</button>` : ''}
     ${post.can_delete ? `<button class="danger" type="button" onclick="deleteSocialPost(${post.id})">削除</button>` : `<button type="button" onclick="reportSocialPost(${post.id})">通報</button>`}
@@ -2713,7 +3509,7 @@ function renderSocialPost(post) {
     <div class="social-post-head">
       <a href="${esc(socialProfileUrl(a))}" class="profile-mini-avatar-wrap" style="text-decoration:none;">${avatarHtml(a, 44, 18)}</a>
       <a class="social-post-author" href="${esc(socialProfileUrl(a))}" style="text-decoration:none;color:inherit;">
-        <div class="social-post-name">${esc(getDisplayName(a))}</div>
+        <div class="social-post-name-row"><div class="social-post-name">${esc(getDisplayName(a))}</div>${questRankBadgeHtml(a)}</div>
         <div class="social-post-meta">${esc(fmtSocialDate(post.created_at))}${post.edited_at ? ' ・ 編集済み' : ''}</div>
       </a>
       ${menu}
@@ -2723,12 +3519,7 @@ function renderSocialPost(post) {
     ${links ? `<div class="social-links">${links}</div>` : ''}
     ${tags ? `<div class="social-tags">${tags}</div>` : ''}
     ${renderSocialQuote(post.quote)}
-    <div class="social-actions">
-      <button class="social-action ${post.my_liked ? 'liked' : ''}" type="button" onclick="toggleSocialLike(${post.id})"><i data-lucide="heart" style="width:15px;height:15px;${post.my_liked ? 'fill:currentColor;' : ''}"></i>${post.like_count || 0}</button>
-      <button class="social-action" type="button" onclick="commentSocialPost(${post.id})"><i data-lucide="message-circle" style="width:15px;height:15px;"></i>${post.comment_count || 0}</button>
-      <button class="social-action" type="button" onclick="copyText('${esc(post.url || location.href)}')"><i data-lucide="link" style="width:15px;height:15px;"></i>共有</button>
-    </div>
-    ${comments ? `<div class="social-comments">${comments}</div>` : ''}
+    <div class="social-interactions">${socialPostInteractionsHtml(post)}</div>
   </article>`;
 }
 
@@ -2738,8 +3529,15 @@ function findSocialPost(id) {
 
 async function toggleSocialLike(id) {
   if (!me) { showAuthModal(); return; }
+  id = Number(id);
   const post = findSocialPost(id);
-  if (!post) return;
+  if (!post || socialLikePending.has(id)) return;
+  const previousLiked = !!post.my_liked;
+  const previousCount = Number(post.like_count || 0);
+  post.my_liked = !previousLiked;
+  post.like_count = Math.max(0, previousCount + (post.my_liked ? 1 : -1));
+  socialLikePending.add(id);
+  updateSocialPostInteractions(id);
   try {
     const res = await fetch(API + '?action=buddies_post_like_toggle', {
       method:'POST',
@@ -2748,51 +3546,207 @@ async function toggleSocialLike(id) {
       body:JSON.stringify({ post_id:id })
     });
     const json = await res.json();
-    if (!json.ok) { toast(json.error || '操作できませんでした'); return; }
-    post.my_liked = !!json.data.liked;
-    post.like_count = Math.max(0, (post.like_count || 0) + (post.my_liked ? 1 : -1));
-    renderSocialFeed();
-  } catch(e) { toast('操作できませんでした'); }
+    if (!json.ok) throw new Error(json.error || '操作できませんでした');
+    const serverLiked = !!json.data.liked;
+    if (serverLiked !== post.my_liked) post.like_count = Math.max(0, Number(post.like_count || 0) + (serverLiked ? 1 : -1));
+    post.my_liked = serverLiked;
+  } catch(e) {
+    post.my_liked = previousLiked;
+    post.like_count = previousCount;
+    toast(e.message || '操作できませんでした');
+  } finally {
+    socialLikePending.delete(id);
+    updateSocialPostInteractions(id);
+  }
 }
 
-async function commentSocialPost(id) {
+function commentSocialPost(id) {
+  openSocialCommentModal(id);
+}
+
+function openSocialCommentModal(id) {
   if (!me) { showAuthModal(); return; }
-  const body = prompt('コメントを入力してください');
-  if (!body || !body.trim()) return;
+  const modal = document.getElementById('social-comment-modal');
+  const body = document.getElementById('social-comment-body');
+  if (!modal || !body || !findSocialPost(id)) return;
+  socialCommentPostId = Number(id);
+  body.value = '';
+  modal.hidden = false;
+  document.body.classList.add('social-modal-open');
+  setTimeout(() => body.focus(), 40);
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeSocialCommentModal() {
+  const modal = document.getElementById('social-comment-modal');
+  if (modal) modal.hidden = true;
+  socialCommentPostId = 0;
+  if (document.getElementById('social-composer')?.hidden) document.body.classList.remove('social-modal-open');
+}
+
+async function submitSocialComment() {
+  if (!me) { showAuthModal(); return; }
+  const id = socialCommentPostId;
+  const input = document.getElementById('social-comment-body');
+  const btn = document.getElementById('social-comment-submit');
+  const body = input?.value.trim() || '';
+  if (!id || !body) { toast('コメントを入力してください'); return; }
+  if (btn) btn.disabled = true;
   try {
     const res = await fetch(API + '?action=buddies_post_comment_add', {
       method:'POST',
       credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({ post_id:id, body:body.trim() })
+      body:JSON.stringify({ post_id:id, body })
     });
     const json = await res.json();
     if (!json.ok) { toast(json.error || 'コメントできませんでした'); return; }
-    await loadSocialPosts(true);
-  } catch(e) { toast('コメントできませんでした'); }
+    const post = findSocialPost(id);
+    if (post) {
+      post.comment_count = (post.comment_count || 0) + 1;
+      if (json.data?.comment) {
+        post.comments = (Array.isArray(post.comments) ? post.comments.concat([json.data.comment]) : [json.data.comment]).slice(-5);
+      }
+      updateSocialPostInteractions(id);
+    }
+    closeSocialCommentModal();
+    toast('コメントしました');
+  } catch(e) {
+    toast('コメントできませんでした');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
-async function editSocialPost(id) {
+async function deleteSocialComment(postId, commentId) {
+  if (!me) { showAuthModal(); return; }
+  if (!confirm('このコメントを削除しますか？')) return;
+  try {
+    const res = await fetch(API + '?action=buddies_post_comment_delete', {
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ comment_id:commentId })
+    });
+    const json = await res.json();
+    if (!json.ok) { toast(json.error || 'コメントを削除できませんでした'); return; }
+    const post = findSocialPost(postId);
+    if (post) {
+      post.comment_count = Math.max(0, Number(post.comment_count || 0) - 1);
+      if (Array.isArray(post.comments)) {
+        post.comments = post.comments.filter(comment => Number(comment.id) !== Number(commentId));
+      }
+      updateSocialPostInteractions(postId);
+    }
+    toast('コメントを削除しました');
+  } catch(e) {
+    toast('コメントを削除できませんでした');
+  }
+}
+
+async function loadSocialComments(id) {
   const post = findSocialPost(id);
   if (!post) return;
-  const body = prompt('投稿本文を編集', post.body || '');
-  if (body === null) return;
-  const payload = {
-    body,
-    links: post.links || [],
-    hashtags: post.hashtags || [],
-    image_urls: (post.images || []).map(i => i.url).filter(Boolean),
-    quote: post.quote,
-  };
-  const res = await fetch(API + '?action=buddies_post_update', {
-    method:'POST',
-    credentials:'include',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ id, ...payload })
-  });
-  const json = await res.json().catch(()=>({ok:false}));
-  if (!json.ok) { toast(json.error || '編集できませんでした'); return; }
-  await loadSocialPosts(true);
+  try {
+    const params = new URLSearchParams({ action:'buddies_posts_list', post_id:String(id), limit:'1', include_comments:'1' });
+    const res = await fetch(API + '?' + params.toString(), { credentials:'include' });
+    const json = await res.json();
+    if (!json.ok || !json.data?.[0]) { toast('コメントを読み込めませんでした'); return; }
+    post.comments = json.data[0].comments || [];
+    updateSocialPostInteractions(id);
+  } catch(e) {
+    toast('コメントを読み込めませんでした');
+  }
+}
+
+function openSocialPostActionModal(mode, id) {
+  if (!me) { showAuthModal(); return; }
+  const post = findSocialPost(id);
+  if (!post) return;
+  const isReport = mode === 'report';
+  if (!isReport && !post.can_edit) { toast('この投稿は編集できません'); return; }
+  const modal = document.getElementById('social-post-action-modal');
+  const title = document.getElementById('social-post-action-title');
+  const body = document.getElementById('social-post-action-body');
+  const note = document.getElementById('social-post-action-note');
+  const submit = document.getElementById('social-post-action-submit');
+  if (!modal || !title || !body || !note || !submit) return;
+  socialPostAction = { mode:isReport ? 'report' : 'edit', postId:Number(id) };
+  title.textContent = isReport ? '投稿を通報' : '投稿を編集';
+  body.value = isReport ? '' : (post.body || '');
+  body.maxLength = isReport ? 300 : 2000;
+  body.placeholder = isReport ? '通報理由を入力（任意）' : '投稿本文を入力';
+  note.textContent = isReport
+    ? '投稿内容と投稿者、通報日時、投稿リンクを管理者へ送信します。'
+    : 'URLとハッシュタグは本文から自動で読み取ります。編集は投稿から15分以内です。';
+  submit.textContent = isReport ? '通報する' : '保存';
+  submit.classList.toggle('danger', isReport);
+  document.querySelectorAll('.social-menu[open]').forEach(menu => menu.removeAttribute('open'));
+  modal.hidden = false;
+  document.body.classList.add('social-modal-open');
+  setTimeout(() => body.focus(), 40);
+  if (window.lucide) window.lucide.createIcons();
+}
+
+function closeSocialPostActionModal() {
+  const modal = document.getElementById('social-post-action-modal');
+  if (modal) modal.hidden = true;
+  socialPostAction = { mode:'', postId:0 };
+  const composerClosed = document.getElementById('social-composer')?.hidden;
+  const commentClosed = document.getElementById('social-comment-modal')?.hidden;
+  if (composerClosed && commentClosed) document.body.classList.remove('social-modal-open');
+}
+
+function editSocialPost(id) {
+  openSocialPostActionModal('edit', id);
+}
+
+async function submitSocialPostAction() {
+  if (!me) { showAuthModal(); return; }
+  const { mode, postId:id } = socialPostAction;
+  const post = findSocialPost(id);
+  const bodyEl = document.getElementById('social-post-action-body');
+  const btn = document.getElementById('social-post-action-submit');
+  if (!post || !bodyEl || !mode) return;
+  if (btn) btn.disabled = true;
+  try {
+    if (mode === 'report') {
+      const res = await fetch(API + '?action=buddies_post_report', {
+        method:'POST',
+        credentials:'include',
+        headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({ post_id:id, reason:bodyEl.value.trim() })
+      });
+      const json = await res.json().catch(()=>({ok:false}));
+      if (!json.ok) { toast(json.error || '通報できませんでした'); return; }
+      closeSocialPostActionModal();
+      toast('通報を送信しました');
+      return;
+    }
+    const body = bodyEl.value;
+    const payload = {
+      body,
+      links: socialUrlsFromText(body),
+      hashtags: socialHashtagsFromText(body),
+      image_urls: (post.images || []).map(i => i.url).filter(Boolean),
+      quote: post.quote,
+    };
+    const res = await fetch(API + '?action=buddies_post_update', {
+      method:'POST',
+      credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({ id, ...payload })
+    });
+    const json = await res.json().catch(()=>({ok:false}));
+    if (!json.ok) { toast(json.error || '編集できませんでした'); return; }
+    closeSocialPostActionModal();
+    await loadSocialPosts(true);
+    toast('投稿を更新しました');
+  } catch(e) {
+    toast(mode === 'report' ? '通報できませんでした' : '編集できませんでした');
+  } finally {
+    if (btn) btn.disabled = false;
+  }
 }
 
 async function deleteSocialPost(id) {
@@ -2809,18 +3763,8 @@ async function deleteSocialPost(id) {
   renderSocialFeed();
 }
 
-async function reportSocialPost(id) {
-  if (!me) { showAuthModal(); return; }
-  const reason = prompt('通報理由を入力してください（任意）') || '';
-  const res = await fetch(API + '?action=buddies_post_report', {
-    method:'POST',
-    credentials:'include',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({ post_id:id, reason })
-  });
-  const json = await res.json().catch(()=>({ok:false}));
-  if (!json.ok) { toast(json.error || '通報できませんでした'); return; }
-  toast('通報を送信しました');
+function reportSocialPost(id) {
+  openSocialPostActionModal('report', id);
 }
 
 // ── ホーム ───────────────────────────────────────────────
@@ -2828,6 +3772,7 @@ async function renderHome() {
   renderSocialAccountButton();
   renderSocialComposer();
   document.querySelectorAll('.social-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.socialMode === socialMode));
+  updateSocialFocusChrome();
   setupSocialObserver();
   await loadSocialPosts(true);
 }
@@ -2863,6 +3808,7 @@ async function renderSearchRecommendations(force = false) {
       .map(verifiedAsProfile)
       .filter(Boolean);
     const merged = intermixVerifiedProfiles(verifiedExtras, similars);
+    await Promise.all(merged.map(item=>attachQuestProfile(item)));
     if (merged.length) {
       list.innerHTML = merged.map(p => profileMini(p, {showReasons: true})).join('');
       list.querySelectorAll('.profile-mini').forEach((el,i) => el.onclick = () => openProfile(merged[i], false));
@@ -2874,7 +3820,8 @@ async function renderSearchRecommendations(force = false) {
 }
 
 function renderNextLiveWithBuddies(profiles) {
-  lastNextLiveWithProfiles = Array.isArray(profiles) ? profiles : [];
+  profiles = Array.isArray(profiles) ? profiles.map(mergeVerifiedOntoProfile) : [];
+  lastNextLiveWithProfiles = profiles;
   let wrap = document.getElementById('next-live-with-section');
   if (!wrap) {
     wrap = document.createElement('div');
@@ -3055,6 +4002,12 @@ function searchByKeyword(q) {
   triggerSearch(q);
 }
 
+function searchByHashtag(tag) {
+  tag = cleanSocialTag(tag);
+  if (!tag) return;
+  searchByKeyword('#' + tag);
+}
+
 function resetAndLoadSearch() {
   searchSeed = Math.floor(Math.random() * 2147483647) + 1;
   searchOffset = 0;
@@ -3076,6 +4029,7 @@ async function loadMoreSearch() {
     const res = await fetch(url, { credentials:'include' });
     const json = await res.json();
     const items = json.ok ? (json.data || []) : [];
+    await Promise.all(items.map(item=>attachQuestProfile(item)));
     if (items.length < searchPageSize) searchEnded = true;
     lastSearchFiltered = lastSearchFiltered.concat(items);
     appendSearchResults(items, searchOffset === 0);
@@ -3681,7 +4635,7 @@ function renderMyPage() {
     <div style="display:flex; align-items:center; gap:14px; cursor:pointer;" onclick="openMyProfileView()">
       ${avatarHtml(me)}
       <div style="flex:1;">
-        <div style="font-size:20px; font-weight:700;">${esc(getDisplayName(me))}</div>
+        <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;font-size:20px;font-weight:700;">${esc(getDisplayName(me))}${questRankBadgeHtml(me)}</div>
         <div style="font-size:13px; color:#666;">${esc(me.location||'')} ${me.age ? '・'+me.age+'歳' : ''}</div>
       </div>
     </div>
@@ -3932,7 +4886,7 @@ function profileMini(p, opts = {}) {
       ${badge}
     </div>
     <div class="profile-mini-info">
-      <div class="profile-mini-name">${esc(name)}</div>
+      <div class="profile-mini-name" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">${esc(name)}${questRankBadgeHtml(p)}</div>
       <div class="profile-mini-meta">${oshiList.map(o=>esc(o)).join(' ・ ')||esc(p.location||'')}</div>
       ${exchangedAtHtml}
       ${reasons}
@@ -4202,7 +5156,7 @@ async function openProfile(profile, isOwn, opts = {}) {
           ${(() => { const badge = accountBadgeInfo(profile); if (badge) return `<button onclick="showBadgePopup(this,'verified')" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:${badge.color};border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>`; if (snsLinks.length) return `<button onclick="showBadgePopup(this,'sns')" style="position:absolute;bottom:0;right:0;width:20px;height:20px;border-radius:50%;background:#3b82f6;border:2px solid #fff;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;"><svg viewBox="0 0 24 24" width="10" height="10" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></button>`; return ''; })()}
         </div>
         <div class="profile-info">
-          <div class="profile-name">${esc(name)}</div>
+          <div class="profile-name" style="display:flex;align-items:center;gap:7px;flex-wrap:wrap;">${esc(name)}${questRankBadgeHtml(profile)}</div>
           <div class="profile-meta">${metaItems.join('')}</div>
           ${snsDiv}
         </div>

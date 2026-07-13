@@ -694,6 +694,17 @@ body.contacts-mode .contact-admin-reply-note{
 body.contacts-mode .contact-admin-reply-note:empty{
   display:none!important;
 }
+body.contacts-mode .contact-reply-mail-choice{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:#555;
+}
+body.contacts-mode .contact-reply-mail-choice-title{font-weight:800;color:#222;}
+body.contacts-mode .contact-reply-mail-choice label{display:inline-flex;align-items:center;gap:5px;cursor:pointer;}
+body.contacts-mode .contact-reply-mail-choice input{margin:0;}
 body.contacts-mode .contact-admin-delete:disabled,
 body.contacts-mode .contact-admin-delete.is-disabled{
   opacity:.38!important;
@@ -2442,7 +2453,10 @@ function renderContactDetailPage(){
   if(c.site_name) detailRows.push(['対象', c.site_name]);
   if(c.latest_at || c.updated_at) detailRows.push(['更新', c.latest_at || c.updated_at]);
   const statusCtl = `<div class="contact-admin-statusbar"><label>ステータス</label><select id="contact-status-select" onchange="updateContactStatus(${Number(c.id)},this.value)">${statusOptionsHtml(c.status)}</select></div>`;
-  const replyBox = `<div class="contact-reply-panel"><div class="contact-admin-reply-hint">${esc(hint)}</div><div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div><div class="contact-admin-reply-note" id="contact-admin-reply-note"></div></div>`;
+  const mailChoice = c.contact_mail_notification_available
+    ? `<div class="contact-reply-mail-choice" role="group" aria-label="メール通知"><span class="contact-reply-mail-choice-title">この返信のメール通知</span><label><input type="radio" name="contact-reply-mail" value="1" ${disabled}>通知する</label><label><input type="radio" name="contact-reply-mail" value="0" ${disabled}>サイト内のみ</label></div>`
+    : `<div class="contact-reply-mail-choice"><span class="contact-reply-mail-choice-title">メール通知</span><span>このお問い合わせでは利用できません</span></div>`;
+  const replyBox = `<div class="contact-reply-panel"><div class="contact-admin-reply-hint">${esc(hint)}</div>${mailChoice}<div class="contact-admin-reply"><textarea id="contact-reply-text" placeholder="返信を入力" ${disabled}></textarea><button class="contact-admin-send" id="contact-admin-send" type="button" onclick="sendContactReply()" ${disabled} aria-label="返信を送信"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"></path><path d="m22 2-7 20-4-9-9-4 20-7Z"></path></svg></button></div><div class="contact-admin-reply-note" id="contact-admin-reply-note"></div></div>`;
   const el = document.getElementById('tab-content');
   if(!el) return;
   el.innerHTML = `<div class="admin-page contact-detail-page"><div class="contact-detail-head"><div class="contact-detail-head-top"><button class="contact-back-btn" type="button" onclick="backContactList()" aria-label="一覧に戻る">‹</button><div class="contact-detail-title-wrap"><div class="contact-detail-title">#${esc(code)} ${esc(c.category || 'お問い合わせ')}</div><div class="contact-detail-sub">${esc(contactStatusLabel(c.status))} / ${esc(contactReplyLabel(c))}</div></div><div class="contact-detail-actions"><button class="btn" type="button" data-contact="${esc(code)}" onclick="openContactInquiry(this.dataset.contact,true,true)">更新</button><button class="btn contact-admin-delete" type="button" data-delete-contact-id="${Number(c.id)}">削除</button></div></div><div class="contact-detail-tools">${statusCtl}${contactUserStateHtml(c)}</div></div><div class="contact-detail-scroll" id="contact-admin-body"><div class="contact-detail-paper"><div class="contact-detail-grid">${detailRows.map(([k,v])=>`<b>${esc(k)}</b><span>${esc(v)}</span>`).join('')}</div>${contactMessagesHtml(c)}</div></div>${replyBox}</div>`;
@@ -2518,15 +2532,21 @@ async function sendContactReply(){
   const ta = document.getElementById('contact-reply-text');
   const text = ta?.value.trim() || '';
   if(!text){ alert('返信内容を入力してください'); return; }
+  const mailChoice = document.querySelector('input[name="contact-reply-mail"]:checked');
+  if(currentContact.contact_mail_notification_available && !mailChoice){ alert('この返信をメールでも通知するか選択してください'); return; }
+  const sendEmail = mailChoice ? mailChoice.value === '1' : false;
   const btn = document.getElementById('contact-admin-send');
   if(btn){ btn.classList.add('is-loading'); btn.disabled = true; }
   setContactReplyCooldown();
   try{
-    const data = await adminApi('contact_admin_reply', {body:{id:currentContact.id,reply:text}});
+    const data = await adminApi('contact_admin_reply', {body:{id:currentContact.id,reply:text,send_email:sendEmail}});
     if(ta) ta.value = '';
     if(data && data.inquiry) currentContact = data.inquiry;
     try{ contactInquiries = await adminApi('contact_admin_list') || contactInquiries; }catch(e){}
     await openContactInquiry(currentContact.id,true,true);
+    const mail=data&&data.mail_notification;
+    if(mail&&mail.requested&&mail.sent) alert(`返信を保存し、メール通知を送信しました。${mail.to?'\n送信先: '+mail.to:''}`);
+    else if(mail&&mail.requested) alert(`返信は保存しましたが、メール通知を送信できませんでした。\n${mail.reason||'管理画面から再送してください。'}`);
   }catch(e){
     if(btn){ btn.classList.remove('is-loading'); btn.disabled = false; }
     alert((e && e.message) || '返信に失敗しました');
