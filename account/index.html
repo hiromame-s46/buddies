@@ -190,8 +190,8 @@ let pendingAction = null;
 
 // 遷移元に応じた戻り先・ログアウト後のリダイレクト先
 const FROM        = new URLSearchParams(location.search).get('from');
-const BACK_URL    = FROM === 'sakulabo' ? '/satellite/sakulabo/mypage/'  : '../';
-const LOGOUT_URL  = FROM === 'sakulabo' ? '/satellite/sakulabo/mypage/'  : '../';
+const BACK_URL    = FROM === 'sakulabo' ? '/satellite/sakulabo/mypage/' : FROM === 'sakumap' ? '/satellite/sakumap/' : '../';
+const LOGOUT_URL  = FROM === 'sakulabo' ? '/satellite/sakulabo/mypage/' : FROM === 'sakumap' ? '/satellite/sakumap/' : '../';
 
 // ── 初期化 ─────────────────────────────────────────────
 async function init() {
