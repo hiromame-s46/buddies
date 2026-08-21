@@ -24,6 +24,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .section{margin-top:28px;}
 .section-title{font-size:11px;font-weight:700;color:#999;letter-spacing:0.08em;text-transform:uppercase;margin-bottom:12px;}
 .card{background:#fff;border:1px solid var(--eee);border-radius:20px;padding:20px;margin-bottom:12px;}
+.card-heading{font-size:15px;font-weight:800;margin-bottom:6px;}
+.card-note{font-size:12px;color:#777;line-height:1.65;margin-bottom:16px;}
+.account-meta{display:grid;gap:0;}
+.account-meta-row{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:13px 0;border-top:1px solid #f0f0f0;}
+.account-meta-row:first-child{border-top:0;padding-top:0;}
+.account-meta-row:last-child{padding-bottom:0;}
+.account-meta dt{font-size:12px;color:#777;font-weight:600;}
+.account-meta dd{font-size:13px;color:#111;font-weight:700;text-align:right;}
+.support-link{margin-top:0;text-decoration:none;}
 
 /* フォーム */
 .field{display:flex;flex-direction:column;gap:6px;margin-bottom:14px;}
@@ -99,6 +108,27 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
     </button>
   </div>
 
+  <!-- プロフィール変更 -->
+  <div class="section">
+    <div class="section-title">プロフィール</div>
+    <div class="card">
+      <div class="card-heading">プロフィール情報</div>
+      <p class="card-note">表示名、アイコン、自己紹介、推しメン、SNSなどの公開プロフィールを変更できます。</p>
+      <a class="btn btn-outline" href="../?edit=1&amp;from=account">プロフィールを変更</a>
+    </div>
+  </div>
+
+  <!-- アカウント情報 -->
+  <div class="section">
+    <div class="section-title">アカウント情報</div>
+    <div class="card">
+      <dl class="account-meta">
+        <div class="account-meta-row"><dt>登録日</dt><dd id="registered-at">—</dd></div>
+        <div class="account-meta-row"><dt>最終変更日</dt><dd id="last-changed-at">—</dd></div>
+      </dl>
+    </div>
+  </div>
+
   <!-- ユーザー名変更 -->
   <div class="section">
     <div class="section-title">ユーザー名</div>
@@ -141,7 +171,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
         </div>
       </div>
       <div class="field">
-        <label>新しいパスワード <span style="font-size:11px;color:#999;font-weight:400;">（8文字以上）</span></label>
+        <label>新しいパスワード <span style="font-size:11px;color:#999;font-weight:400;">（8〜256文字）</span></label>
         <div class="pw-wrap">
           <input type="password" id="pw-new" placeholder="••••••••" autocomplete="new-password">
           <button type="button" class="pw-toggle" onclick="togglePw('pw-new', this)">
@@ -165,6 +195,15 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
     </div>
   </div>
 
+  <!-- お問い合わせ -->
+  <div class="section">
+    <div class="section-title">サポート</div>
+    <div class="card">
+      <div class="card-heading">お問い合わせ</div>
+      <p class="card-note">Buddiesに関するご質問や不具合の報告はこちらからお送りください。</p>
+      <a class="btn btn-outline support-link" href="../../form/">お問い合わせフォームへ</a>
+    </div>
+  </div>
 </div>
 
 <!-- ── 確認モーダル ── -->
@@ -190,8 +229,8 @@ let pendingAction = null;
 
 // 遷移元に応じた戻り先・ログアウト後のリダイレクト先
 const FROM        = new URLSearchParams(location.search).get('from');
-const BACK_URL    = FROM === 'sakulabo' ? '/satellite/sakulabo/mypage/' : FROM === 'sakumap' ? '/satellite/sakumap/' : '../';
-const LOGOUT_URL  = FROM === 'sakulabo' ? '/satellite/sakulabo/mypage/' : FROM === 'sakumap' ? '/satellite/sakumap/' : '../';
+const BACK_URL    = FROM === 'sakulabo' ? '../../sakulabo/mypage/' : FROM === 'sakumap' ? '../../sakumap/' : '../';
+const LOGOUT_URL  = FROM === 'sakulabo' ? '../../sakulabo/mypage/' : FROM === 'sakumap' ? '../../sakumap/' : '../';
 
 // ── 初期化 ─────────────────────────────────────────────
 async function init() {
@@ -206,14 +245,36 @@ async function init() {
       return;
     }
     me = json.data;
-    document.getElementById('header-username').textContent = '@' + me.username;
-    document.getElementById('current-username-display').value = me.username;
+    renderAccountData();
   } catch(e) {
     location.href = BACK_URL;
     return;
   }
   document.getElementById('page-loading').style.display = 'none';
   document.getElementById('main').style.display = 'block';
+}
+
+function renderAccountData() {
+  if (!me) return;
+  document.getElementById('header-username').textContent = '@' + me.username;
+  document.getElementById('current-username-display').value = me.username;
+  document.getElementById('registered-at').textContent = formatAccountDate(me.registered_at);
+  document.getElementById('last-changed-at').textContent = formatAccountDate(me.last_changed_at);
+}
+
+function formatAccountDate(value) {
+  const match = String(value || '').match(/^(\d{4})-(\d{2})-(\d{2})(?:[ T](\d{2}):(\d{2}))?/);
+  if (!match) return '—';
+  const date = `${match[1]}年${Number(match[2])}月${Number(match[3])}日`;
+  return match[4] ? `${date} ${match[4]}:${match[5]}` : date;
+}
+
+async function refreshAccountData() {
+  try {
+    const res = await fetch(API + '?action=auth_me', { credentials: 'include' });
+    const json = await res.json();
+    if (json.ok && json.data) { me = json.data; renderAccountData(); }
+  } catch (_) { /* 更新後の表示取得に失敗しても操作結果は維持する */ }
 }
 
 // ── パスワード表示切り替え ──────────────────────────────
@@ -303,12 +364,12 @@ async function doUsernameChange() {
     const json = await res.json();
     if (json.ok) {
       me.username = json.data.username;
-      document.getElementById('current-username-display').value = me.username;
-      document.getElementById('header-username').textContent     = '@' + me.username;
+      renderAccountData();
       document.getElementById('new-username').value              = '';
       document.getElementById('username-change-password').value  = '';
       showMsg('username-msg', 'ユーザー名を変更しました。', 'success');
       toast('ユーザー名を変更しました');
+      await refreshAccountData();
     } else {
       showMsg('username-msg', json.error, 'error');
     }
@@ -324,7 +385,7 @@ function confirmPasswordChange() {
   const newPw2  = document.getElementById('pw-new2').value;
   if (!current) { showMsg('pw-msg', '現在のパスワードを入力してください。', 'error'); return; }
   if (!newPw)   { showMsg('pw-msg', '新しいパスワードを入力してください。', 'error'); return; }
-  if (newPw.length < 8) { showMsg('pw-msg', 'パスワードは8文字以上で入力してください。', 'error'); return; }
+  if (newPw.length < 8 || newPw.length > 256) { showMsg('pw-msg', 'パスワードは8〜256文字で入力してください。', 'error'); return; }
   if (newPw !== newPw2) { showMsg('pw-msg', '新しいパスワードが一致しません。', 'error'); return; }
 
   openConfirm({
@@ -357,6 +418,7 @@ async function doPasswordChange() {
       document.getElementById('pw-new2').value    = '';
       showMsg('pw-msg', 'パスワードを変更しました。', 'success');
       toast('パスワードを変更しました');
+      await refreshAccountData();
     } else {
       showMsg('pw-msg', json.error, 'error');
     }
