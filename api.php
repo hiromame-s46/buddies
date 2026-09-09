@@ -13,6 +13,12 @@ error_reporting(E_ALL);
  *   auth_login                POST ログイン（sakulabo共通）
  *   auth_logout               POST ログアウト
  *   auth_me                   GET  ログインユーザー情報（Buddies拡張フィールド含む）
+ *   buddies_email_status      GET  メール認証状態
+ *   buddies_email_request     POST メールアドレス登録・変更の確認メール送信
+ *   buddies_email_delete      POST 認証済みメールアドレスの即時削除
+ *   buddies_email_verify      GET  メール認証リンクの消費
+ *   buddies_password_reset_request POST パスワードリセットメール送信
+ *   buddies_password_reset    POST パスワードリセット実行
  *
  *   buddies_profile_get       GET  Buddiesプロフィール取得（自分 or 他ユーザー）
  *   buddies_public_profile_get GET  公開プロフィール取得（一般ユーザー用 view.html）
@@ -35,19 +41,37 @@ error_reporting(E_ALL);
  */
 
 // ── 設定 ─────────────────────────────────────────────────
-$config = require __DIR__ . '/../../../api/config.php';
+function loadBuddiesDbConfig(): array {
+    // DB接続はこのAPIだけが担当し、サイト共通の接続設定を使用する。
+    $configPath = __DIR__ . '/../../../api/config.php';
+    if (!is_file($configPath) || !is_readable($configPath)) {
+        throw new RuntimeException('../../../api/config.php が見つからないか、読み込めません。');
+    }
+    $config = require $configPath;
+    if (!is_array($config)
+        || empty($config['host'])
+        || empty($config['dbname'])
+        || !array_key_exists('username', $config)
+        || !array_key_exists('password', $config)) {
+        throw new RuntimeException('../../../api/config.php のDB設定が正しくありません。');
+    }
+    return $config;
+}
 
 define('SESSION_EXPIRE_HOURS', 720);
 define('ALLOWED_ORIGINS', [
     'https://buddies46.stars.ne.jp',
 ]);
-define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v13.lock');
+define('SCHEMA_FLAG', __DIR__ . '/.buddies_schema_v14.lock');
 define('BLOG_DATA_PATH', __DIR__ . '/../data/blogs.json');
 define('SAKUMIMI_DATA_PATH', __DIR__ . '/../data/sakumimi_data.json');
 define('MEMBER_DATA_PATH', __DIR__ . '/../data/member.json');
 define('SAKUMAP_EVENTS_PATH', __DIR__ . '/../sakumap/events.json');
 define('SAKUMAP_STAMPS_PATH', __DIR__ . '/../sakumap/stamps.json');
 define('SAKUMAP_BASE_URL', 'https://buddies46.stars.ne.jp/satellite/sakumap/');
+require_once __DIR__ . '/mail-system.php';
+$buddiesTimezone = (string)(buddies_mail_env('BUDDIES_TIMEZONE', 'Asia/Tokyo') ?: 'Asia/Tokyo');
+if (!@date_default_timezone_set($buddiesTimezone)) date_default_timezone_set('Asia/Tokyo');
 
 // ── ヘッダー ─────────────────────────────────────────────
 if (!headers_sent()) {
@@ -87,28 +111,101 @@ set_exception_handler(function(\Throwable $e): void {
     exit;
 });
 
+$config = null;
+
 // ── DB 接続 ──────────────────────────────────────────────
 function db(): PDO {
     static $pdo = null;
     if ($pdo) return $pdo;
-    $config = require __DIR__ . '/../../../api/config.php';
-    $dsn = sprintf('mysql:host=%s;dbname=%s;charset=utf8mb4', $config['host'], $config['dbname']);
-    $pdo = new PDO($dsn, $config['username'], $config['password'], [
-        PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-        PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-        PDO::ATTR_EMULATE_PREPARES   => false,
-        PDO::ATTR_TIMEOUT            => 5,
-    ]);
-    if (!file_exists(SCHEMA_FLAG)) {
-        runMigrations($pdo);
-        @file_put_contents(SCHEMA_FLAG, date('Y-m-d H:i:s'));
-    } else {
-        ensureBuddiesProfileSakulaboColumns($pdo);
-        ensureBuddiesHistoryTable($pdo);
-        ensureBuddiesSocialTables($pdo);
-        ensureVerifiedCollaboratorTables($pdo);
+    global $config;
+    try {
+        if (!is_array($config)) $config = loadBuddiesDbConfig();
+        $dsn = sprintf(
+            'mysql:host=%s;port=%d;dbname=%s;charset=utf8mb4',
+            $config['host'],
+            max(1, (int)($config['port'] ?? 3306)),
+            $config['dbname']
+        );
+        $pdo = new PDO($dsn, $config['username'], $config['password'], [
+            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_TIMEOUT            => 5,
+        ]);
+        runBuddiesSchemaMigrations($pdo);
+        return $pdo;
+    } catch (\Throwable $e) {
+        throw $e;
     }
-    return $pdo;
+}
+
+function existingBuddiesSchemaVersion(): int {
+    $version = 0;
+    foreach (glob(__DIR__ . '/.buddies_schema_v*.lock') ?: [] as $path) {
+        if (preg_match('/\.buddies_schema_v(\d+)\.lock$/', $path, $match)) {
+            $version = max($version, (int)$match[1]);
+        }
+    }
+    return $version;
+}
+
+function buddiesSchemaTableExists(PDO $pdo, string $table): bool {
+    $st = $pdo->prepare('SELECT 1 FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = ? LIMIT 1');
+    $st->execute([$table]);
+    return (bool)$st->fetchColumn();
+}
+
+function buddiesEmailSchemaNeedsRepair(PDO $pdo): bool {
+    $emailRequired = ['user_id', 'email_ciphertext', 'email_hash', 'pending_email_ciphertext', 'pending_email_hash', 'verification_token_hash', 'verification_expires_at', 'verification_requested_at', 'email_verified_at', 'created_at', 'updated_at'];
+    $resetRequired = ['user_id', 'token_hash', 'expires_at', 'used_at', 'created_at'];
+    if (!buddiesSchemaTableExists($pdo, 'buddies_user_emails') || !buddiesSchemaTableExists($pdo, 'buddies_password_reset_tokens')) return true;
+    return (bool)array_diff($emailRequired, tableColumns($pdo, 'buddies_user_emails'))
+        || (bool)array_diff($resetRequired, tableColumns($pdo, 'buddies_password_reset_tokens'));
+}
+
+function writeBuddiesSchemaLock(): void {
+    $temporary = SCHEMA_FLAG . '.' . bin2hex(random_bytes(6)) . '.tmp';
+    if (@file_put_contents($temporary, date('c') . "\n", LOCK_EX) !== false) {
+        @rename($temporary, SCHEMA_FLAG);
+    }
+    if (is_file($temporary)) @unlink($temporary);
+}
+
+function runBuddiesSchemaMigrations(PDO $pdo): void {
+    $hasCurrentLock = file_exists(SCHEMA_FLAG);
+    if ($hasCurrentLock && !buddiesEmailSchemaNeedsRepair($pdo)) return;
+
+    // 複数の初回リクエストが同時に来ても、DDLを同時実行しない。
+    $lockHandle = @fopen(SCHEMA_FLAG . '.busy', 'c');
+    if ($lockHandle) @flock($lockHandle, LOCK_EX);
+    try {
+        clearstatcache(true, SCHEMA_FLAG);
+        $hasCurrentLock = file_exists(SCHEMA_FLAG);
+        if ($hasCurrentLock && !buddiesEmailSchemaNeedsRepair($pdo)) return;
+
+        // 既存のv13以前の環境は、既存スキーマを壊さない補完処理だけを実行する。
+        // ロックがまだない新規環境では従来の全体マイグレーションを実行する。
+        if (!$hasCurrentLock) {
+            $hasExistingBuddiesSchema = buddiesSchemaTableExists($pdo, 'buddies_profiles');
+            if (existingBuddiesSchemaVersion() === 0 && !$hasExistingBuddiesSchema) {
+                runMigrations($pdo);
+            } else {
+                ensureBuddiesProfileSakulaboColumns($pdo);
+                ensureBuddiesHistoryTable($pdo);
+                ensureBuddiesSocialTables($pdo);
+                ensureVerifiedCollaboratorTables($pdo);
+            }
+        }
+
+        // v14: Buddies専用メール認証・パスワードリセット用スキーマ。
+        ensureBuddiesEmailTables($pdo);
+        writeBuddiesSchemaLock();
+    } finally {
+        if ($lockHandle) {
+            @flock($lockHandle, LOCK_UN);
+            @fclose($lockHandle);
+        }
+    }
 }
 
 function tableColumns(PDO $pdo, string $table): array {
@@ -120,24 +217,82 @@ function tableColumns(PDO $pdo, string $table): array {
     }
 }
 
+function ensureBuddiesEmailTables(PDO $pdo): void {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_user_emails (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL UNIQUE,
+        email_ciphertext TEXT NULL,
+        email_hash CHAR(64) NULL,
+        pending_email_ciphertext TEXT NULL,
+        pending_email_hash CHAR(64) NULL,
+        verification_token_hash CHAR(64) NULL,
+        verification_expires_at DATETIME NULL,
+        verification_requested_at DATETIME NULL,
+        email_verified_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_buddies_email_hash (email_hash),
+        KEY idx_buddies_verification_token (verification_token_hash),
+        KEY idx_buddies_pending_hash (pending_email_hash)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $emailColumns = tableColumns($pdo, 'buddies_user_emails');
+    $emailAlterations = [
+        'email_ciphertext' => 'ALTER TABLE buddies_user_emails ADD COLUMN email_ciphertext TEXT NULL',
+        'email_hash' => 'ALTER TABLE buddies_user_emails ADD COLUMN email_hash CHAR(64) NULL',
+        'pending_email_ciphertext' => 'ALTER TABLE buddies_user_emails ADD COLUMN pending_email_ciphertext TEXT NULL',
+        'pending_email_hash' => 'ALTER TABLE buddies_user_emails ADD COLUMN pending_email_hash CHAR(64) NULL',
+        'verification_token_hash' => 'ALTER TABLE buddies_user_emails ADD COLUMN verification_token_hash CHAR(64) NULL',
+        'verification_expires_at' => 'ALTER TABLE buddies_user_emails ADD COLUMN verification_expires_at DATETIME NULL',
+        'verification_requested_at' => 'ALTER TABLE buddies_user_emails ADD COLUMN verification_requested_at DATETIME NULL',
+        'email_verified_at' => 'ALTER TABLE buddies_user_emails ADD COLUMN email_verified_at DATETIME NULL',
+        'created_at' => 'ALTER TABLE buddies_user_emails ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
+        'updated_at' => 'ALTER TABLE buddies_user_emails ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP',
+    ];
+    foreach ($emailAlterations as $column => $sql) {
+        if (!in_array($column, $emailColumns, true)) $pdo->exec($sql);
+    }
+    $pdo->exec("CREATE TABLE IF NOT EXISTS buddies_password_reset_tokens (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        user_id BIGINT UNSIGNED NOT NULL,
+        token_hash CHAR(64) NOT NULL UNIQUE,
+        expires_at DATETIME NOT NULL,
+        used_at DATETIME NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        KEY idx_buddies_reset_user (user_id, created_at),
+        KEY idx_buddies_reset_valid (token_hash, expires_at, used_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
+    $resetColumns = tableColumns($pdo, 'buddies_password_reset_tokens');
+    $resetAlterations = [
+        'user_id' => 'ALTER TABLE buddies_password_reset_tokens ADD COLUMN user_id BIGINT UNSIGNED NOT NULL',
+        'token_hash' => 'ALTER TABLE buddies_password_reset_tokens ADD COLUMN token_hash CHAR(64) NOT NULL',
+        'expires_at' => 'ALTER TABLE buddies_password_reset_tokens ADD COLUMN expires_at DATETIME NOT NULL',
+        'used_at' => 'ALTER TABLE buddies_password_reset_tokens ADD COLUMN used_at DATETIME NULL',
+        'created_at' => 'ALTER TABLE buddies_password_reset_tokens ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP',
+    ];
+    foreach ($resetAlterations as $column => $sql) {
+        if (!in_array($column, $resetColumns, true)) $pdo->exec($sql);
+    }
+}
+
 function envv(string $key, ?string $default = null): ?string {
+    $serverValue = getenv($key);
+    if ($serverValue !== false) return (string)$serverValue;
     static $env = null;
     if ($env === null) {
         $env = [];
-        foreach ([__DIR__ . '/../mail-system/.env', __DIR__ . '/.env'] as $file) {
-            if (!is_file($file)) continue;
+        $file = __DIR__ . '/.env';
+        if (is_file($file)) {
             foreach (file($file, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
                 $line = trim($line);
                 if ($line === '' || str_starts_with($line, '#') || !str_contains($line, '=')) continue;
                 [$k, $v] = array_map('trim', explode('=', $line, 2));
                 if ($k === '') continue;
-                $env[$k] = trim($v, " \t\n\r\0\x0B\"'");
+                if (!array_key_exists($k, $env)) $env[$k] = trim($v, " \t\n\r\0\x0B\"'");
             }
         }
     }
     if (array_key_exists($key, $env)) return $env[$key];
-    $v = getenv($key);
-    return $v === false ? $default : (string)$v;
+    return $default;
 }
 
 function ensureVerifiedCollaboratorTables(PDO $pdo): void {
@@ -180,6 +335,7 @@ function ensureBuddiesProfileSakulaboColumns(PDO $pdo): void {
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
         'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
         'show_sakumv_quiz' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumv_quiz TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにSakuMV Quiz自己ベストを表示'",
+        'show_quest_badge' => "ALTER TABLE buddies_profiles ADD COLUMN show_quest_badge TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにBuddies Questランクバッジを表示'",
         'next_lives' => "ALTER TABLE buddies_profiles ADD COLUMN next_lives TEXT NULL DEFAULT NULL COMMENT 'JSON array of selected future live performance ids' AFTER favorite_songs",
         'next_live_seats' => "ALTER TABLE buddies_profiles ADD COLUMN next_live_seats TEXT NULL DEFAULT NULL COMMENT 'JSON object of seat info by live id' AFTER next_lives",
     ];
@@ -333,6 +489,7 @@ function runMigrations(PDO $pdo): void {
         'show_favorite_blogs' => "ALTER TABLE buddies_profiles ADD COLUMN show_favorite_blogs TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにブログお気に入りを表示'",
         'show_sakumap_stamps' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumap_stamps TINYINT(1) NOT NULL DEFAULT 0 COMMENT '公開プロフィールにSakuMap獲得スタンプを表示'",
         'show_sakumv_quiz' => "ALTER TABLE buddies_profiles ADD COLUMN show_sakumv_quiz TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにSakuMV Quiz自己ベストを表示'",
+        'show_quest_badge' => "ALTER TABLE buddies_profiles ADD COLUMN show_quest_badge TINYINT(1) NOT NULL DEFAULT 1 COMMENT '公開プロフィールにBuddies Questランクバッジを表示'",
     ];
     foreach ($alterMap as $col => $sql) {
         if (!in_array($col, $bpCols, true)) {
@@ -1058,6 +1215,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['show_favorite_blogs'] = !empty($bp['show_favorite_blogs']);
         $data['show_sakumap_stamps'] = !empty($bp['show_sakumap_stamps']);
         $data['show_sakumv_quiz'] = !array_key_exists('show_sakumv_quiz', $bp) || !empty($bp['show_sakumv_quiz']);
+        $data['show_quest_badge'] = !array_key_exists('show_quest_badge', $bp) || !empty($bp['show_quest_badge']);
     } else {
         $data['birthday']       = null;
         $data['age']            = null;
@@ -1076,6 +1234,7 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         $data['show_favorite_blogs'] = false;
         $data['show_sakumap_stamps'] = false;
         $data['show_sakumv_quiz'] = true;
+        $data['show_quest_badge'] = true;
     }
     $data['sakumap_linked'] = sakumapLinkStatus((int)$u['id'])['linked'];
     $verified = verifiedAccountByUserId((int)$u['id']);
@@ -1099,6 +1258,11 @@ function buildUserData(array $u, ?array $bp = null, bool $includePrivate = false
         : [];
     $data['buddies_history'] = getBuddiesHistoryForProfile((int)$u['id']);
     $data['quest_profile'] = buddiesQuestProfileForUser((int)$u['id']);
+    if ($includePrivate) {
+        // 登録日・最終変更日はログイン中の本人にだけ返す。
+        $data['registered_at'] = $u['created_at'] ?? null;
+        $data['last_changed_at'] = $u['updated_at'] ?? ($u['created_at'] ?? null);
+    }
     return $data;
 }
 
@@ -1132,6 +1296,7 @@ function buildRowData(array $r): array {
         'show_favorite_mimis' => !empty($r['show_favorite_mimis']),
         'show_favorite_blogs' => !empty($r['show_favorite_blogs']),
         'show_sakumap_stamps' => !empty($r['show_sakumap_stamps']),
+        'show_quest_badge' => !array_key_exists('show_quest_badge', $r) || !empty($r['show_quest_badge']),
         'exchanged_at'  => $r['exchanged_at']  ?? null,
         'favorited_at'  => $r['favorited_at']  ?? null,
     ];
@@ -1942,6 +2107,7 @@ function buildVerifiedPostData(array $p): array {
 // ── アクション振り分け ────────────────────────────────────
 $action = $_GET['action'] ?? $_POST['action'] ?? body()['action'] ?? '';
 
+try {
 match ($action) {
     'auth_register'           => actionRegister(),
     'auth_login'              => actionLogin(),
@@ -1949,6 +2115,12 @@ match ($action) {
     'auth_me'                 => actionMe(),
     'auth_username_change'    => actionUsernameChange(),
     'auth_password_change'    => actionPasswordChange(),
+    'buddies_email_status'    => actionEmailStatus(),
+    'buddies_email_request'   => actionEmailRequest(),
+    'buddies_email_delete'    => actionEmailDelete(),
+    'buddies_email_verify'    => actionEmailVerify(),
+    'buddies_password_reset_request' => actionPasswordResetRequest(),
+    'buddies_password_reset'  => actionPasswordReset(),
 
     'buddies_profile_get'     => actionProfileGet(),
     'buddies_public_profile_get' => actionPublicProfileGet(),
@@ -2070,12 +2242,20 @@ match ($action) {
     'contact_admin_list'      => actionContactAdminList(),
     'contact_admin_get'       => actionContactAdminGet(),
     'contact_admin_reply'     => actionContactAdminReply(),
+    'contact_admin_copy_to_form' => actionContactAdminCopyToForm(),
     'contact_admin_send_mail' => actionContactAdminSendMail(),
     'contact_admin_update_status' => actionContactAdminUpdateStatus(),
     'contact_admin_delete'    => actionContactAdminDelete(),
 
     default => err('不明なアクションです。'),
 };
+} catch (\Throwable $e) {
+    error_log('[buddies] API request failed: ' . $e->getMessage());
+    if (str_contains($e->getMessage(), '../../../api/config.php')) {
+        err('DB接続設定を読み込めません。../../../api/config.phpを確認してください。', 500);
+    }
+    err('サーバーとの接続に失敗しました。時間をおいて再度お試しください。', 500);
+}
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 //  ユーザー登録
@@ -2199,8 +2379,8 @@ function actionPasswordChange(): void {
     $currentPassword = $b['current_password'] ?? '';
     $newPassword     = $b['new_password']      ?? '';
 
-    if (strlen($newPassword) < 8)
-        err('新しいパスワードは8文字以上で入力してください。');
+    if (strlen($newPassword) < 8 || strlen($newPassword) > 256)
+        err('新しいパスワードは8〜256文字で入力してください。');
 
     $st = db()->prepare('SELECT * FROM sakulabo_users WHERE id = ? LIMIT 1');
     $st->execute([$uid]);
@@ -2210,8 +2390,23 @@ function actionPasswordChange(): void {
         err('現在のパスワードが正しくありません。');
 
     $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
-    db()->prepare('UPDATE sakulabo_users SET password_hash = ? WHERE id = ?')
-       ->execute([$hash, $uid]);
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        $pdo->prepare('UPDATE sakulabo_users SET password_hash = ? WHERE id = ?')
+           ->execute([$hash, $uid]);
+        // パスワード変更時は全セッションを破棄し、この端末だけ新しいセッションにする。
+        $newToken = generateToken();
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+' . SESSION_EXPIRE_HOURS . ' hours'));
+        $pdo->prepare('DELETE FROM sakulabo_sessions WHERE user_id = ?')->execute([$uid]);
+        $pdo->prepare('INSERT INTO sakulabo_sessions (token, user_id, expires_at) VALUES (?,?,?)')
+            ->execute([$newToken, $uid, $expiresAt]);
+        $pdo->commit();
+        setSessionCookie($newToken);
+    } catch (\Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
 
     ok();
 }
@@ -2227,6 +2422,213 @@ function actionMe(): void {
     $bp = getBuddiesProfile((int)$me['id']);
 
     ok(buildUserData($me, $bp, true));
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+//  Buddiesメール認証・パスワードリセット
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+function buddiesNormalizeEmail(mixed $value): ?string {
+    $email = mb_strtolower(trim((string)$value), 'UTF-8');
+    if ($email === '' || mb_strlen($email, 'UTF-8') > 254 || !filter_var($email, FILTER_VALIDATE_EMAIL)) return null;
+    return $email;
+}
+
+function buddiesMaskEmail(?string $email): ?string {
+    if (!$email || !str_contains($email, '@')) return null;
+    [$local, $domain] = explode('@', $email, 2);
+    $localLength = mb_strlen($local, 'UTF-8');
+    if ($localLength <= 1) $maskedLocal = '•';
+    elseif ($localLength === 2) $maskedLocal = mb_substr($local, 0, 1) . '•';
+    else $maskedLocal = mb_substr($local, 0, 1) . '•••' . mb_substr($local, -1, 1);
+    return $maskedLocal . '@' . $domain;
+}
+
+function buddiesEmailRow(int $userId): ?array {
+    $st = db()->prepare('SELECT * FROM buddies_user_emails WHERE user_id=? LIMIT 1');
+    $st->execute([$userId]);
+    return $st->fetch() ?: null;
+}
+
+function buddiesEmailStatusData(int $userId): array {
+    $row = buddiesEmailRow($userId);
+    $pendingValid = $row && !empty($row['pending_email_hash']) && !empty($row['verification_expires_at'])
+        && strtotime((string)$row['verification_expires_at']) > time();
+    $verified = $row && !empty($row['email_hash']) && !empty($row['email_verified_at']);
+    $status = $pendingValid ? 'pending' : ($verified ? 'verified' : 'none');
+    // 本人だけが取得できるAPIなので、アカウント設定で登録先を確認できるよう復号して返す。
+    $verifiedEmail = $verified ? buddies_mail_decrypt($row['email_ciphertext'] ?? null) : null;
+    $pendingEmail = $pendingValid ? buddies_mail_decrypt($row['pending_email_ciphertext'] ?? null) : null;
+    return [
+        'status' => $status,
+        'email' => $verifiedEmail,
+        'pending_email' => $pendingEmail,
+        'email_verified_at' => $verified ? ($row['email_verified_at'] ?? null) : null,
+        'verification_expires_at' => $pendingValid ? ($row['verification_expires_at'] ?? null) : null,
+    ];
+}
+
+function actionEmailStatus(): void {
+    $me = requireAuth();
+    if (($mailError = buddies_mail_configuration_error()) !== null) {
+        error_log('[buddies] email status mail configuration error: ' . $mailError);
+        err('メール認証の設定が未完了です。管理者に設定をご確認ください。', 500);
+    }
+    ok(buddiesEmailStatusData((int)$me['id']));
+}
+
+function actionEmailDelete(): void {
+    $me = requireAuth();
+    $uid = (int)$me['id'];
+    $pdo = db();
+    $pdo->beginTransaction();
+    try {
+        // メール削除後に、削除前に発行されたリセットリンクが使えないようにする。
+        $pdo->prepare('DELETE FROM buddies_password_reset_tokens WHERE user_id=?')->execute([$uid]);
+        $pdo->prepare('DELETE FROM buddies_user_emails WHERE user_id=?')->execute([$uid]);
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        err('メールアドレスを削除できませんでした。もう一度お試しください。', 500);
+    }
+    ok(['email' => buddiesEmailStatusData($uid), 'message' => 'メールアドレスを削除しました。']);
+}
+
+function actionEmailRequest(): void {
+    $me = requireAuth();
+    $email = buddiesNormalizeEmail(body()['email'] ?? '');
+    if ($email === null) err('有効なメールアドレスを入力してください。');
+    if (($mailError = buddies_mail_configuration_error()) !== null) {
+        error_log('[buddies] verification mail is not configured: ' . $mailError);
+        err('確認メールの設定が未完了です。管理者に設定をご確認ください。', 500);
+    }
+    $uid = (int)$me['id'];
+    $hash = buddies_mail_hash($email);
+    $pdo = db();
+    $existing = $pdo->prepare('SELECT user_id FROM buddies_user_emails WHERE email_hash=? AND user_id<>? LIMIT 1');
+    $existing->execute([$hash, $uid]);
+    if ($existing->fetch()) err('このメールアドレスはすでに別のアカウントで使用されています。');
+
+    $row = buddiesEmailRow($uid);
+    if ($row && !empty($row['email_hash']) && hash_equals((string)$row['email_hash'], $hash) && !empty($row['email_verified_at'])) {
+        ok(['email' => buddiesEmailStatusData($uid), 'email_sent' => false, 'message' => 'このメールアドレスはすでに認証済みです。']);
+    }
+    if ($row && !empty($row['verification_requested_at']) && strtotime((string)$row['verification_requested_at']) > time() - 60) {
+        err('確認メールは1分に1回まで送信できます。しばらくお待ちください。', 429);
+    }
+
+    $rawToken = bin2hex(random_bytes(32));
+    $tokenHash = buddies_mail_hash($rawToken);
+    $expiresAt = date('Y-m-d H:i:s', time() + 86400);
+    if ($row) {
+        $st = $pdo->prepare('UPDATE buddies_user_emails SET pending_email_ciphertext=?, pending_email_hash=?, verification_token_hash=?, verification_expires_at=?, verification_requested_at=NOW() WHERE user_id=?');
+        $st->execute([buddies_mail_encrypt($email), $hash, $tokenHash, $expiresAt, $uid]);
+    } else {
+        $st = $pdo->prepare('INSERT INTO buddies_user_emails (user_id,pending_email_ciphertext,pending_email_hash,verification_token_hash,verification_expires_at,verification_requested_at) VALUES (?,?,?,?,?,NOW())');
+        $st->execute([$uid, buddies_mail_encrypt($email), $hash, $tokenHash, $expiresAt]);
+    }
+
+    if (!buddies_mail_send_verification($email, $me, $rawToken)) {
+        $pdo->prepare('UPDATE buddies_user_emails SET pending_email_ciphertext=NULL,pending_email_hash=NULL,verification_token_hash=NULL,verification_expires_at=NULL,verification_requested_at=NULL WHERE user_id=?')->execute([$uid]);
+        err('確認メールを送信できませんでした。' . buddies_mail_last_error_message(), 500);
+    }
+    ok(['email' => buddiesEmailStatusData($uid), 'email_sent' => true, 'message' => '確認メールを送信しました。メール内のリンクは24時間有効です。']);
+}
+
+function buddiesConsumeEmailVerificationToken(string $token): array {
+    if (!preg_match('/^[a-f0-9]{64}$/i', $token)) return ['ok' => false, 'error' => '認証リンクが正しくありません。'];
+    $pdo = db();
+    $st = $pdo->prepare('SELECT e.*,u.username,u.display_name FROM buddies_user_emails e JOIN sakulabo_users u ON u.id=e.user_id WHERE e.verification_token_hash=? AND e.verification_expires_at>NOW() LIMIT 1');
+    $st->execute([buddies_mail_hash($token)]);
+    $row = $st->fetch();
+    if (!$row || empty($row['pending_email_hash']) || empty($row['pending_email_ciphertext'])) return ['ok' => false, 'error' => '認証リンクが無効または期限切れです。'];
+
+    $duplicate = $pdo->prepare('SELECT user_id FROM buddies_user_emails WHERE email_hash=? AND user_id<>? LIMIT 1');
+    $duplicate->execute([(string)$row['pending_email_hash'], (int)$row['user_id']]);
+    if ($duplicate->fetch()) return ['ok' => false, 'error' => 'このメールアドレスは別のアカウントで使用されています。'];
+
+    $pdo->beginTransaction();
+    try {
+        $update = $pdo->prepare('UPDATE buddies_user_emails SET email_ciphertext=pending_email_ciphertext,email_hash=pending_email_hash,email_verified_at=NOW(),pending_email_ciphertext=NULL,pending_email_hash=NULL,verification_token_hash=NULL,verification_expires_at=NULL,verification_requested_at=NULL WHERE id=? AND verification_token_hash=?');
+        $update->execute([(int)$row['id'], buddies_mail_hash($token)]);
+        if ($update->rowCount() !== 1) throw new RuntimeException('verification token was already used');
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        return ['ok' => false, 'error' => '認証リンクが無効または期限切れです。'];
+    }
+    return ['ok' => true, 'email' => buddiesMaskEmail(buddies_mail_decrypt($row['pending_email_ciphertext']))];
+}
+
+function actionEmailVerify(): void {
+    if (($mailError = buddies_mail_configuration_error()) !== null) {
+        error_log('[buddies] email verification mail configuration error: ' . $mailError);
+        err('メール認証の設定が未完了です。管理者に設定をご確認ください。', 500);
+    }
+    $token = trim((string)($_GET['token'] ?? body()['token'] ?? ''));
+    $result = buddiesConsumeEmailVerificationToken($token);
+    if (!$result['ok']) err((string)$result['error'], 400);
+    ok($result);
+}
+
+function actionPasswordResetRequest(): void {
+    $email = buddiesNormalizeEmail(body()['email'] ?? '');
+    $notRegistered = 'そのメールアドレスは登録されていません。';
+    if ($email === null) ok(['registered' => false, 'email_sent' => false, 'message' => $notRegistered]);
+    if (($mailError = buddies_mail_configuration_error()) !== null) {
+        error_log('[buddies] password reset mail is not configured: ' . $mailError);
+        err('パスワードリセット用メールの設定が未完了です。管理者に設定をご確認ください。', 500);
+    }
+    $hash = buddies_mail_hash($email);
+    $st = db()->prepare('SELECT e.*,u.id AS uid,u.username,u.display_name FROM buddies_user_emails e JOIN sakulabo_users u ON u.id=e.user_id WHERE e.email_hash=? AND e.email_verified_at IS NOT NULL LIMIT 1');
+    $st->execute([$hash]);
+    $row = $st->fetch();
+    if (!$row) ok(['registered' => false, 'email_sent' => false, 'message' => $notRegistered]);
+    $recent = db()->prepare('SELECT id FROM buddies_password_reset_tokens WHERE user_id=? AND created_at>DATE_SUB(NOW(),INTERVAL 60 SECOND) LIMIT 1');
+    $recent->execute([(int)$row['uid']]);
+    if ($recent->fetch()) ok(['registered' => true, 'email_sent' => false, 'message' => 'リセットメールは1分に1回まで送信できます。しばらくお待ちください。']);
+
+    $emailPlain = buddies_mail_decrypt($row['email_ciphertext'] ?? null);
+    if (!$emailPlain) err('登録メールアドレスを読み込めませんでした。管理者にお問い合わせください。', 500);
+    $rawToken = bin2hex(random_bytes(32));
+    $tokenHash = buddies_mail_hash($rawToken);
+    $pdo = db();
+    $pdo->prepare('DELETE FROM buddies_password_reset_tokens WHERE user_id=? AND used_at IS NULL')->execute([(int)$row['uid']]);
+    $pdo->prepare('INSERT INTO buddies_password_reset_tokens (user_id,token_hash,expires_at) VALUES (?,?,?)')->execute([(int)$row['uid'], $tokenHash, date('Y-m-d H:i:s', time() + 1800)]);
+    if (!buddies_mail_send_password_reset($emailPlain, $row, $rawToken)) {
+        $pdo->prepare('DELETE FROM buddies_password_reset_tokens WHERE token_hash=?')->execute([$tokenHash]);
+        err('メールを送信できませんでした。時間をおいて再度お試しください。', 500);
+    }
+    ok(['registered' => true, 'email_sent' => true, 'message' => 'パスワードリセット用のメールを送信しました。']);
+}
+
+function actionPasswordReset(): void {
+    if (($mailError = buddies_mail_configuration_error()) !== null) {
+        error_log('[buddies] password reset mail configuration error: ' . $mailError);
+        err('パスワードリセットの設定が未完了です。管理者に設定をご確認ください。', 500);
+    }
+    $token = trim((string)(body()['token'] ?? ''));
+    $newPassword = (string)(body()['new_password'] ?? '');
+    if (!preg_match('/^[a-f0-9]{64}$/i', $token)) err('リセットリンクが正しくありません。');
+    if (strlen($newPassword) < 8 || strlen($newPassword) > 256) err('パスワードは8〜256文字で入力してください。');
+    $pdo = db();
+    $st = $pdo->prepare('SELECT t.*,u.id AS uid FROM buddies_password_reset_tokens t JOIN sakulabo_users u ON u.id=t.user_id WHERE t.token_hash=? AND t.used_at IS NULL AND t.expires_at>NOW() LIMIT 1');
+    $st->execute([buddies_mail_hash($token)]);
+    $row = $st->fetch();
+    if (!$row) err('リセットリンクが無効または期限切れです。');
+    $pdo->beginTransaction();
+    try {
+        $hash = password_hash($newPassword, PASSWORD_BCRYPT, ['cost' => 12]);
+        $pdo->prepare('UPDATE sakulabo_users SET password_hash=? WHERE id=?')->execute([$hash, (int)$row['uid']]);
+        $pdo->prepare('DELETE FROM sakulabo_sessions WHERE user_id=?')->execute([(int)$row['uid']]);
+        $used = $pdo->prepare('UPDATE buddies_password_reset_tokens SET used_at=NOW() WHERE id=? AND used_at IS NULL');
+        $used->execute([(int)$row['id']]);
+        if ($used->rowCount() !== 1) throw new RuntimeException('reset token was already used');
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        err('パスワードを変更できませんでした。もう一度お試しください。', 500);
+    }
+    ok(['message' => 'パスワードを変更しました。新しいパスワードでログインしてください。']);
 }
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -2342,6 +2744,7 @@ function actionProfileUpdate(): void {
     $showSakumvQuiz = hasSakumvQuizRecords((int)$me['id'])
         ? truthyFlag($b['show_sakumv_quiz'] ?? 0)
         : 1;
+    $showQuestBadge = truthyFlag($b['show_quest_badge'] ?? 1);
 
     if ($bio          && mb_strlen($bio)          > 500)  err('自己紹介は500文字以内で入力してください。');
     if ($postTemplate && mb_strlen($postTemplate) > 1000) err('SNS紹介タグは1000文字以内で入力してください。');
@@ -2363,8 +2766,8 @@ function actionProfileUpdate(): void {
 
         db()->prepare('INSERT INTO buddies_profiles
         (user_id, birthday, age, gender, location, buddies_since, bio,
-         tags, favorite_songs, next_lives, next_live_seats, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps, show_sakumv_quiz)
-        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+         tags, favorite_songs, next_lives, next_live_seats, sns_links, follow_stance, post_template, show_favorite_mimis, show_favorite_blogs, show_sakumap_stamps, show_sakumv_quiz, show_quest_badge)
+        VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
         ON DUPLICATE KEY UPDATE
           birthday=VALUES(birthday), age=VALUES(age),
           gender=VALUES(gender), location=VALUES(location),
@@ -2377,7 +2780,8 @@ function actionProfileUpdate(): void {
           show_favorite_mimis=VALUES(show_favorite_mimis),
           show_favorite_blogs=VALUES(show_favorite_blogs),
           show_sakumap_stamps=VALUES(show_sakumap_stamps),
-          show_sakumv_quiz=VALUES(show_sakumv_quiz)')
+          show_sakumv_quiz=VALUES(show_sakumv_quiz),
+          show_quest_badge=VALUES(show_quest_badge)')
     ->execute([
         $me['id'],
         $birthday,
@@ -2397,6 +2801,7 @@ function actionProfileUpdate(): void {
         $showFavoriteBlogs,
         $showSakumapStamps,
         $showSakumvQuiz,
+        $showQuestBadge,
     ]);
 
     $newUser = db()->prepare('SELECT * FROM sakulabo_users WHERE id=? LIMIT 1');
@@ -2451,7 +2856,7 @@ function actionLiveParticipants(): void {
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
         bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
-        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
+        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps, bp.show_quest_badge';
     $params = [];
     $where = ["bp.next_lives IS NOT NULL", "bp.next_lives <> ''", "bp.next_lives <> '[]'"];
     if ($liveId !== '') {
@@ -3165,7 +3570,7 @@ function actionExchangeList(): void {
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
                 bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
-                bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
+                bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps, bp.show_quest_badge,
                 e.created_at AS exchanged_at
          FROM buddies_exchanges e
          JOIN sakulabo_users u ON u.id = e.target_id
@@ -3231,7 +3636,7 @@ function actionFavoriteList(): void {
                 u.user_icon,
                 bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
                 bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
-                bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps,
+                bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps, bp.show_quest_badge,
                 f.created_at AS favorited_at
          FROM buddies_favorites f
          JOIN sakulabo_users u ON u.id = f.target_id
@@ -3301,7 +3706,7 @@ function actionSearch(): void {
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
         bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
-        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
+        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps, bp.show_quest_badge';
 
     $where  = ['u.id != ?'];
     $params = [$myId ?: 0];
@@ -3628,7 +4033,7 @@ function actionSimilar(): void {
         u.user_icon,
         bp.birthday, bp.age, bp.gender, bp.location, bp.buddies_since, bp.bio,
         bp.tags, bp.favorite_songs, bp.next_lives, bp.next_live_seats, bp.sns_links, bp.follow_stance, bp.post_template,
-        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps';
+        bp.show_favorite_mimis, bp.show_favorite_blogs, bp.show_sakumap_stamps, bp.show_quest_badge';
 
     // 候補を最大150件をランダム取得し PHP 側でスコアリング
     $st = db()->prepare("
@@ -6409,7 +6814,13 @@ function contactGenerateCode(PDO $pdo): string {
         for ($i = 0; $i < 4; $i++) $code .= $chars[random_int(0, strlen($chars) - 1)];
         $st = $pdo->prepare('SELECT id FROM buddies_contact_inquiries WHERE contact_code=? LIMIT 1');
         $st->execute([$code]);
-        if (!$st->fetch()) return $code;
+        if ($st->fetch()) continue;
+        if (formContactTablesAvailable()) {
+            $legacy = $pdo->prepare('SELECT id FROM form_contact_inquiries WHERE contact_code=? LIMIT 1');
+            $legacy->execute([$code]);
+            if ($legacy->fetch()) continue;
+        }
+        return $code;
     }
     throw new RuntimeException('管理番号の生成に失敗しました。');
 }
@@ -6678,11 +7089,11 @@ function contactFetchJoined(int $id): ?array {
     $st->execute([$id]);
     return $st->fetch() ?: null;
 }
-function buildContactInquiryData(array $r, bool $includeMessages = false): array {
+function buildContactInquiryData(array $r, bool $includeMessages = false, string $source = 'buddies'): array {
     $mode = (string)($r['account_mode'] ?? 'guest');
     $isAnonymous = $mode === 'anonymous';
     $contactMailSub = null;
-    if (!$isAnonymous && !empty($r['user_id']) && !empty($r['need_reply']) && (string)($r['reply_channel'] ?? '') === 'site') {
+    if ($source === 'buddies' && !$isAnonymous && !empty($r['user_id']) && !empty($r['need_reply']) && (string)($r['reply_channel'] ?? '') === 'site') {
         $contactMailSub = contactMailSubscriptionForUser((int)$r['user_id']);
     }
     $name = 'ログインなし';
@@ -6726,6 +7137,8 @@ function buildContactInquiryData(array $r, bool $includeMessages = false): array
         'latest_message'=>(string)($r['latest_message'] ?? ''),
         'latest_sender'=>(string)($r['latest_sender'] ?? ''),
         'latest_at'=>$r['latest_at'] ?? null,
+        'copied_to_form'=>!empty($r['copied_to_form']),
+        'form_id_conflict'=>!empty($r['form_id_conflict']),
     ];
     if ($includeMessages) {
         $st = db()->prepare('SELECT id, sender, body, created_at FROM buddies_contact_messages WHERE inquiry_id=? ORDER BY id ASC');
@@ -6764,6 +7177,184 @@ function buildContactInquiryData(array $r, bool $includeMessages = false): array
         ], $img->fetchAll());
     }
     return $data;
+}
+
+// form/ は独立した API から form_contact_* に保存するため、管理画面からは
+// Buddies 本体の問い合わせと同じ一覧・詳細画面で扱えるようにする。
+function formContactTablesAvailable(): bool {
+    static $available = null;
+    if ($available === true) return true;
+    try {
+        $pdo = db();
+        $inquiries = (bool)$pdo->query("SHOW TABLES LIKE 'form_contact_inquiries'")->fetchColumn();
+        $messages = (bool)$pdo->query("SHOW TABLES LIKE 'form_contact_messages'")->fetchColumn();
+        $available = $inquiries && $messages;
+    } catch (Throwable $e) {
+        $available = false;
+    }
+    return $available;
+}
+
+function ensureFormContactTables(): void {
+    $pdo = db();
+    $pdo->exec("CREATE TABLE IF NOT EXISTS form_contact_inquiries (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        contact_code CHAR(4) NOT NULL,
+        user_id INT NULL,
+        account_mode VARCHAR(20) NOT NULL DEFAULT 'guest',
+        requester_name VARCHAR(128) NULL,
+        requester_username VARCHAR(64) NULL,
+        category VARCHAR(80) NOT NULL,
+        title VARCHAR(200) NULL,
+        site_name VARCHAR(200) NULL,
+        message TEXT NOT NULL,
+        need_reply TINYINT(1) NOT NULL DEFAULT 1,
+        reply_channel VARCHAR(20) NOT NULL DEFAULT 'site',
+        dm_service VARCHAR(32) NULL,
+        dm_account VARCHAR(120) NULL,
+        email_notification TINYINT(1) NOT NULL DEFAULT 0,
+        status VARCHAR(20) NOT NULL DEFAULT 'open',
+        admin_replied_at DATETIME NULL,
+        user_read_at DATETIME NULL,
+        user_hidden_at DATETIME NULL,
+        admin_read_at DATETIME NULL,
+        updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE KEY uq_contact_code(contact_code),
+        KEY idx_contact_user(user_id,created_at),
+        KEY idx_contact_status(status,created_at)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS form_contact_messages (
+        id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+        inquiry_id BIGINT UNSIGNED NOT NULL,
+        sender VARCHAR(20) NOT NULL DEFAULT 'user',
+        body TEXT NOT NULL,
+        created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        INDEX idx_contact_messages_inquiry(inquiry_id,id)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS form_contact_migrations (
+        name VARCHAR(80) PRIMARY KEY,
+        migrated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci");
+}
+
+function contactAdminPublicId(string $source, int $id): int {
+    // 管理 API の id が両テーブルで衝突しても、form 側を負数にして区別する。
+    return $source === 'form' ? -abs($id) : abs($id);
+}
+
+function contactAdminSourceAndId(int $publicId): array {
+    return $publicId < 0 ? ['form', abs($publicId)] : ['buddies', $publicId];
+}
+
+function contactAdminFetch(string $source, int $id, ?string $code = null): ?array {
+    $source = $source === 'form' ? 'form' : 'buddies';
+    $inquiryTable = $source === 'form' ? 'form_contact_inquiries' : 'buddies_contact_inquiries';
+    $messageTable = $source === 'form' ? 'form_contact_messages' : 'buddies_contact_messages';
+    $imageCount = $source === 'form'
+        ? '0'
+        : '(SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id)';
+    $copiedToForm = ($source === 'buddies' && formContactTablesAvailable())
+        ? '(SELECT COUNT(*) FROM form_contact_inquiries fci WHERE fci.id=ci.id AND fci.contact_code=ci.contact_code)'
+        : '0';
+    $formIdConflict = ($source === 'buddies' && formContactTablesAvailable())
+        ? '(SELECT COUNT(*) FROM form_contact_inquiries fci WHERE fci.id=ci.id AND fci.contact_code<>ci.contact_code)'
+        : '0';
+    $where = $code !== null ? 'ci.contact_code=?' : 'ci.id=?';
+    $value = $code !== null ? $code : $id;
+    $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon,
+        {$imageCount} AS image_count,
+        {$copiedToForm} AS copied_to_form,
+        {$formIdConflict} AS form_id_conflict,
+        (SELECT COUNT(*) FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id AND cm.sender='admin') AS admin_reply_count,
+        (SELECT COUNT(*) FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id AND cm.sender='user' AND (ci.admin_read_at IS NULL OR cm.created_at > ci.admin_read_at)) AS unread_user_count,
+        (SELECT cm.body FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_message,
+        (SELECT cm.sender FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_sender,
+        (SELECT cm.created_at FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_at
+        FROM {$inquiryTable} ci
+        LEFT JOIN sakulabo_users u ON u.id=ci.user_id
+        WHERE {$where} LIMIT 1");
+    $st->execute([$value]);
+    $row = $st->fetch();
+    if (!$row) return null;
+    $row['_contact_source'] = $source;
+    return $row;
+}
+
+function contactAdminFind(string $code): ?array {
+    $row = contactAdminFetch('buddies', 0, $code);
+    if ($row) return $row;
+    return null;
+}
+
+function buildContactAdminData(array $row, bool $includeMessages = false): array {
+    $source = (string)($row['_contact_source'] ?? 'buddies');
+    $data = buildContactInquiryData($row, false, $source);
+    $data['id'] = contactAdminPublicId($source, (int)$row['id']);
+    $data['contact_source'] = $source;
+    if (!$includeMessages) return $data;
+
+    $messageTable = $source === 'form' ? 'form_contact_messages' : 'buddies_contact_messages';
+    $st = db()->prepare("SELECT id, sender, body, created_at FROM {$messageTable} WHERE inquiry_id=? ORDER BY id ASC");
+    $st->execute([(int)$row['id']]);
+    $data['messages'] = array_map(fn($m) => [
+        'id'=>(int)$m['id'],
+        'sender'=>(string)$m['sender'],
+        'body'=>(string)$m['body'],
+        'created_at'=>$m['created_at'],
+        'can_edit'=>false,
+    ], $st->fetchAll());
+    $data['images'] = [];
+    if ($source === 'buddies') {
+        $img = db()->prepare('SELECT id, message_id, file_url, original_name, mime_type, size_bytes, created_at FROM buddies_contact_images WHERE inquiry_id=? ORDER BY id ASC');
+        $img->execute([(int)$row['id']]);
+        $data['images'] = array_map(fn($x) => [
+            'id'=>(int)$x['id'],
+            'message_id'=>isset($x['message_id']) ? (int)$x['message_id'] : 0,
+            'url'=>(string)$x['file_url'],
+            'original_name'=>(string)($x['original_name'] ?? ''),
+            'mime_type'=>(string)$x['mime_type'],
+            'size_bytes'=>(int)$x['size_bytes'],
+            'created_at'=>$x['created_at'],
+        ], $img->fetchAll());
+    }
+    return $data;
+}
+
+function contactAdminListRows(string $source): array {
+    $inquiryTable = $source === 'form' ? 'form_contact_inquiries' : 'buddies_contact_inquiries';
+    $messageTable = $source === 'form' ? 'form_contact_messages' : 'buddies_contact_messages';
+    $imageCount = $source === 'form'
+        ? '0'
+        : '(SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id)';
+    $copiedToForm = ($source === 'buddies' && formContactTablesAvailable())
+        ? '(SELECT COUNT(*) FROM form_contact_inquiries fci WHERE fci.id=ci.id AND fci.contact_code=ci.contact_code)'
+        : '0';
+    $formIdConflict = ($source === 'buddies' && formContactTablesAvailable())
+        ? '(SELECT COUNT(*) FROM form_contact_inquiries fci WHERE fci.id=ci.id AND fci.contact_code<>ci.contact_code)'
+        : '0';
+    $st = db()->query("SELECT ci.*, u.username, u.display_name, u.user_icon,
+        {$imageCount} AS image_count,
+        {$copiedToForm} AS copied_to_form,
+        {$formIdConflict} AS form_id_conflict,
+        (SELECT COUNT(*) FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id AND cm.sender='admin') AS admin_reply_count,
+        (SELECT COUNT(*) FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id AND cm.sender='user' AND (ci.admin_read_at IS NULL OR cm.created_at > ci.admin_read_at)) AS unread_user_count,
+        (SELECT cm.body FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_message,
+        (SELECT cm.sender FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_sender,
+        (SELECT cm.created_at FROM {$messageTable} cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_at
+        FROM {$inquiryTable} ci
+        LEFT JOIN sakulabo_users u ON u.id=ci.user_id
+        ORDER BY ci.updated_at DESC, ci.created_at DESC
+        LIMIT 300");
+    return array_map(function ($row) use ($source) {
+        $row['_contact_source'] = $source;
+        return $row;
+    }, $st->fetchAll());
+}
+
+function contactAdminResolvedByPublicId(int $publicId): ?array {
+    if ($publicId <= 0) return null;
+    return contactAdminFetch('buddies', $publicId);
 }
 function actionContactMineList(): void { ensureContactTables();
     $u = requireAuth();
@@ -6907,7 +7498,7 @@ function contactPublicBaseFromApi(): string {
     $scheme = $https ? 'https' : 'http';
     $host = preg_replace('/[\r\n\0]/', '', $_SERVER['HTTP_HOST'] ?? 'buddies46.stars.ne.jp');
     $apiDir = rtrim(str_replace('\\', '/', dirname($_SERVER['SCRIPT_NAME'] ?? '/')), '/');
-    return $scheme . '://' . $host . $apiDir . '/form/';
+    return $scheme . '://' . $host . dirname($apiDir) . '/form/';
 }
 function contactSaveUploadedImages(PDO $pdo, int $inquiryId, ?int $messageId, string $code, int $maxAdd = 1): array {
     if (empty($_FILES['images'])) return [];
@@ -6922,7 +7513,7 @@ function contactSaveUploadedImages(PDO $pdo, int $inquiryId, ?int $messageId, st
     $errs  = is_array($files['error']) ? $files['error'] : [$files['error']];
     $sizes = is_array($files['size']) ? $files['size'] : [$files['size']];
     $allowed = ['image/jpeg','image/png','image/gif','image/webp'];
-    $dir = __DIR__ . '/form/img';
+    $dir = __DIR__ . '/../form/img';
     if (!is_dir($dir) && !@mkdir($dir, 0755, true)) err('画像保存先を作成できません。');
     $saved = [];
     for ($i=0; $i<min(count($names), $limit); $i++) {
@@ -7046,49 +7637,29 @@ function actionContactUserHide(): void { ensureContactTables();
 }
 function actionContactAdminList(): void { ensureContactTables();
     requireHiromameAdmin();
-    $st = db()->query("SELECT ci.*, u.username, u.display_name, u.user_icon,
-        (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='admin') AS admin_reply_count,
-        (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='user' AND (ci.admin_read_at IS NULL OR cm.created_at > ci.admin_read_at)) AS unread_user_count,
-        (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count,
-        (SELECT cm.body FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_message,
-        (SELECT cm.sender FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_sender,
-        (SELECT cm.created_at FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id ORDER BY cm.id DESC LIMIT 1) AS latest_at
-        FROM buddies_contact_inquiries ci
-        LEFT JOIN sakulabo_users u ON u.id = ci.user_id
-        ORDER BY CASE WHEN (SELECT COUNT(*) FROM buddies_contact_messages cm WHERE cm.inquiry_id=ci.id AND cm.sender='user' AND (ci.admin_read_at IS NULL OR cm.created_at > ci.admin_read_at)) > 0 THEN 0 ELSE 1 END,
-                 CASE ci.status WHEN 'open' THEN 0 WHEN 'pending' THEN 1 WHEN 'accepted' THEN 2 WHEN 'replied' THEN 3 WHEN 'rejected' THEN 4 WHEN 'cancelled' THEN 5 WHEN 'closed' THEN 6 ELSE 7 END,
-                 ci.updated_at DESC, ci.created_at DESC
-        LIMIT 300");
-    $rows = $st->fetchAll();
-    ok(array_map(function($r) {
-        return buildContactInquiryData($r, false);
-    }, $rows));
+    $rows = contactAdminListRows('buddies');
+    usort($rows, function ($a, $b) {
+        $unread = (int)($b['unread_user_count'] ?? 0) <=> (int)($a['unread_user_count'] ?? 0);
+        if ($unread !== 0) return $unread;
+        $rank = ['open'=>0,'pending'=>1,'accepted'=>2,'replied'=>3,'rejected'=>4,'cancelled'=>5,'closed'=>6];
+        $status = ($rank[(string)($a['status'] ?? '')] ?? 7) <=> ($rank[(string)($b['status'] ?? '')] ?? 7);
+        if ($status !== 0) return $status;
+        return strcmp((string)($b['updated_at'] ?? $b['created_at'] ?? ''), (string)($a['updated_at'] ?? $a['created_at'] ?? ''));
+    });
+    ok(array_map(fn($r) => buildContactAdminData($r, false), array_slice($rows, 0, 300)));
 }
 function actionContactAdminGet(): void { ensureContactTables();
     requireHiromameAdmin();
     $id = (int)($_GET['id'] ?? 0);
     $code = strtoupper(contactClean($_GET['code'] ?? $_GET['contact_code'] ?? '', 8));
     if ($id <= 0 && $code === '') err('id または code は必須です。');
-    if ($id > 0) {
-        $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon,
-            (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count
-            FROM buddies_contact_inquiries ci
-            LEFT JOIN sakulabo_users u ON u.id = ci.user_id
-            WHERE ci.id=? LIMIT 1");
-        $st->execute([$id]);
-    } else {
-        $st = db()->prepare("SELECT ci.*, u.username, u.display_name, u.user_icon,
-            (SELECT COUNT(*) FROM buddies_contact_images cimg WHERE cimg.inquiry_id=ci.id) AS image_count
-            FROM buddies_contact_inquiries ci
-            LEFT JOIN sakulabo_users u ON u.id = ci.user_id
-            WHERE ci.contact_code=? LIMIT 1");
-        $st->execute([$code]);
-    }
-    $r = $st->fetch();
+    $r = $id !== 0 ? contactAdminResolvedByPublicId($id) : contactAdminFind($code);
     if (!$r) err('お問い合わせが見つかりません。', 404);
-    try { db()->prepare('UPDATE buddies_contact_inquiries SET admin_read_at=NOW() WHERE id=?')->execute([(int)$r['id']]); } catch (Throwable $e) {}
+    $source = 'buddies';
+    $table = 'buddies_contact_inquiries';
+    try { db()->prepare("UPDATE {$table} SET admin_read_at=NOW() WHERE id=?")->execute([(int)$r['id']]); } catch (Throwable $e) {}
     $r['unread_user_count'] = 0;
-    ok(buildContactInquiryData($r, true));
+    ok(buildContactAdminData($r, true));
 }
 function actionContactAdminReply(): void { ensureContactTables();
     requireHiromameAdmin();
@@ -7098,27 +7669,139 @@ function actionContactAdminReply(): void { ensureContactTables();
     $sendEmail = !empty($b['send_email']);
     if ($id <= 0) err('id は必須です。');
     if ($reply === '') err('返信内容を入力してください。');
-    $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
-    $st->execute([$id]);
-    $r = $st->fetch();
+    $r = contactAdminResolvedByPublicId($id);
     if (!$r) err('お問い合わせが見つかりません。', 404);
     if (in_array((string)$r['status'], ['rejected','cancelled','accepted','replied','closed'], true)) err('このステータスのお問い合わせには返信を追加できません。');
-    contactRateLimit('admin_reply_' . $id, 4);
-    db()->prepare("INSERT INTO buddies_contact_messages (inquiry_id, sender, body) VALUES (?,?,?)")
-      ->execute([$id, 'admin', $reply]);
-    db()->prepare("UPDATE buddies_contact_inquiries SET admin_replied_at=NOW(), email_notification=0, status=CASE WHEN status IN ('accepted','replied','rejected','cancelled','closed') THEN status ELSE 'open' END, updated_at=NOW() WHERE id=?")->execute([$id]);
-    $fresh = contactFetchJoined($id);
+    $source = 'buddies';
+    $physicalId = (int)$r['id'];
+    $inquiryTable = 'buddies_contact_inquiries';
+    $messageTable = 'buddies_contact_messages';
+    contactRateLimit('admin_reply_' . $source . '_' . $physicalId, 4);
+    db()->prepare("INSERT INTO {$messageTable} (inquiry_id, sender, body) VALUES (?,?,?)")
+      ->execute([$physicalId, 'admin', $reply]);
+    db()->prepare("UPDATE {$inquiryTable} SET admin_replied_at=NOW(), email_notification=0, status=CASE WHEN status IN ('accepted','replied','rejected','cancelled','closed') THEN status ELSE 'open' END, updated_at=NOW() WHERE id=?")->execute([$physicalId]);
     $mailNotification = ['requested'=>$sendEmail,'sent'=>false,'available'=>false,'reason'=>'今回はメール通知を送信していません。'];
     if ($sendEmail) {
         try {
-            $mailNotification = ['requested'=>true] + sendContactReplyNotificationForInquiry($id);
+            $mailNotification = ['requested'=>true] + sendContactReplyNotificationForInquiry($physicalId);
         } catch (Throwable $e) {
             error_log('[contact] reply notification failed: ' . $e->getMessage());
             $mailNotification = ['requested'=>true,'sent'=>false,'available'=>true,'reason'=>'メール通知に失敗しました。管理画面から再送できます。'];
         }
     }
-    $fresh = contactFetchJoined($id);
-    ok(['replied'=>true, 'mail_notification'=>$mailNotification, 'inquiry'=>$fresh ? buildContactInquiryData($fresh, true) : null]);
+    $fresh = contactAdminFetch($source, $physicalId);
+    ok(['replied'=>true, 'mail_notification'=>$mailNotification, 'inquiry'=>$fresh ? buildContactAdminData($fresh, true) : null]);
+}
+
+function copyBuddiesContactToForm(int $id): array {
+    $source = contactAdminFetch('buddies', $id);
+    if (!$source) throw new RuntimeException('お問い合わせが見つかりません。');
+
+    ensureFormContactTables();
+    $pdo = db();
+    $targetByIdSt = $pdo->prepare('SELECT * FROM form_contact_inquiries WHERE id=? LIMIT 1');
+    $targetByIdSt->execute([$id]);
+    $targetById = $targetByIdSt->fetch() ?: null;
+    $targetByCodeSt = $pdo->prepare('SELECT * FROM form_contact_inquiries WHERE contact_code=? LIMIT 1');
+    $targetByCodeSt->execute([(string)$source['contact_code']]);
+    $targetByCode = $targetByCodeSt->fetch() ?: null;
+
+    if ($targetById && (string)$targetById['contact_code'] !== (string)$source['contact_code']) {
+        throw new RuntimeException('satellite/form側ですでに別のお問い合わせが同じ内部IDを使用しています。上書きせず中止しました。');
+    }
+    if ($targetByCode && (int)$targetByCode['id'] !== $id) {
+        throw new RuntimeException('satellite/form側ですでに同じ管理番号が別の内部IDで使用されています。上書きせず中止しました。');
+    }
+
+    $messageSt = $pdo->prepare('SELECT id, inquiry_id, sender, body, created_at FROM buddies_contact_messages WHERE inquiry_id=? ORDER BY id ASC');
+    $messageSt->execute([$id]);
+    $sourceMessages = $messageSt->fetchAll();
+
+    $pdo->beginTransaction();
+    try {
+        $alreadyCopied = (bool)$targetById;
+        if (!$alreadyCopied) {
+            $columns = 'id,contact_code,user_id,account_mode,requester_name,requester_username,category,title,site_name,message,need_reply,reply_channel,dm_service,dm_account,email_notification,status,admin_replied_at,user_read_at,user_hidden_at,admin_read_at,updated_at,created_at';
+            $pdo->prepare("INSERT INTO form_contact_inquiries ({$columns}) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)")
+                ->execute([
+                    $id,
+                    $source['contact_code'],
+                    $source['user_id'],
+                    $source['account_mode'],
+                    $source['requester_name'],
+                    $source['requester_username'],
+                    $source['category'],
+                    $source['title'] ?? '',
+                    $source['site_name'],
+                    $source['message'],
+                    $source['need_reply'],
+                    $source['reply_channel'],
+                    $source['dm_service'],
+                    $source['dm_account'],
+                    $source['email_notification'],
+                    $source['status'],
+                    $source['admin_replied_at'],
+                    $source['user_read_at'],
+                    $source['user_hidden_at'],
+                    $source['admin_read_at'],
+                    $source['updated_at'],
+                    $source['created_at'],
+                ]);
+        }
+
+        $targetMessageSt = $pdo->prepare('SELECT id, inquiry_id, sender, body, created_at FROM form_contact_messages WHERE id=? LIMIT 1');
+        $insertMessageSt = $pdo->prepare('INSERT INTO form_contact_messages (id,inquiry_id,sender,body,created_at) VALUES (?,?,?,?,?)');
+        foreach ($sourceMessages as $message) {
+            $targetMessageSt->execute([(int)$message['id']]);
+            $targetMessage = $targetMessageSt->fetch() ?: null;
+            if ($targetMessage) {
+                if ((int)$targetMessage['inquiry_id'] !== $id
+                    || (string)$targetMessage['sender'] !== (string)$message['sender']
+                    || (string)$targetMessage['body'] !== (string)$message['body']) {
+                    throw new RuntimeException('satellite/form側ですでに別のメッセージが同じ内部IDを使用しています。上書きせず中止しました。');
+                }
+                continue;
+            }
+            $insertMessageSt->execute([
+                (int)$message['id'],
+                $id,
+                $message['sender'],
+                $message['body'],
+                $message['created_at'],
+            ]);
+        }
+        $pdo->commit();
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        throw $e;
+    }
+    // form API 初回起動時の旧テーブル一括移行を止め、明示コピー方式を維持する。
+    $pdo->prepare("INSERT IGNORE INTO form_contact_migrations(name) VALUES('legacy_buddies_contacts')")->execute();
+
+    $fresh = contactAdminFetch('buddies', $id);
+    return [
+        'copied'=>true,
+        'already_copied'=>$alreadyCopied,
+        'id'=>$id,
+        'target_id'=>$id,
+        'contact_code'=>(string)$source['contact_code'],
+        'inquiry'=>$fresh ? buildContactAdminData($fresh, true) : null,
+    ];
+}
+
+function actionContactAdminCopyToForm(): void { ensureContactTables();
+    requireHiromameAdmin();
+    $id = (int)(body()['id'] ?? $_GET['id'] ?? 0);
+    if ($id <= 0) err('id は必須です。');
+    try {
+        ok(copyBuddiesContactToForm($id));
+    } catch (Throwable $e) {
+        error_log('[contact] copy to form failed: ' . $e->getMessage());
+        if ($e instanceof PDOException) {
+            err('satellite/formへのコピーに失敗しました。時間をおいて再度お試しください。', 500);
+        }
+        err($e->getMessage(), 409);
+    }
 }
 
 function ensureContactMailSubscriptionColumn(): void {
@@ -7187,11 +7870,7 @@ function contactMailRegistrationStateForUser(int $userId): array {
 }
 
 function contactLoadMailSystemCore(): void {
-    if (function_exists('todo_mail_send')) return;
-    $core = __DIR__ . '/../mail-system/system/mail.php';
-    if (!is_file($core)) err('Mail Systemの送信機能が見つかりません。', 500);
-    require_once $core;
-    if (!function_exists('todo_mail_send')) err('Mail Systemの送信機能を読み込めませんでした。', 500);
+    if (!function_exists('buddies_mail_send')) err('Buddiesのメール送信機能を読み込めませんでした。', 500);
 }
 
 function contactMailConfirmationUrl(string $token): string {
@@ -7202,17 +7881,19 @@ function contactMailConfirmationUrl(string $token): string {
 function contactMailRegistrationMessage(array $user, string $email, string $confirmUrl): array {
     contactLoadMailSystemCore();
     $name = (string)(($user['display_name'] ?? '') ?: ($user['username'] ?? 'Buddies'));
-    $expires = function_exists('todo_mail_confirm_expires_label') ? todo_mail_confirm_expires_label() : '24時間以内';
-    $subject = '[Buddies お問い合わせ] 返信メール通知の登録確認';
+    $hours = max(1, min(168, (int)(buddies_mail_env('BUDDIES_MAIL_CONFIRM_EXPIRES_HOURS', '24') ?: '24')));
+    $expires = buddies_mail_expiry_label($hours * 3600);
+    $prefix = buddies_mail_subject_prefix();
+    $subject = $prefix . ' お問い合わせ返信メール通知の登録確認';
     $text = "お問い合わせ返信通知のメールアドレス確認\n\n"
         . $name . " さん\n\n"
         . "お問い合わせへの返信をメールでお知らせするため、メールアドレスの確認をお願いします。\n"
         . "下のリンクを開くとメールアドレスが認証され、お問い合わせページで通知先を確認できます。\n\n"
         . "▼メールアドレスを認証する\n" . $confirmUrl . "\n\n"
-        . "このリンクの有効期限は " . $expires . " です。\n"
+        . "このリンクの有効期限は " . $expires . " です。一度認証すると使えなくなります。\n"
         . "心当たりがない場合は、このメールを破棄してください。\n\n"
-        . (function_exists('mail_system_footer_text') ? mail_system_footer_text(contactUserFormUrl()) : 'ひろまめ / Mail System');
-    return ['subject'=>$subject,'text'=>$text,'html'=>''];
+        . buddies_mail_footer();
+    return ['subject'=>$subject,'text'=>$text];
 }
 
 function actionContactMailStatus(): void {
@@ -7235,7 +7916,7 @@ function actionContactMailRequest(): void {
     }
     $token = bin2hex(random_bytes(32));
     $hash = hash('sha256', $token);
-    $hours = max(1, min(168, (int)(envv('TODO_MAIL_CONFIRM_EXPIRES_HOURS', '24') ?: '24')));
+    $hours = max(1, min(168, (int)(buddies_mail_env('BUDDIES_MAIL_CONFIRM_EXPIRES_HOURS', '24') ?: '24')));
     $expires = date('Y-m-d H:i:s', time() + $hours * 3600);
     if ($existing && (string)$existing['status'] === 'active') {
         db()->prepare('UPDATE buddies_todo_email_subscriptions SET contact_pending_email=?, confirm_token_hash=?, token_expires_at=?, contact_enabled=0, last_error=NULL WHERE user_id=?')
@@ -7249,7 +7930,7 @@ function actionContactMailRequest(): void {
     }
     $confirmUrl = contactMailConfirmationUrl($token);
     $message = contactMailRegistrationMessage($u, $email, $confirmUrl);
-    $sent = todo_mail_send([$email], $message['subject'], $message['text'], $message['html']);
+    $sent = buddies_mail_send($email, $message['subject'], $message['text']);
     if (!$sent) {
         if ($existing) {
             db()->prepare('UPDATE buddies_todo_email_subscriptions SET email=?, status=?, contact_pending_email=?, confirm_token_hash=?, token_expires_at=?, confirmed_at=?, unsubscribed_at=?, contact_enabled=?, last_error=? WHERE user_id=?')
@@ -7317,13 +7998,14 @@ function latestAdminContactMessage(int $inquiryId): ?array {
 }
 
 function contactMailSystemUrl(string $route = 'contact-mail'): string {
-    $base = trim((string)(envv('MAIL_SYSTEM_BASE_URL', '') ?: ''));
-    if ($base === '') $base = '../mail-system/';
-    return rtrim($base, '/') . '/?' . rawurlencode($route);
+    return (string)(buddies_mail_env(
+        'BUDDIES_MAIL_SETTINGS_URL',
+        'https://buddies46.stars.ne.jp/satellite/buddies/account/'
+    ) ?: 'https://buddies46.stars.ne.jp/satellite/buddies/account/');
 }
 
 function contactUserFormUrl(): string {
-    return (string)(envv('BUDDIES_CONTACT_URL', 'https://buddies46.stars.ne.jp/satellite/buddies/form/') ?: 'https://buddies46.stars.ne.jp/satellite/buddies/form/');
+    return (string)(envv('BUDDIES_CONTACT_URL', 'https://buddies46.stars.ne.jp/satellite/form/') ?: 'https://buddies46.stars.ne.jp/satellite/form/');
 }
 
 function sendContactReplyNotificationForInquiry(int $id): array {
@@ -7337,16 +8019,21 @@ function sendContactReplyNotificationForInquiry(int $id): array {
     if (!$sub) return ['sent'=>false,'available'=>false,'reason'=>'返信メール通知が登録されていません。'];
     $message = latestAdminContactMessage($id);
     if (!$message) throw new RuntimeException('通知できる管理者返信がありません。');
-    $template = __DIR__ . '/../mail-system/contact/mail.php';
-    if (!is_file($template)) throw new RuntimeException('お問い合わせメールテンプレートが見つかりません。');
-    require_once $template;
-    if (!function_exists('contact_mail_reply_notification_message') || !function_exists('todo_mail_send')) {
-        throw new RuntimeException('お問い合わせメール送信機能を読み込めませんでした。');
-    }
+    contactLoadMailSystemCore();
     $code = (string)($r['contact_code'] ?? ('ID' . $id));
-    $payload = contact_mail_reply_notification_message($r, $message, contactUserFormUrl(), contactMailSystemUrl('contact-mail'));
-    $sent = todo_mail_send([(string)$sub['email']], $payload['subject'], $payload['text'], $payload['html']);
-    if (!$sent) throw new RuntimeException('Mail Systemから返信通知を送信できませんでした。');
+    $category = (string)($r['category'] ?? 'お問い合わせ');
+    $reply = trim((string)($message['body'] ?? ''));
+    $prefix = buddies_mail_subject_prefix();
+    $subject = $prefix . ' #' . $code . ' に返信がありました';
+    $text = "お問い合わせに返信がありました\n\n"
+        . "管理番号: #" . $code . "\n"
+        . "カテゴリ: " . $category . "\n\n"
+        . "返信内容:\n" . $reply . "\n\n"
+        . "このサイトで返信を確認する\n" . contactUserFormUrl() . "\n\n"
+        . "メール通知設定\n" . contactMailSystemUrl() . "\n\n"
+        . buddies_mail_footer();
+    $sent = buddies_mail_send((string)$sub['email'], $subject, $text);
+    if (!$sent) throw new RuntimeException('Buddiesから返信通知を送信できませんでした。');
     db()->prepare('UPDATE buddies_contact_inquiries SET email_notification=1, updated_at=NOW() WHERE id=?')->execute([$id]);
     return ['sent'=>true,'available'=>true,'to'=>(string)$sub['email'],'contact_code'=>$code];
 }
@@ -7379,14 +8066,14 @@ function actionContactAdminUpdateStatus(): void { ensureContactTables();
     $status = contactClean($b['status'] ?? '', 20);
     if ($id <= 0) err('id は必須です。');
     if (!in_array($status, ['open','rejected','pending','accepted','replied'], true)) err('不正なステータスです。');
-    $st = db()->prepare('SELECT * FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
-    $st->execute([$id]);
-    $r = $st->fetch();
+    $r = contactAdminResolvedByPublicId($id);
     if (!$r) err('お問い合わせが見つかりません。', 404);
-    db()->prepare("UPDATE buddies_contact_inquiries SET status=?, user_hidden_at=CASE WHEN ? IN ('open','pending','rejected') THEN NULL ELSE user_hidden_at END, updated_at=NOW() WHERE id=?")->execute([$status, $status, $id]);
-    $fresh = contactFetchJoined($id);
+    $source = 'buddies';
+    $table = 'buddies_contact_inquiries';
+    db()->prepare("UPDATE {$table} SET status=?, user_hidden_at=CASE WHEN ? IN ('open','pending','rejected') THEN NULL ELSE user_hidden_at END, updated_at=NOW() WHERE id=?")->execute([$status, $status, (int)$r['id']]);
+    $fresh = contactAdminFetch($source, (int)$r['id']);
     if (!$fresh) err('更新後のお問い合わせが見つかりません。', 404);
-    ok(buildContactInquiryData($fresh, true));
+    ok(buildContactAdminData($fresh, true));
 }
 function contactAdminDeleteFiles(int $id): void {
     try {
@@ -7416,14 +8103,17 @@ function actionContactAdminDelete(): void { ensureContactTables();
     $b = body();
     $id = (int)($b['id'] ?? ($_GET['id'] ?? 0));
     if ($id <= 0) err('id は必須です。');
-    $st = db()->prepare('SELECT id, contact_code, status FROM buddies_contact_inquiries WHERE id=? LIMIT 1');
-    $st->execute([$id]);
-    $r = $st->fetch();
+    $r = contactAdminResolvedByPublicId($id);
     if (!$r) err('お問い合わせが見つかりません。', 404);
     if ((string)($r['status'] ?? 'open') === 'open') {
         err('受付中のお問い合わせは削除できません。ステータスを変更してから削除してください。', 400);
     }
-    contactAdminDeleteFiles($id);
-    db()->prepare('DELETE FROM buddies_contact_inquiries WHERE id=?')->execute([$id]);
+    $source = 'buddies';
+    $physicalId = (int)$r['id'];
+    contactAdminDeleteFiles($physicalId);
+    $inquiryTable = 'buddies_contact_inquiries';
+    $messageTable = 'buddies_contact_messages';
+    db()->prepare("DELETE FROM {$messageTable} WHERE inquiry_id=?")->execute([$physicalId]);
+    db()->prepare("DELETE FROM {$inquiryTable} WHERE id=?")->execute([$physicalId]);
     ok(['deleted'=>true, 'id'=>$id, 'contact_code'=>(string)($r['contact_code'] ?? '')]);
 }

@@ -90,7 +90,7 @@ button{border:0;background:none;padding:0;cursor:pointer}
   <div class="sheet" onclick="event.stopPropagation()">
     <div class="sheet-h"></div>
     <div class="sheet-t">お問い合わせ</div>
-    <a class="opt" href="../form/">
+    <a class="opt" href="../../form/">
       <span class="opt-ico"><i data-lucide="mail" width="20" height="20"></i></span>
       <span><div style="font-weight:600">フォームで問い合わせ</div><div style="font-size:12px;color:#666">お問い合わせフォームを開きます</div></span>
     </a>

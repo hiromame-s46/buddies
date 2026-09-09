@@ -14,6 +14,8 @@ secrets/
 
 # Local schema/runtime markers
 .buddies_schema_*.lock
+.buddies_schema_*.lock.busy
+.buddies_schema_*.lock.*.tmp
 *.lock.local
 
 # User generated uploads

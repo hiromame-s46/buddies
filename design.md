@@ -1,6 +1,6 @@
 # Buddies — デザインガイド
 
-Buddies（櫻坂46ファン向けコミュニティマッチングプラットフォーム）のビジュアル／UI 設計ドキュメント。実装は単一の [index.html](index.html) に内包された CSS / JS を中心に、[account/index.html](account/index.html) と [form/index.html](form/index.html) でも同じ設計言語を踏襲する。
+Buddies（櫻坂46ファン向けコミュニティマッチングプラットフォーム）のビジュアル／UI 設計ドキュメント。実装は単一の [index.html](index.html) に内包された CSS / JS を中心に、[account/index.html](account/index.html) と [../form/index.html](../form/index.html) でも同じ設計言語を踏襲する。
 
 ---
 
@@ -294,7 +294,7 @@ min-height:40px;
 - 角丸 12px の長方形入力（ピル UI ではなくフォーム UI）。
 - 危険操作（ログアウト・削除）は赤系の `.btn-danger`。
 
-### 9.3 お問い合わせフォーム（[form/index.html](form/index.html)）
+### 9.3 お問い合わせフォーム（[../form/index.html](../form/index.html)）
 
 - 余白を広く取った最小限のシングルカラム。
 - 入力はピル系（`border-radius:9999px`）に戻る。

@@ -422,6 +422,8 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .live-filter-past .next-live-edit-venue{color:#999}
 .next-live-list{display:grid;gap:8px}
 .next-live-item{display:grid;gap:3px;padding:12px 14px;border:1px solid #ececec;border-radius:16px;background:#fff}
+.next-live-item.live-setlist-trigger{width:100%;font:inherit;text-align:left;color:inherit;cursor:pointer;transition:background .15s,border-color .15s}
+.next-live-item.live-setlist-trigger:hover{background:#fafafa;border-color:#d8d8d8}
 .next-live-date{font-size:12px;font-weight:900;color:#111}
 .next-live-title{font-size:13px;font-weight:800;color:#222;line-height:1.45}
 .next-live-venue{font-size:12px;color:#666;line-height:1.45}
@@ -592,6 +594,15 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .badge-popup { position:fixed; z-index:9001; background:#fff; border-radius:12px; box-shadow:0 4px 24px rgba(0,0,0,.18); padding:14px 16px; max-width:240px; font-size:13px; line-height:1.5; color:#333; }
 .badge-popup-header { display:flex; align-items:center; gap:8px; font-weight:700; font-size:14px; margin-bottom:6px; }
 .badge-popup-close { margin-left:auto; background:none; border:none; cursor:pointer; padding:0; color:#999; font-size:16px; line-height:1; }
+.setlist-modal-card{display:grid;gap:14px}
+.setlist-modal-kicker{font-size:11px;color:#888;font-weight:900;letter-spacing:.04em}
+.setlist-modal-title{font-size:19px;font-weight:900;line-height:1.45;padding-right:28px}
+.setlist-modal-meta{font-size:12px;color:#666;line-height:1.6}
+.setlist-list{display:grid;gap:7px}
+.setlist-song{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:9px 10px;border-radius:12px;background:#fafafa;border:1px solid #f0f0f0}
+.setlist-song-no{font-size:12px;color:#999;font-weight:900;text-align:center}
+.setlist-song-title{font-size:13px;font-weight:800;line-height:1.45}
+.setlist-song-remark{display:block;font-size:11px;color:#777;font-weight:600;margin-top:2px}
 .profile-mini-name { font-weight:600; font-size:15px; margin-bottom:2px; }
 .profile-mini-meta { font-size:12px; color:var(--gray); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .profile-mini-exchanged-at { font-size:11px; color:#aaa; margin-top:3px; white-space:nowrap; }
@@ -680,9 +691,11 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .social-blog-option-member { font-size:11px; color:#cf5d83; font-weight:950; }
 .social-blog-option-title { min-width:0; font-size:12px; font-weight:950; line-height:1.35; overflow:hidden; overflow-wrap:anywhere; display:-webkit-box; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
 .social-blog-option-date { font-size:10px; color:#888; font-weight:800; }
-.social-blog-image-option { position:relative; min-width:0; width:100%; aspect-ratio:1/1; border:1px solid #ececec; border-radius:14px; background:#f5f5f5; padding:0; overflow:hidden; cursor:pointer; isolation:isolate; }
+.social-picker-list.is-image-grid { grid-auto-rows:auto; align-items:start; }
+.social-blog-image-option { position:relative; display:block; align-self:start; min-width:0; width:100%; max-width:100%; height:auto; border:1px solid #ececec; border-radius:14px; background:#f5f5f5; padding:0; overflow:hidden; cursor:pointer; isolation:isolate; }
+.social-blog-image-option::before { content:''; display:block; width:100%; padding-top:100%; }
 .social-blog-image-option:hover { border-color:#ccc; }
-.social-blog-image-option img { position:absolute; inset:0; width:100%; height:100%; min-width:0; min-height:0; object-fit:contain; display:block; }
+.social-blog-image-option img { position:absolute; inset:0; width:100%; height:100%; max-width:100%; max-height:100%; min-width:0; min-height:0; object-fit:contain; display:block; }
 .social-compose-actions { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; border-top:1px solid #f0f0f0; padding-top:12px; }
 .social-modal-open { overflow:hidden; }
 @media(max-width:560px){
@@ -783,7 +796,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 .header-icon-btn:hover { background:#f2f2f2; color:#000; }
 .header-icon-btn:active { background:#e8e8e8; }
 
-.floating-tabbar { position:fixed; left:0; right:0; bottom:calc(-48px - env(safe-area-inset-bottom)); height:calc(172px + env(safe-area-inset-bottom)); padding:34px max(22px, env(safe-area-inset-left)) calc(66px + env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-right)); background:linear-gradient(to top,#fff 0%,#fff 28%,rgba(255,255,255,.98) 48%,rgba(255,255,255,.9) 74%,rgba(255,255,255,0) 100%); border:0; border-radius:0; box-shadow:none; display:flex; align-items:flex-end; justify-content:center; gap:30px; z-index:100; pointer-events:none; }
+.floating-tabbar { position:fixed; left:0; right:0; bottom:0; height:calc(76px + env(safe-area-inset-bottom)); padding:10px max(22px, env(safe-area-inset-left)) calc(18px + env(safe-area-inset-bottom)) max(22px, env(safe-area-inset-right)); background:#fff; border:0; border-top:1px solid rgba(17,17,17,.07); border-radius:0; box-shadow:none; display:flex; align-items:flex-start; justify-content:center; gap:30px; z-index:100; pointer-events:none; }
 .tab-btn { width:48px; height:48px; flex:0 0 48px; display:flex; align-items:center; justify-content:center; padding:0; border-radius:0; cursor:pointer; transition:color .18s, transform .18s; color:#a8a8a8; background:transparent; border:0; box-shadow:none; text-decoration:none; pointer-events:auto; }
 .tab-btn svg { width:25px; height:25px; stroke:currentColor; fill:none; stroke-width:2.1; stroke-linecap:round; stroke-linejoin:round; }
 .tab-btn.active { color:#000; }
@@ -941,16 +954,52 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 
 /* ── 認証モーダル ── */
 .auth-modal-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex; align-items:center; justify-content:center; z-index:3000; padding:16px; }
-.auth-modal { background:#fff; border-radius:24px; padding:28px 24px; width:100%; max-width:400px; }
-.auth-modal-title { font-size:22px; font-weight:800; margin-bottom:20px; }
+.auth-modal { background:#fff; border-radius:24px; padding:28px 24px; width:100%; max-width:400px; max-height:90vh; overflow-y:auto; }
+.auth-modal-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+.auth-modal-title { font-size:22px; font-weight:800; }
+.auth-contact-link { display:inline-flex; align-items:center; justify-content:center; width:38px; height:38px; flex:0 0 38px; border:1px solid var(--border); border-radius:50%; color:#333; background:#fff; text-decoration:none; transition:background .15s, border-color .15s, transform .15s; }
+.auth-contact-link:hover { background:#f7f7f7; border-color:#bbb; }
+.auth-contact-link:active { transform:scale(.96); }
+.auth-contact-link:focus-visible { outline:2px solid #111; outline-offset:2px; }
+.auth-contact-link svg { width:19px; height:19px; fill:none; stroke:currentColor; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
 .auth-tabs { display:flex; gap:8px; margin-bottom:20px; }
 .auth-tab { flex:1; padding:10px; border-radius:9999px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid var(--eee); background:#f2f2f2; color:#999; transition:all .2s; }
 .auth-tab.active { background:#000; color:#fff; border-color:#000; }
-.auth-field { margin-bottom:12px; }
+.auth-field { min-width:0; margin-bottom:12px; }
 .auth-field label { display:block; font-size:12px; color:#666; margin-bottom:4px; font-weight:600; }
 .auth-field input { width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px; font-size:15px; color:#000; outline:none; transition:border .2s; }
+.auth-field-input { width:100%; padding:12px 16px; border:1px solid var(--border); border-radius:12px; font-size:15px; color:#000; background:#fff; outline:none; transition:border .2s; }
+.auth-field-input:focus { border-color:#000; }
 .auth-field input:focus { border-color:#000; }
 .auth-err { font-size:13px; color:#e00; margin-bottom:8px; display:none; }
+.auth-field-input[type="date"] { display:block; width:180px; max-width:100%; min-width:0; box-sizing:border-box; }
+.auth-field-note { margin:4px 0 8px; color:#999; font-size:11px; line-height:1.5; }
+.auth-sns-list { display:grid; gap:8px; width:100%; }
+.auth-sns-row { display:grid; grid-template-columns:84px minmax(0,1fr) 40px; gap:6px; align-items:center; width:100%; }
+.auth-sns-row > * { min-width:0; }
+.auth-sns-row .auth-field-input { width:100%; min-width:0; padding:10px 10px; font-size:13px; }
+.auth-sns-remove { width:40px; height:40px; padding:0; border:1px solid var(--border); border-radius:12px; background:#fff; color:#777; font-size:20px; line-height:1; cursor:pointer; }
+.auth-sns-add { width:100%; margin-top:8px; }
+.auth-register-step { display:none; min-width:0; flex-direction:column; gap:12px; }
+.auth-register-step.active { display:flex; }
+.auth-wizard-progress { display:flex; align-items:center; justify-content:center; gap:0; margin:4px 0 0; }
+.auth-wizard-progress span { width:24px; height:24px; border-radius:50%; display:flex; align-items:center; justify-content:center; background:#f2f2f2; border:1px solid #e5e5e5; color:#999; font-size:11px; font-weight:800; position:relative; }
+.auth-wizard-progress span + span { margin-left:28px; }
+.auth-wizard-progress span + span::before { content:""; position:absolute; right:22px; width:28px; height:1px; background:#e5e5e5; }
+.auth-wizard-progress span.active { background:#000; border-color:#000; color:#fff; }
+.auth-wizard-caption { text-align:center; font-size:10px; color:#999; margin:-4px 0 2px; letter-spacing:.02em; }
+.auth-step-title { font-size:18px; font-weight:800; text-align:center; line-height:1.35; }
+.auth-step-sub { font-size:12px; color:#888; text-align:center; line-height:1.6; margin-top:-4px; }
+.auth-text-link { background:none; border:none; padding:0; cursor:pointer; color:#555; font-size:12px; font-weight:600; text-decoration:underline; }
+.auth-guest-option { margin-top:16px; padding-top:16px; border-top:1px solid var(--eee); text-align:center; }
+.auth-guest-option[hidden] { display:none; }
+.auth-guest-button { width:100%; min-height:42px; padding:10px 16px; border:1px solid var(--border); border-radius:9999px; background:#f7f7f7; color:#222; font-size:13px; font-weight:700; cursor:pointer; }
+.auth-guest-note { margin:7px 0 0; color:#999; font-size:11px; line-height:1.5; }
+.auth-wizard-back { align-self:flex-start; border:none; background:none; color:#888; padding:0; font-size:12px; cursor:pointer; }
+.auth-wizard-select { appearance:none; }
+.auth-wizard-textarea { min-height:100px; resize:vertical; }
+.auth-email-note { padding:12px 14px; border:1px solid #eee; border-radius:14px; background:#fafafa; color:#666; font-size:12px; line-height:1.7; }
+.auth-forgot-link { display:block; margin:10px auto 0; }
 @media (max-width: 500px) {
   .auth-modal-overlay {
     align-items:flex-end;
@@ -960,7 +1009,7 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   }
   .auth-modal {
     max-width:none;
-    max-height:min(78dvh, 620px);
+    max-height:min(90dvh, 760px);
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     border-radius:28px 28px 0 0;
@@ -986,6 +1035,14 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   .auth-field input {
     font-size:16px;
   }
+  .auth-field-input[type="date"] {
+    width:160px;
+    padding-left:10px;
+    padding-right:10px;
+  }
+  .auth-sns-row { grid-template-columns:76px minmax(0,1fr) 38px; gap:5px; }
+  .auth-sns-row .auth-field-input { padding-left:8px; padding-right:8px; }
+  .auth-sns-remove { width:38px; height:38px; }
 }
 
 /* ── アイコン選択ページ ── */
@@ -1019,36 +1076,13 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="page-loading" style="text-align:center; padding:60px 20px; color:#999; font-size:14px;">読み込み中…</div>
 
   <div id="home-page" hidden>
-    <section class="social-home">
-      <div class="social-topbar">
-        <div>
-          <div class="social-kicker">Buddies SNS</div>
-          <h1 id="social-home-title" class="social-title">タイムライン</h1>
-        </div>
-        <button id="home-account-button" class="social-account-btn" type="button" onclick="openHomeAccount()" aria-label="アカウント"></button>
-      </div>
-      <div class="social-tabs" role="tablist" aria-label="タイムライン切り替え">
-        <button class="social-tab active" type="button" data-social-mode="all" onclick="switchSocialMode('all')">タイムライン</button>
-        <button class="social-tab" type="button" data-social-mode="following" onclick="switchSocialMode('following')">フォロー</button>
-      </div>
-      <div id="social-shared-context" class="social-shared-context" hidden>
-        <span>共有された投稿を表示中</span>
-        <button type="button" onclick="clearSocialFocusedPost()">タイムラインへ</button>
-      </div>
-      <div id="social-feed" class="social-feed"></div>
-      <div id="social-loading" class="social-feed-state" hidden>読み込み中…</div>
-      <div id="social-sentinel" class="social-sentinel" aria-hidden="true"></div>
-      <button id="social-compose-fab" class="social-compose-fab" type="button" onclick="openSocialComposer()" aria-label="投稿を作成">
-        <i data-lucide="plus"></i>
-      </button>
-      <div id="social-composer" class="social-composer" hidden></div>
-    </section>
+    <div id="todays-sakura-section"></div>
   </div>
 
   <div id="search-page" hidden>
     <div class="search-input-wrap">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲、ライブ、投稿内容で検索" style="padding-left:44px; padding-right:44px;">
+      <input type="text" id="search-input" class="pill-input" placeholder="名前、推しメン、タグ、好きな曲、ライブで検索" style="padding-left:44px; padding-right:44px;">
       <button type="button" id="search-clear-btn" class="search-clear-btn" onclick="clearSearchInput()" aria-label="クリア">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
       </button>
@@ -1080,7 +1114,6 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
   <div id="mypage-page" hidden>
     <div id="my-page-card" class="card"></div>
     <div id="verified-mypage-section"></div>
-    <div id="todays-sakura-section"></div>
     <h2 id="related-sites-title" class="section-title" hidden>関連サイト</h2>
     <div id="related-sites-section" class="related-site-list"></div>
     <h2 id="my-events-joined-title" class="section-title" hidden>参加中のイベント</h2>
@@ -1102,23 +1135,26 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 </div>
 
 <nav class="floating-tabbar">
-  <button class="tab-btn active" data-tab="home" onclick="switchTab('home')" aria-label="ホーム">
+  <a class="tab-btn active" data-tab="home" href="./" onclick="event.preventDefault(); switchTab('home')" aria-label="ホーム">
     <svg viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-  </button>
-  <button class="tab-btn" data-tab="search" onclick="switchTab('search')" aria-label="検索">
+  </a>
+  <a class="tab-btn" data-tab="search" href="./?tab=search" onclick="event.preventDefault(); switchTab('search')" aria-label="検索">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-  </button>
+  </a>
   <a class="tab-btn" href="./live.html" aria-label="ネクストライブ">
     <svg viewBox="0 0 24 24"><path d="M2 10V8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v2a2.5 2.5 0 0 0 0 4v2a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2v-2a2.5 2.5 0 0 0 0-4Z"/><path d="M13 6v2"/><path d="M13 16v2"/><path d="M13 11v2"/></svg>
   </a>
-  <button class="tab-btn" data-tab="mypage" onclick="switchTab('mypage')" aria-label="マイページ">
+  <a class="tab-btn" data-tab="mypage" href="./?tab=mypage" onclick="event.preventDefault(); switchTab('mypage')" aria-label="マイページ">
     <svg viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-  </button>
+  </a>
 </nav>
 
 <!-- Profile Modal -->
 <div id="profile-modal" class="modal-overlay" onclick="if(event.target===this)closeProfileModal(true)">
   <div class="modal-card" id="profile-modal-card"></div>
+</div>
+<div id="setlist-modal" class="modal-overlay" onclick="if(event.target===this)closeSetlistPopup()">
+  <div class="modal-card setlist-modal-card" id="setlist-modal-card"></div>
 </div>
 
 <!-- Edit Page -->
@@ -1338,6 +1374,17 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
         <span>
           <span class="sakulabo-toggle-title">SakuMV Quizの自己ベストを表示する</span>
           <span class="sakulabo-toggle-desc">公開プロフィールに、4部門それぞれの最高記録と現在順位を表示します。</span>
+        </span>
+      </label>
+    </div>
+    <div id="edit-quest-section" class="edit-section">
+      <div class="edit-section-title">Buddies Quest</div>
+      <label class="sakulabo-toggle-card">
+        <input id="edit-show-quest-badge" class="filter-switch" type="checkbox">
+        <span class="filter-switch-track" aria-hidden="true"></span>
+        <span>
+          <span class="sakulabo-toggle-title">Questバッジをプロフィールに表示する</span>
+          <span class="sakulabo-toggle-desc">オフにすると、公開プロフィールや検索結果でBuddies Questのランクバッジを非表示にします。</span>
         </span>
       </label>
     </div>
@@ -1608,27 +1655,124 @@ textarea.pill-input { border-radius:20px; resize:vertical; min-height:100px; }
 <!-- Auth Modal -->
 <div id="auth-modal" class="auth-modal-overlay" style="display:none;">
   <div class="auth-modal">
-    <div class="auth-modal-title">Buddies</div>
+    <div class="auth-modal-head">
+      <div class="auth-modal-title">Buddies</div>
+      <a class="auth-contact-link" href="../form/" target="_blank" rel="noopener" aria-label="お問い合わせ" title="お問い合わせ">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5Z"></path><path d="M8 12h.01M12 12h.01M16 12h.01"></path></svg>
+      </a>
+    </div>
     <div class="auth-tabs">
       <button class="auth-tab active" onclick="switchAuthTab('login')">ログイン</button>
       <button class="auth-tab" onclick="switchAuthTab('register')">新規登録</button>
     </div>
-    <div id="auth-login-form">
-      <div class="auth-field"><label>ユーザー名</label><input id="auth-username" type="text" autocapitalize="none"></div>
-      <div class="auth-field"><label>パスワード</label><input id="auth-password" type="password"></div>
+    <form id="auth-login-form" autocomplete="on" onsubmit="event.preventDefault(); doLogin();">
+      <div class="auth-field"><label for="auth-username">ユーザー名</label><input id="auth-username" name="username" type="text" autocomplete="username" autocapitalize="none" autocorrect="off" spellcheck="false"></div>
+      <div class="auth-field"><label for="auth-password">パスワード</label><input id="auth-password" name="password" type="password" autocomplete="current-password"></div>
       <div class="auth-err" id="auth-login-err"></div>
-      <button class="pill-button black" style="width:100%; margin-top:4px;" onclick="doLogin()">ログイン</button>
+      <button class="pill-button black" style="width:100%; margin-top:4px;" type="submit">ログイン</button>
       <p style="font-size:12px; color:#999; text-align:center; margin-top:12px;">SakuLabo のアカウントでもログインできます</p>
-    </div>
+      <button class="auth-text-link auth-forgot-link" type="button" onclick="showPasswordResetModal()">パスワードを忘れた方</button>
+    </form>
     <div id="auth-register-form" style="display:none;">
-      <div class="auth-field"><label>ユーザー名（半角英数字・_ 3〜32文字）</label><input id="reg-username" type="text" autocapitalize="none"></div>
-      <div class="auth-field"><label>表示名</label><input id="reg-display" type="text"></div>
-      <div class="auth-field"><label>パスワード（8文字以上）</label><input id="reg-password" type="password"></div>
-      <div class="auth-field"><label>パスワード（確認）</label><input id="reg-password2" type="password"></div>
-      <div class="auth-err" id="auth-reg-err"></div>
-      <button class="pill-button black" style="width:100%; margin-top:4px;" onclick="doRegister()">アカウント作成</button>
+      <div class="auth-register-step active" id="register-step-account">
+        <div class="auth-wizard-progress"><span class="active">1</span><span>2</span><span>3</span><span>4</span><span>5</span></div>
+        <div class="auth-wizard-caption">アカウント情報</div>
+        <div class="auth-step-title">ユーザー名とパスワード</div>
+        <div class="auth-step-sub">ユーザー名とパスワードはプロフィールに公開されません。</div>
+        <div class="auth-err" id="auth-reg-account-err"></div>
+        <div class="auth-field"><label>ユーザー名（半角英数字・_ 3〜32文字）</label><input id="reg-username" type="text" maxlength="32" autocomplete="username" autocapitalize="none"></div>
+        <div class="auth-field"><label>パスワード（8文字以上）</label><input id="reg-password" type="password" maxlength="128" autocomplete="new-password"></div>
+        <div class="auth-field"><label>パスワード（確認）</label><input id="reg-password2" type="password" maxlength="128" autocomplete="new-password"></div>
+        <button class="pill-button black" style="width:100%; margin-top:4px;" type="button" onclick="registerNextAccount()">次へ</button>
+        <p style="font-size:11px; color:#999; text-align:center; margin-top:4px; line-height:1.6;">ユーザー名は他のBuddiesアカウントと重複できません。</p>
+      </div>
+      <div class="auth-register-step" id="register-step-display">
+        <button class="auth-wizard-back" type="button" onclick="showRegisterStep('register-step-account')">← 戻る</button>
+        <div class="auth-wizard-progress"><span class="active">1</span><span class="active">2</span><span>3</span><span>4</span><span>5</span></div>
+        <div class="auth-wizard-caption">公開プロフィール</div>
+        <div class="auth-step-title">表示名</div>
+        <div class="auth-step-sub">Buddiesで表示される名前です。あとからいつでも変更できます。</div>
+        <div class="auth-err" id="auth-reg-display-err"></div>
+        <div class="auth-field"><label>表示名</label><input id="reg-display" type="text" maxlength="64" autocomplete="nickname" placeholder="Buddiesで表示する名前"></div>
+        <button class="pill-button black" style="width:100%; margin-top:4px;" type="button" onclick="createAccountFromWizard()">アカウントを作成して次へ</button>
+      </div>
+      <div class="auth-register-step" id="register-step-oshi">
+        <div class="auth-wizard-progress"><span class="active">1</span><span class="active">2</span><span class="active">3</span><span>4</span><span>5</span></div>
+        <div class="auth-wizard-caption">推しメン</div>
+        <div class="auth-step-title">推しメンを登録</div>
+        <div class="auth-step-sub">最大3人まで登録できます。あとから変更・追加できます。</div>
+        <div class="auth-err" id="auth-reg-oshi-err"></div>
+        <div class="auth-field"><label>推しメン（任意）</label>
+          <select id="reg-oshi-1" class="auth-field-input auth-wizard-select"><option value="">第一推し（任意）</option></select>
+          <select id="reg-oshi-2" class="auth-field-input auth-wizard-select" style="margin-top:8px;"><option value="">2人目（任意）</option></select>
+          <select id="reg-oshi-3" class="auth-field-input auth-wizard-select" style="margin-top:8px;"><option value="">3人目（任意）</option></select>
+        </div>
+        <button class="pill-button black" style="width:100%; margin-top:4px;" type="button" onclick="saveRegisterOshi()">保存して次へ</button>
+        <button class="auth-text-link" type="button" style="align-self:center;" onclick="showRegisterStep('register-step-profile')">スキップ</button>
+      </div>
+      <div class="auth-register-step" id="register-step-profile">
+        <div class="auth-wizard-progress"><span class="active">1</span><span class="active">2</span><span class="active">3</span><span class="active">4</span><span>5</span></div>
+        <div class="auth-wizard-caption">プロフィール（任意）</div>
+        <div class="auth-step-title">プロフィールを設定</div>
+        <div class="auth-step-sub">誕生日や自己紹介などを登録できます。すべて任意です。</div>
+        <div class="auth-err" id="auth-reg-profile-err"></div>
+        <div class="auth-field">
+          <label for="reg-birthday">誕生日</label>
+          <p class="auth-field-note">プロフィールには年齢のみが公開されます。</p>
+          <input id="reg-birthday" class="auth-field-input" type="date">
+        </div>
+        <div class="auth-field"><label>性別</label><select id="reg-gender" class="auth-field-input"><option value="">選択しない</option><option value="男性">男性</option><option value="女性">女性</option><option value="その他">その他</option></select></div>
+        <div class="auth-field"><label>居住地</label><input id="reg-location" class="auth-field-input" type="text" maxlength="80" placeholder="例：東京都"></div>
+        <div class="auth-field"><label>Buddies歴</label><input id="reg-buddies-since" class="auth-field-input" type="text" maxlength="20" placeholder="例：2020年ごろ"></div>
+        <div class="auth-field">
+          <label>SNSリンク（任意・最大10個）</label>
+          <p class="auth-field-note">プロフィールに公開するSNSやWebサイトを登録できます。</p>
+          <div id="reg-sns-container" class="auth-sns-list"></div>
+          <button type="button" id="reg-add-sns-btn" class="pill-button auth-sns-add" onclick="addRegisterSns()">+ SNSリンクを追加</button>
+        </div>
+        <div class="auth-field"><label>フォローのスタンス</label><select id="reg-follow-stance" class="auth-field-input"><option value="">選択しない</option><option value="silent_ok">無言フォローOK</option><option value="hello_please">一言ほしい</option></select></div>
+        <div class="auth-field"><label>自己紹介</label><textarea id="reg-bio" class="auth-field-input auth-wizard-textarea" maxlength="500" rows="4" placeholder="好きなこと、活動エリアなど"></textarea></div>
+        <button class="pill-button black" style="width:100%; margin-top:4px;" type="button" onclick="finishRegisterProfile()">保存して完了</button>
+        <button class="auth-text-link" type="button" style="align-self:center;" onclick="finishRegisterProfile(true)">あとで設定する</button>
+      </div>
+      <div class="auth-register-step" id="register-step-email">
+        <div class="auth-wizard-progress"><span class="active">1</span><span class="active">2</span><span class="active">3</span><span class="active">4</span><span class="active">5</span></div>
+        <div class="auth-wizard-caption">メール認証（任意）</div>
+        <div class="auth-step-title">メールアドレスを認証</div>
+        <div class="auth-step-sub">パスワードを忘れたときの再設定にも使えます。</div>
+        <div class="auth-email-note">メールアドレスは暗号化して保存します。認証リンクは24時間有効で、認証が完了すると無効になります。</div>
+        <div class="auth-err" id="auth-reg-email-err"></div>
+        <div class="auth-field"><label for="reg-email">メールアドレス（任意）</label><input id="reg-email" class="auth-field-input" type="email" autocomplete="email" placeholder="you@example.com"></div>
+        <button class="pill-button black" style="width:100%; margin-top:4px;" type="button" onclick="requestRegisterEmail()">確認メールを送信して完了</button>
+        <button class="auth-text-link" type="button" style="align-self:center;" onclick="finishRegisterEmail(true)">あとで設定する</button>
+      </div>
       <p style="font-size:12px; color:#999; text-align:center; margin-top:12px;">SakuLabo でも同じアカウントでログインできます</p>
     </div>
+    <div class="auth-guest-option">
+      <button class="auth-guest-button" type="button" onclick="continueAsGuest()">ゲストで続ける</button>
+      <p class="auth-guest-note">閲覧など一部の機能を利用できます。投稿・いいね・参加登録にはログインが必要です。</p>
+    </div>
+  </div>
+</div>
+
+<div id="password-reset-modal" class="auth-modal-overlay" style="display:none;" onclick="if(event.target===this)closePasswordResetModal()">
+  <div class="auth-modal">
+    <div class="auth-modal-title">パスワードをリセット</div>
+    <p style="font-size:13px;color:#666;line-height:1.7;margin:-8px 0 16px;">メール認証済みのアカウントに、リセット用リンクを送信します。</p>
+    <form id="password-reset-form" onsubmit="event.preventDefault(); requestPasswordReset();">
+      <div class="auth-field"><label for="reset-email">メールアドレス</label><input id="reset-email" type="email" autocomplete="email" required></div>
+      <div class="auth-err" id="password-reset-err"></div>
+      <button class="pill-button black" style="width:100%;" type="submit">リセットメールを送信</button>
+    </form>
+    <button class="auth-text-link" type="button" style="display:block;margin:14px auto 0;" onclick="closePasswordResetModal()">ログイン画面に戻る</button>
+  </div>
+</div>
+
+<div id="mail-sent-modal" class="auth-modal-overlay" style="display:none;z-index:3200;">
+  <div class="auth-modal" role="dialog" aria-modal="true" aria-labelledby="mail-sent-title">
+    <div class="auth-modal-title" id="mail-sent-title">メールを送信しました</div>
+    <p style="font-size:14px;color:#555;line-height:1.8;margin:-6px 0 20px;">メールを送信しました。メール本文に記載のURLから操作を続けてください。<br><br>hiromame.sakura@gmail.comよりメールを送信しました。届かない場合は迷惑メールフォルダもご確認ください。</p>
+    <button class="pill-button black" id="mail-sent-ok" style="width:100%;" type="button" onclick="closeMailSentModal()">OK</button>
   </div>
 </div>
 
@@ -1701,6 +1845,7 @@ const API = './api.php';
 const BLOG_PICKER_API = './blog-picker.php';
 const MEMBER_DATA = '../data/member.json';
 const LIVE_DATA   = '../data/live.json';
+const SETLIST_DATA = '../data/sakamichi_sakura_setlists.json';
 const SAKUMAP_API = '../sakumap/api.php';
 
 // ── 状態 ────────────────────────────────────────────────
@@ -1767,6 +1912,7 @@ let historyActiveTab = 'past-lives';
 let editNextLivesExpanded = false;
 let filterPastLivesExpanded = false;
 let editNextLiveSeats = {};
+let setlistGroups = [];
 let socialMode = 'all';
 let socialPosts = [];
 const questProfileCache = new Map();
@@ -1926,6 +2072,30 @@ function liveDisplay(id) {
   const [date, title, venue] = String(id || '').split('|');
   return { id, date, title: title || 'ライブ', venue: venue || '', weekday:'' };
 }
+function normalizeLiveTitle(value) {
+  return String(value || '').replace(/[［\[][^］\]]*[］\]]/g, '').replace(/櫻坂46|sakurazaka46/gi, '').toLowerCase().replace(/[\s　「」『』『』【】［］()（）\[\]〈〉《》「」・:：!！?？“”"'’]/g, '');
+}
+function buildSetlistGroups(raw) {
+  const rows = Array.isArray(raw) ? raw : [];
+  const groups = new Map();
+  rows.forEach(row => {
+    const key = [row.liveid, row.date, row.series, row.stage].map(v => String(v || '')).join('|');
+    if (!groups.has(key)) groups.set(key, { liveid:String(row.liveid || ''), date:String(row.date || ''), series:String(row.series || ''), stage:String(row.stage || ''), songs:[] });
+    groups.get(key).songs.push(row);
+  });
+  return [...groups.values()].map(group => ({ ...group, songs:group.songs.sort((a,b) => Number(a.position || 0) - Number(b.position || 0)) }));
+}
+function setlistForLive(live) {
+  if (!live?.date || !setlistGroups.length) return null;
+  const candidates = setlistGroups.filter(group => group.date === live.date);
+  if (!candidates.length) return null;
+  const title = normalizeLiveTitle(live.title);
+  return candidates.find(group => {
+    const series = normalizeLiveTitle(group.series);
+    return series === title || series.includes(title) || title.includes(series);
+  }) || (candidates.length === 1 ? candidates[0] : null);
+}
+function liveItemKey(id) { return encodeURIComponent(String(id || '')); }
 function seatAreaLabel(v) { return v === 'arena' ? 'アリーナ' : v === 'stand' ? 'スタンド' : ''; }
 function cleanSeatInfo(seat = {}) {
   const floor = String(seat.floor || '').replace(/[^0-9]/g, '').slice(0, 2);
@@ -1967,11 +2137,12 @@ function pastLiveIds(profile) {
 // ── 初期化 ───────────────────────────────────────────────
 async function init() {
   try {
-    const [meRes, mRes, vRes, liveRes] = await Promise.all([
+    const [meRes, mRes, vRes, liveRes, setlistRes] = await Promise.all([
       fetch(API + '?action=auth_me', { credentials:'include' }),
       fetch(MEMBER_DATA).catch(() => null),
       fetch(API + '?action=verified_public_list&limit=6', { credentials:'include' }).catch(() => null),
       fetch(LIVE_DATA).catch(() => null),
+      fetch(SETLIST_DATA).catch(() => null),
     ]);
     const meJson = await meRes.json();
     me = meJson.ok ? meJson.data : null;
@@ -1993,6 +2164,9 @@ async function init() {
     if (liveRes) {
       try { liveOptions = buildLiveOptions(await liveRes.json()); } catch(e){ liveOptions = []; }
     }
+    if (setlistRes) {
+      try { setlistGroups = buildSetlistGroups(await setlistRes.json()); } catch(e) { setlistGroups = []; }
+    }
     // 認証データを me に合体（重複は認証側を優先）
     if (me) {
       me = mergeVerifiedOntoProfile(me);
@@ -2009,13 +2183,13 @@ async function init() {
     if (prepareLiveRedirectLogin()) return;
   } else {
     showMainUI();
-    // ホームと投稿一覧はログインなしで閲覧できる。
-    // お気に入り・ライブ参加の導線だけはログイン後に元の画面へ戻す。
+    // ゲストはホームと投稿一覧などを閲覧できる。書き込み操作はログインへ誘導する。
     if (prepareFavoriteRedirectLogin()) return;
     if (prepareLiveRedirectLogin()) return;
   }
 
   checkUrl();
+  promptInitialAuth();
 
   // ?edit=1 でプロフィール編集を直接開く（sakulabo からの誘導等）
   try {
@@ -2055,11 +2229,6 @@ async function loadUserData() {
 function showMainUI() {
   renderHeaderAuth();
   renderAll();
-  if (socialFocusedPostId > 0) {
-    sessionStorage.removeItem('buddies_return_from_profile');
-    switchTab('home');
-    return;
-  }
   restoreProfileReturnState();
   if (restoringProfileReturn) return;
   const tabParam = new URLSearchParams(location.search).get('tab');
@@ -2088,13 +2257,95 @@ function showAuthModal() {
 function closeAuthModal() {
   document.getElementById('auth-modal').style.display = 'none';
 }
+function showPasswordResetModal() {
+  closeAuthModal();
+  const modal = document.getElementById('password-reset-modal');
+  const err = document.getElementById('password-reset-err');
+  if (err) { err.textContent = ''; err.style.color = '#e00'; err.style.display = 'none'; }
+  modal.style.display = 'flex';
+  setTimeout(() => document.getElementById('reset-email')?.focus(), 50);
+}
+function closePasswordResetModal() {
+  document.getElementById('password-reset-modal').style.display = 'none';
+}
+function showMailSentModal() {
+  document.getElementById('mail-sent-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('mail-sent-ok')?.focus(), 0);
+}
+function closeMailSentModal() {
+  document.getElementById('mail-sent-modal').style.display = 'none';
+}
+async function requestPasswordReset() {
+  const email = document.getElementById('reset-email').value.trim();
+  const err = document.getElementById('password-reset-err');
+  const button = document.querySelector('#password-reset-form button[type="submit"]');
+  err.textContent = '';
+  err.style.color = '#e00';
+  err.style.display = 'none';
+  button.disabled = true;
+  button.textContent = '送信中…';
+  try {
+    const res = await fetch(API + '?action=buddies_password_reset_request', {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email}),
+    });
+    const json = await res.json();
+    if (!json.ok) { err.textContent = json.error || 'メールを送信できませんでした。'; err.style.display = 'block'; return; }
+    if (json.data?.registered === false) {
+      err.textContent = json.data?.message || 'そのメールアドレスは登録されていません。';
+      err.style.display = 'block';
+      return;
+    }
+    if (json.data?.email_sent === false) {
+      err.textContent = json.data?.message || '時間をおいて再度お試しください。';
+      err.style.display = 'block';
+      return;
+    }
+    document.getElementById('reset-email').value = '';
+    closePasswordResetModal();
+    showMailSentModal();
+  } catch (_) {
+    err.textContent = '通信エラーが発生しました。もう一度お試しください。';
+    err.style.display = 'block';
+  } finally {
+    button.disabled = false;
+    button.textContent = 'リセットメールを送信';
+  }
+}
+function continueAsGuest() {
+  sessionStorage.setItem('buddies_guest_mode', '1');
+  closeAuthModal();
+  renderHeaderAuth();
+  toast('ゲストとして続けます');
+}
+function hasPublicViewRequest() {
+  const query = new URLSearchParams(location.search);
+  const hash = new URLSearchParams(location.hash.replace(/^#/, ''));
+  return Boolean(
+    query.get('uid') || query.get('mode') || query.get('token') ||
+    hash.get('uid') || hash.get('mode') || hash.get('token') ||
+    sessionStorage.getItem('buddies_shared_uid')
+  );
+}
+function promptInitialAuth() {
+  if (me || sessionStorage.getItem('buddies_guest_mode') === '1') return;
+  if (new URLSearchParams(location.search).get('register') === '1') {
+    showAuthModal();
+    switchAuthTab('register');
+    return;
+  }
+  if (getFavoriteRedirectUrl() || getLiveRedirectUrl() || hasPublicViewRequest()) return;
+  showAuthModal();
+  switchAuthTab('login');
+}
 function getFavoriteRedirectUrl() {
   const qs = new URLSearchParams(location.search);
   const raw = qs.get('favorite_redirect') || sessionStorage.getItem('buddies_favorite_redirect') || '';
   if (!raw) return '';
   let decoded = raw;
   try { decoded = decodeURIComponent(raw); } catch(e) {}
-  if (!/^view\.html\?id=\d+(?:&tab=posts)?$/.test(decoded)) return '';
+  if (!/^view\.html\?id=\d+$/.test(decoded)) return '';
   return decoded;
 }
 function getLiveRedirectUrl() {
@@ -2163,7 +2414,10 @@ function prepareFavoriteRedirectLogin() {
 function switchAuthTab(tab) {
   document.getElementById('auth-login-form').style.display = tab === 'login' ? 'block' : 'none';
   document.getElementById('auth-register-form').style.display = tab === 'register' ? 'block' : 'none';
+  const guestOption = document.querySelector('.auth-guest-option');
+  if (guestOption) guestOption.hidden = tab !== 'login';
   document.querySelectorAll('.auth-tab').forEach((b,i) => b.classList.toggle('active', (i===0) === (tab==='login')));
+  if (tab === 'register') resetRegisterWizard();
 }
 async function doLogin() {
   const username = document.getElementById('auth-username').value.trim();
@@ -2180,6 +2434,7 @@ async function doLogin() {
     const json = await res.json();
     if (!json.ok) { errEl.textContent = json.error; errEl.style.display = 'block'; return; }
     me = json.data.user;
+    sessionStorage.removeItem('buddies_guest_mode');
     await attachQuestProfile(me);
     await loadUserData();
     closeAuthModal();
@@ -2192,39 +2447,303 @@ async function doLogin() {
   } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
   finally { setLoading(false); }
 }
-async function doRegister() {
+let registerDraft = { username: '', password: '' };
+let registerSns = [];
+
+const REGISTER_SNS_TYPES = [
+  ['x', 'X'], ['threads', 'Threads'], ['instagram', 'Instagram'], ['tiktok', 'TikTok'],
+  ['youtube', 'YouTube'], ['github', 'GitHub'], ['line', 'LINE'], ['note', 'note'],
+  ['ameba', 'Ameba'], ['link', 'Link'],
+];
+
+function renderRegisterSns() {
+  const wrap = document.getElementById('reg-sns-container');
+  const add = document.getElementById('reg-add-sns-btn');
+  if (!wrap || !add) return;
+  wrap.innerHTML = registerSns.map((sns, index) => `
+    <div class="auth-sns-row">
+      <select class="auth-field-input auth-wizard-select" aria-label="SNSの種類" onchange="registerSns[${index}].type=this.value">
+        ${REGISTER_SNS_TYPES.map(([value, label]) => `<option value="${value}" ${sns.type === value ? 'selected' : ''}>${label}</option>`).join('')}
+      </select>
+      <input class="auth-field-input" type="url" inputmode="url" placeholder="https://" value="${esc(sns.url || '')}" aria-label="SNSリンクURL" oninput="registerSns[${index}].url=this.value">
+      <button type="button" class="auth-sns-remove" aria-label="SNSリンクを削除" onclick="removeRegisterSns(${index})">×</button>
+    </div>
+  `).join('');
+  add.style.display = registerSns.length >= 10 ? 'none' : 'inline-flex';
+}
+
+function addRegisterSns() {
+  if (registerSns.length >= 10) return;
+  registerSns.push({ type: 'x', url: '' });
+  renderRegisterSns();
+}
+
+function removeRegisterSns(index) {
+  registerSns.splice(index, 1);
+  renderRegisterSns();
+}
+
+function showRegisterStep(stepId) {
+  document.querySelectorAll('.auth-register-step').forEach(step => step.classList.toggle('active', step.id === stepId));
+  const step = document.getElementById(stepId);
+  if (stepId === 'register-step-profile' && me) {
+    document.getElementById('reg-birthday').value = me.birthday || '';
+    document.getElementById('reg-gender').value = me.gender || '';
+    document.getElementById('reg-location').value = me.location || '';
+    document.getElementById('reg-buddies-since').value = me.buddies_since || '';
+    document.getElementById('reg-follow-stance').value = me.follow_stance || '';
+    document.getElementById('reg-bio').value = me.bio || '';
+    registerSns = Array.isArray(me.sns_links)
+      ? JSON.parse(JSON.stringify(me.sns_links)).filter(sns => sns && typeof sns === 'object').slice(0, 10)
+      : [];
+  }
+  if (stepId === 'register-step-profile') renderRegisterSns();
+  if (step) step.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function clearRegisterErrors() {
+  document.querySelectorAll('#auth-register-form .auth-err').forEach(el => {
+    el.textContent = '';
+    el.style.display = 'none';
+  });
+}
+
+function showRegisterError(id, message) {
+  const el = document.getElementById(id);
+  el.textContent = message;
+  el.style.display = 'block';
+}
+
+function resetRegisterWizard() {
+  registerDraft = { username: '', password: '' };
+  registerSns = [];
+  clearRegisterErrors();
+  showRegisterStep('register-step-account');
+  ['reg-username','reg-password','reg-password2','reg-display','reg-birthday','reg-location','reg-buddies-since','reg-bio','reg-email'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  ['reg-gender','reg-follow-stance','reg-oshi-1','reg-oshi-2','reg-oshi-3'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderRegisterSns();
+}
+
+function registerNextAccount() {
+  clearRegisterErrors();
   const username = document.getElementById('reg-username').value.trim();
-  const display  = document.getElementById('reg-display').value.trim();
   const password = document.getElementById('reg-password').value;
-  const password2= document.getElementById('reg-password2').value;
-  const errEl = document.getElementById('auth-reg-err');
-  errEl.style.display = 'none';
-  if (password !== password2) { errEl.textContent = 'パスワードが一致しません。'; errEl.style.display = 'block'; return; }
+  const password2 = document.getElementById('reg-password2').value;
+  if (!/^[A-Za-z0-9_]{3,32}$/.test(username)) {
+    showRegisterError('auth-reg-account-err', 'ユーザー名は半角英数字とアンダースコアの3〜32文字で入力してください。');
+    return;
+  }
+  if (password.length < 8) {
+    showRegisterError('auth-reg-account-err', 'パスワードは8文字以上で入力してください。');
+    return;
+  }
+  if (password !== password2) {
+    showRegisterError('auth-reg-account-err', 'パスワードが一致しません。');
+    return;
+  }
+  registerDraft = { username, password };
+  showRegisterStep('register-step-display');
+  setTimeout(() => document.getElementById('reg-display').focus(), 50);
+}
+
+function populateRegisterMembers() {
+  const names = Object.keys(memberMap).filter(Boolean).sort((a, b) => a.localeCompare(b, 'ja'));
+  ['reg-oshi-1','reg-oshi-2','reg-oshi-3'].forEach((id, index) => {
+    const select = document.getElementById(id);
+    if (!select) return;
+    const current = select.value;
+    select.innerHTML = '';
+    const placeholder = document.createElement('option');
+    placeholder.value = '';
+    placeholder.textContent = index === 0 ? '第一推し（任意）' : `${index + 1}人目（任意）`;
+    select.appendChild(placeholder);
+    [...new Set([current, ...names].filter(Boolean))].forEach(name => {
+      const option = document.createElement('option');
+      option.value = name;
+      option.textContent = name;
+      option.selected = name === current;
+      select.appendChild(option);
+    });
+  });
+}
+
+async function createAccountFromWizard() {
+  clearRegisterErrors();
+  const display = document.getElementById('reg-display').value.trim();
+  if (!display || display.length > 64) {
+    showRegisterError('auth-reg-display-err', '表示名を1〜64文字で入力してください。');
+    return;
+  }
+  const btn = document.querySelector('#register-step-display .pill-button');
+  btn.disabled = true;
   setLoading(true, 'アカウントを作成中…');
   try {
     const res = await fetch(API + '?action=auth_register', {
       method:'POST', credentials:'include',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({ username, display_name: display, password }),
+      body: JSON.stringify({ username: registerDraft.username, display_name: display, password: registerDraft.password }),
     });
     const json = await res.json();
-    if (!json.ok) { errEl.textContent = json.error; errEl.style.display = 'block'; return; }
+    if (!json.ok) {
+      showRegisterError('auth-reg-display-err', json.error || 'アカウントを作成できませんでした。');
+      return;
+    }
     me = json.data.user;
+    sessionStorage.removeItem('buddies_guest_mode');
     await attachQuestProfile(me);
     await loadUserData();
-    closeAuthModal();
-    renderHeaderAuth();
-    renderAll();
+    populateRegisterMembers();
+    showRegisterStep('register-step-oshi');
     toast('アカウントを作成しました');
-    if (redirectAfterFavoriteLogin()) return;
-    reopenPendingProfile();
-  } catch(e) { errEl.textContent = '通信エラーが発生しました。'; errEl.style.display = 'block'; }
-  finally { setLoading(false); }
+  } catch(e) {
+    showRegisterError('auth-reg-display-err', '通信エラーが発生しました。もう一度お試しください。');
+  } finally {
+    btn.disabled = false;
+    setLoading(false);
+  }
 }
+
+function registerProfilePayload(extra = {}) {
+  return {
+    display_name: me?.display_name || registerDraft.username,
+    oshi_member: document.getElementById('reg-oshi-1').value || null,
+    oshi_member_2: document.getElementById('reg-oshi-2').value || null,
+    oshi_member_3: document.getElementById('reg-oshi-3').value || null,
+    ...extra,
+  };
+}
+
+async function saveRegisterOshi() {
+  clearRegisterErrors();
+  const btn = document.querySelector('#register-step-oshi .pill-button');
+  btn.disabled = true;
+  setLoading(true, '推しメンを保存中…');
+  try {
+    const res = await fetch(API + '?action=buddies_profile_update', {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(registerProfilePayload()),
+    });
+    const json = await res.json();
+    if (!json.ok) { showRegisterError('auth-reg-oshi-err', json.error || '推しメンを保存できませんでした。'); return; }
+    me = json.data;
+    showRegisterStep('register-step-profile');
+  } catch(e) {
+    showRegisterError('auth-reg-oshi-err', '通信エラーが発生しました。もう一度お試しください。');
+  } finally {
+    btn.disabled = false;
+    setLoading(false);
+  }
+}
+
+function showRegisterEmailStep() {
+  clearRegisterErrors();
+  const email = document.getElementById('reg-email');
+  if (email) email.value = '';
+  showRegisterStep('register-step-email');
+}
+function finishRegisterEmail(skip = false) {
+  if (skip) completeRegisterWizard();
+}
+async function requestRegisterEmail() {
+  const email = document.getElementById('reg-email').value.trim();
+  clearRegisterErrors();
+  if (!email) {
+    showRegisterError('auth-reg-email-err', 'メール認証を行う場合はメールアドレスを入力してください。不要な場合は「あとで設定する」を選択してください。');
+    return;
+  }
+  const btn = document.querySelector('#register-step-email .pill-button');
+  btn.disabled = true;
+  setLoading(true, '確認メールを送信中…');
+  try {
+    const res = await fetch(API + '?action=buddies_email_request', {
+      method:'POST', credentials:'include',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({email}),
+    });
+    const json = await res.json();
+    if (!json.ok) { showRegisterError('auth-reg-email-err', json.error || '確認メールを送信できませんでした。'); return; }
+    completeRegisterWizard('確認メールを送信しました');
+    if (json.data?.email_sent !== false) showMailSentModal();
+  } catch(e) {
+    showRegisterError('auth-reg-email-err', '通信エラーが発生しました。もう一度お試しください。');
+  } finally {
+    btn.disabled = false;
+    setLoading(false);
+  }
+}
+
+function completeRegisterWizard(message = 'プロフィールはあとから設定できます。') {
+  closeAuthModal();
+  renderHeaderAuth();
+  renderAll();
+  toast(message);
+  if (redirectAfterFavoriteLogin()) return;
+  reopenPendingProfile();
+}
+
+async function finishRegisterProfile(skip = false) {
+  if (skip) {
+    showRegisterEmailStep();
+    return;
+  }
+  clearRegisterErrors();
+  const bio = document.getElementById('reg-bio').value.trim();
+  if (bio.length > 500) {
+    showRegisterError('auth-reg-profile-err', '自己紹介は500文字以内で入力してください。');
+    return;
+  }
+  const btn = document.querySelector('#register-step-profile .pill-button');
+  btn.disabled = true;
+  setLoading(true, 'プロフィールを保存中…');
+  try {
+    const res = await fetch(API + '?action=buddies_profile_update', {
+      method:'POST', credentials:'include', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(registerProfilePayload({
+        birthday: document.getElementById('reg-birthday').value || null,
+        gender: document.getElementById('reg-gender').value || null,
+        location: document.getElementById('reg-location').value.trim() || null,
+        buddies_since: document.getElementById('reg-buddies-since').value.trim() || null,
+        follow_stance: document.getElementById('reg-follow-stance').value || null,
+        sns_links: registerSns
+          .map(sns => ({ type: sns.type || 'link', url: String(sns.url || '').trim() }))
+          .filter(sns => sns.url)
+          .slice(0, 10),
+        bio: bio || null,
+      })),
+    });
+    const json = await res.json();
+    if (!json.ok) { showRegisterError('auth-reg-profile-err', json.error || 'プロフィールを保存できませんでした。'); return; }
+    me = json.data;
+    showRegisterEmailStep();
+  } catch(e) {
+    showRegisterError('auth-reg-profile-err', '通信エラーが発生しました。もう一度お試しください。');
+  } finally {
+    btn.disabled = false;
+    setLoading(false);
+  }
+}
+
+// 既存の外部呼び出し互換用。登録ボタンはウィザードから実行する。
+function doRegister() { registerNextAccount(); }
+['reg-username','reg-password','reg-password2'].forEach(id => {
+  document.getElementById(id).addEventListener('keydown', e => {
+    if (e.key === 'Enter') registerNextAccount();
+  });
+});
+document.getElementById('reg-display').addEventListener('keydown', e => {
+  if (e.key === 'Enter') createAccountFromWizard();
+});
 async function doLogout() {
   openConfirmModal('ログアウト', 'ログアウトしますか？', async () => {
     await fetch(API + '?action=auth_logout', { method:'POST', credentials:'include' });
     me = null; exchangedProfiles = []; favoriteProfiles = [];
+    sessionStorage.removeItem('buddies_guest_mode');
     renderHeaderAuth(); renderAll();
     showAuthModal();
     toast('ログアウトしました');
@@ -2243,7 +2762,8 @@ function renderHeaderAuth() {
       </a>
     </div>`;
   } else {
-    el.innerHTML = `<button class="pill-button black" style="padding:6px 14px; font-size:13px;" onclick="showAuthModal()">ログイン</button>`;
+    const guest = sessionStorage.getItem('buddies_guest_mode') === '1';
+    el.innerHTML = `<button class="pill-button ${guest ? '' : 'black'}" style="padding:6px 14px; font-size:13px;" onclick="showAuthModal()">${guest ? 'ゲスト / ログイン' : 'ログイン'}</button>`;
   }
 }
 
@@ -2314,6 +2834,7 @@ function getOshi1Color(profile) {
 }
 function getDisplayName(p) { return p.display_name || p.name || '名無し'; }
 function questRankBadgeHtml(p){
+  if (p?.show_quest_badge === false) return '';
   const rank=p?.quest_rank||p?.quest_profile?.rank;
   if(!rank?.name)return'';
   return `<span class="quest-rank-badge" role="button" tabindex="0" style="--rank-color:${esc(rank.color||'#315c37')}" data-rank="${esc(rank.name)}" data-level="${esc(rank.level)}" data-xp="${esc(rank.xp||0)}" aria-label="クエストランクを表示" onclick="showQuestRankInfo(event,this)" onkeydown="if(event.key==='Enter'||event.key===' '){showQuestRankInfo(event,this)}"><i data-lucide="${esc(rank.icon||'award')}"></i></span>`;
@@ -2595,8 +3116,8 @@ function renderTodaysSakuraCard(payload) {
     <section class="today-card">
       <div class="today-head ${collapsed ? 'is-compact' : ''}">
         <div>
-          <div class="today-kicker">Today's Sakurazaka</div>
-          <div class="today-title">Today’s 櫻坂</div>
+          <div class="today-kicker">Today's Sakurazaka46</div>
+          <div class="today-title">Today’s 櫻坂46</div>
           <div class="today-date">${esc(compactDateLabel(dateKey))}</div>
         </div>
         <div class="home-head-actions">
@@ -2663,7 +3184,7 @@ function renderSocialAccountButton() {
 
 function openHomeAccount() {
   if (!me) { showAuthModal(); return; }
-  location.href = './view.html?id=' + encodeURIComponent(me.id) + '&tab=posts';
+  location.href = './view.html?id=' + encodeURIComponent(me.id);
 }
 
 function openSocialComposer() {
@@ -2790,6 +3311,7 @@ async function openSocialBlogPicker() {
   const picker = document.getElementById('social-blog-picker');
   const list = document.getElementById('social-blog-list');
   if (!picker || !list) return;
+  list.classList.remove('is-image-grid');
   socialBlogSelected = null;
   socialBlogListScrollTop = 0;
   const search = document.getElementById('social-blog-search');
@@ -2803,6 +3325,7 @@ async function openSocialBlogPicker() {
 function closeSocialBlogPicker() {
   const picker = document.getElementById('social-blog-picker');
   if (picker) picker.hidden = true;
+  document.getElementById('social-blog-list')?.classList.remove('is-image-grid');
   socialBlogSelected = null;
   socialBlogRequestToken++;
   clearTimeout(socialBlogSearchTimer);
@@ -2854,6 +3377,7 @@ async function resetSocialBlogList() {
   socialBlogError = '';
   socialBlogRequestToken++;
   if (list) {
+    list.classList.remove('is-image-grid');
     list.scrollTop = 0;
     list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">読み込み中…</div>';
   }
@@ -2920,6 +3444,7 @@ async function openSocialBlogImages(blogId) {
   if (!summary) return;
   const list = document.getElementById('social-blog-list');
   socialBlogListScrollTop = list?.scrollTop || 0;
+  list?.classList.add('is-image-grid');
   socialBlogSelected = { ...summary, images:[] };
   updateSocialBlogPickerChrome();
   if (list) list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">画像を読み込み中…</div>';
@@ -2937,12 +3462,14 @@ async function openSocialBlogImages(blogId) {
     </button>`).join('') : '<div class="social-feed-state" style="grid-column:1/-1;">このブログには選択できる画像がありません</div>';
     list.scrollTop = 0;
   } catch(e) {
+    list?.classList.remove('is-image-grid');
     if (list) list.innerHTML = '<div class="social-feed-state" style="grid-column:1/-1;">画像の読み込みに失敗しました</div>';
   }
 }
 
 function backToSocialBlogList() {
   socialBlogSelected = null;
+  document.getElementById('social-blog-list')?.classList.remove('is-image-grid');
   updateSocialBlogPickerChrome();
   renderSocialBlogList();
   const list = document.getElementById('social-blog-list');
@@ -3431,7 +3958,7 @@ function setupSocialObserver() {
 }
 
 function socialProfileUrl(author) {
-  return './view.html?id=' + encodeURIComponent(author.id) + '&tab=posts';
+  return './view.html?id=' + encodeURIComponent(author.id);
 }
 
 function socialShareUrl(postId) {
@@ -3769,12 +4296,7 @@ function reportSocialPost(id) {
 
 // ── ホーム ───────────────────────────────────────────────
 async function renderHome() {
-  renderSocialAccountButton();
-  renderSocialComposer();
-  document.querySelectorAll('.social-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.socialMode === socialMode));
-  updateSocialFocusChrome();
-  setupSocialObserver();
-  await loadSocialPosts(true);
+  await loadTodaysSakura();
 }
 
 async function renderSearchRecommendations(force = false) {
@@ -4616,7 +5138,6 @@ function calcMatchReasons(p) {
 function renderMyPage() {
   const card = document.getElementById('my-page-card');
   const verifiedWrap = document.getElementById('verified-mypage-section');
-  loadTodaysSakura();
   if (!me) {
     setMyPageListSectionsVisible(false);
     card.innerHTML = `<div style="text-align:center; padding:20px;">
@@ -4902,12 +5423,36 @@ function sakulaboFavMeta(parts) {
 function liveItemHtml(id, label = '') {
   const live = liveDisplay(id);
   const prefix = label ? `${esc(label)} ` : '';
-  return `<div class="next-live-item">
+  return `<button type="button" class="next-live-item live-setlist-trigger" onclick="openSetlistPopupKey('${liveItemKey(id)}')" aria-label="${esc(live.title)}のセトリを表示">
     <div class="next-live-date">${prefix}${esc(liveDateLabel(live.date, live.weekday))}</div>
     <div class="next-live-title">${esc(live.title)}</div>
     ${live.venue ? `<div class="next-live-venue">${esc(live.venue)}</div>` : ''}
-  </div>`;
+  </button>`;
 }
+function openSetlistPopupKey(key) {
+  openSetlistPopup(decodeURIComponent(key || ''));
+}
+function openSetlistPopup(id) {
+  const modal = document.getElementById('setlist-modal');
+  const card = document.getElementById('setlist-modal-card');
+  if (!modal || !card) return;
+  const live = liveDisplay(id);
+  const setlist = setlistForLive(live);
+  const songs = setlist?.songs || [];
+  card.innerHTML = `<button class="modal-close-btn" type="button" onclick="closeSetlistPopup()" aria-label="閉じる">×</button>
+    <div class="setlist-modal-kicker">SETLIST</div>
+    <div class="setlist-modal-title">${esc(live.title || 'ライブ')}</div>
+    <div class="setlist-modal-meta">${esc(liveDateLabel(live.date, live.weekday))}${live.venue ? ` ・ ${esc(live.venue)}` : ''}${setlist?.stage ? ` ・ ${esc(setlist.stage)}` : ''}</div>
+    ${songs.length ? `<div class="setlist-list">${songs.map((song, i) => `<div class="setlist-song"><div class="setlist-song-no">${esc(song.position || i + 1)}</div><div class="setlist-song-title">${esc(song.title || '曲名不明')}${song.remark ? `<span class="setlist-song-remark">${esc(song.remark)}</span>` : ''}</div></div>`).join('')}</div>` : '<div class="today-empty">この公演のセトリはまだ登録されていません。</div>'}`;
+  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeSetlistPopup() {
+  document.getElementById('setlist-modal')?.classList.remove('active');
+  if (!document.getElementById('profile-modal')?.classList.contains('active')) document.body.style.overflow = '';
+}
+window.openSetlistPopupKey = openSetlistPopupKey;
+window.closeSetlistPopup = closeSetlistPopup;
 function renderNextLivesSection(profile, opts = {}) {
   const ids = nextLiveIds(profile);
   if (!ids.length) return '';
@@ -5554,10 +6099,12 @@ function ensureEditSectionPlacement() {
   const sakulabo = document.getElementById('edit-sakulabo-section');
   const sakumap = document.getElementById('edit-sakumap-section');
   const sakumv = document.getElementById('sakumv-quiz-section');
+  const quest = document.getElementById('edit-quest-section');
   if (basic && sns && sns.parentElement !== basic) basic.appendChild(sns);
   if (links && sakulabo && sakulabo.parentElement !== links) links.appendChild(sakulabo);
   if (links && sakumap && sakumap.parentElement !== links) links.appendChild(sakumap);
   if (links && sakumv && sakumv.parentElement !== links) links.appendChild(sakumv);
+  if (links && quest && quest.parentElement !== links) links.appendChild(quest);
 }
 
 function updateEditSummary() {
@@ -5593,6 +6140,7 @@ function loadEditFormFromCurrentUser() {
   document.getElementById('edit-show-favorite-blogs').checked = !!me.show_favorite_blogs;
   document.getElementById('edit-show-sakumap-stamps').checked = !!me.show_sakumap_stamps;
   document.getElementById('edit-show-sakumv-quiz').checked = me.show_sakumv_quiz !== false;
+  document.getElementById('edit-show-quest-badge').checked = me.show_quest_badge !== false;
   document.getElementById('sakumap-stamps-toggle-card').style.display = me.sakumap_linked ? 'flex' : 'none';
   document.getElementById('sakumap-link-note').style.display = me.sakumap_linked ? 'none' : 'block';
   document.getElementById('sakumv-quiz-section').style.display = me.sakumv_quiz_linked ? 'block' : 'none';
@@ -5701,6 +6249,7 @@ function openEdit() {
   document.getElementById('edit-show-favorite-blogs').checked = !!me.show_favorite_blogs;
   document.getElementById('edit-show-sakumap-stamps').checked = !!me.show_sakumap_stamps;
   document.getElementById('edit-show-sakumv-quiz').checked = me.show_sakumv_quiz !== false;
+  document.getElementById('edit-show-quest-badge').checked = me.show_quest_badge !== false;
   document.getElementById('sakumap-stamps-toggle-card').style.display = me.sakumap_linked ? 'flex' : 'none';
   document.getElementById('sakumap-link-note').style.display = me.sakumap_linked ? 'none' : 'block';
   document.getElementById('sakumv-quiz-section').style.display = me.sakumv_quiz_linked ? 'block' : 'none';
@@ -6243,6 +6792,7 @@ async function saveEdit(options = {}) {
     show_favorite_blogs: document.getElementById('edit-show-favorite-blogs').checked,
     show_sakumap_stamps: me.sakumap_linked && document.getElementById('edit-show-sakumap-stamps').checked,
     show_sakumv_quiz: me.sakumv_quiz_linked ? document.getElementById('edit-show-sakumv-quiz').checked : true,
+    show_quest_badge: document.getElementById('edit-show-quest-badge').checked,
   };
 
   setLoading(true, '保存中…');

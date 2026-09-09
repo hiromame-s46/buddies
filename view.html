@@ -83,6 +83,8 @@ main{padding:24px 22px 34px}
 .tag{display:inline-flex;align-items:center;min-height:34px;padding:7px 12px;border-radius:9999px;background:#fff;border:1px solid #ececec;font-size:13px;font-weight:700;color:#333;line-height:1.35}
 .next-live-list{display:grid;gap:10px}
 .next-live-item{display:grid;gap:4px;background:#fff;border:1px solid #ececec;border-radius:18px;padding:14px 16px;text-decoration:none;color:inherit}
+.next-live-item.live-setlist-trigger{width:100%;font:inherit;text-align:left;cursor:pointer}
+.history-live.live-setlist-trigger{width:100%;font:inherit;text-align:left;color:inherit;cursor:pointer}
 .next-live-date{font-size:12px;font-weight:900;color:#111;line-height:1.35}
 .next-live-title{font-size:14px;font-weight:900;color:#222;line-height:1.45}
 .next-live-venue{font-size:12px;color:#666;line-height:1.5}
@@ -180,42 +182,13 @@ main{padding:24px 22px 34px}
 .confirm-actions{display:grid;gap:8px}
 .confirm-btn{min-height:46px;border-radius:9999px;border:1px solid #ddd;background:#fff;color:#111;font:800 14px inherit;cursor:pointer}
 .confirm-btn.danger{background:#e00;border-color:#e00;color:#fff}
-.profile-tabs{display:grid;grid-template-columns:1fr 1fr;gap:6px;padding:4px;border:1px solid #eee;border-radius:999px;background:#f7f7f7;margin:8px 0 20px}
-.profile-tab{border:0;border-radius:999px;background:transparent;min-height:40px;font:inherit;font-size:13px;font-weight:900;color:#666;cursor:pointer}
-.profile-tab.active{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.06)}
-.profile-panel[hidden]{display:none}
-.post-list{display:grid;gap:12px}
-.post-card{border:1px solid #ececec;border-radius:18px;background:#fff;padding:14px;display:grid;gap:10px}
-.post-meta{font-size:11px;color:#777;font-weight:800}
-.post-body{font-size:14px;line-height:1.75;white-space:pre-wrap;color:#222}
-.post-images{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
-.post-images.one{grid-template-columns:1fr}
-.post-image-item{min-width:0;color:inherit;text-decoration:none;display:block}
-.post-images img{width:auto;max-width:100%;height:auto;max-height:min(72vh,680px);object-fit:contain;border-radius:14px;border:1px solid #eee;background:#f2f2f2;display:block;margin-inline:auto}
-.post-images:not(.one) img{max-height:min(54vh,440px)}
-.post-image-credit{margin-top:6px;font-size:11px;line-height:1.45;color:#666;font-weight:800;display:grid;gap:1px}
-.post-image-credit b{color:#111;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.post-quote{border:1px solid #e9e9e9;border-radius:16px;background:#fafafa;padding:12px;display:grid;gap:7px;color:#222;text-decoration:none;min-width:0}
-.post-quote img{width:auto;max-width:100%;height:auto;max-height:min(48vh,320px);object-fit:contain;border-radius:12px;border:1px solid #eee;justify-self:center;background:#f2f2f2}
-.post-quote-title{font-size:13px;font-weight:900;line-height:1.45;overflow-wrap:anywhere}
-.post-quote-sub{font-size:12px;color:#666;line-height:1.55;overflow-wrap:anywhere}
-.post-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-top:1px solid #f1f1f1;padding-top:10px}
-.post-action{border:0;background:transparent;color:#555;padding:6px 8px;border-radius:9999px;font:inherit;font-size:12px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;gap:5px}
-.post-action:hover{background:#f5f5f5;color:#111}.post-action.liked{background:#f2f2f2;color:#111}.post-action:disabled{opacity:.55;cursor:wait}
-.post-action svg{width:15px;height:15px;display:block;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}.post-action.liked svg{fill:currentColor}.post-comments{display:grid;gap:8px}.post-comment{display:flex;gap:8px;align-items:flex-start;font-size:12px;line-height:1.55;color:#333;background:#fafafa;border-radius:14px;padding:9px 10px}
-.post-comment b{color:#111;max-width:34%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.post-comment span{flex:1;min-width:0;white-space:pre-wrap;overflow-wrap:anywhere}
-.post-comment-delete{border:0;background:transparent;color:#999;font:inherit;font-size:11px;font-weight:900;cursor:pointer;padding:2px 4px;border-radius:8px}.post-comment-delete:hover{background:#eee;color:#d33}
-.post-comment-summary{font-size:11px;color:#888;font-weight:800;padding:0 2px}.post-comment-modal[hidden]{display:none}.post-comment-modal{position:fixed;inset:0;z-index:90;display:grid;place-items:end center;padding:18px;background:rgba(0,0,0,.38);backdrop-filter:blur(8px)}
-.post-comment-dialog{width:min(100%,520px);border-radius:24px;background:#fff;box-shadow:0 24px 80px rgba(0,0,0,.24);padding:16px;display:grid;gap:12px}.post-comment-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.post-comment-head h2{margin:0;font-size:17px}.post-comment-close{width:36px;height:36px;border:0;border-radius:50%;background:#f3f3f3;font-size:20px;cursor:pointer}
-.post-comment-dialog textarea{width:100%;min-height:120px;border:1px solid #ddd;border-radius:16px;padding:12px;font:inherit;font-size:16px;line-height:1.6;resize:vertical;outline:none}.post-comment-dialog textarea:focus{border-color:#111;box-shadow:0 0 0 3px rgba(0,0,0,.05)}.post-comment-submit{min-height:44px;border:0;border-radius:9999px;background:#111;color:#fff;font:inherit;font-size:13px;font-weight:900;cursor:pointer}.post-comment-submit:disabled{opacity:.5;cursor:wait}
-.post-tags,.post-links{display:flex;gap:6px;flex-wrap:wrap}
-.post-pill{display:inline-flex;min-height:28px;align-items:center;border-radius:999px;background:#f5f5f5;color:#333;text-decoration:none;padding:5px 10px;font-size:12px;font-weight:800;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.post-empty{padding:26px 14px;border:1px dashed #ddd;border-radius:18px;color:#888;text-align:center;font-size:13px;font-weight:800}
 .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(16px);background:#111;color:#fff;border-radius:9999px;padding:10px 16px;font-size:13px;opacity:0;pointer-events:none;transition:.25s;z-index:50;max-width:90%;white-space:nowrap}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 @media(max-width:560px){main{padding:18px 16px 32px}.hero{padding:20px 10px 12px}.name{font-size:22px}.icon-wrap{width:104px;height:104px}.section{margin-top:30px}.section+.section{margin-top:38px}.card{border-radius:24px;padding:18px}.next-live-card{padding:0}.next-live-card .next-live-item{grid-template-columns:68px 1fr auto;column-gap:13px;padding:12px;min-height:92px}.next-live-card .next-live-month,.next-live-card .next-live-day{font-size:20px}.next-live-card .next-live-slash{font-size:20px}.meta-item{grid-template-columns:1fr;gap:2px}.member-chip{width:100%}.sakumap-stamps{gap:10px}.sakumap-stamp{padding:11px 8px}.sakumv-record{padding:14px}}
 .quest-rank-chip{width:30px;height:30px;min-height:0;padding:0;border-radius:9px;display:inline-grid;place-items:center;cursor:pointer}.quest-rank-chip:before{display:none}.quest-rank-chip .lucide{width:18px;height:18px;stroke-width:2.5}.quest-badge-mark .lucide{width:24px;height:24px;stroke-width:2.3}
+.buddies-blog-list{display:grid;gap:10px}.buddies-blog-card{display:grid;grid-template-columns:96px minmax(0,1fr);gap:13px;min-height:88px;border:1px solid #ececec;border-radius:20px;background:#fff;color:#111;text-decoration:none;overflow:hidden}.buddies-blog-card.no-cover{grid-template-columns:minmax(0,1fr)}.buddies-blog-cover{width:96px;height:100%;min-height:88px;background:#f4f4f4;overflow:hidden}.buddies-blog-cover img{width:100%;height:100%;display:block;object-fit:cover}.buddies-blog-body{min-width:0;padding:12px 13px 12px 0;display:flex;flex-direction:column;justify-content:center}.buddies-blog-card.no-cover .buddies-blog-body{padding-left:15px}.buddies-blog-date{font-size:10px;font-weight:800;color:#999}.buddies-blog-title{margin-top:2px;font-size:14px;font-weight:900;line-height:1.45}.buddies-blog-excerpt{margin-top:4px;color:#666;font-size:11px;line-height:1.55;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
 .rank-info-overlay{position:fixed;inset:0;z-index:70;display:none;align-items:flex-end;justify-content:center;padding:10px;background:rgba(17,17,17,.42);backdrop-filter:blur(3px)}.rank-info-overlay.show{display:flex}.rank-info-card{width:min(100%,420px);border:1px solid #deded8;border-radius:20px;background:#fff;padding:18px;box-shadow:0 12px 36px rgba(0,0,0,.16)}.rank-info-top{display:flex;align-items:center;gap:12px}.rank-info-icon{width:48px;height:48px;border-radius:13px;display:grid;place-items:center;background:color-mix(in srgb,var(--rank-color,#5f8f66) 14%,#fff);color:var(--rank-color,#315c37)}.rank-info-icon .lucide{width:26px;height:26px}.rank-info-name{font-size:18px;font-weight:900}.rank-info-meta{margin-top:2px;color:#666;font-size:12px;font-weight:800}.rank-info-close{width:100%;min-height:44px;margin-top:15px;border:0;border-radius:999px;background:#111;color:#fff;font:inherit;font-size:13px;font-weight:900;cursor:pointer}
+.setlist-modal-overlay{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;padding:10px;background:rgba(17,17,17,.42);backdrop-filter:blur(3px)}.setlist-modal-overlay.show{display:flex}.setlist-modal-card{width:min(100%,520px);max-height:88vh;overflow:auto;border-radius:22px;background:#fff;padding:20px;box-shadow:0 12px 36px rgba(0,0,0,.16)}.setlist-modal-kicker{font-size:11px;color:#888;font-weight:900;letter-spacing:.04em}.setlist-modal-title{font-size:19px;font-weight:900;line-height:1.45;padding-right:28px}.setlist-modal-meta{font-size:12px;color:#666;line-height:1.6;margin-top:4px}.setlist-list{display:grid;gap:7px;margin-top:14px}.setlist-song{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:9px 10px;border-radius:12px;background:#fafafa;border:1px solid #f0f0f0}.setlist-song-no{font-size:12px;color:#999;font-weight:900;text-align:center}.setlist-song-title{font-size:13px;font-weight:800;line-height:1.45}.setlist-song-remark{display:block;font-size:11px;color:#777;font-weight:600;margin-top:2px}
 </style>
 </head>
 <body>
@@ -229,6 +202,7 @@ main{padding:24px 22px 34px}
 </div>
 <div id="toast" class="toast"></div>
 <div id="rank-info-overlay" class="rank-info-overlay" onclick="if(event.target===this)closeQuestRank()"><div class="rank-info-card" role="dialog" aria-modal="true" aria-label="クエストランク"><div class="rank-info-top"><div class="rank-info-icon" id="rank-info-icon"></div><div><div class="rank-info-name" id="rank-info-name"></div><div class="rank-info-meta" id="rank-info-meta"></div></div></div><button class="rank-info-close" type="button" onclick="closeQuestRank()">閉じる</button></div></div>
+<div id="setlist-modal-overlay" class="setlist-modal-overlay" onclick="if(event.target===this)closeSetlistPopup()"><div id="setlist-modal-card" class="setlist-modal-card" role="dialog" aria-modal="true"></div></div>
 <div id="confirm-modal" class="confirm-overlay" onclick="if(event.target===this)closeConfirmModal()">
   <div class="confirm-sheet">
     <h2 id="confirm-title" class="confirm-title">確認</h2>
@@ -239,25 +213,17 @@ main{padding:24px 22px 34px}
     </div>
   </div>
 </div>
-<div id="post-comment-modal" class="post-comment-modal" hidden onclick="if(event.target===this)closeProfileCommentModal()">
-  <div class="post-comment-dialog" role="dialog" aria-modal="true" aria-labelledby="post-comment-title">
-    <div class="post-comment-head"><h2 id="post-comment-title">コメント</h2><button class="post-comment-close" type="button" onclick="closeProfileCommentModal()" aria-label="閉じる">×</button></div>
-    <textarea id="post-comment-body" maxlength="500" placeholder="コメントを入力"></textarea>
-    <button id="post-comment-submit" class="post-comment-submit" type="button" onclick="submitProfileComment()">送信</button>
-  </div>
-</div>
 <script>
 const API = './api.php';
 const MEMBER_DATA = '../data/member.json';
 const LIVE_DATA = '../data/live.json';
+const SETLIST_DATA = '../data/sakamichi_sakura_setlists.json';
 let profile = null;
 let me = null;
 let memberMap = {};
 let memberDataLoaded = false;
 let liveOptions = [];
-let profilePosts = [];
-let profileCommentPostId = 0;
-const profileLikePending = new Set();
+let setlistGroups = [];
 
 function closeOrBack(e){
   const params = new URLSearchParams(location.search);
@@ -317,6 +283,13 @@ function buildLiveOptions(raw){
   return out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.title).localeCompare(String(b.title)));
 }
 function liveDisplay(id){const live=liveOptions.find(l=>sameLiveId(l.id,id));if(live)return live;const [date,title,venue]=String(id||'').split('|');return {id:normalizeLiveId(id),date,title:title||'ライブ',venue:venue||'',weekday:''};}
+function normalizeLiveTitle(value){return String(value||'').replace(/[［\[][^］\]]*[］\]]/g,'').replace(/櫻坂46|sakurazaka46/gi,'').toLowerCase().replace(/[\s　「」『』【】［］()（）\[\]〈〉《》・:：!！?？“”"'’]/g,'');}
+function buildSetlistGroups(raw){const groups=new Map();(Array.isArray(raw)?raw:[]).forEach(row=>{const key=[row.liveid,row.date,row.series,row.stage].map(v=>String(v||'')).join('|');if(!groups.has(key))groups.set(key,{date:String(row.date||''),series:String(row.series||''),stage:String(row.stage||''),songs:[]});groups.get(key).songs.push(row);});return [...groups.values()].map(g=>({...g,songs:g.songs.sort((a,b)=>Number(a.position||0)-Number(b.position||0))}));}
+function setlistForLive(live){if(!live?.date||!setlistGroups.length)return null;const candidates=setlistGroups.filter(g=>g.date===live.date);if(!candidates.length)return null;const title=normalizeLiveTitle(live.title);return candidates.find(g=>{const series=normalizeLiveTitle(g.series);return series===title||series.includes(title)||title.includes(series)})||(candidates.length===1?candidates[0]:null);}
+function liveItemKey(id){return encodeURIComponent(String(id||''));}
+function openSetlistPopupKey(key){openSetlistPopup(decodeURIComponent(key||''));}
+function openSetlistPopup(id){const overlay=document.getElementById('setlist-modal-overlay'),card=document.getElementById('setlist-modal-card');if(!overlay||!card)return;const live=liveDisplay(id),setlist=setlistForLive(live),songs=setlist?.songs||[];card.innerHTML=`<button class="modal-close-btn" type="button" onclick="closeSetlistPopup()" aria-label="閉じる">×</button><div class="setlist-modal-kicker">SETLIST</div><div class="setlist-modal-title">${esc(live.title||'ライブ')}</div><div class="setlist-modal-meta">${esc(liveDateLabel(live.date,live.weekday))}${live.venue?` ・ ${esc(live.venue)}`:''}${setlist?.stage?` ・ ${esc(setlist.stage)}`:''}</div>${songs.length?`<div class="setlist-list">${songs.map((song,i)=>`<div class="setlist-song"><div class="setlist-song-no">${esc(song.position||i+1)}</div><div class="setlist-song-title">${esc(song.title||'曲名不明')}${song.remark?`<span class="setlist-song-remark">${esc(song.remark)}</span>`:''}</div></div>`).join('')}</div>`:'<div class="empty">この公演のセトリはまだ登録されていません。</div>'}`;overlay.classList.add('show');}
+function closeSetlistPopup(){document.getElementById('setlist-modal-overlay')?.classList.remove('show');}
 function seatAreaLabel(v){return v==='arena'?'アリーナ':v==='stand'?'スタンド':'';}
 function cleanSeatInfo(seat={}){const floor=String(seat.floor||'').replace(/[^0-9]/g,'').slice(0,2);const area=['arena','stand'].includes(seat.area)?seat.area:'';const block=String(seat.block||'').replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,12);return{floor,area,block};}
 function seatHasValue(seat){const s=cleanSeatInfo(seat);return!!(s.floor||s.area||s.block);}
@@ -485,13 +458,14 @@ function liveTicketDateHtml(live, label = ''){
 function liveItemHtml(id, label = ''){
   const live = liveDisplay(id);
   const seat = liveSeat(profile?.next_live_seats, id);
-  return `<a class="next-live-item" href="./live.html?live=${encodeURIComponent(id)}">
+  const content = `
     <div class="next-live-date">${liveTicketDateHtml(live, label)}</div>
     <div class="next-live-title">${esc(live.title)}</div>
     ${live.venue ? `<div class="next-live-venue">${esc(live.venue)}</div>` : ''}
     ${!label && seatHasValue(seat) ? `<div class="next-live-seat">${esc(seatLabel(seat))}</div>` : ''}
     ${!label ? '<div class="next-live-chevron">›</div>' : ''}
-  </a>`;
+  `;
+  return label ? `<button type="button" class="next-live-item live-setlist-trigger" onclick="openSetlistPopupKey('${liveItemKey(id)}')" aria-label="${esc(live.title)}のセトリを表示">${content}</button>` : `<a class="next-live-item" href="./live.html?live=${encodeURIComponent(id)}">${content}</a>`;
 }
 function renderNextLives(p){
   const ids = nextLiveIds(p);
@@ -552,11 +526,11 @@ function historyDateLabel(item){
 function historyLiveHtml(item){
   if (!item?.live_id) return '';
   const live = liveDisplay(item.live_id);
-  return `<div class="history-live">
+  return `<button type="button" class="history-live live-setlist-trigger" onclick="openSetlistPopupKey('${liveItemKey(item.live_id)}')" aria-label="${esc(live.title || 'ライブ')}のセトリを表示">
     <div class="history-live-label">参加したLIVE</div>
     <div class="history-live-title">${esc(live.title || 'ライブ')}</div>
     ${live.venue ? `<div class="history-live-venue">${esc(live.venue)}</div>` : ''}
-  </div>`;
+  </button>`;
 }
 function historyEntryDateKey(item){
   const y = Number(item?.year || 0);
@@ -682,6 +656,7 @@ function heroMeta(rows){
   return `<div class="hero-meta">${rows.map(([label,val])=>`<span class="hero-meta-chip"><span class="hero-meta-label">${esc(label)}</span>${esc(val)}</span>`).join('')}</div>`;
 }
 function questRankChip(p){
+  if(p?.show_quest_badge===false)return'';
   const rank=p?.quest_profile?.rank;
   if(!rank)return'';
   return `<span class="quest-rank-chip" role="button" tabindex="0" style="--rank-color:${esc(rank.color||'#315c37')}" data-level="${esc(rank.level)}" data-rank="${esc(rank.name)}" data-xp="${esc(rank.xp||0)}" data-icon="${esc(rank.icon||'award')}" data-color="${esc(rank.color||'#315c37')}" aria-label="クエストランクを表示" onclick="showQuestRank(event,this)" onkeydown="if(event.key==='Enter'||event.key===' '){showQuestRank(event,this)}"><i data-lucide="${esc(rank.icon||'award')}"></i></span>`;
@@ -689,6 +664,7 @@ function questRankChip(p){
 function showQuestRank(event,element){event?.preventDefault();event?.stopPropagation();const overlay=document.getElementById('rank-info-overlay'),icon=document.getElementById('rank-info-icon');document.getElementById('rank-info-name').textContent=element.dataset.rank;document.getElementById('rank-info-meta').textContent=`RANK ${element.dataset.level} ・ ${element.dataset.xp} XP`;icon.style.setProperty('--rank-color',element.dataset.color||'#315c37');icon.innerHTML=`<i data-lucide="${esc(element.dataset.icon||'award')}"></i>`;overlay.classList.add('show');if(window.lucide)window.lucide.createIcons();}
 function closeQuestRank(){document.getElementById('rank-info-overlay')?.classList.remove('show');}
 function renderQuestProfile(p){
+  if(p?.show_quest_badge===false)return'';
   const quest=p?.quest_profile;
   if(!quest?.rank)return'';
   const rank=quest.rank,badges=Array.isArray(quest.badges)?quest.badges:[];
@@ -701,12 +677,13 @@ async function load(){
   const id = parseInt(params.get('id') || params.get('uid') || '0', 10);
   if (!id) return renderError('プロフィールが指定されていません。');
   try {
-    const [meRes, pRes, memberRes, liveRes, questRes] = await Promise.all([
+    const [meRes, pRes, memberRes, liveRes, questRes, setlistRes] = await Promise.all([
       fetch(`${API}?action=auth_me`, { credentials:'include' }).catch(()=>null),
       fetch(`${API}?action=buddies_public_profile_get&user_id=${id}`, { credentials:'include' }),
       fetch(MEMBER_DATA).catch(()=>null),
       fetch(LIVE_DATA).catch(()=>null),
-      fetch(`../todo/api.php?action=public_quest_profile_get&user_id=${id}`, { credentials:'include' }).catch(()=>null)
+      fetch(`../todo/api.php?action=public_quest_profile_get&user_id=${id}`, { credentials:'include' }).catch(()=>null),
+      fetch(SETLIST_DATA).catch(()=>null)
     ]);
     if (meRes) { try { const j = await meRes.json(); me = j.ok ? j.data : null; } catch(e){} }
     if (memberRes) {
@@ -719,6 +696,9 @@ async function load(){
     }
     if (liveRes) {
       try { liveOptions = buildLiveOptions(await liveRes.json()); } catch(e){ liveOptions = []; }
+    }
+    if (setlistRes) {
+      try { setlistGroups = buildSetlistGroups(await setlistRes.json()); } catch(e) { setlistGroups = []; }
     }
     const json = await pRes.json();
     if (!json.ok) return renderError(json.error || 'プロフィールを取得できませんでした。');
@@ -798,15 +778,8 @@ function render(p){
     ${historySection}
     ${linkedSections}
     ${snsSection}
+    <div id="buddies-blog-section"></div>
     <div id="favorite-area" class="section"></div>`;
-  const hasPosts = Number(p.post_count || 0) > 0;
-  const tabsHtml = hasPosts ? `
-    <div class="profile-tabs">
-      <button class="profile-tab active" type="button" data-profile-tab="main" onclick="switchProfileTab('main')">メイン</button>
-      <button class="profile-tab" type="button" data-profile-tab="posts" onclick="switchProfileTab('posts')">投稿</button>
-    </div>` : '';
-  const postsPanelHtml = hasPosts ? '<div id="profile-panel-posts" class="profile-panel" hidden><div class="post-empty">投稿を読み込み中…</div></div>' : '';
-
   document.getElementById('app').innerHTML = `
     <div class="hero">
       <div class="icon-wrap"><div class="icon" style="background:${esc(heroBg)}">${heroIcon}</div>${badge}</div>
@@ -816,226 +789,17 @@ function render(p){
       ${heroMeta(rows)}
     </div>
 
-    ${tabsHtml}
-    <div id="profile-panel-main" class="profile-panel">${mainPanel}</div>
-    ${postsPanelHtml}
+    <div class="profile-content">${mainPanel}</div>
 
     <div class="footer">Buddies profile</div>
   `;
   renderFavoriteArea();
+  loadBuddiesBlogs(p.id);
   if(window.lucide)window.lucide.createIcons();
-  const initialTab = hasPosts && new URLSearchParams(location.search).get('tab') === 'posts' ? 'posts' : 'main';
-  switchProfileTab(initialTab);
 }
-
-function switchProfileTab(tab){
-  tab = tab === 'posts' ? 'posts' : 'main';
-  document.querySelectorAll('.profile-tab').forEach(btn=>btn.classList.toggle('active', btn.dataset.profileTab === tab));
-  const main = document.getElementById('profile-panel-main');
-  const posts = document.getElementById('profile-panel-posts');
-  if (main) main.hidden = tab !== 'main';
-  if (posts) posts.hidden = tab !== 'posts';
-  if (tab === 'posts') loadProfilePosts();
-}
-
-function postDateLabel(value){
-  if(!value)return'';
-  const d=new Date(String(value).replace(' ','T'));
-  if(isNaN(d))return'';
-  return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
-}
-
-function renderProfilePostImages(images, post){
-  images = Array.isArray(images) ? images.filter(i=>i&&i.url) : [];
-  if(!images.length)return'';
-  const q = post?.quote || null;
-  const blog = q && q.type === 'sakulabo_blog' && q.payload ? q.payload : null;
-  const credit = blog ? `<div class="post-image-credit"><span>櫻坂46</span>${blog.member ? `<b>${esc(blog.member)}</b>` : ''}${blog.title ? `<span>${esc(blog.title)}</span>` : ''}</div>` : '';
-  return `<div class="post-images ${images.length===1?'one':''}">${images.slice(0,10).map(i=>{
-    const inner = `<img src="${esc(assetUrl(i.url))}" alt="" loading="lazy">${credit}`;
-    return blog?.url ? `<a class="post-image-item" href="${esc(blog.url)}" target="_blank" rel="noopener">${inner}</a>` : `<div class="post-image-item">${inner}</div>`;
-  }).join('')}</div>`;
-}
-
-function compactDisplayUrl(url){
-  try{
-    const u=new URL(String(url));
-    let path=u.pathname||'/';
-    if(path!=='/' && /\.[a-z0-9]{2,8}$/i.test(path.split('/').pop()||'')) path=path.slice(0,path.lastIndexOf('/')+1)||'/';
-    let label=u.host+path;
-    if(label.length>48){
-      const parts=path.split('/').filter(Boolean);
-      label=u.host+'/'+parts.slice(0,2).join('/')+(parts.length?'/':'');
-      if(label.length>48) label=label.slice(0,45)+'...';
-    }
-    return label;
-  }catch(e){
-    const s=String(url||'').replace(/^https?:\/\//,'');
-    return s.length>48?s.slice(0,45)+'...':s;
-  }
-}
-
-function renderProfilePostQuote(q){
-  if(!q||!q.payload||q.type==='sakulabo_blog')return'';
-  const p=q.payload;
-  const title=p.title||p.author_name||(q.type==='sakumap_spot'?'SakuMapスポット':q.type==='sakulabo_mimi'?'さくみみ':'引用投稿');
-  const sub=p.body||p.subtitle||p.member||p.date||'';
-  const href=p.url||(q.type==='post'&&p.post_id?`./index.html?post=${encodeURIComponent(p.post_id)}`:'');
-  const inner=`${p.image_url?`<img src="${esc(assetUrl(p.image_url))}" alt="" loading="lazy">`:''}<div class="post-quote-title">${esc(title)}</div>${sub?`<div class="post-quote-sub">${esc(sub)}</div>`:''}`;
-  return href?`<a class="post-quote" href="${esc(href)}" target="_blank" rel="noopener">${inner}</a>`:`<div class="post-quote">${inner}</div>`;
-}
-
-function findProfilePost(id){
-  return profilePosts.find(post=>Number(post.id)===Number(id));
-}
-
-function profilePostActionsHtml(post){
-  const pending=profileLikePending.has(Number(post.id));
-  return `<div class="post-actions">
-    <button class="post-action ${post.my_liked?'liked':''}" type="button" onclick="toggleProfilePostLike(${Number(post.id)})" aria-label="いいね ${Number(post.like_count||0)}件" aria-pressed="${post.my_liked?'true':'false'}" ${pending?'disabled':''}><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 0 0 0-7.78z"></path></svg><span>${Number(post.like_count||0)}</span></button>
-    <button class="post-action" type="button" onclick="openProfileCommentModal(${Number(post.id)})" aria-label="コメント ${Number(post.comment_count||0)}件"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15a4 4 0 0 1-4 4H7l-4 4V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4z"></path></svg><span>${Number(post.comment_count||0)}</span></button>
-  </div>`;
-}
-
-function profilePostCommentsHtml(post){
-  const comments=Array.isArray(post.comments)?post.comments.slice(-5):[];
-  if(!comments.length)return'';
-  const hiddenCount=Math.max(0,Number(post.comment_count||0)-comments.length);
-  return `${hiddenCount?`<div class="post-comment-summary">最新${comments.length}件を表示（全${Number(post.comment_count||0)}件）</div>`:''}<div class="post-comments">${comments.map(comment=>`<div class="post-comment"><b>${esc(comment.author?.display_name||comment.author?.username||'名無し')}</b><span>${esc(comment.body)}</span>${comment.can_delete?`<button class="post-comment-delete" type="button" onclick="deleteProfilePostComment(${Number(post.id)},${Number(comment.id)})">削除</button>`:''}</div>`).join('')}</div>`;
-}
-
-function updateProfilePostInteractions(id){
-  const post=findProfilePost(id);
-  const card=document.querySelector(`.post-card[data-post-id="${Number(id)}"]`);
-  if(!post||!card)return;
-  const actions=card.querySelector('.post-interactions');
-  const comments=card.querySelector('.post-comments-wrap');
-  if(actions)actions.innerHTML=profilePostActionsHtml(post);
-  if(comments)comments.innerHTML=profilePostCommentsHtml(post);
-}
-
-function renderProfilePost(post){
-  const images = Array.isArray(post.images) ? post.images.filter(i=>i&&i.url) : [];
-  const links = Array.isArray(post.links) ? post.links : [];
-  const tags = Array.isArray(post.hashtags) ? post.hashtags : [];
-  return `<article class="post-card" data-post-id="${Number(post.id)}">
-    <div class="post-meta">${esc(postDateLabel(post.created_at))}${post.edited_at ? ' ・ 編集済み' : ''}</div>
-    ${post.body ? `<div class="post-body">${esc(post.body)}</div>` : ''}
-    ${renderProfilePostImages(images, post)}
-    ${links.length ? `<div class="post-links">${links.map(u=>`<a class="post-pill" href="${esc(u)}" target="_blank" rel="noopener" title="${esc(u)}">${esc(compactDisplayUrl(u))}</a>`).join('')}</div>` : ''}
-    ${tags.length ? `<div class="post-tags">${tags.map(t=>`<span class="post-pill">#${esc(t)}</span>`).join('')}</div>` : ''}
-    ${renderProfilePostQuote(post.quote)}
-    <div class="post-interactions">${profilePostActionsHtml(post)}</div>
-    <div class="post-comments-wrap">${profilePostCommentsHtml(post)}</div>
-  </article>`;
-}
-
-function requireProfilePostAuth(){
-  if(me)return true;
-  const redirect=`view.html?id=${encodeURIComponent(profile?.id||'')}&tab=posts`;
-  location.href=`./?favorite_redirect=${encodeURIComponent(redirect)}`;
-  return false;
-}
-
-async function toggleProfilePostLike(id){
-  if(!requireProfilePostAuth())return;
-  id=Number(id);
-  const post=findProfilePost(id);
-  if(!post||profileLikePending.has(id))return;
-  const previousLiked=!!post.my_liked;
-  const previousCount=Number(post.like_count||0);
-  post.my_liked=!previousLiked;
-  post.like_count=Math.max(0,previousCount+(post.my_liked?1:-1));
-  profileLikePending.add(id);
-  updateProfilePostInteractions(id);
-  try{
-    const res=await fetch(`${API}?action=buddies_post_like_toggle`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:id})});
-    const json=await res.json();
-    if(!json.ok)throw new Error(json.error||'操作できませんでした');
-    const serverLiked=!!json.data?.liked;
-    if(serverLiked!==post.my_liked)post.like_count=Math.max(0,Number(post.like_count||0)+(serverLiked?1:-1));
-    post.my_liked=serverLiked;
-  }catch(e){
-    post.my_liked=previousLiked;
-    post.like_count=previousCount;
-    toast(e.message||'いいねを更新できませんでした');
-  }finally{
-    profileLikePending.delete(id);
-    updateProfilePostInteractions(id);
-  }
-}
-
-function openProfileCommentModal(id){
-  if(!requireProfilePostAuth()||!findProfilePost(id))return;
-  profileCommentPostId=Number(id);
-  const modal=document.getElementById('post-comment-modal');
-  const input=document.getElementById('post-comment-body');
-  if(input)input.value='';
-  if(modal)modal.hidden=false;
-  document.body.style.overflow='hidden';
-  setTimeout(()=>input?.focus(),40);
-}
-
-function closeProfileCommentModal(){
-  const modal=document.getElementById('post-comment-modal');
-  if(modal)modal.hidden=true;
-  profileCommentPostId=0;
-  document.body.style.overflow='';
-}
-
-async function submitProfileComment(){
-  if(!requireProfilePostAuth())return;
-  const id=profileCommentPostId;
-  const input=document.getElementById('post-comment-body');
-  const button=document.getElementById('post-comment-submit');
-  const body=input?.value.trim()||'';
-  if(!id||!body){toast('コメントを入力してください');return;}
-  if(button)button.disabled=true;
-  try{
-    const res=await fetch(`${API}?action=buddies_post_comment_add`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({post_id:id,body})});
-    const json=await res.json();
-    if(!json.ok)throw new Error(json.error||'コメントできませんでした');
-    const post=findProfilePost(id);
-    if(post){
-      post.comment_count=Number(post.comment_count||0)+1;
-      if(json.data?.comment)post.comments=(Array.isArray(post.comments)?post.comments:[]).concat([json.data.comment]).slice(-5);
-      updateProfilePostInteractions(id);
-    }
-    closeProfileCommentModal();
-    toast('コメントしました');
-  }catch(e){toast(e.message||'コメントできませんでした');}
-  finally{if(button)button.disabled=false;}
-}
-
-async function deleteProfilePostComment(postId,commentId){
-  if(!requireProfilePostAuth()||!confirm('このコメントを削除しますか？'))return;
-  try{
-    const res=await fetch(`${API}?action=buddies_post_comment_delete`,{method:'POST',credentials:'include',headers:{'Content-Type':'application/json'},body:JSON.stringify({comment_id:commentId})});
-    const json=await res.json();
-    if(!json.ok)throw new Error(json.error||'コメントを削除できませんでした');
-    const post=findProfilePost(postId);
-    if(post){
-      post.comment_count=Math.max(0,Number(post.comment_count||0)-1);
-      post.comments=(Array.isArray(post.comments)?post.comments:[]).filter(comment=>Number(comment.id)!==Number(commentId));
-      updateProfilePostInteractions(postId);
-    }
-    toast('コメントを削除しました');
-  }catch(e){toast(e.message||'コメントを削除できませんでした');}
-}
-
-async function loadProfilePosts(){
-  const panel = document.getElementById('profile-panel-posts');
-  if (!panel || panel.dataset.loaded === '1' || !profile?.id) return;
-  panel.dataset.loaded = '1';
-  try{
-    const res = await fetch(`${API}?action=buddies_posts_list&user_id=${encodeURIComponent(profile.id)}&limit=24&include_comments=1`, { credentials:'include' });
-    const json = await res.json();
-    profilePosts = json.ok ? (json.data || []).map(post=>({...post,comments:Array.isArray(post.comments)?post.comments:[]})) : [];
-    panel.innerHTML = profilePosts.length ? `<div class="post-list">${profilePosts.map(renderProfilePost).join('')}</div>` : '<div class="post-empty">まだ投稿はありません</div>';
-  }catch(e){
-    panel.innerHTML = '<div class="post-empty">投稿を読み込めませんでした</div>';
-  }
-}
+function buddiesBlogDate(value){if(!value)return'';const d=new Date(String(value).replace(' ','T'));if(isNaN(d))return'';return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;}
+function renderBuddiesBlogCard(blog){const cover=blog.cover_image_url?`<div class="buddies-blog-cover"><img src="${esc(blog.cover_image_url)}" alt="" loading="lazy" onerror="this.closest('.buddies-blog-card').classList.add('no-cover');this.parentElement.remove()"></div>`:'';return `<a class="buddies-blog-card ${cover?'':'no-cover'}" href="${esc(blog.url)}">${cover}<div class="buddies-blog-body"><div class="buddies-blog-date">${esc(buddiesBlogDate(blog.published_at))}</div><div class="buddies-blog-title">${esc(blog.title||'Buddies Blog')}</div>${blog.excerpt?`<div class="buddies-blog-excerpt">${esc(blog.excerpt)}</div>`:''}</div></a>`;}
+async function loadBuddiesBlogs(userId){const root=document.getElementById('buddies-blog-section');if(!root||!userId)return;try{const res=await fetch(`../Buddies-Blog/profile-blogs.php?user_id=${encodeURIComponent(userId)}&limit=6`,{credentials:'include'}),json=await res.json(),blogs=json.ok?(json.data||[]):[];if(!blogs.length)return;root.innerHTML=`<div class="section"><div class="section-title">Buddies Blog</div><div class="card"><div class="buddies-blog-list">${blogs.map(renderBuddiesBlogCard).join('')}</div></div></div>`;}catch(e){}}
 
 function openLoginForFavorite(){
   if (!profile) return;

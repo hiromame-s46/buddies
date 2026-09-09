@@ -48,6 +48,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .past-lives-count{font-size:11px;color:#999}
 .past-live-list{display:grid;gap:8px}
 .past-live-item{background:#fff;border:1px solid #eee;border-radius:14px;padding:11px 12px;display:grid;gap:4px}
+.past-live-item.live-setlist-trigger{width:100%;font:inherit;text-align:left;color:inherit;cursor:pointer}
 .past-live-date{font-size:11px;color:#777;font-weight:900}
 .past-live-name{font-size:13px;font-weight:900}
 .past-live-venue{font-size:12px;color:#777}
@@ -61,12 +62,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .history-live-label{font-size:10px;font-weight:900;color:#888;letter-spacing:.04em}
 .history-live-title{font-size:13px;font-weight:900;color:#222;line-height:1.45}
 .history-live-venue{font-size:12px;color:#777;line-height:1.45}
+.history-live.live-setlist-trigger{width:100%;font:inherit;text-align:left;color:inherit;cursor:pointer}
 .history-title{font-size:15px;font-weight:950;color:#111;line-height:1.5}
 .history-note{font-size:13px;color:#555;line-height:1.7;white-space:pre-wrap}
 .history-image{width:100%;aspect-ratio:16/9;border-radius:14px;overflow:hidden;background:#f2f2f2;border:1px solid #eee}
 .history-image img{width:100%;height:100%;object-fit:cover;display:block}
 .empty{padding:28px 16px;border:1px dashed #ddd;border-radius:18px;color:#999;text-align:center;font-size:13px;font-weight:800;line-height:1.7}
 .error{padding:32px 4px;text-align:center;color:#666}.error h2{font-size:18px;color:#111;margin-bottom:8px}.error a{color:#111;font-weight:900}
+.setlist-modal-overlay{position:fixed;inset:0;z-index:80;display:none;align-items:flex-end;justify-content:center;padding:10px;background:rgba(17,17,17,.42);backdrop-filter:blur(3px)}.setlist-modal-overlay.show{display:flex}.setlist-modal-card{width:min(100%,520px);max-height:88vh;overflow:auto;border-radius:22px;background:#fff;padding:20px;box-shadow:0 12px 36px rgba(0,0,0,.16)}.setlist-modal-kicker{font-size:11px;color:#888;font-weight:900;letter-spacing:.04em}.setlist-modal-title{font-size:19px;font-weight:900;line-height:1.45;padding-right:28px}.setlist-modal-meta{font-size:12px;color:#666;line-height:1.6;margin-top:4px}.setlist-list{display:grid;gap:7px;margin-top:14px}.setlist-song{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;padding:9px 10px;border-radius:12px;background:#fafafa;border:1px solid #f0f0f0}.setlist-song-no{font-size:12px;color:#999;font-weight:900;text-align:center}.setlist-song-title{font-size:13px;font-weight:800;line-height:1.45}.setlist-song-remark{display:block;font-size:11px;color:#777;font-weight:600;margin-top:2px}.modal-close-btn{position:absolute;top:14px;right:16px;width:32px;height:32px;border:0;border-radius:50%;background:#f2f2f2;color:#666;font-size:20px;line-height:1;cursor:pointer}
 @media(min-width:700px){.app{padding-left:28px;padding-right:28px}.hero{padding-top:24px}.name{font-size:26px}}
 </style>
 </head>
@@ -77,16 +80,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
     <div class="head-title">History</div>
     <span></span>
   </header>
-  <main id="app"><div class="empty" data-nosnippet>読み込み中…</div></main>
+<main id="app"><div class="empty" data-nosnippet>読み込み中…</div></main>
 </div>
+<div id="setlist-modal-overlay" class="setlist-modal-overlay" onclick="if(event.target===this)closeSetlistPopup()"><div id="setlist-modal-card" class="setlist-modal-card" role="dialog" aria-modal="true"></div></div>
 
 <script>
 const API = './api.php';
 const MEMBER_DATA = '../data/member.json';
 const LIVE_DATA = '../data/live.json';
+const SETLIST_DATA = '../data/sakamichi_sakura_setlists.json';
 let profile = null;
 let memberMap = {};
 let liveOptions = [];
+let setlistGroups = [];
 let allHistoryItems = [];
 let filters = { live:false, image:false, q:'' };
 
@@ -143,6 +149,12 @@ function buildLiveOptions(raw){
   return out.sort((a,b)=>String(a.date).localeCompare(String(b.date))||String(a.title).localeCompare(String(b.title)));
 }
 function liveDisplay(id){const live=liveOptions.find(l=>sameLiveId(l.id,id));if(live)return live;const [date,title,venue]=String(id||'').split('|');return {id:normalizeLiveId(id),date,title:title||'ライブ',venue:venue||'',weekday:''};}
+function normalizeLiveTitle(value){return String(value||'').replace(/[［\[][^］\]]*[］\]]/g,'').replace(/櫻坂46|sakurazaka46/gi,'').toLowerCase().replace(/[\s　「」『』【】［］()（）\[\]〈〉《》・:：!！?？“”"'’]/g,'');}
+function buildSetlistGroups(raw){const groups=new Map();(Array.isArray(raw)?raw:[]).forEach(row=>{const key=[row.liveid,row.date,row.series,row.stage].map(v=>String(v||'')).join('|');if(!groups.has(key))groups.set(key,{date:String(row.date||''),series:String(row.series||''),stage:String(row.stage||''),songs:[]});groups.get(key).songs.push(row);});return [...groups.values()].map(g=>({...g,songs:g.songs.sort((a,b)=>Number(a.position||0)-Number(b.position||0))}));}
+function setlistForLive(live){if(!live?.date||!setlistGroups.length)return null;const candidates=setlistGroups.filter(g=>g.date===live.date);if(!candidates.length)return null;const title=normalizeLiveTitle(live.title);return candidates.find(g=>{const series=normalizeLiveTitle(g.series);return series===title||series.includes(title)||title.includes(series)})||(candidates.length===1?candidates[0]:null);}
+function openSetlistPopupKey(key){openSetlistPopup(decodeURIComponent(key||''));}
+function openSetlistPopup(id){const overlay=document.getElementById('setlist-modal-overlay'),card=document.getElementById('setlist-modal-card');if(!overlay||!card)return;const live=liveDisplay(id),setlist=setlistForLive(live),songs=setlist?.songs||[];card.innerHTML=`<button class="modal-close-btn" type="button" onclick="closeSetlistPopup()" aria-label="閉じる">×</button><div class="setlist-modal-kicker">SETLIST</div><div class="setlist-modal-title">${esc(live.title||'ライブ')}</div><div class="setlist-modal-meta">${esc(liveDateLabel(live.date,live.weekday))}${live.venue?` ・ ${esc(live.venue)}`:''}${setlist?.stage?` ・ ${esc(setlist.stage)}`:''}</div>${songs.length?`<div class="setlist-list">${songs.map((song,i)=>`<div class="setlist-song"><div class="setlist-song-no">${esc(song.position||i+1)}</div><div class="setlist-song-title">${esc(song.title||'曲名不明')}${song.remark?`<span class="setlist-song-remark">${esc(song.remark)}</span>`:''}</div></div>`).join('')}</div>`:'<div class="empty">この公演のセトリはまだ登録されていません。</div>'}`;overlay.classList.add('show');}
+function closeSetlistPopup(){document.getElementById('setlist-modal-overlay')?.classList.remove('show');}
 function pastLiveIds(p){const ids=uniqueLiveIds(p?.next_lives);const today=localDateKey();return ids.filter(id=>{const live=liveDisplay(id);return !!live.date&&live.date<today;}).sort((a,b)=>String(liveDisplay(b).date||'').localeCompare(String(liveDisplay(a).date||'')));}
 function historyDateLabel(item){const y=item?.year?`${item.year}`:'';if(!y)return'';const m=item.month?`${String(item.month).padStart(2,'0')}`:'';const d=item.day?`${String(item.day).padStart(2,'0')}`:'';return [y,m,d].filter(Boolean).join('.');}
 function historyEntryDateKey(item){const y=Number(item?.year||0),m=Number(item?.month||0),d=Number(item?.day||0);if(!y)return'';return `${String(y).padStart(4,'0')}-${String(m||0).padStart(2,'0')}-${String(d||0).padStart(2,'0')}`;}
@@ -166,14 +178,14 @@ function pastLivesHtml(p){
     <div class="past-lives-title"><span>参加したLIVE</span><span class="past-lives-count">${ids.length}公演</span></div>
     <div class="past-live-list">${ids.map(id=>{
       const live=liveDisplay(id);
-      return `<div class="past-live-item"><div class="past-live-date">${esc(liveDateLabel(live.date,live.weekday))}</div><div class="past-live-name">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="past-live-venue">${esc(live.venue)}</div>`:''}</div>`;
+      return `<button type="button" class="past-live-item live-setlist-trigger" onclick="openSetlistPopupKey('${encodeURIComponent(id)}')" aria-label="${esc(live.title||'ライブ')}のセトリを表示"><div class="past-live-date">${esc(liveDateLabel(live.date,live.weekday))}</div><div class="past-live-name">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="past-live-venue">${esc(live.venue)}</div>`:''}</button>`;
     }).join('')}</div>
   </section>`;
 }
 function historyLiveHtml(item){
   if(!item?.live_id)return'';
   const live=liveDisplay(item.live_id);
-  return `<div class="history-live"><div class="history-live-label">参加したLIVE</div><div class="history-live-title">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="history-live-venue">${esc(live.venue)}</div>`:''}</div>`;
+  return `<button type="button" class="history-live live-setlist-trigger" onclick="openSetlistPopupKey('${encodeURIComponent(item.live_id)}')" aria-label="${esc(live.title||'ライブ')}のセトリを表示"><div class="history-live-label">参加したLIVE</div><div class="history-live-title">${esc(live.title||'ライブ')}</div>${live.venue?`<div class="history-live-venue">${esc(live.venue)}</div>`:''}</button>`;
 }
 function historySearchText(item){
   const live=item.live_id?liveDisplay(item.live_id):null;
@@ -239,10 +251,11 @@ async function load(){
   const id=parseInt(params.get('id')||params.get('uid')||'0',10);
   if(!id)return renderError('プロフィールが指定されていません。');
   try{
-    const [pRes,memberRes,liveRes]=await Promise.all([
+    const [pRes,memberRes,liveRes,setlistRes]=await Promise.all([
       fetch(`${API}?action=buddies_public_profile_get&user_id=${id}`,{credentials:'include'}),
       fetch(`${MEMBER_DATA}?_=${Date.now()}`).catch(()=>null),
-      fetch(`${LIVE_DATA}?_=${Date.now()}`).catch(()=>null)
+      fetch(`${LIVE_DATA}?_=${Date.now()}`).catch(()=>null),
+      fetch(`${SETLIST_DATA}?_=${Date.now()}`).catch(()=>null)
     ]);
     if(memberRes){try{
       const raw=await memberRes.json();
@@ -250,6 +263,7 @@ async function load(){
       members.forEach(m=>{if(m?.name)memberMap[m.name]=m;});
     }catch(e){memberMap={};}}
     if(liveRes){try{liveOptions=buildLiveOptions(await liveRes.json());}catch(e){liveOptions=[];}}
+    if(setlistRes){try{setlistGroups=buildSetlistGroups(await setlistRes.json());}catch(e){setlistGroups=[];}}
     const json=await pRes.json();
     if(!json.ok)return renderError(json.error||'プロフィールを取得できませんでした。');
     profile=json.data;

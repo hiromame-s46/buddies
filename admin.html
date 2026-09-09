@@ -2245,10 +2245,13 @@ function renderContactDetailPage(){
 async function openContactInquiry(key, silent, replace){
   const keyStr=String(key||'').trim();
   if(!keyStr) return;
-  const isId=/^\d+$/.test(keyStr);
-  const query=isId?{id:keyStr}:{code:keyStr.toUpperCase()};
+  const byCode=contactInquiries.find(c=>String(c.contact_code||'').toUpperCase()===keyStr.toUpperCase());
+  const byId=contactInquiries.find(c=>+c.id===+keyStr);
+  // 管理番号は数字だけになることもあるため、一覧に存在するコードを ID より優先する。
+  const useId=keyStr.startsWith('-') || (!byCode && !!byId);
+  const query=useId?{id:keyStr}:{code:keyStr.toUpperCase()};
   if(!silent){
-    const base=contactInquiries.find(c=>isId?+c.id===+keyStr:String(c.contact_code||'').toUpperCase()===keyStr.toUpperCase());
+    const base=useId?byId:byCode;
     if(base){ currentContact=base; renderContactDetailPage(); }
   }
   try{
@@ -2392,7 +2395,7 @@ function contactAdminRow(c){
   const preview = compactText(c.latest_message || c.message || '本文なし', 120);
   const who = c.latest_sender === 'admin' ? '管理者返信' : 'ユーザー送信';
   const href = `?tab=contacts&contact=${encodeURIComponent(code)}`;
-  return `<a class="contact-mail-row ${unread?'unread':''}" href="${esc(href)}" data-contact="${esc(code)}" onclick="event.preventDefault();openContactInquiry(this.dataset.contact)"><div class="contact-mail-row-main"><div class="contact-mail-row-subject">${esc(subject)}</div><div class="contact-mail-row-meta">${esc(who)} / ${esc(contactAccountLabel(c))} / ${esc(contactReplyLabel(c))}</div><div class="contact-mail-row-preview">${esc(preview)}</div></div><div class="contact-mail-row-side"><div class="contact-mail-row-date">${esc(c.latest_at || c.updated_at || c.created_at || '')}</div><div class="contact-mail-badges"><span class="contact-status ${esc(contactStatusClass(c.status))}">${esc(contactStatusLabel(c.status))}</span>${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}${c.is_user_hidden||c.user_hidden_at?'<span class="contact-status hidden">非表示</span>':''}</div></div></a>`;
+  return `<a class="contact-mail-row ${unread?'unread':''}" href="${esc(href)}" data-contact="${esc(code)}" onclick="event.preventDefault();openContactInquiry(this.dataset.contact)"><div class="contact-mail-row-main"><div class="contact-mail-row-subject">${esc(subject)}</div><div class="contact-mail-row-meta">${esc(who)} / ${esc(contactAccountLabel(c))} / ${esc(contactReplyLabel(c))}</div><div class="contact-mail-row-preview">${esc(preview)}</div></div><div class="contact-mail-row-side"><div class="contact-mail-row-date">${esc(c.latest_at || c.updated_at || c.created_at || '')}</div><div class="contact-mail-badges"><span class="contact-status ${esc(contactStatusClass(c.status))}">${esc(contactStatusLabel(c.status))}</span>${c.copied_to_form?'<span class="contact-status">formコピー済み</span>':''}${c.form_id_conflict?'<span class="contact-status rejected">form ID競合</span>':''}${unread?`<span class="contact-status unread">未読 ${+c.unread_user_count}</span>`:''}${c.is_user_hidden||c.user_hidden_at?'<span class="contact-status hidden">非表示</span>':''}</div></div></a>`;
 }
 function renderContactListPage(){
   document.body.classList.add('contacts-mode');
@@ -2553,6 +2556,32 @@ async function sendContactReply(){
   }
 }
 
+function contactCopyButtonHtml(c){
+  const id = Number(c && c.id || 0);
+  if (!id) return '';
+  if (c.copied_to_form) return '<button class="btn" type="button" disabled>formコピー済み</button>';
+  if (c.form_id_conflict) return '<button class="btn is-disabled" type="button" disabled title="satellite/form側で内部IDが競合しています">form ID競合</button>';
+  return `<button class="btn btn-primary" type="button" data-copy-contact-id="${id}">formへコピー</button>`;
+}
+async function copyContactToForm(id){
+  const num = Number(id || (currentContact && currentContact.id) || 0);
+  if (!num) return;
+  const target = (Array.isArray(contactInquiries) ? contactInquiries.find(c=>+c.id===num) : null) || currentContact || null;
+  const label = target ? `#${target.contact_code || target.id}` : 'このお問い合わせ';
+  if (!confirm(`${label} を satellite/form にコピーしますか？\nお問い合わせID・メッセージID・ユーザーIDを引き継ぎます。`)) return;
+  const btn = Array.from(document.querySelectorAll('[data-copy-contact-id]')).find(el=>Number(el.dataset.copyContactId)===num);
+  if(btn){ btn.disabled=true; btn.textContent='コピー中…'; }
+  try{
+    const result = await adminApi('contact_admin_copy_to_form', {body:{id:num}});
+    try{ contactInquiries = await adminApi('contact_admin_list') || contactInquiries; }catch(e){}
+    await openContactInquiry(num,true,true);
+    alert(result && result.already_copied ? 'すでに satellite/form へコピー済みです。' : 'satellite/form へコピーしました。');
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.textContent='formへコピー'; }
+    alert((e && e.message) || 'コピーに失敗しました');
+  }
+}
+
 
 /* admin-compact-mail-view-20260617: final delete/open guard and compact controls */
 function canAdminDeleteContact(c){
@@ -2610,6 +2639,9 @@ renderContactDetailPage = function(){
   const actions = document.querySelector('.contact-detail-actions');
   const oldBtn = actions && actions.querySelector('[data-delete-contact-id]');
   if(actions && currentContact && oldBtn){
+    if(!actions.querySelector('[data-copy-contact-id]')){
+      oldBtn.insertAdjacentHTML('beforebegin', contactCopyButtonHtml(currentContact));
+    }
     if(!actions.querySelector('[data-contact-mail-id]')){
       oldBtn.insertAdjacentHTML('beforebegin', contactMailButtonHtml(currentContact));
     }
@@ -2623,6 +2655,13 @@ document.addEventListener('click', function(e){
   e.preventDefault();
   e.stopPropagation();
   sendContactMailNotification(btn.dataset.contactMailId);
+}, true);
+document.addEventListener('click', function(e){
+  const btn = e.target && e.target.closest ? e.target.closest('[data-copy-contact-id]') : null;
+  if(!btn) return;
+  e.preventDefault();
+  e.stopPropagation();
+  copyContactToForm(btn.dataset.copyContactId);
 }, true);
 const __deleteContactInquiryCompact = deleteContactInquiry;
 deleteContactInquiry = async function(id){

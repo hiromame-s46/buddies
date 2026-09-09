@@ -41,6 +41,102 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
 .field input{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:12px;font-size:14px;background:#fff;outline:none;transition:border .2s;font-family:inherit;color:#000;-webkit-appearance:none;appearance:none;}
 .field input:focus{border-color:#000;}
 .field input:disabled{background:#f9f9f9;color:#999;cursor:not-allowed;}
+.security-toggle{margin-top:4px;}
+.security-panel[hidden]{display:none;}
+.security-panel{margin-top:18px;padding-top:18px;border-top:1px solid #f0f0f0;}
+.profile-editor{display:none;margin-top:20px;padding-top:20px;border-top:1px solid #eee;}
+.profile-editor.open{display:block;}
+.profile-editor-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:18px;}
+.profile-editor-heading h3{font-size:16px;font-weight:800;}
+.profile-editor-heading p{font-size:11px;color:#999;margin-top:3px;}
+.profile-editor-section{display:grid;gap:14px;padding:18px 0;border-top:1px solid #f0f0f0;}
+.profile-editor-section:first-of-type{border-top:0;padding-top:0;}
+.profile-editor-section-title{font-size:13px;font-weight:800;}
+.profile-editor-label{font-size:12px;color:#666;font-weight:600;margin-bottom:6px;display:block;}
+.profile-editor input,.profile-editor textarea,.profile-editor select{width:100%;padding:11px 12px;border:1px solid var(--border);border-radius:11px;font:inherit;font-size:13px;background:#fff;color:#111;outline:none;}
+.profile-editor textarea{min-height:90px;resize:vertical;line-height:1.6;}
+.profile-editor input:focus,.profile-editor textarea:focus,.profile-editor select:focus{border-color:#000;}
+.profile-editor-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.profile-editor-grid.three{grid-template-columns:repeat(3,1fr);}
+.profile-editor-icon{display:flex;align-items:center;gap:14px;}
+.profile-editor-icon-preview{width:72px;height:72px;border-radius:50%;overflow:hidden;background:#eee;display:grid;place-items:center;color:#999;font-size:24px;font-weight:800;flex:none;}
+.profile-editor-icon-preview img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.profile-editor-icon-actions{display:grid;gap:7px;}
+.profile-editor-icon-actions button,.profile-editor-add,.profile-editor-cancel{width:auto;padding:8px 12px;border-radius:999px;border:1px solid var(--border);background:#fff;color:#111;font:inherit;font-size:12px;font-weight:700;cursor:pointer;}
+.profile-editor-icon-actions button:hover,.profile-editor-add:hover,.profile-editor-cancel:hover{background:#f7f7f7;}
+.profile-editor-chips{display:flex;flex-wrap:wrap;gap:6px;}
+.profile-editor-chip{display:inline-flex;align-items:center;gap:5px;padding:6px 9px;border-radius:999px;background:#f5f5f5;font-size:11px;color:#333;}
+.profile-editor-chip button{border:0;background:none;color:#888;cursor:pointer;padding:0;font-size:14px;line-height:1;}
+.profile-editor-oshi-list{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.profile-editor-oshi-card{position:relative;min-width:0;padding:10px 6px 8px;border:1px solid #eee;border-radius:14px;background:#fafafa;text-align:center;}
+.profile-editor-oshi-avatar{width:52px;height:52px;margin:0 auto 5px;border-radius:50%;overflow:hidden;background:#eee;display:grid;place-items:center;color:#999;font-size:20px;font-weight:800;}
+.profile-editor-oshi-avatar img{width:100%;height:100%;object-fit:cover;object-position:top center;}
+.profile-editor-oshi-label{font-size:10px;color:#999;font-weight:700;}
+.profile-editor-oshi-name{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.profile-editor-oshi-remove{position:absolute;top:5px;right:5px;width:22px;height:22px;border:0;border-radius:50%;background:#fff;color:#888;cursor:pointer;font-size:16px;line-height:1;}
+.profile-editor-add{margin-top:8px;width:100%;}
+.profile-editor-sns-row{display:grid;grid-template-columns:102px 1fr auto;gap:6px;align-items:center;margin-bottom:7px;}
+.profile-editor-sns-row button{border:1px solid var(--border);background:#fff;border-radius:10px;padding:9px 10px;cursor:pointer;color:#666;}
+.profile-editor-toggle{display:flex;align-items:flex-start;gap:9px;padding:11px 12px;border:1px solid #eee;border-radius:12px;background:#fafafa;font-size:12px;line-height:1.5;cursor:pointer;}
+.profile-editor-toggle input{width:auto;margin-top:3px;accent-color:#000;}
+.profile-editor-toggle strong{display:block;font-size:12px;color:#111;}
+.profile-editor-toggle span{color:#777;font-size:11px;}
+.profile-editor-live-list{display:grid;gap:7px;max-height:300px;overflow:auto;}
+.profile-editor-live{display:flex;align-items:flex-start;gap:9px;padding:10px 11px;border:1px solid #eee;border-radius:12px;background:#fafafa;cursor:pointer;}
+.profile-editor-live input{width:auto;margin-top:3px;accent-color:#000;}
+.profile-editor-live-main{min-width:0;display:grid;gap:2px;}
+.profile-editor-live-date{font-size:11px;color:#777;font-weight:700;}
+.profile-editor-live-title{font-size:12px;font-weight:700;line-height:1.45;}
+.profile-editor-live-venue{font-size:11px;color:#999;}
+.profile-editor-actions{display:flex;gap:8px;padding-top:16px;border-top:1px solid #eee;}
+.profile-editor-actions .btn{flex:1;}
+.profile-editor .msg{margin-top:0;}
+.email-status{padding:12px 14px;border:1px solid #eee;border-radius:13px;background:#fafafa;color:#555;font-size:13px;line-height:1.7;margin-bottom:12px;}
+.email-status strong{color:#111;}
+.email-form{display:grid;gap:8px;}
+.email-form[hidden]{display:none;}
+.email-form input{width:100%;padding:12px 14px;border:1px solid var(--border);border-radius:12px;font:inherit;font-size:16px;background:#fff;color:#111;outline:none;}
+.email-form input:focus{border-color:#000;}
+.email-form .btn{width:100%;}
+.email-form-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.email-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.email-address{overflow-wrap:anywhere;}
+.email-note{font-size:11px;color:#999;line-height:1.6;margin:10px 0 0;}
+@media(max-width:420px){.profile-editor-grid{grid-template-columns:1fr;}.profile-editor-grid.three{grid-template-columns:repeat(3,1fr);}.profile-editor-sns-row{grid-template-columns:88px 1fr auto;}.email-form-actions,.email-actions{grid-template-columns:1fr;}}
+
+/* index.html と同じプロフィール画像ピッカー */
+.icon-picker-page{display:none;position:fixed;inset:0;background:#fff;z-index:1100;overflow-y:auto;}
+.icon-picker-page.active{display:block;}
+.icon-picker-header{display:flex;align-items:center;gap:16px;padding:12px 24px;border-bottom:1px solid #eee;background:#fff;}
+.icon-picker-back{width:44px;height:44px;border:0;background:transparent;border-radius:10px;cursor:pointer;font-size:20px;color:#000;}
+.icon-picker-title{font-size:20px;font-weight:800;letter-spacing:-.5px;}
+.icon-picker-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;padding:12px 16px;border-bottom:1px solid #eee;position:sticky;top:0;background:#fff;z-index:10;}
+.icon-picker-toolbar select{width:auto;max-width:180px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:#fff;font:inherit;font-size:13px;}
+.icon-picker-toolbar button{padding:9px 12px;border:1px solid var(--border);border-radius:999px;background:#f5f5f5;color:#000;font:inherit;font-size:12px;font-weight:600;cursor:pointer;}
+.icon-picker-toolbar button.active{background:#000;color:#fff;border-color:#000;}
+.icon-picker-toolbar .icon-picker-delete{margin-left:auto;background:#fff;color:#e53e3e;border-color:#fed7d7;}
+.icon-picker-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;padding:8px;}
+@media(min-width:501px){.icon-picker-grid{grid-template-columns:repeat(4,1fr);}}
+@media(min-width:769px){.icon-picker-grid{grid-template-columns:repeat(5,1fr);}}
+.icon-picker-cell{aspect-ratio:1;overflow:hidden;border-radius:8px;cursor:pointer;background:#f5f5f5;position:relative;border:0;padding:0;}
+.icon-picker-cell img{width:100%;height:100%;object-fit:cover;object-position:top center;transition:opacity .15s;}
+.icon-picker-cell:hover img{opacity:.85;}
+.icon-picker-cell.selected::after{content:'✓';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.45);color:#fff;font-size:28px;font-weight:700;}
+.profile-value-modal,.profile-oshi-modal{position:fixed;inset:0;z-index:1200;background:rgba(0,0,0,.3);display:flex;align-items:flex-end;justify-content:center;opacity:0;pointer-events:none;transition:opacity .2s;backdrop-filter:blur(2px);}
+.profile-value-modal.active,.profile-oshi-modal.active{opacity:1;pointer-events:auto;}
+.profile-value-card,.profile-oshi-card{width:100%;max-width:400px;background:#fff;border-radius:28px 28px 0 0;padding:28px 24px 32px;transform:translateY(100%);transition:transform .25s;}
+.profile-value-modal.active .profile-value-card,.profile-oshi-modal.active .profile-oshi-card{transform:translateY(0);}
+.profile-value-title,.profile-oshi-title{font-size:18px;font-weight:700;margin-bottom:16px;}
+.profile-value-input,.profile-oshi-select{width:100%;padding:12px 16px;border:1px solid #eee;border-radius:12px;font:inherit;font-size:16px;margin-bottom:12px;color:#000;}
+.profile-value-suggest{display:none;margin:0 0 10px;border:1px solid #eee;border-radius:12px;overflow:hidden;max-height:200px;overflow-y:auto;}
+.profile-value-suggest button{width:100%;display:flex;align-items:center;justify-content:space-between;padding:11px 16px;border:0;border-bottom:1px solid #eee;font:inherit;font-size:14px;text-align:left;cursor:pointer;color:#111;background:#fff;}
+.profile-value-suggest button:last-child{border-bottom:0;}
+.profile-value-suggest button:hover{background:#f7f7f7;}
+.profile-value-suggest small{font-size:11px;color:#999;}
+.profile-value-actions,.profile-oshi-actions{display:flex;gap:8px;}
+.profile-value-actions button,.profile-oshi-actions button{flex:1;padding:12px;border-radius:999px;border:1px solid var(--border);background:#fff;font:inherit;font-size:13px;font-weight:700;cursor:pointer;}
+.profile-value-actions .primary,.profile-oshi-actions .primary{background:#000;color:#fff;border-color:#000;}
+@media(min-width:501px){.profile-value-modal,.profile-oshi-modal{align-items:center;padding:20px;}.profile-value-card,.profile-oshi-card{border-radius:28px;}}
 
 /* エラー・成功メッセージ */
 .msg{font-size:12px;font-weight:600;padding:10px 14px;border-radius:10px;display:none;margin-top:10px;}
@@ -114,7 +210,111 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
     <div class="card">
       <div class="card-heading">プロフィール情報</div>
       <p class="card-note">表示名、アイコン、自己紹介、推しメン、SNSなどの公開プロフィールを変更できます。</p>
-      <a class="btn btn-outline" href="../?edit=1&amp;from=account">プロフィールを変更</a>
+      <button class="btn btn-outline" id="profile-edit-toggle" type="button" onclick="toggleProfileEditor()">プロフィールを編集</button>
+
+      <div class="profile-editor" id="profile-editor" aria-hidden="true" tabindex="-1">
+        <div class="profile-editor-heading">
+          <div>
+            <h3>プロフィールを編集</h3>
+            <p>このページ内で変更して保存できます。</p>
+          </div>
+        </div>
+
+        <div class="profile-editor-section">
+          <div class="profile-editor-section-title">基本情報</div>
+          <div class="profile-editor-icon">
+            <div class="profile-editor-icon-preview" id="profile-icon-preview">？</div>
+            <div class="profile-editor-icon-actions">
+              <button type="button" onclick="openProfileIconPicker()">アイコンを選ぶ</button>
+              <button type="button" onclick="clearProfileIcon()">アイコンを削除</button>
+            </div>
+          </div>
+          <div>
+            <label class="profile-editor-label" for="profile-display-name">表示名 <span style="color:#e00;">*</span></label>
+            <input id="profile-display-name" maxlength="64" placeholder="表示名">
+          </div>
+          <div>
+            <label class="profile-editor-label">誕生日（年齢は自動計算されます）</label>
+            <div class="profile-editor-grid three">
+              <select id="profile-birthday-year" aria-label="誕生日の年"></select>
+              <select id="profile-birthday-month" aria-label="誕生日の月"></select>
+              <select id="profile-birthday-day" aria-label="誕生日の日"></select>
+            </div>
+          </div>
+          <div class="profile-editor-grid">
+            <div>
+              <label class="profile-editor-label" for="profile-gender">性別</label>
+              <select id="profile-gender"><option value="">選択しない</option><option>男性</option><option>女性</option><option>その他</option></select>
+            </div>
+            <div>
+              <label class="profile-editor-label" for="profile-location">出身（在住）都道府県</label>
+              <select id="profile-location"><option value="">選択しない</option></select>
+            </div>
+          </div>
+          <div>
+            <label class="profile-editor-label" for="profile-bio">自己紹介</label>
+            <textarea id="profile-bio" maxlength="500" placeholder="好きなこと、活動エリアなど"></textarea>
+          </div>
+        </div>
+
+        <div class="profile-editor-section">
+          <div class="profile-editor-section-title">My推し</div>
+          <div class="profile-editor-oshi-list" id="profile-oshi-list"></div>
+          <button class="profile-editor-add" type="button" id="profile-add-oshi" onclick="openProfileOshiPicker()">+ 推しメンを追加</button>
+          <div>
+            <label class="profile-editor-label" for="profile-buddies-since">推し始めた時期</label>
+            <select id="profile-buddies-since"></select>
+          </div>
+          <div>
+            <label class="profile-editor-label">興味タグ（最大5個）</label>
+            <div class="profile-editor-chips" id="profile-tags-list"></div>
+            <button class="profile-editor-add" type="button" id="profile-add-tag" onclick="openProfileValueModal('tag')">+ 興味タグを追加</button>
+          </div>
+          <div>
+            <label class="profile-editor-label">好きな曲（最大3曲）</label>
+            <div class="profile-editor-chips" id="profile-songs-list"></div>
+            <button class="profile-editor-add" type="button" id="profile-add-song" onclick="openProfileValueModal('song')">+ 好きな曲を追加</button>
+          </div>
+        </div>
+
+        <div class="profile-editor-section">
+          <div class="profile-editor-section-title">SNS・紹介タグ</div>
+          <div>
+            <label class="profile-editor-label">SNSリンク（最大10個）</label>
+            <div id="profile-sns-list"></div>
+            <button class="profile-editor-add" type="button" onclick="addProfileSns()">+ SNSリンクを追加</button>
+          </div>
+          <div>
+            <label class="profile-editor-label" for="profile-follow-stance">フォローのスタンス</label>
+            <select id="profile-follow-stance"><option value="">選択しない</option><option value="silent_ok">無言フォローOK</option><option value="hello_please">一言欲しい</option></select>
+          </div>
+          <div>
+            <label class="profile-editor-label" for="profile-post-template">紹介タグ（任意・Xワンタップ投稿用）</label>
+            <textarea id="profile-post-template" maxlength="1000" placeholder="プロフィール紹介文を入力"></textarea>
+          </div>
+        </div>
+
+        <div class="profile-editor-section">
+          <div class="profile-editor-section-title">Next Live</div>
+          <p class="card-note" style="margin:0;">参加予定の公演を選ぶとプロフィールに表示されます。</p>
+          <div class="profile-editor-live-list" id="profile-live-list"><div style="font-size:12px;color:#999;">ライブ情報を読み込み中…</div></div>
+        </div>
+
+        <div class="profile-editor-section">
+          <div class="profile-editor-section-title">公開設定</div>
+          <label class="profile-editor-toggle"><input id="profile-show-favorite-mimis" type="checkbox"><span><strong>お気に入りのさくみみを表示する</strong><span>公開プロフィールにSakuLaboのお気に入りを表示します。</span></span></label>
+          <label class="profile-editor-toggle"><input id="profile-show-favorite-blogs" type="checkbox"><span><strong>お気に入りのブログを表示する</strong><span>公開プロフィールにSakuLaboのお気に入りブログを表示します。</span></span></label>
+          <label class="profile-editor-toggle" id="profile-sakumap-toggle"><input id="profile-show-sakumap-stamps" type="checkbox"><span><strong>SakuMapの獲得スタンプを表示する</strong><span>SakuMapと連携済みの場合に表示できます。</span></span></label>
+          <label class="profile-editor-toggle" id="profile-sakumv-toggle"><input id="profile-show-sakumv-quiz" type="checkbox"><span><strong>SakuMV Quizの自己ベストを表示する</strong><span>公開プロフィールに自己ベストを表示します。</span></span></label>
+          <label class="profile-editor-toggle"><input id="profile-show-quest-badge" type="checkbox"><span><strong>Questバッジをプロフィールに表示する</strong><span>プロフィールのBuddies Questランクバッジを表示します。</span></span></label>
+        </div>
+
+        <div class="msg" id="profile-msg"></div>
+        <div class="profile-editor-actions">
+          <button class="btn btn-outline" type="button" onclick="closeProfileEditor()">キャンセル</button>
+          <button class="btn btn-primary" type="button" id="profile-save-btn" onclick="saveProfileFromAccount()">保存する</button>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -125,7 +325,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
       <dl class="account-meta">
         <div class="account-meta-row"><dt>登録日</dt><dd id="registered-at">—</dd></div>
         <div class="account-meta-row"><dt>最終変更日</dt><dd id="last-changed-at">—</dd></div>
+        <div class="account-meta-row"><dt>メール認証</dt><dd id="email-verification-status">確認中…</dd></div>
+        <div class="account-meta-row"><dt>メール認証日</dt><dd id="email-verified-at">—</dd></div>
       </dl>
+    </div>
+  </div>
+
+  <!-- メール認証 -->
+  <div class="section">
+    <div class="section-title">メール認証</div>
+    <div class="card">
+      <div class="email-status" id="email-status">確認中…</div>
+      <div class="email-actions">
+        <button class="btn btn-outline" id="email-change-toggle" type="button" onclick="openEmailEditor()">メールアドレスを登録</button>
+        <button class="btn btn-danger" id="email-delete-btn" type="button" hidden onclick="confirmEmailDeletion()">認証済みメールアドレスを削除</button>
+      </div>
+      <form class="email-form" id="email-form" hidden onsubmit="event.preventDefault();requestEmailVerification();">
+        <label class="profile-editor-label" id="account-email-label" for="account-email">メールアドレス</label>
+        <input id="account-email" type="email" autocomplete="email" placeholder="you@example.com" required>
+        <div class="email-form-actions">
+          <button class="btn btn-outline" type="button" onclick="closeEmailEditor()">キャンセル</button>
+          <button class="btn btn-primary" id="email-request-btn" type="submit">確認メールを送信</button>
+        </div>
+      </form>
+      <p class="email-note">メールアドレスは暗号化して保存します。登録・変更のたびに認証が必要です。認証済みのメールアドレスがあると、パスワードを忘れた場合に再設定できます。</p>
+      <div class="msg" id="email-msg"></div>
     </div>
   </div>
 
@@ -133,26 +357,29 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
   <div class="section">
     <div class="section-title">ユーザー名</div>
     <div class="card">
-      <div class="field">
-        <label>現在のユーザー名</label>
-        <input type="text" id="current-username-display" disabled>
-      </div>
-      <div class="field">
-        <label>新しいユーザー名 <span style="font-size:11px;color:#999;font-weight:400;">（半角英数字・_ 、3〜32文字）</span></label>
-        <input type="text" id="new-username" placeholder="new_username" autocapitalize="none" autocomplete="username" spellcheck="false" maxlength="32">
-      </div>
-      <div class="field">
-        <label>現在のパスワード（確認）</label>
-        <div class="pw-wrap">
-          <input type="password" id="username-change-password" placeholder="••••••••" autocomplete="current-password">
-          <button type="button" class="pw-toggle" onclick="togglePw('username-change-password', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
+      <button class="btn btn-outline security-toggle" id="username-toggle" type="button" aria-expanded="false" aria-controls="username-change-panel" onclick="toggleSecurityPanel('username-change-panel', this)">ユーザー名を変更する</button>
+      <div class="security-panel" id="username-change-panel" hidden>
+        <div class="field">
+          <label>現在のユーザー名</label>
+          <input type="text" id="current-username-display" disabled>
         </div>
-      </div>
-      <div class="msg" id="username-msg"></div>
-      <div style="margin-top:16px;">
-        <button class="btn btn-primary" id="username-btn" onclick="confirmUsernameChange()">ユーザー名を変更</button>
+        <div class="field">
+          <label>新しいユーザー名 <span style="font-size:11px;color:#999;font-weight:400;">（半角英数字・_ 、3〜32文字）</span></label>
+          <input type="text" id="new-username" placeholder="new_username" autocapitalize="none" autocomplete="off" spellcheck="false" maxlength="32">
+        </div>
+        <div class="field">
+          <label>現在のパスワード（確認）</label>
+          <div class="pw-wrap">
+            <input type="password" id="username-change-password" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="pw-toggle" onclick="togglePw('username-change-password', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <div class="msg" id="username-msg"></div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary" id="username-btn" onclick="confirmUsernameChange()">ユーザー名を変更</button>
+        </div>
       </div>
     </div>
   </div>
@@ -161,36 +388,39 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
   <div class="section">
     <div class="section-title">パスワード</div>
     <div class="card">
-      <div class="field">
-        <label>現在のパスワード</label>
-        <div class="pw-wrap">
-          <input type="password" id="pw-current" placeholder="••••••••" autocomplete="current-password">
-          <button type="button" class="pw-toggle" onclick="togglePw('pw-current', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
+      <button class="btn btn-outline security-toggle" id="password-toggle" type="button" aria-expanded="false" aria-controls="password-change-panel" onclick="toggleSecurityPanel('password-change-panel', this)">パスワードを変更する</button>
+      <div class="security-panel" id="password-change-panel" hidden>
+        <div class="field">
+          <label>現在のパスワード</label>
+          <div class="pw-wrap">
+            <input type="password" id="pw-current" placeholder="••••••••" autocomplete="current-password">
+            <button type="button" class="pw-toggle" onclick="togglePw('pw-current', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="field">
-        <label>新しいパスワード <span style="font-size:11px;color:#999;font-weight:400;">（8〜256文字）</span></label>
-        <div class="pw-wrap">
-          <input type="password" id="pw-new" placeholder="••••••••" autocomplete="new-password">
-          <button type="button" class="pw-toggle" onclick="togglePw('pw-new', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
+        <div class="field">
+          <label>新しいパスワード <span style="font-size:11px;color:#999;font-weight:400;">（8〜256文字）</span></label>
+          <div class="pw-wrap">
+            <input type="password" id="pw-new" placeholder="••••••••" autocomplete="new-password">
+            <button type="button" class="pw-toggle" onclick="togglePw('pw-new', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="field">
-        <label>新しいパスワード（確認）</label>
-        <div class="pw-wrap">
-          <input type="password" id="pw-new2" placeholder="••••••••" autocomplete="new-password">
-          <button type="button" class="pw-toggle" onclick="togglePw('pw-new2', this)">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          </button>
+        <div class="field">
+          <label>新しいパスワード（確認）</label>
+          <div class="pw-wrap">
+            <input type="password" id="pw-new2" placeholder="••••••••" autocomplete="new-password">
+            <button type="button" class="pw-toggle" onclick="togglePw('pw-new2', this)">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
         </div>
-      </div>
-      <div class="msg" id="pw-msg"></div>
-      <div style="margin-top:16px;">
-        <button class="btn btn-primary" id="pw-btn" onclick="confirmPasswordChange()">パスワードを変更</button>
+        <div class="msg" id="pw-msg"></div>
+        <div style="margin-top:16px;">
+          <button class="btn btn-primary" id="pw-btn" onclick="confirmPasswordChange()">パスワードを変更</button>
+        </div>
       </div>
     </div>
   </div>
@@ -202,6 +432,56 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
       <div class="card-heading">お問い合わせ</div>
       <p class="card-note">Buddiesに関するご質問や不具合の報告はこちらからお送りください。</p>
       <a class="btn btn-outline support-link" href="../../form/">お問い合わせフォームへ</a>
+    </div>
+  </div>
+</div>
+
+<!-- ── プロフィール画像選択（index.html と同じUI） ── -->
+<div id="profile-icon-picker-page" class="icon-picker-page" aria-hidden="true">
+  <div class="icon-picker-header">
+    <button class="icon-picker-back" type="button" onclick="closeProfileIconPicker()" aria-label="戻る">&larr;</button>
+    <div class="icon-picker-title">プロフィール画像を選ぶ</div>
+  </div>
+  <div class="icon-picker-toolbar">
+    <select id="profile-icon-member-filter" onchange="loadProfileIconImages(true)">
+      <option value="">すべてのメンバー</option>
+    </select>
+    <select id="profile-icon-sort" onchange="loadProfileIconImages(true)">
+      <option value="newest">新しい順</option>
+      <option value="oldest">古い順</option>
+    </select>
+    <button id="profile-icon-fav-only" type="button" onclick="toggleProfileIconFavOnly()">♡ お気に入りのみ</button>
+    <button class="icon-picker-delete" type="button" onclick="clearProfileIcon()">画像を削除</button>
+  </div>
+  <div id="profile-icon-picker-loading" style="text-align:center;padding:40px;color:#999;font-size:14px;">読み込み中…</div>
+  <div id="profile-icon-picker-grid" class="icon-picker-grid" style="display:none;"></div>
+  <div id="profile-icon-picker-empty" style="display:none;text-align:center;padding:60px 20px;color:#999;font-size:14px;">画像が見つかりません</div>
+  <div id="profile-icon-load-more" style="display:none;text-align:center;padding:16px;">
+    <button type="button" class="profile-editor-add" style="max-width:220px;" onclick="loadProfileIconImages(false)">さらに読み込む</button>
+  </div>
+</div>
+
+<!-- ── 推しメン選択 ── -->
+<div id="profile-oshi-modal" class="profile-oshi-modal" onclick="if(event.target===this)closeProfileOshiPicker()" aria-hidden="true">
+  <div class="profile-oshi-card">
+    <div class="profile-oshi-title">推しメンを選択</div>
+    <select id="profile-oshi-picker-select" class="profile-oshi-select"></select>
+    <div class="profile-oshi-actions">
+      <button type="button" onclick="closeProfileOshiPicker()">キャンセル</button>
+      <button type="button" class="primary" onclick="addSelectedProfileOshi()">追加</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── タグ・楽曲追加 ── -->
+<div id="profile-value-modal" class="profile-value-modal" onclick="if(event.target===this)closeProfileValueModal()" aria-hidden="true">
+  <div class="profile-value-card">
+    <div class="profile-value-title" id="profile-value-title"></div>
+    <div class="profile-value-suggest" id="profile-value-suggest"></div>
+    <input id="profile-value-input" class="profile-value-input" type="text" autocomplete="off">
+    <div class="profile-value-actions">
+      <button type="button" onclick="closeProfileValueModal()">キャンセル</button>
+      <button type="button" class="primary" onclick="submitProfileValueModal()">追加</button>
     </div>
   </div>
 </div>
@@ -219,12 +499,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Goth
   </div>
 </div>
 
+<!-- ── メール送信完了モーダル ── -->
+<div class="modal-overlay" id="mail-sent-modal" style="display:none;">
+  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="mail-sent-title">
+    <div class="modal-title" id="mail-sent-title">メールを送信しました</div>
+    <div class="modal-body">メールを送信しました。メール本文に記載のURLから操作を続けてください。<br><br>hiromame.sakura@gmail.comよりメールを送信しました。届かない場合は迷惑メールフォルダもご確認ください。</div>
+    <div class="modal-actions">
+      <button class="btn btn-primary" id="mail-sent-ok" type="button" onclick="closeMailSentModal()">OK</button>
+    </div>
+  </div>
+</div>
+
 <!-- トースト -->
 <div class="toast" id="toast"></div>
 
 <script>
 const API = '../api.php';
 let me = null;
+let emailState = null;
+let emailEditorOpen = false;
 let pendingAction = null;
 
 // 遷移元に応じた戻り先・ログアウト後のリダイレクト先
@@ -241,13 +534,20 @@ async function init() {
     const res  = await fetch(API + '?action=auth_me', { credentials: 'include' });
     const json = await res.json();
     if (!json.ok || !json.data) {
-      location.href = BACK_URL;
+      document.getElementById('page-loading').style.display = 'none';
+      const main = document.getElementById('main');
+      main.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#666;line-height:1.8"><strong style="display:block;color:#111;font-size:18px;margin-bottom:8px">ログインが必要です</strong>アカウント設定はログインユーザーのみ利用できます。<br><a class="btn btn-primary" href="../" style="display:inline-flex;margin-top:18px;text-decoration:none">Buddiesへ戻る</a></div>';
+      main.style.display = 'block';
       return;
     }
     me = json.data;
     renderAccountData();
+    await loadEmailStatus();
   } catch(e) {
-    location.href = BACK_URL;
+    document.getElementById('page-loading').style.display = 'none';
+    const main = document.getElementById('main');
+    main.innerHTML = '<div style="padding:48px 20px;text-align:center;color:#666;line-height:1.8"><strong style="display:block;color:#111;font-size:18px;margin-bottom:8px">ログインが必要です</strong>アカウント設定はログインユーザーのみ利用できます。<br><a class="btn btn-primary" href="../" style="display:inline-flex;margin-top:18px;text-decoration:none">Buddiesへ戻る</a></div>';
+    main.style.display = 'block';
     return;
   }
   document.getElementById('page-loading').style.display = 'none';
@@ -260,6 +560,148 @@ function renderAccountData() {
   document.getElementById('current-username-display').value = me.username;
   document.getElementById('registered-at').textContent = formatAccountDate(me.registered_at);
   document.getElementById('last-changed-at').textContent = formatAccountDate(me.last_changed_at);
+  renderAccountEmailMeta();
+}
+
+async function loadEmailStatus() {
+  try {
+    const res = await fetch(API + '?action=buddies_email_status', { credentials: 'include' });
+    const json = await res.json();
+    if (json.ok) { emailState = json.data || null; renderEmailStatus(); renderAccountEmailMeta(); }
+  } catch (_) {
+    const status = document.getElementById('email-status');
+    if (status) status.textContent = 'メール認証の状態を取得できませんでした。';
+  }
+}
+
+function renderEmailStatus() {
+  const status = document.getElementById('email-status');
+  const toggle = document.getElementById('email-change-toggle');
+  const form = document.getElementById('email-form');
+  const label = document.getElementById('account-email-label');
+  const button = document.getElementById('email-request-btn');
+  const deleteButton = document.getElementById('email-delete-btn');
+  if (!status || !toggle || !form || !label || !button || !deleteButton) return;
+  const verifiedEmail = emailState?.email || '';
+  const pendingEmail = emailState?.pending_email || '';
+  if (verifiedEmail) {
+    status.innerHTML = `<strong>登録中のメールアドレス</strong><br><span class="email-address">${escHtml(verifiedEmail)}</span>${pendingEmail ? `<br><br><strong>変更先（認証待ち）</strong><br><span class="email-address">${escHtml(pendingEmail)}</span>` : ''}<br><span style="font-size:11px;color:#888">${pendingEmail ? '変更先へ送信したメールのURLを開いて認証してください。' : '認証済みです。パスワードの再設定に利用できます。'}</span>`;
+    toggle.textContent = pendingEmail ? 'メールアドレスを変更・再送信' : 'メールアドレスを変更';
+    label.textContent = '新しいメールアドレス';
+  } else if (pendingEmail) {
+    status.innerHTML = `<strong>認証待ちのメールアドレス</strong><br><span class="email-address">${escHtml(pendingEmail)}</span><br><span style="font-size:11px;color:#888">メール内のURLを開くと登録が完了します。</span>`;
+    toggle.textContent = 'メールアドレスを変更・再送信';
+    label.textContent = '認証するメールアドレス';
+  } else {
+    status.innerHTML = '<strong>未設定</strong><br><span style="font-size:11px;color:#888">パスワードリセットにはメール認証が必要です。</span>';
+    toggle.textContent = 'メールアドレスを登録';
+    label.textContent = 'メールアドレス';
+  }
+  button.textContent = '確認メールを送信';
+  form.hidden = !emailEditorOpen;
+  toggle.hidden = emailEditorOpen;
+  deleteButton.hidden = !verifiedEmail || emailEditorOpen;
+}
+
+function renderAccountEmailMeta() {
+  const status = document.getElementById('email-verification-status');
+  const date = document.getElementById('email-verified-at');
+  if (!status || !date) return;
+  const verified = Boolean(emailState?.email_verified_at);
+  const pending = Boolean(emailState?.pending_email);
+  status.textContent = verified ? (pending ? '認証済み（変更確認待ち）' : '認証済み') : (pending ? '認証待ち' : '未認証');
+  date.textContent = verified ? formatAccountDate(emailState.email_verified_at) : '—';
+}
+
+function openEmailEditor() {
+  emailEditorOpen = true;
+  const input = document.getElementById('account-email');
+  input.value = emailState?.pending_email || '';
+  renderEmailStatus();
+  setTimeout(() => input.focus(), 50);
+}
+
+function closeEmailEditor() {
+  emailEditorOpen = false;
+  document.getElementById('account-email').value = '';
+  hideMsg('email-msg');
+  renderEmailStatus();
+}
+
+function showMailSentModal() {
+  document.getElementById('mail-sent-modal').style.display = 'flex';
+  setTimeout(() => document.getElementById('mail-sent-ok')?.focus(), 0);
+}
+
+function closeMailSentModal() {
+  document.getElementById('mail-sent-modal').style.display = 'none';
+}
+
+function confirmEmailDeletion() {
+  const email = emailState?.email || '';
+  if (!email) return;
+  openConfirm({
+    title: 'メールアドレスを削除しますか？',
+    body: `<strong>${escHtml(email)}</strong>を削除します。削除すると、このメールアドレスを使ったパスワードリセットもできなくなります。`,
+    warnText: '削除したメールアドレスと認証待ちの変更先は、すぐに削除されます。',
+    okLabel: '削除する',
+    okClass: 'btn-danger',
+    action: deleteEmailAddress,
+  });
+}
+
+async function deleteEmailAddress() {
+  const button = document.getElementById('email-delete-btn');
+  button.disabled = true;
+  hideMsg('email-msg');
+  try {
+    const res = await fetch(API + '?action=buddies_email_delete', {
+      method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'},
+    });
+    const json = await res.json();
+    if (!json.ok) { showMsg('email-msg', json.error || 'メールアドレスを削除できませんでした。', 'error'); return; }
+    emailState = json.data?.email || null;
+    emailEditorOpen = false;
+    renderEmailStatus();
+    renderAccountEmailMeta();
+    showMsg('email-msg', json.data?.message || 'メールアドレスを削除しました。', 'success');
+  } catch (_) {
+    showMsg('email-msg', '通信エラーが発生しました。', 'error');
+  } finally {
+    button.disabled = false;
+    renderEmailStatus();
+  }
+}
+
+async function requestEmailVerification() {
+  const input = document.getElementById('account-email');
+  const button = document.getElementById('email-request-btn');
+  const email = input.value.trim();
+  hideMsg('email-msg');
+  if (!email) { showMsg('email-msg', 'メールアドレスを入力してください。', 'error'); return; }
+  button.disabled = true;
+  button.textContent = '送信中…';
+  try {
+    const res = await fetch(API + '?action=buddies_email_request', {
+      method: 'POST', credentials: 'include',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({email}),
+    });
+    const json = await res.json();
+    if (!json.ok) { showMsg('email-msg', json.error || '確認メールを送信できませんでした。', 'error'); return; }
+    emailState = json.data?.email || emailState;
+    emailEditorOpen = false;
+    renderEmailStatus();
+    renderAccountEmailMeta();
+    input.value = '';
+    if (json.data?.email_sent === false) showMsg('email-msg', json.data?.message || 'このメールアドレスは認証済みです。', 'success');
+    else showMailSentModal();
+  } catch (_) {
+    showMsg('email-msg', '通信エラーが発生しました。', 'error');
+  } finally {
+    button.disabled = false;
+    renderEmailStatus();
+  }
 }
 
 function formatAccountDate(value) {
@@ -275,6 +717,512 @@ async function refreshAccountData() {
     const json = await res.json();
     if (json.ok && json.data) { me = json.data; renderAccountData(); }
   } catch (_) { /* 更新後の表示取得に失敗しても操作結果は維持する */ }
+}
+
+// ── プロフィール編集（/account 内） ──────────────────────
+const ACCOUNT_PREFECTURES = ['北海道','青森県','岩手県','宮城県','秋田県','山形県','福島県','茨城県','栃木県','群馬県','埼玉県','千葉県','東京都','神奈川県','新潟県','富山県','石川県','福井県','山梨県','長野県','岐阜県','静岡県','愛知県','三重県','滋賀県','京都府','大阪府','兵庫県','奈良県','和歌山県','鳥取県','島根県','岡山県','広島県','山口県','徳島県','香川県','愛媛県','高知県','福岡県','佐賀県','長崎県','熊本県','大分県','宮崎県','鹿児島県','沖縄県'];
+const profileEditorState = {
+  members: [], liveOptions: [], sns: [], oshi: [], tags: [], songs: [],
+  filterOptions: { tags: [], songs: [] },
+  iconImages: [], iconOffset: 0, iconTotal: 0, iconFavOnly: false, iconLoaded: false,
+};
+let profileEditorResourcesLoaded = false;
+
+function populateProfileSelect(id, values, placeholder, selected = '') {
+  const select = document.getElementById(id);
+  if (!select) return;
+  select.innerHTML = '';
+  const first = document.createElement('option');
+  first.value = '';
+  first.textContent = placeholder;
+  select.appendChild(first);
+  values.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  select.value = selected || '';
+}
+
+function setupAccountBirthday(value) {
+  const year = document.getElementById('profile-birthday-year');
+  const month = document.getElementById('profile-birthday-month');
+  const day = document.getElementById('profile-birthday-day');
+  if (!year || !month || !day) return;
+  const current = new Date().getFullYear();
+  populateProfileSelect('profile-birthday-year', Array.from({length: current - 1948}, (_, i) => String(current + 1 - i)), '年');
+  populateProfileSelect('profile-birthday-month', Array.from({length: 12}, (_, i) => String(i + 1)), '月');
+  populateProfileSelect('profile-birthday-day', Array.from({length: 31}, (_, i) => String(i + 1)), '日');
+  const match = String(value || '').match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (match) {
+    year.value = match[1];
+    month.value = String(Number(match[2]));
+    day.value = String(Number(match[3]));
+  }
+}
+
+function accountBirthdayValue() {
+  const y = document.getElementById('profile-birthday-year')?.value;
+  const m = document.getElementById('profile-birthday-month')?.value;
+  const d = document.getElementById('profile-birthday-day')?.value;
+  if (!y && !m && !d) return null;
+  if (!y || !m || !d) return '';
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function setupAccountSince(value) {
+  const current = new Date().getFullYear();
+  populateProfileSelect('profile-buddies-since', Array.from({length: current - 2009}, (_, i) => String(current - i)), '選択しない', String(value || '').slice(0, 4));
+}
+
+function buildAccountLiveOptions(raw) {
+  const items = Array.isArray(raw?.items) ? raw.items : (Array.isArray(raw) ? raw : []);
+  const counts = {};
+  items.forEach(item => (item.performances || []).forEach(perf => {
+    if (perf.date) counts[perf.date] = (counts[perf.date] || 0) + 1;
+  }));
+  const options = [];
+  items.forEach(item => (item.performances || []).forEach(perf => {
+    if (!perf.date) return;
+    const venue = (item.venues || []).length === 1 ? item.venues[0] : '';
+    const id = counts[perf.date] > 1 ? `${perf.date}|${item.title || ''}|${venue}` : perf.date;
+    options.push({ id, date: perf.date, weekday: perf.weekday || '', title: item.title || '', venue });
+  }));
+  return options.sort((a, b) => String(a.date).localeCompare(String(b.date)) || a.title.localeCompare(b.title, 'ja'));
+}
+
+function sameAccountLiveId(a, b) {
+  const left = String(a || '');
+  const right = String(b || '');
+  if (left === right) return true;
+  const leftDate = left.split('|')[0];
+  const rightDate = right.split('|')[0];
+  if (leftDate !== rightDate) return false;
+  // 同日公演はタイトル・会場を含むIDで区別する。
+  return !left.includes('|') && !right.includes('|');
+}
+
+async function loadProfileEditorResources() {
+  if (profileEditorResourcesLoaded) return;
+  const [memberRes, liveRes, filterRes] = await Promise.all([
+    // account/index.html は1階層深いため、index.html と同じ satellite/data を参照する。
+    fetch('../../data/member.json').catch(() => null),
+    fetch('../../data/live.json').catch(() => null),
+    fetch(API + '?action=buddies_filter_options', { credentials: 'include' }).catch(() => null),
+  ]);
+  if (memberRes?.ok) {
+    try {
+      const raw = await memberRes.json();
+      profileEditorState.members = (Array.isArray(raw) ? raw : Object.values(raw || {})).filter(m => m && m.name).sort((a, b) => a.name.localeCompare(b.name, 'ja'));
+    } catch (_) {}
+  }
+  if (liveRes?.ok) {
+    try { profileEditorState.liveOptions = buildAccountLiveOptions(await liveRes.json()); } catch (_) {}
+  }
+  if (filterRes?.ok) {
+    try {
+      const json = await filterRes.json();
+      if (json.ok && json.data) profileEditorState.filterOptions = { tags: json.data.tags || [], songs: json.data.songs || [] };
+    } catch (_) {}
+  }
+  profileEditorResourcesLoaded = true;
+}
+
+function fillProfileOshi() {
+  profileEditorState.oshi = [me?.oshi_member, me?.oshi_member_2, me?.oshi_member_3].filter(Boolean).filter((name, index, list) => list.indexOf(name) === index).slice(0, 3);
+  renderProfileOshi();
+}
+
+function renderProfileOshi() {
+  const wrap = document.getElementById('profile-oshi-list');
+  const addButton = document.getElementById('profile-add-oshi');
+  if (!wrap) return;
+  wrap.innerHTML = profileEditorState.oshi.map((name, index) => {
+    const member = profileEditorState.members.find(item => item.name === name);
+    const avatar = member?.image ? `<img src="${escHtml(member.image)}" alt="">` : escHtml(name.charAt(0) || '?');
+    return `<div class="profile-editor-oshi-card"><button type="button" class="profile-editor-oshi-remove" onclick="removeProfileOshi(${index})" aria-label="${escHtml(name)}を削除">×</button><div class="profile-editor-oshi-avatar">${avatar}</div><div class="profile-editor-oshi-label">${index === 0 ? '第一推し' : index === 1 ? '第二推し' : '第三推し'}</div><div class="profile-editor-oshi-name">${escHtml(name)}</div></div>`;
+  }).join('');
+  if (addButton) addButton.style.display = profileEditorState.oshi.length >= 3 ? 'none' : 'block';
+}
+
+function openProfileOshiPicker() {
+  const select = document.getElementById('profile-oshi-picker-select');
+  if (!select) return;
+  const selected = new Set(profileEditorState.oshi);
+  const options = profileEditorState.members.map(member => member.name).filter(name => !selected.has(name));
+  populateProfileSelect('profile-oshi-picker-select', options, options.length ? '推しメンを選択' : '追加できるメンバーがありません');
+  if (!options.length) return;
+  document.getElementById('profile-oshi-modal').classList.add('active');
+  document.getElementById('profile-oshi-modal').setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeProfileOshiPicker() {
+  document.getElementById('profile-oshi-modal').classList.remove('active');
+  document.getElementById('profile-oshi-modal').setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = 'auto';
+}
+
+function addSelectedProfileOshi() {
+  const value = document.getElementById('profile-oshi-picker-select')?.value;
+  if (!value || profileEditorState.oshi.includes(value) || profileEditorState.oshi.length >= 3) return;
+  profileEditorState.oshi.push(value);
+  renderProfileOshi();
+  renderProfileIconPreview();
+  closeProfileOshiPicker();
+}
+
+function removeProfileOshi(index) {
+  profileEditorState.oshi.splice(index, 1);
+  renderProfileOshi();
+  renderProfileIconPreview();
+}
+
+function renderProfileLiveList() {
+  const wrap = document.getElementById('profile-live-list');
+  if (!wrap) return;
+  const selected = Array.isArray(me?.next_lives) ? me.next_lives : [];
+  if (!profileEditorState.liveOptions.length) {
+    wrap.innerHTML = '<div style="font-size:12px;color:#999;">今後のライブ情報がありません。</div>';
+    return;
+  }
+  wrap.innerHTML = profileEditorState.liveOptions.map(live => {
+    const checked = selected.some(id => sameAccountLiveId(id, live.id));
+    const date = `${live.date.replaceAll('-', '.')} ${live.weekday ? `(${live.weekday})` : ''}`;
+    return `<label class="profile-editor-live"><input type="checkbox" value="${escHtml(live.id)}" ${checked ? 'checked' : ''}><span class="profile-editor-live-main"><span class="profile-editor-live-date">${escHtml(date)}</span><span class="profile-editor-live-title">${escHtml(live.title)}</span>${live.venue ? `<span class="profile-editor-live-venue">${escHtml(live.venue)}</span>` : ''}</span></label>`;
+  }).join('');
+}
+
+function renderProfileTags() {
+  const wrap = document.getElementById('profile-tags-list');
+  const add = document.getElementById('profile-add-tag');
+  if (!wrap) return;
+  wrap.innerHTML = profileEditorState.tags.map((tag, index) => `<span class="profile-editor-chip">${escHtml(tag)}<button type="button" onclick="removeProfileTag(${index})" aria-label="${escHtml(tag)}を削除">×</button></span>`).join('');
+  if (add) add.style.display = profileEditorState.tags.length >= 5 ? 'none' : 'block';
+}
+
+function renderProfileSongs() {
+  const wrap = document.getElementById('profile-songs-list');
+  const add = document.getElementById('profile-add-song');
+  if (!wrap) return;
+  wrap.innerHTML = profileEditorState.songs.map((song, index) => `<span class="profile-editor-chip">${escHtml(song)}<button type="button" onclick="removeProfileSong(${index})" aria-label="${escHtml(song)}を削除">×</button></span>`).join('');
+  if (add) add.style.display = profileEditorState.songs.length >= 3 ? 'none' : 'block';
+}
+
+function removeProfileTag(index) {
+  profileEditorState.tags.splice(index, 1);
+  renderProfileTags();
+}
+
+function removeProfileSong(index) {
+  profileEditorState.songs.splice(index, 1);
+  renderProfileSongs();
+}
+
+let profileValueContext = null;
+
+function openProfileValueModal(kind) {
+  const isSong = kind === 'song';
+  const values = isSong ? profileEditorState.songs : profileEditorState.tags;
+  if (values.length >= (isSong ? 3 : 5)) return;
+  profileValueContext = { kind, maxLength: isSong ? 30 : 20 };
+  const input = document.getElementById('profile-value-input');
+  input.value = '';
+  input.placeholder = isSong ? '好きな曲を入力（例: Start over!）' : '興味タグを入力（例: ライブ参戦）';
+  document.getElementById('profile-value-title').textContent = isSong ? '好きな曲を追加' : '興味タグを追加';
+  renderProfileValueSuggestions('');
+  const modal = document.getElementById('profile-value-modal');
+  modal.classList.add('active');
+  modal.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  input.oninput = () => renderProfileValueSuggestions(input.value);
+  setTimeout(() => input.focus(), 80);
+}
+
+function renderProfileValueSuggestions(query) {
+  const wrap = document.getElementById('profile-value-suggest');
+  if (!profileValueContext || !wrap) return;
+  const all = profileValueContext.kind === 'song' ? profileEditorState.filterOptions.songs : profileEditorState.filterOptions.tags;
+  const normalized = String(query || '').trim().toLowerCase();
+  const selected = profileValueContext.kind === 'song' ? profileEditorState.songs : profileEditorState.tags;
+  const matches = all.filter(item => {
+    const name = String(item?.name || item || '');
+    return name && !selected.includes(name) && (!normalized || name.toLowerCase().includes(normalized));
+  }).slice(0, 8);
+  if (!matches.length) {
+    wrap.style.display = 'none';
+    wrap.innerHTML = '';
+    return;
+  }
+  wrap.innerHTML = matches.map(item => `<button type="button" data-value="${escHtml(item.name || item)}"><span>${escHtml(item.name || item)}</span>${item.count ? `<small>${escHtml(item.count)}人</small>` : ''}</button>`).join('');
+  wrap.querySelectorAll('[data-value]').forEach(button => button.addEventListener('click', () => {
+    document.getElementById('profile-value-input').value = button.dataset.value;
+    wrap.style.display = 'none';
+  }));
+  wrap.style.display = 'block';
+}
+
+function closeProfileValueModal() {
+  const modal = document.getElementById('profile-value-modal');
+  modal.classList.remove('active');
+  modal.setAttribute('aria-hidden', 'true');
+  document.getElementById('profile-value-input').oninput = null;
+  profileValueContext = null;
+  document.body.style.overflow = 'auto';
+}
+
+function submitProfileValueModal() {
+  if (!profileValueContext) return;
+  const input = document.getElementById('profile-value-input');
+  const value = input.value.trim();
+  const list = profileValueContext.kind === 'song' ? profileEditorState.songs : profileEditorState.tags;
+  if (!value || value.length > profileValueContext.maxLength) {
+    alert(`${profileValueContext.kind === 'song' ? '曲名' : 'タグ'}は1〜${profileValueContext.maxLength}文字で入力してください。`);
+    return;
+  }
+  if (list.includes(value)) {
+    alert('すでに追加されています。');
+    return;
+  }
+  list.push(value);
+  if (profileValueContext.kind === 'song') renderProfileSongs();
+  else renderProfileTags();
+  closeProfileValueModal();
+}
+
+function renderProfileSns() {
+  const wrap = document.getElementById('profile-sns-list');
+  if (!wrap) return;
+  wrap.innerHTML = profileEditorState.sns.map((sns, index) => `<div class="profile-editor-sns-row"><select onchange="profileEditorState.sns[${index}].type=this.value"><option value="x" ${sns.type === 'x' ? 'selected' : ''}>X</option><option value="threads" ${sns.type === 'threads' ? 'selected' : ''}>Threads</option><option value="instagram" ${sns.type === 'instagram' ? 'selected' : ''}>Instagram</option><option value="tiktok" ${sns.type === 'tiktok' ? 'selected' : ''}>TikTok</option><option value="youtube" ${sns.type === 'youtube' ? 'selected' : ''}>YouTube</option><option value="github" ${sns.type === 'github' ? 'selected' : ''}>GitHub</option><option value="line" ${sns.type === 'line' ? 'selected' : ''}>LINE</option><option value="note" ${sns.type === 'note' ? 'selected' : ''}>note</option><option value="ameba" ${sns.type === 'ameba' ? 'selected' : ''}>Ameba</option><option value="link" ${sns.type === 'link' ? 'selected' : ''}>Link</option></select><input type="url" placeholder="https://" value="${escHtml(sns.url || '')}" oninput="profileEditorState.sns[${index}].url=this.value"><button type="button" aria-label="SNSリンクを削除" onclick="profileEditorState.sns.splice(${index},1);renderProfileSns()">×</button></div>`).join('');
+}
+
+function addProfileSns() {
+  if (profileEditorState.sns.length >= 10) return;
+  profileEditorState.sns.push({ type: 'x', url: '' });
+  renderProfileSns();
+}
+
+function getProfileAvatarUrl() {
+  if (me?.user_icon) return me.user_icon;
+  const member = profileEditorState.members.find(item => item.name === (profileEditorState.oshi[0] || me?.oshi_member));
+  return member?.image || '';
+}
+
+function renderProfileIconPreview() {
+  const preview = document.getElementById('profile-icon-preview');
+  if (!preview) return;
+  const url = getProfileAvatarUrl();
+  preview.innerHTML = url ? `<img src="${escHtml(url)}" alt="">` : escHtml((me?.display_name || me?.username || '?').charAt(0));
+}
+
+async function openProfileIconPicker() {
+  if (!profileEditorResourcesLoaded) await loadProfileEditorResources();
+  const filter = document.getElementById('profile-icon-member-filter');
+  if (filter && filter.options.length <= 1) {
+    profileEditorState.members.forEach(member => {
+      const option = document.createElement('option');
+      option.value = member.name;
+      option.textContent = member.name;
+      filter.appendChild(option);
+    });
+  }
+  const page = document.getElementById('profile-icon-picker-page');
+  page.classList.add('active');
+  page.setAttribute('aria-hidden', 'false');
+  document.body.style.overflow = 'hidden';
+  await loadProfileIconImages(true);
+}
+
+function closeProfileIconPicker() {
+  const page = document.getElementById('profile-icon-picker-page');
+  page.classList.remove('active');
+  page.setAttribute('aria-hidden', 'true');
+  document.body.style.overflow = 'auto';
+}
+
+function toggleProfileIconFavOnly() {
+  profileEditorState.iconFavOnly = !profileEditorState.iconFavOnly;
+  const button = document.getElementById('profile-icon-fav-only');
+  button.classList.toggle('active', profileEditorState.iconFavOnly);
+  button.textContent = profileEditorState.iconFavOnly ? '♥ お気に入りのみ' : '♡ お気に入りのみ';
+  loadProfileIconImages(true);
+}
+
+async function loadProfileIconImages(reset = true) {
+  const loading = document.getElementById('profile-icon-picker-loading');
+  const grid = document.getElementById('profile-icon-picker-grid');
+  const empty = document.getElementById('profile-icon-picker-empty');
+  const more = document.getElementById('profile-icon-load-more');
+  if (reset) {
+    profileEditorState.iconOffset = 0;
+    profileEditorState.iconImages = [];
+    grid.innerHTML = '';
+  }
+  loading.style.display = 'block';
+  grid.style.display = 'none';
+  empty.style.display = 'none';
+  const member = document.getElementById('profile-icon-member-filter').value;
+  const sort = document.getElementById('profile-icon-sort').value;
+  const favorite = profileEditorState.iconFavOnly ? '&favorite_only=1' : '';
+  try {
+    const res = await fetch(`${API}?action=buddies_blog_images&limit=60&offset=${profileEditorState.iconOffset}&sort=${encodeURIComponent(sort)}&member=${encodeURIComponent(member)}${favorite}`, { credentials: 'include' });
+    const json = await res.json();
+    if (json.ok) {
+      const items = json.data.items || [];
+      profileEditorState.iconImages = reset ? items : profileEditorState.iconImages.concat(items);
+      profileEditorState.iconTotal = Number(json.data.total || profileEditorState.iconImages.length);
+      profileEditorState.iconOffset = profileEditorState.iconImages.length;
+    }
+  } catch (_) {}
+  loading.style.display = 'none';
+  if (!profileEditorState.iconImages.length) {
+    empty.style.display = 'block';
+    more.style.display = 'none';
+    return;
+  }
+  grid.style.display = 'grid';
+  const current = me?.user_icon || '';
+  grid.innerHTML = profileEditorState.iconImages.map(image => `<button type="button" class="icon-picker-cell${image.url === current ? ' selected' : ''}" data-icon-url="${escHtml(image.url)}"><img src="${escHtml(image.url)}" alt="" loading="lazy"></button>`).join('');
+  grid.querySelectorAll('[data-icon-url]').forEach(button => button.addEventListener('click', () => setProfileIcon(button.dataset.iconUrl)));
+  more.style.display = profileEditorState.iconImages.length < profileEditorState.iconTotal ? 'block' : 'none';
+}
+
+async function setProfileIcon(url) {
+  try {
+    const res = await fetch(API + '?action=buddies_icon_update', { method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ user_icon: url }) });
+    const json = await res.json();
+    if (!json.ok) { showMsg('profile-msg', json.error || 'アイコンを変更できませんでした。', 'error'); return; }
+    me.user_icon = json.data.user_icon;
+    renderProfileIconPreview();
+    closeProfileIconPicker();
+    toast('アイコンを変更しました');
+  } catch (_) { showMsg('profile-msg', '通信エラーが発生しました。', 'error'); }
+}
+
+async function clearProfileIcon() {
+  try {
+    const res = await fetch(API + '?action=buddies_icon_clear', { method: 'POST', credentials: 'include' });
+    const json = await res.json();
+    if (!json.ok) { showMsg('profile-msg', json.error || 'アイコンを削除できませんでした。', 'error'); return; }
+    me.user_icon = null;
+    renderProfileIconPreview();
+    if (document.getElementById('profile-icon-picker-page').classList.contains('active')) closeProfileIconPicker();
+    toast('アイコンを削除しました');
+  } catch (_) { showMsg('profile-msg', '通信エラーが発生しました。', 'error'); }
+}
+
+function fillProfileEditor() {
+  document.getElementById('profile-display-name').value = me.display_name || '';
+  document.getElementById('profile-gender').value = me.gender || '';
+  populateProfileSelect('profile-location', ACCOUNT_PREFECTURES, '選択しない', me.location || '');
+  document.getElementById('profile-bio').value = me.bio || '';
+  setupAccountBirthday(me.birthday || '');
+  setupAccountSince(me.buddies_since || '');
+  fillProfileOshi();
+  profileEditorState.tags = Array.isArray(me.tags) ? [...me.tags].slice(0, 5) : [];
+  profileEditorState.songs = Array.isArray(me.favorite_songs) ? [...me.favorite_songs].slice(0, 3) : [];
+  renderProfileTags();
+  renderProfileSongs();
+  profileEditorState.sns = JSON.parse(JSON.stringify(me.sns_links || []));
+  renderProfileSns();
+  document.getElementById('profile-follow-stance').value = me.follow_stance || '';
+  document.getElementById('profile-post-template').value = me.post_template || '';
+  document.getElementById('profile-show-favorite-mimis').checked = !!me.show_favorite_mimis;
+  document.getElementById('profile-show-favorite-blogs').checked = !!me.show_favorite_blogs;
+  document.getElementById('profile-show-sakumap-stamps').checked = !!me.show_sakumap_stamps;
+  document.getElementById('profile-show-sakumv-quiz').checked = me.show_sakumv_quiz !== false;
+  document.getElementById('profile-show-quest-badge').checked = me.show_quest_badge !== false;
+  document.getElementById('profile-sakumap-toggle').style.display = me.sakumap_linked ? 'flex' : 'none';
+  document.getElementById('profile-sakumv-toggle').style.display = me.sakumv_quiz_linked ? 'flex' : 'none';
+  renderProfileLiveList();
+  renderProfileIconPreview();
+}
+
+async function openProfileEditor() {
+  if (!me) return;
+  const editor = document.getElementById('profile-editor');
+  const toggle = document.getElementById('profile-edit-toggle');
+  toggle.disabled = true;
+  try { await loadProfileEditorResources(); fillProfileEditor(); }
+  catch (_) { showMsg('profile-msg', 'プロフィール項目の読み込みに失敗しました。', 'error'); }
+  toggle.disabled = false;
+  editor.classList.add('open');
+  editor.setAttribute('aria-hidden', 'false');
+  toggle.textContent = 'プロフィール編集を閉じる';
+  editor.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  // ブラウザの自動補完でユーザー名欄へ移るのを防ぎ、編集パネルをフォーカス先にする。
+  setTimeout(() => editor.focus({ preventScroll: true }), 0);
+}
+
+function closeProfileEditor() {
+  const editor = document.getElementById('profile-editor');
+  editor.classList.remove('open');
+  editor.setAttribute('aria-hidden', 'true');
+  document.getElementById('profile-edit-toggle').textContent = 'プロフィールを編集';
+}
+
+function toggleProfileEditor() {
+  if (document.getElementById('profile-editor').classList.contains('open')) closeProfileEditor();
+  else openProfileEditor();
+}
+
+async function saveProfileFromAccount() {
+  const name = document.getElementById('profile-display-name').value.trim();
+  const birthday = accountBirthdayValue();
+  const bio = document.getElementById('profile-bio').value.trim();
+  if (!name || name.length > 64) { showMsg('profile-msg', '表示名は1〜64文字で入力してください。', 'error'); return; }
+  if (birthday === '') { showMsg('profile-msg', '誕生日は年・月・日をすべて選択してください。', 'error'); return; }
+  if (bio.length > 500) { showMsg('profile-msg', '自己紹介は500文字以内で入力してください。', 'error'); return; }
+  const btn = document.getElementById('profile-save-btn');
+  const nextLives = Array.from(document.querySelectorAll('#profile-live-list input[type="checkbox"]:checked')).map(input => input.value);
+  const snsLinks = profileEditorState.sns.map(sns => ({ type: sns.type || 'link', url: String(sns.url || '').trim() })).filter(sns => sns.url).slice(0, 10);
+  const payload = {
+    display_name: name,
+    birthday,
+    gender: document.getElementById('profile-gender').value || null,
+    location: document.getElementById('profile-location').value || null,
+    buddies_since: document.getElementById('profile-buddies-since').value || null,
+    bio: bio || null,
+    oshi_member: profileEditorState.oshi[0] || null,
+    oshi_member_2: profileEditorState.oshi[1] || null,
+    oshi_member_3: profileEditorState.oshi[2] || null,
+    tags: profileEditorState.tags.slice(0, 5),
+    favorite_songs: profileEditorState.songs.slice(0, 3),
+    next_lives: nextLives,
+    next_live_seats: me.next_live_seats || {},
+    sns_links: snsLinks,
+    follow_stance: snsLinks.length ? (document.getElementById('profile-follow-stance').value || null) : null,
+    post_template: document.getElementById('profile-post-template').value.trim() || null,
+    show_favorite_mimis: document.getElementById('profile-show-favorite-mimis').checked,
+    show_favorite_blogs: document.getElementById('profile-show-favorite-blogs').checked,
+    show_sakumap_stamps: me.sakumap_linked && document.getElementById('profile-show-sakumap-stamps').checked,
+    show_sakumv_quiz: me.sakumv_quiz_linked ? document.getElementById('profile-show-sakumv-quiz').checked : true,
+    show_quest_badge: document.getElementById('profile-show-quest-badge').checked,
+  };
+  btn.disabled = true;
+  hideMsg('profile-msg');
+  try {
+    const res = await fetch(API + '?action=buddies_profile_update', { method: 'POST', credentials: 'include', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(payload) });
+    const json = await res.json();
+    if (!json.ok) { showMsg('profile-msg', json.error || '保存に失敗しました。', 'error'); return; }
+    me = json.data;
+    renderAccountData();
+    closeProfileEditor();
+    toast('プロフィールを保存しました');
+  } catch (_) { showMsg('profile-msg', '通信エラーが発生しました。', 'error'); }
+  finally { btn.disabled = false; }
+}
+
+function toggleSecurityPanel(panelId, button) {
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  const isOpen = !panel.hidden;
+  panel.hidden = isOpen;
+  button.setAttribute('aria-expanded', String(!isOpen));
+  button.textContent = isOpen
+    ? (panelId === 'username-change-panel' ? 'ユーザー名を変更する' : 'パスワードを変更する')
+    : '閉じる';
 }
 
 // ── パスワード表示切り替え ──────────────────────────────
@@ -449,9 +1397,13 @@ function escHtml(s) {
 
 document.addEventListener('keydown', e => {
   if (e.key === 'Escape' && document.getElementById('confirm-modal').style.display !== 'none') closeConfirm();
+  if (e.key === 'Escape' && document.getElementById('profile-icon-picker-page').classList.contains('active')) closeProfileIconPicker();
+  if (e.key === 'Escape' && document.getElementById('profile-oshi-modal').classList.contains('active')) closeProfileOshiPicker();
+  if (e.key === 'Escape' && document.getElementById('profile-value-modal').classList.contains('active')) closeProfileValueModal();
 });
 
 init();
 </script>
+<script src="../auth-gate.js" data-api="../api.php"></script>
 </body>
 </html>
